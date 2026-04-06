@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useStorage } from '../hooks/useStorage'
 import { formatDuration, todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
+import { SectionAlerts } from './AlertBanner'
+import InlineInsight from './InlineInsight'
+import PremiumTeaser from './PremiumTeaser'
+import { interpretSleep } from '../engine/interpretations'
 
-export default function SleepTab({ babyId, ageMonths }) {
+export default function SleepTab({ babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   const [logs, setLogs] = useStorage(`sleep_${babyId}`, [])
   const [running, setRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -40,6 +44,7 @@ export default function SleepTab({ babyId, ageMonths }) {
       setStartTs(null)
       setRunning(false)
       setElapsed(0)
+      onDataChange?.()
     }
   }
 
@@ -56,6 +61,7 @@ export default function SleepTab({ babyId, ageMonths }) {
     const entry = { id: uid(), date: form.date, durationMin: mins, label: form.label, manual: true }
     setLogs([entry, ...logs])
     setModal(false)
+    onDataChange?.()
   }
 
   const remove = (id) => setLogs(logs.filter(l=>l.id!==id))
@@ -66,6 +72,8 @@ export default function SleepTab({ babyId, ageMonths }) {
         <div className="section-title">Sen i drzemki</div>
         <div className="section-desc">Śledź czas snu dziecka</div>
       </div>
+
+      <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
 
       <div className="card">
         <div className="timer-display">
@@ -85,6 +93,10 @@ export default function SleepTab({ babyId, ageMonths }) {
         <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">sesje snu</div></div>
         <div className="stat-card"><div className="stat-val">{norm}h</div><div className="stat-lbl">norma wiekowa</div></div>
       </div>
+
+      {isPremium
+        ? <InlineInsight insight={interpretSleep(logs, ageMonths)} />
+        : <PremiumTeaser label="Ocena jakości snu" onUpgrade={onUpgrade} />}
 
       <div className="card">
         <div className="card-header">Historia snu</div>

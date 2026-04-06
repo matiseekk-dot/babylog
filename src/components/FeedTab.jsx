@@ -2,10 +2,11 @@ import React, { useState } from 'react'
 import { useStorage } from '../hooks/useStorage'
 import { nowTime, todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
+import { SectionAlerts } from './AlertBanner'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
 
-export default function FeedTab({ babyId }) {
+export default function FeedTab({ babyId, sectionAlerts = [], onNavigate, onDataChange }) {
   const key = `feed_${babyId}`
   const [logs, setLogs] = useStorage(key, [])
   const [modal, setModal] = useState(false)
@@ -30,13 +31,13 @@ export default function FeedTab({ babyId }) {
 
   const add = () => {
     const entry = { id: uid(), ...form, amount: form.amount }
-    const next = [entry, ...logs]
-    setLogs(next)
+    setLogs([entry, ...logs])
     setModal(false)
     setForm({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
+    onDataChange?.()
   }
 
-  const remove = (id) => setLogs(logs.filter(l => l.id !== id))
+  const remove = (id) => { setLogs(logs.filter(l => l.id !== id)); onDataChange?.() }
 
   return (
     <>
@@ -44,6 +45,8 @@ export default function FeedTab({ babyId }) {
         <div className="section-title">Karmienie</div>
         <div className="section-desc">Rejestruj karmienia piersią i butelką</div>
       </div>
+
+      <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
 
       <div className="stat-row">
         <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">karmień dziś</div></div>

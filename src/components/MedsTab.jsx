@@ -2,11 +2,15 @@ import React, { useState } from 'react'
 import { useStorage } from '../hooks/useStorage'
 import { nowTime, todayDate, uid, calcParacetamol, calcIbuprofen } from '../utils/helpers'
 import Modal from './Modal'
+import { SectionAlerts } from './AlertBanner'
+import InlineInsight from './InlineInsight'
+import PremiumTeaser from './PremiumTeaser'
+import { interpretMeds } from '../engine/interpretations'
 
 const BUILT_IN_MEDS = ['Paracetamol','Ibuprofen','Sól fizjologiczna','Probiotyk']
 const EMOJI_OPTIONS = ['💊','🌡️','🫁','🦠','🩹','🧴','💉','🩺','🌿','🍯','🧪','💧','🫀','🧬','⚕️']
 
-export default function MedsTab({ babyId, ageMonths, weightKg }) {
+export default function MedsTab({ babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   const [logs, setLogs] = useStorage(`meds_${babyId}`, [])
   const [customMeds, setCustomMeds] = useStorage(`meds_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
@@ -49,6 +53,8 @@ export default function MedsTab({ babyId, ageMonths, weightKg }) {
         <div className="section-desc">Dawkowanie dla dziecka {weightKg} kg, {ageMonths} mies.</div>
       </div>
       <div className="warn-card"><strong>Ważne:</strong> Podane dawki są orientacyjne. Zawsze konsultuj się z lekarzem lub farmaceutą.</div>
+      <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
+
 
       <div className="card">
         <div className="card-header">Kalkulator dawek — wbudowane</div>
@@ -87,6 +93,10 @@ export default function MedsTab({ babyId, ageMonths, weightKg }) {
       )}
 
       <button className="btn-add" onClick={()=>{ setMedForm({name:'',emoji:'💊',dosage:'',notes:''}); setAddMedModal(true) }}>+ Dodaj własny lek do kalkulatora</button>
+
+      {isPremium
+        ? <InlineInsight insight={interpretMeds(logs)} />
+        : <PremiumTeaser label="Informacje o lekach" onUpgrade={onUpgrade} />}
 
       <div className="card" style={{marginTop:8}}>
         <div className="card-header">Historia podań</div>

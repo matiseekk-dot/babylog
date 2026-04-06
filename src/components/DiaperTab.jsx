@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStorage } from '../hooks/useStorage'
 import { nowTime, todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
+import { SectionAlerts } from './AlertBanner'
 
 const TYPES = [
   { label:'Mokra', emoji:'💧', badge:'badge-blue' },
@@ -9,7 +10,7 @@ const TYPES = [
   { label:'Obydwie', emoji:'🔄', badge:'badge-purple' },
 ]
 
-export default function DiaperTab({ babyId }) {
+export default function DiaperTab({ babyId, sectionAlerts = [], onNavigate, onDataChange }) {
   const [logs, setLogs] = useStorage(`diaper_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ type:'Mokra', time: nowTime(), date: todayDate(), note:'' })
@@ -23,6 +24,7 @@ export default function DiaperTab({ babyId }) {
     const entry = { id: uid(), ...form }
     setLogs([entry, ...logs])
     setModal(false)
+    onDataChange?.()
     setForm({ type:'Mokra', time: nowTime(), date: todayDate(), note:'' })
   }
 
@@ -35,6 +37,8 @@ export default function DiaperTab({ babyId }) {
       <div className="section-header">
         <div className="section-title">Pieluchy</div>
         <div className="section-desc">Monitoruj pieluchy i zdrowie dziecka</div>
+      <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
+
       </div>
 
       <div className="stat-row">
@@ -69,6 +73,7 @@ export default function DiaperTab({ babyId }) {
           <button key={t.label} onClick={() => {
             const entry = { id:uid(), type:t.label, time:nowTime(), date:todayDate(), note:'' }
             setLogs([entry,...logs])
+            onDataChange?.()
           }} style={{
             flex:1, padding:'10px 4px', border:'0.5px solid var(--border-med)',
             borderRadius:12, background:'var(--surface)', fontSize:13,
