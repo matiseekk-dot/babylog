@@ -5,8 +5,8 @@ import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
+import TempChart from './TempChart'
 import { interpretTemp } from '../engine/interpretations'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 
 export default function TempTab({ babyId, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   const [logs, setLogs] = useStorage(`temp_${babyId}`, [])
@@ -24,8 +24,6 @@ export default function TempTab({ babyId, sectionAlerts = [], onNavigate, onData
   const todayLogs = logs.filter(l=>l.date===today).sort((a,b)=>b.time.localeCompare(a.time))
   const last = todayLogs[0]
 
-  const chartData = [...logs].sort((a,b)=>a.date.localeCompare(a.date)||a.time.localeCompare(b.time))
-    .slice(-20).map(l=>({ label:`${l.date.slice(5)} ${l.time}`, temp:l.temp }))
 
   return (
     <>
@@ -48,22 +46,7 @@ export default function TempTab({ babyId, sectionAlerts = [], onNavigate, onData
         </div>
       )}
 
-      {chartData.length > 1 && (
-        <div className="card" style={{padding:'12px 8px'}}>
-          <div className="chart-wrap">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <XAxis dataKey="label" tick={{fontSize:9}} interval="preserveStartEnd" />
-                <YAxis domain={[35.5,41]} tick={{fontSize:11}} width={34} />
-                <Tooltip formatter={v=>`${v}°C`} />
-                <ReferenceLine y={37.5} stroke="#BA7517" strokeDasharray="4 2" />
-                <ReferenceLine y={38.5} stroke="#D85A30" strokeDasharray="4 2" />
-                <Line type="monotone" dataKey="temp" stroke="var(--green)" strokeWidth={2} dot={{r:3}} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
+      <TempChart logs={logs} />
 
       {isPremium
         ? <InlineInsight insight={interpretTemp(logs)} />

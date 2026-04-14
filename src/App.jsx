@@ -16,6 +16,7 @@ import ProfilesScreen from './components/ProfilesScreen'
 import ChildStatusBar from './components/ChildStatusBar'
 import ChildStatusCard from './components/ChildStatusCard'
 import PaywallScreen from './components/PaywallScreen'
+import DoctorNotesTab from './components/DoctorNotesTab'
 import OnboardingScreen from './components/OnboardingScreen'
 
 const DEFAULT_PROFILE = {
@@ -58,6 +59,7 @@ const MORE_TABS = [
   { id:'vacc',       emoji:'💉', label:'Szczepienia' },
   { id:'diet',       emoji:'🥕', label:'Rozszerzanie diety' },
   { id:'diary',      emoji:'📖', label:'Dziennik' },
+  { id:'doctor',     emoji:'🩺', label:'Notatki lekarskie' },
 ]
 
 // Status prosty dla free userów — bez szczegółów
@@ -143,6 +145,7 @@ export default function App() {
       case 'vacc':       return <VaccinationsTab {...sharedProps} />
       case 'diet':       return <DietTab       {...sharedProps} />
       case 'diary':      return <DiaryTab      {...sharedProps} />
+      case 'doctor':     return <DoctorNotesTab {...sharedProps} />
       default:           return <FeedTab       {...sharedProps} sectionAlerts={visibleSection('feed')}   onNavigate={navigate} />
     }
   }

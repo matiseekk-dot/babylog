@@ -6,6 +6,7 @@ import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretMeds } from '../engine/interpretations'
+import { useMedReminder } from '../hooks/useMedReminder'
 
 const BUILT_IN_MEDS = ['Paracetamol','Ibuprofen','Sól fizjologiczna','Probiotyk']
 const EMOJI_OPTIONS = ['💊','🌡️','🫁','🦠','🩹','🧴','💉','🩺','🌿','🍯','🧪','💧','🫀','🧬','⚕️']
@@ -20,14 +21,18 @@ export default function MedsTab({ babyId, ageMonths, weightKg, sectionAlerts = [
   const [form, setForm] = useState({ med:'Paracetamol', dose:'', time:nowTime(), date:todayDate(), note:'' })
   const [medForm, setMedForm] = useState({ name:'', emoji:'💊', dosage:'', notes:'' })
 
+  const { permission, askPermission, scheduleReminder, cancelReminder, pendingReminders } = useMedReminder(babyId)
+
   const parac = calcParacetamol(weightKg)
   const ibu = calcIbuprofen(weightKg, ageMonths)
   const allMedNames = [...BUILT_IN_MEDS, ...customMeds.map(m=>m.name), 'Inny']
 
   const add = () => {
-    setLogs([{ id:uid(), ...form }, ...logs])
+    const entry = { id:uid(), ...form }
+    setLogs([entry, ...logs])
     setModal(false)
     setForm({ med:'Paracetamol', dose:'', time:nowTime(), date:todayDate(), note:'' })
+    if (permission === 'granted') scheduleReminder(entry)
   }
   const remove = (id) => setLogs(logs.filter(l=>l.id!==id))
 
@@ -53,6 +58,33 @@ export default function MedsTab({ babyId, ageMonths, weightKg, sectionAlerts = [
         <div className="section-desc">Dawkowanie dla dziecka {weightKg} kg, {ageMonths} mies.</div>
       </div>
       <div className="warn-card"><strong>Ważne:</strong> Podane dawki są orientacyjne. Zawsze konsultuj się z lekarzem lub farmaceutą.</div>
+
+      {/* Reminder permission banner */}
+      {isPremium && permission !== 'granted' && permission !== 'unsupported' && (
+        <div style={{margin:'8px 16px 0',padding:'10px 14px',background:'#E6F1FB',border:'0.5px solid #85B7EB',borderRadius:10,display:'flex',alignItems:'center',gap:10}}>
+          <span style={{fontSize:16}}>🔔</span>
+          <div style={{flex:1,fontSize:12,color:'#0C447C'}}>Włącz powiadomienia, żeby dostać alert gdy będzie można podać kolejną dawkę.</div>
+          <button onClick={askPermission} style={{background:'#185FA5',color:'#fff',border:'none',borderRadius:8,padding:'6px 12px',fontSize:11,fontWeight:700,cursor:'pointer',whiteSpace:'nowrap'}}>Włącz</button>
+        </div>
+      )}
+
+      {/* Pending reminders */}
+      {isPremium && pendingReminders.length > 0 && (
+        <div style={{margin:'8px 16px 0',display:'flex',flexDirection:'column',gap:4}}>
+          {pendingReminders.map(r => (
+            <div key={r.id} style={{padding:'9px 12px',background:r.minutesLeft<=0?'#E1F5EE':'#FEF9F0',border:`0.5px solid ${r.minutesLeft<=0?'#9FE1CB':'#FAC775'}`,borderRadius:10,display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:14}}>⏱️</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:12,fontWeight:700,color:r.minutesLeft<=0?'#085041':'#633806'}}>
+                  {r.minutesLeft<=0 ? `${r.medName} — możesz podać teraz` : `${r.medName} — za ${r.minutesLeft} min`}
+                </div>
+                {r.dose && <div style={{fontSize:11,color:'var(--text-3)'}}>Dawka: {r.dose}</div>}
+              </div>
+              <button onClick={()=>cancelReminder(r.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:14,cursor:'pointer',padding:4}}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
       <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
 
 

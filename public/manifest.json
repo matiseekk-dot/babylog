@@ -1,0 +1,19 @@
+{
+  "name": "Spokojny Rodzic",
+  "short_name": "BabyLog",
+  "description": "Aplikacja, która pomaga Ci wiedzieć co robić, gdy dziecko jest chore.",
+  "start_url": "/babylog/",
+  "scope": "/babylog/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1D9E75",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/babylog/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any maskable" },
+    { "src": "/babylog/icon-96.png",  "sizes": "96x96",   "type": "image/png" },
+    { "src": "/babylog/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/babylog/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["health", "lifestyle", "medical"],
+  "lang": "pl"
+}
