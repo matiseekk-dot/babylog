@@ -8,12 +8,30 @@
   "background_color": "#ffffff",
   "theme_color": "#1D9E75",
   "orientation": "portrait",
+  "lang": "pl",
+  "categories": ["health", "lifestyle", "medical"],
   "icons": [
-    { "src": "/babylog/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any maskable" },
-    { "src": "/babylog/icon-96.png",  "sizes": "96x96",   "type": "image/png" },
+    { "src": "/babylog/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
+    { "src": "/babylog/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
     { "src": "/babylog/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/babylog/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-  "categories": ["health", "lifestyle", "medical"],
-  "lang": "pl"
+  "screenshots": [
+    {
+      "src": "/babylog/screenshot-1.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dashboard zdrowia dziecka"
+    },
+    {
+      "src": "/babylog/screenshot-2.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Analiza temperatury"
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": []
 }
