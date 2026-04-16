@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
 import { MOOD_OPTIONS } from '../data/staticData'
 
-export default function DiaryTab({ babyId }) {
-  const [entries, setEntries] = useStorage(`diary_${babyId}`, [])
+export default function DiaryTab({uid,  babyId }) {
+  const [entries, setEntries] = useFirestore(uid, `diary_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ date:todayDate(), mood:'😊', text:'' })
 

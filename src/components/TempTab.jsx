@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, uid, getTempClass, getTempLabel } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
@@ -8,8 +8,8 @@ import PremiumTeaser from './PremiumTeaser'
 import TempChart from './TempChart'
 import { interpretTemp } from '../engine/interpretations'
 
-export default function TempTab({ babyId, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
-  const [logs, setLogs] = useStorage(`temp_${babyId}`, [])
+export default function TempTab({uid,  babyId, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+  const [logs, setLogs] = useFirestore(uid, `temp_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
 

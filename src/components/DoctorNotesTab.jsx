@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
 import PremiumTeaser from './PremiumTeaser'
 
 const VISIT_TYPES = ['Pediatra', 'Pogotowie', 'Teleporada', 'Specjalista', 'Kontrolna']
 
-export default function DoctorNotesTab({ babyId, isPremium, onUpgrade }) {
-  const [notes, setNotes] = useStorage(`doctor_notes_${babyId}`, [])
+export default function DoctorNotesTab({uid,  babyId, isPremium, onUpgrade }) {
+  const [notes, setNotes] = useFirestore(uid, `doctor_notes_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [viewNote, setViewNote] = useState(null)
   const [form, setForm] = useState({

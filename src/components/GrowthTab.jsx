@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-export default function GrowthTab({ babyId }) {
-  const [logs, setLogs] = useStorage(`growth_${babyId}`, [])
+export default function GrowthTab({uid,  babyId }) {
+  const [logs, setLogs] = useFirestore(uid, `growth_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ date: todayDate(), weight:'', height:'', headCirc:'' })
   const [view, setView] = useState('weight')

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { formatDuration, todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
@@ -7,11 +7,11 @@ import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretSleep } from '../engine/interpretations'
 
-export default function SleepTab({ babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
-  const [logs, setLogs] = useStorage(`sleep_${babyId}`, [])
+export default function SleepTab({uid,  babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+  const [logs, setLogs] = useFirestore(uid, `sleep_${babyId}`, [])
   const [running, setRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
-  const [startTs, setStartTs] = useStorage(`sleep_timer_${babyId}`, null)
+  const [startTs, setStartTs] = useFirestore(uid, `sleep_timer_${babyId}`, null)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ date: todayDate(), startTime: '20:00', endTime: '07:00', label: 'Drzemka' })
   const intervalRef = useRef(null)

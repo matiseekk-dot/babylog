@@ -1,5 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStorage } from './hooks/useStorage'
+import { useFirestore, migrateAllLocalData, enableOffline } from './hooks/useFirestore'
+import { useAuth } from './hooks/useAuth'
+import LoginScreen from './components/LoginScreen'
 import { useChildStatus } from './hooks/useChildStatus'
 import { usePremium } from './hooks/usePremium'
 import FeedTab from './components/FeedTab'
@@ -70,18 +73,29 @@ const FREE_STATUS = {
 }
 
 export default function App() {
-  const [profiles, setProfiles] = useStorage('profiles', [DEFAULT_PROFILE])
-  const [activeId, setActiveId] = useStorage('activeProfile', 'default')
+  const { user, loading: authLoading, login, logout } = useAuth()
+  const uid = user?.uid ?? null
+
+  // Włącz offline persistence
+  useEffect(() => { enableOffline() }, [])
+
+  // Migruj localStorage → Firestore przy pierwszym logowaniu
+  useEffect(() => {
+    if (uid) migrateAllLocalData(uid).catch(() => {})
+  }, [uid])
+
+  const [profiles, setProfiles] = useFirestore(uid, 'profiles', [DEFAULT_PROFILE])
+  const [activeId, setActiveId] = useFirestore(uid, 'activeProfile', 'default')
   const [tab, setTab] = useState('feed')
   const [showProfiles, setShowProfiles] = useState(false)
   const [showMore, setShowMore] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
-  const [onboardingDone, setOnboardingDone] = useStorage('onboarding_done', false)
+  const [onboardingDone, setOnboardingDone] = useFirestore(uid, 'onboarding_done', false)
 
   const active = profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
 
   // ── Freemium ──────────────────────────────────────────────────────────────
-  const { isPremium, activate, deactivate } = usePremium()
+  const { isPremium, activate, deactivate } = usePremium(uid)
 
   const openPaywall = () => setShowPaywall(true)
   const closePaywall = () => setShowPaywall(false)
@@ -125,6 +139,7 @@ export default function App() {
   const navActive     = (id) => id === 'more' ? MORE_TABS.some(t => t.id === tab) : tab === id
 
   const sharedProps = {
+    uid,
     babyId: active.id,
     ageMonths: active.months,
     weightKg: active.weight,
@@ -151,6 +166,27 @@ export default function App() {
   }
 
   const currentMoreTab = MORE_TABS.find(t => t.id === tab)
+
+  // ── Auth loading ─────────────────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div className="app" style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ textAlign:'center', color:'var(--text-3)' }}>
+          <div style={{ fontSize:48, marginBottom:16 }}>🍼</div>
+          <div style={{ fontSize:14 }}>Ładowanie...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Login screen ──────────────────────────────────────────────────────────
+  if (!user) {
+    return (
+      <div className="app">
+        <LoginScreen onLogin={login} loading={authLoading} />
+      </div>
+    )
+  }
 
   // ── Onboarding ────────────────────────────────────────────────────────────
   if (!onboardingDone) {
@@ -206,6 +242,11 @@ export default function App() {
               🔒 Free
             </button>
           )}
+          {/* Logout */}
+          <button onClick={logout} title="Wyloguj" style={{
+            background:'none', border:'none', cursor:'pointer',
+            color:'var(--text-3)', fontSize:18, padding:'4px 6px', minHeight:36,
+          }}>⎋</button>
           {/* Baby chip */}
           <button className="baby-chip" onClick={() => { setShowProfiles(s=>!s); setShowMore(false) }}>
             <div className="baby-chip-avatar" style={{background:active.avatarColor,color:'var(--green-dark)',fontSize:13}}>

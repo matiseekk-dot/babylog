@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
 
-export default function FeedTab({ babyId, sectionAlerts = [], onNavigate, onDataChange }) {
+export default function FeedTab({uid,  babyId, sectionAlerts = [], onNavigate, onDataChange }) {
   const key = `feed_${babyId}`
-  const [logs, setLogs] = useStorage(key, [])
+  const [logs, setLogs] = useFirestore(uid, key, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
 

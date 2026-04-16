@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { VACCINATIONS } from '../data/staticData'
 import { todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
 
-export default function VaccinationsTab({ babyId, ageMonths }) {
-  const [done, setDone] = useStorage(`vacc_${babyId}`, {})
-  const [customVacc, setCustomVacc] = useStorage(`vacc_custom_${babyId}`, [])
+export default function VaccinationsTab({uid,  babyId, ageMonths }) {
+  const [done, setDone] = useFirestore(uid, `vacc_${babyId}`, {})
+  const [customVacc, setCustomVacc] = useFirestore(uid, `vacc_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
   const [form, setForm] = useState({ name: '', when: '', months: String(ageMonths) })

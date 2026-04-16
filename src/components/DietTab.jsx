@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { DIET_ITEMS } from '../data/staticData'
 import { uid } from '../utils/helpers'
 import Modal from './Modal'
 
 const EMOJI_OPTIONS = ['🥕','🥦','🍠','🎃','🍎','🍐','🍌','🫐','🍓','🍇','🍑','🥑','🧅','🧄','🫛','🌽','🍅','🥝','🍋','🫚','🐔','🐟','🥩','🥚','🧀','🥛','🌾','🍚','🫘','🥜','🍯','🧇','🥞']
 
-export default function DietTab({ babyId, ageMonths }) {
-  const [status, setStatus] = useStorage(`diet_${babyId}`, {})
-  const [customItems, setCustomItems] = useStorage(`diet_custom_${babyId}`, [])
+export default function DietTab({uid,  babyId, ageMonths }) {
+  const [status, setStatus] = useFirestore(uid, `diet_${babyId}`, {})
+  const [customItems, setCustomItems] = useFirestore(uid, `diet_custom_${babyId}`, [])
   const [filter, setFilter] = useState('all')
   const [modal, setModal] = useState(false)
   const [deleteId, setDeleteId] = useState(null)

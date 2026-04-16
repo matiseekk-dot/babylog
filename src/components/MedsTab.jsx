@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, uid, calcParacetamol, calcIbuprofen } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
@@ -11,9 +11,9 @@ import { useMedReminder } from '../hooks/useMedReminder'
 const BUILT_IN_MEDS = ['Paracetamol','Ibuprofen','Sól fizjologiczna','Probiotyk']
 const EMOJI_OPTIONS = ['💊','🌡️','🫁','🦠','🩹','🧴','💉','🩺','🌿','🍯','🧪','💧','🫀','🧬','⚕️']
 
-export default function MedsTab({ babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
-  const [logs, setLogs] = useStorage(`meds_${babyId}`, [])
-  const [customMeds, setCustomMeds] = useStorage(`meds_custom_${babyId}`, [])
+export default function MedsTab({uid,  babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+  const [logs, setLogs] = useFirestore(uid, `meds_${babyId}`, [])
+  const [customMeds, setCustomMeds] = useFirestore(uid, `meds_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [doseModal, setDoseModal] = useState(null)
   const [addMedModal, setAddMedModal] = useState(false)

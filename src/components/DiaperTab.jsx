@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, uid } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
@@ -10,8 +10,8 @@ const TYPES = [
   { label:'Obydwie', emoji:'🔄', badge:'badge-purple' },
 ]
 
-export default function DiaperTab({ babyId, sectionAlerts = [], onNavigate, onDataChange }) {
-  const [logs, setLogs] = useStorage(`diaper_${babyId}`, [])
+export default function DiaperTab({uid,  babyId, sectionAlerts = [], onNavigate, onDataChange }) {
+  const [logs, setLogs] = useFirestore(uid, `diaper_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ type:'Mokra', time: nowTime(), date: todayDate(), note:'' })
 

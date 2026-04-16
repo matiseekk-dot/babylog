@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { useStorage } from '../hooks/useStorage'
+import { useFirestore } from '../hooks/useFirestore'
 import { MILESTONES } from '../data/staticData'
 import { todayDate, formatDate, uid } from '../utils/helpers'
 import Modal from './Modal'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
 
-export default function MilestonesTab({ babyId, ageMonths }) {
-  const [done, setDone] = useStorage(`milestones_${babyId}`, {})
-  const [customMilestones, setCustomMilestones] = useStorage(`milestones_custom_${babyId}`, [])
+export default function MilestonesTab({uid,  babyId, ageMonths }) {
+  const [done, setDone] = useFirestore(uid, `milestones_${babyId}`, {})
+  const [customMilestones, setCustomMilestones] = useFirestore(uid, `milestones_custom_${babyId}`, [])
   const [filter, setFilter] = useState('all')
   const [modal, setModal] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
