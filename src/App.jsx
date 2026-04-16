@@ -3,6 +3,7 @@ import { useStorage } from './hooks/useStorage'
 import { useFirestore, migrateAllLocalData, enableOffline } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
+import { useRevenueCat } from './hooks/useRevenueCat'
 import { useChildStatus } from './hooks/useChildStatus'
 import { usePremium } from './hooks/usePremium'
 import FeedTab from './components/FeedTab'
@@ -94,16 +95,30 @@ export default function App() {
 
   const active = profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
 
-  // ── Freemium ──────────────────────────────────────────────────────────────
+  // ── Freemium + RevenueCat ─────────────────────────────────────────────────
   const { isPremium, activate, deactivate } = usePremium(uid)
 
   const openPaywall = () => setShowPaywall(true)
   const closePaywall = () => setShowPaywall(false)
-  const handleActivate = () => {
-    // TODO: Tu podpinasz logikę płatności (Stripe, RevenueCat, itp.)
-    // Na razie aktywuje od razu — do zamiany na callback po sukcesie transakcji
-    activate()
-    setShowPaywall(false)
+
+  // RevenueCat — weryfikacja subskrypcji
+  const { checking: rcChecking, checkPremium, activateWithToken } = useRevenueCat(uid, activate)
+
+  const handleActivate = async (planId) => {
+    // Jeśli jesteśmy w TWA (Android) — Google Play Billing
+    // window.RevenueCat dostępny po instalacji natywnego SDK
+    if (window.Android?.launchBilling) {
+      window.Android.launchBilling(planId)
+      return
+    }
+    // Web fallback — sprawdź czy zakup już istnieje w RC
+    const active = await checkPremium()
+    if (active) {
+      setShowPaywall(false)
+    } else {
+      // Pokaż instrukcję — zakup możliwy tylko przez Google Play
+      alert('Zakup Premium jest dostępny w aplikacji Android. Pobierz Spokojny Rodzic z Google Play.')
+    }
   }
 
   // ── Decision layer (zawsze liczymy, ale pokazujemy tylko premium) ──────────
@@ -201,7 +216,7 @@ export default function App() {
   if (showPaywall) {
     return (
       <div className="app" style={{ position: 'relative', overflowY: 'auto' }}>
-        <PaywallScreen onActivate={handleActivate} onClose={closePaywall} />
+        <PaywallScreen onActivate={handleActivate} onClose={closePaywall} checking={rcChecking} />
       </div>
     )
   }
