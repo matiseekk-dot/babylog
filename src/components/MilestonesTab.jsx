@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { MILESTONES } from '../data/staticData'
-import { todayDate, formatDategenId} from '../utils/helpers'
+import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
