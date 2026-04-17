@@ -62,7 +62,10 @@ export function useFirestore(uid, key, fallback) {
     // Real-time subscription
     const unsub = onSnapshot(docRef(uid, key), snap => {
       if (snap.exists()) {
-        setState(snap.data().value ?? fallback)
+        const val = snap.data().value ?? fallback
+        // Keep localStorage in sync so rule engine can read latest data
+        try { localStorage.setItem('babylog_' + key, JSON.stringify(val)) } catch {}
+        setState(val)
       } else {
         setState(fallback)
       }

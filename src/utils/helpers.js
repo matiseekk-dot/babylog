@@ -61,6 +61,9 @@ export function getTempLabel(temp) {
   return 'Wysoka gorączka'
 }
 
-export function uid() {
+export function uid()
+export { uid as genId } {
   return Date.now().toString(36) + Math.random().toString(36).slice(2,6)
 }
+
+export const genId = uid

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Modal from './Modal'
-import { uid } from '../utils/helpers'
+import { genId } from '../utils/helpers'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 const AVATAR_COLORS = ['#E1F5EE','#FAEEDA','#EEEDFE','#FAECE7','#E6F1FB','#FBEAF0','#EAF3DE','#FCEBEB']
@@ -22,7 +22,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
 
   const save = () => {
     if (!form.name.trim()) return
-    onAdd({ id: uid(), name: form.name.trim(), months: Number(form.months), weight: Number(form.weight), avatar: form.avatar, avatarColor: form.avatarColor })
+    onAdd({ id: genId(), name: form.name.trim(), months: Number(form.months), weight: Number(form.weight), avatar: form.avatar, avatarColor: form.avatarColor })
     setModal(false)
   }
 

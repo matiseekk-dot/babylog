@@ -1,18 +1,20 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { todayDate, uid } from '../utils/helpers'
+import { todayDate, genId} from '../utils/helpers'
 import Modal from './Modal'
+import { toast } from './Toast'
 import { MOOD_OPTIONS } from '../data/staticData'
 
-export default function DiaryTab({uid,  babyId }) {
+export default function DiaryTab({uid, babyId }) {
   const [entries, setEntries] = useFirestore(uid, `diary_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ date:todayDate(), mood:'😊', text:'' })
 
   const add = () => {
     if (!form.text.trim()) return
-    setEntries([{ id:uid(), ...form }, ...entries])
+    setEntries([{ id:genId(), ...form }, ...entries])
     setModal(false)
+    toast('Wpis zapisany')
     setForm({ date:todayDate(), mood:'😊', text:'' })
   }
 

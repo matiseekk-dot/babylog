@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
+import { t, useLocale } from '../i18n'
 
 export default function LoginScreen({ onLogin, loading }) {
+  useLocale()  // re-render on language change
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 
@@ -11,7 +13,7 @@ export default function LoginScreen({ onLogin, loading }) {
       await onLogin()
     } catch (e) {
       if (e.code !== 'auth/popup-closed-by-user') {
-        setError('Nie udało się zalogować. Spróbuj ponownie.')
+        setError(t('login.error'))
       }
     } finally {
       setBusy(false)
@@ -36,13 +38,13 @@ export default function LoginScreen({ onLogin, loading }) {
           fontSize: 26, fontWeight: 800, color: '#fff',
           letterSpacing: -0.5, lineHeight: 1.2,
         }}>
-          Spokojny Rodzic
+          {t('login.title')}
         </div>
         <div style={{
           fontSize: 14, color: 'rgba(255,255,255,0.8)',
           marginTop: 10, lineHeight: 1.5,
         }}>
-          Aplikacja, która pomaga Ci wiedzieć<br />co robić, gdy dziecko jest chore.
+          {t('login.subtitle').split('\n').map((l,i)=><span key={i}>{l}{i===0?<br />:null}</span>)}
         </div>
       </div>
 
@@ -51,9 +53,9 @@ export default function LoginScreen({ onLogin, loading }) {
 
         {/* Benefity */}
         {[
-          { icon: '☁️', text: 'Dane synchronizowane między urządzeniami' },
-          { icon: '🔒', text: 'Twoje dane są prywatne i bezpieczne' },
-          { icon: '📱', text: 'Działa offline — nawet bez internetu' },
+          { icon: '☁️', text: t('login.benefit1') },
+          { icon: '🔒', text: t('login.benefit2') },
+          { icon: '📱', text: t('login.benefit3') },
         ].map(b => (
           <div key={b.icon} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{
@@ -109,15 +111,14 @@ export default function LoginScreen({ onLogin, loading }) {
               animation: 'spin .8s linear infinite',
             }} />
           )}
-          {busy ? 'Logowanie...' : 'Zaloguj się przez Google'}
+          {busy ? t('login.loading') : t('login.button')}
         </button>
 
         <p style={{
           fontSize: 11, color: '#9a9a94', textAlign: 'center',
           marginTop: 14, lineHeight: 1.5,
         }}>
-          Kontynuując, akceptujesz naszą Politykę Prywatności.<br />
-          Twoje dane zdrowotne są przechowywane tylko na Twoim koncie Google.
+          {t('login.footer').split('\n').map((l,i)=><span key={i}>{l}{i===0?<br />:null}</span>)}
         </p>
       </div>
 

@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { MILESTONES } from '../data/staticData'
-import { todayDate, formatDate, uid } from '../utils/helpers'
+import { todayDate, formatDategenId} from '../utils/helpers'
 import Modal from './Modal'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
 
-export default function MilestonesTab({uid,  babyId, ageMonths }) {
+export default function MilestonesTab({uid, babyId, ageMonths }) {
   const [done, setDone] = useFirestore(uid, `milestones_${babyId}`, {})
   const [customMilestones, setCustomMilestones] = useFirestore(uid, `milestones_custom_${babyId}`, [])
   const [filter, setFilter] = useState('all')
@@ -24,7 +24,7 @@ export default function MilestonesTab({uid,  babyId, ageMonths }) {
 
   const addCustom = () => {
     if (!form.name.trim()) return
-    const m = { id: uid(), name: form.name.trim(), emoji: form.emoji, age: form.age || `${form.months} mies.`, months: Number(form.months), custom: true }
+    const m = { id: genId(), name: form.name.trim(), emoji: form.emoji, age: form.age || `${form.months} mies.`, months: Number(form.months), custom: true }
     setCustomMilestones([...customMilestones, m])
     setModal(false)
     setForm({ name: '', emoji: '⭐', age: '', months: String(ageMonths) })

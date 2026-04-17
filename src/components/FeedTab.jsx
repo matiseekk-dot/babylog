@@ -1,23 +1,33 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, uid } from '../utils/helpers'
+import { nowTime, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
+import { toast } from './Toast'
+import { t, useLocale } from '../i18n'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
 
-export default function FeedTab({uid,  babyId, sectionAlerts = [], onNavigate, onDataChange }) {
-  const key = `feed_${babyId}`
-  const [logs, setLogs] = useFirestore(uid, key, [])
+// Szybkie przyciski — jedno tapnięcie zapisuje z aktualną godziną
+function getQuickBtns() {
+  return [
+    { type:'Pierś lewa',  emoji:'🤱', label:t('feed.quick.left'),   amount:'15', color:'#E1F5EE', textColor:'#085041' },
+    { type:'Pierś prawa', emoji:'🤱', label:t('feed.quick.right'),  amount:'15', color:'#E1F5EE', textColor:'#085041' },
+    { type:'Butelka',     emoji:'🍼', label:t('feed.quick.bottle'), amount:'120',color:'#E6F1FB', textColor:'#0C447C' },
+  ]
+}
+
+export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, onDataChange }) {
+  useLocale()
+  const QUICK_BTNS = getQuickBtns()
+  const [logs, setLogs] = useFirestore(uid, `feed_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
 
   const today = todayDate()
   const todayLogs = logs.filter(l => l.date === today).sort((a,b) => b.time.localeCompare(a.time))
-
   const totalMl = todayLogs.filter(l=>l.type==='Butelka'||l.type==='Odciągnięte mleko').reduce((s,l)=>s+Number(l.amount||0),0)
   const breastCount = todayLogs.filter(l=>l.type.startsWith('Pierś')).length
-
   const lastLog = todayLogs[0]
   const lastAgo = lastLog ? (() => {
     const [h,m] = lastLog.time.split(':').map(Number)
@@ -27,37 +37,68 @@ export default function FeedTab({uid,  babyId, sectionAlerts = [], onNavigate, o
     return `${Math.floor(diff/60)}h ${diff%60}m`
   })() : '—'
 
-  const isBottle = form.type==='Butelka'||form.type==='Odciągnięte mleko'
+  const quickAdd = (type, amount) => {
+    const entry = { id: genId(), type, amount, time: nowTime(), date: todayDate() }
+    setLogs([entry, ...logs])
+    onDataChange?.()
+    toast(`${t('common.saved')}: ${type}`)
+  }
 
   const add = () => {
-    const entry = { id: uid(), ...form, amount: form.amount }
+    const entry = { id: genId(), ...form }
     setLogs([entry, ...logs])
     setModal(false)
     setForm({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
     onDataChange?.()
+    toast(t('feed.toast.saved'))
   }
 
   const remove = (id) => { setLogs(logs.filter(l => l.id !== id)); onDataChange?.() }
+  const isBottle = form.type==='Butelka'||form.type==='Odciągnięte mleko'
 
   return (
     <>
       <div className="section-header">
-        <div className="section-title">Karmienie</div>
-        <div className="section-desc">Rejestruj karmienia piersią i butelką</div>
+        <div className="section-title">{t('feed.title')}</div>
+        <div className="section-desc">{t('feed.desc')}</div>
       </div>
 
       <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
 
+      {/* Szybkie przyciski — jedno tapnięcie */}
+      <div style={{ display:'flex', gap:8, margin:'10px 16px 0' }}>
+        {QUICK_BTNS.map(b => (
+          <button
+            key={b.type}
+            onClick={() => quickAdd(b.type, b.amount)}
+            style={{
+              flex:1, minHeight:64, border:'none', borderRadius:14,
+              background:b.color, color:b.textColor,
+              fontSize:12, fontWeight:700, cursor:'pointer',
+              display:'flex', flexDirection:'column',
+              alignItems:'center', justifyContent:'center', gap:4,
+              whiteSpace:'pre-line', lineHeight:1.2,
+            }}
+          >
+            <span style={{fontSize:22}}>{b.emoji}</span>
+            {b.label}
+          </button>
+        ))}
+      </div>
+
       <div className="stat-row">
-        <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">karmień dziś</div></div>
-        <div className="stat-card"><div className="stat-val">{totalMl > 0 ? `${totalMl}ml` : `${breastCount}×`}</div><div className="stat-lbl">{totalMl > 0 ? 'ml butelką' : 'pierś'}</div></div>
-        <div className="stat-card"><div className="stat-val">{lastAgo}</div><div className="stat-lbl">od ostatniego</div></div>
+        <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">{t('feed.stat.count')}</div></div>
+        <div className="stat-card"><div className="stat-val">{totalMl > 0 ? `${totalMl}ml` : `${breastCount}×`}</div><div className="stat-lbl">{totalMl > 0 ? t('feed.stat.bottle') : t('feed.stat.breast')}</div></div>
+        <div className="stat-card"><div className="stat-val">{lastAgo}</div><div className="stat-lbl">{t('feed.stat.ago')}</div></div>
       </div>
 
       <div className="card">
-        <div className="card-header">Dzisiaj</div>
+        <div className="card-header">{t('feed.today')}</div>
         {todayLogs.length === 0
-          ? <div className="empty-state"><div className="empty-icon">🍼</div><p>Brak wpisów na dziś</p></div>
+          ? <div className="empty-state">
+              <div className="empty-icon">🍼</div>
+              <p>{t('feed.empty')}</p>
+            </div>
           : todayLogs.map(l => (
             <div className="log-item" key={l.id}>
               <div className="log-icon">{l.type.startsWith('Pierś') ? '🤱' : '🍼'}</div>
@@ -73,10 +114,10 @@ export default function FeedTab({uid,  babyId, sectionAlerts = [], onNavigate, o
       </div>
 
       <button className="btn-add" onClick={() => { setForm(f=>({...f,time:nowTime(),date:todayDate()})); setModal(true) }}>
-        + Dodaj karmienie
+        {t('feed.add_detail')}
       </button>
 
-      <Modal open={modal} onClose={() => setModal(false)} title="Nowe karmienie">
+      <Modal open={modal} onClose={() => setModal(false)} title={t('feed.modal.title')}>
         <div className="form-group">
           <label className="form-label">Typ karmienia</label>
           <select className="form-select" value={form.type} onChange={e => setForm(f=>({...f,type:e.target.value,amount:e.target.value.startsWith('Pierś')?'15':'120'}))}>

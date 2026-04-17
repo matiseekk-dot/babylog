@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { todayDate, uid } from '../utils/helpers'
+import { todayDate, genId} from '../utils/helpers'
 import Modal from './Modal'
 import PremiumTeaser from './PremiumTeaser'
 
 const VISIT_TYPES = ['Pediatra', 'Pogotowie', 'Teleporada', 'Specjalista', 'Kontrolna']
 
-export default function DoctorNotesTab({uid,  babyId, isPremium, onUpgrade }) {
+export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
   const [notes, setNotes] = useFirestore(uid, `doctor_notes_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [viewNote, setViewNote] = useState(null)
@@ -22,7 +22,7 @@ export default function DoctorNotesTab({uid,  babyId, isPremium, onUpgrade }) {
 
   const save = () => {
     if (!form.diagnosis.trim() && !form.recommendations.trim()) return
-    setNotes([{ id: uid(), ...form }, ...notes])
+    setNotes([{ id: genId(), ...form }, ...notes])
     setModal(false)
     resetForm()
   }

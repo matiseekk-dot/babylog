@@ -1,23 +1,25 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, uid, getTempClass, getTempLabel } from '../utils/helpers'
+import { nowTime, todayDate, genId, getTempClass, getTempLabel } from '../utils/helpers'
 import Modal from './Modal'
+import { toast } from './Toast'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import TempChart from './TempChart'
 import { interpretTemp } from '../engine/interpretations'
 
-export default function TempTab({uid,  babyId, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   const [logs, setLogs] = useFirestore(uid, `temp_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
 
   const add = () => {
-    setLogs([{ id:uid(), ...form, temp:Number(form.temp) }, ...logs])
+    setLogs([{ id:genId(), ...form, temp:Number(form.temp) }, ...logs])
     setModal(false)
     setForm({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
     onDataChange?.()
+    toast(`Temperatura: ${Number(form.temp).toFixed(1)}°C`)
   }
 
   const today = todayDate()

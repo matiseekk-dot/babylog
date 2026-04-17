@@ -1,17 +1,18 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, uid, calcParacetamol, calcIbuprofen } from '../utils/helpers'
+import { nowTime, todayDate, genId, calcParacetamol, calcIbuprofen } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretMeds } from '../engine/interpretations'
+import { toast } from './Toast'
 import { useMedReminder } from '../hooks/useMedReminder'
 
 const BUILT_IN_MEDS = ['Paracetamol','Ibuprofen','Sól fizjologiczna','Probiotyk']
 const EMOJI_OPTIONS = ['💊','🌡️','🫁','🦠','🩹','🧴','💉','🩺','🌿','🍯','🧪','💧','🫀','🧬','⚕️']
 
-export default function MedsTab({uid,  babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   const [logs, setLogs] = useFirestore(uid, `meds_${babyId}`, [])
   const [customMeds, setCustomMeds] = useFirestore(uid, `meds_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
@@ -28,7 +29,7 @@ export default function MedsTab({uid,  babyId, ageMonths, weightKg, sectionAlert
   const allMedNames = [...BUILT_IN_MEDS, ...customMeds.map(m=>m.name), 'Inny']
 
   const add = () => {
-    const entry = { id:uid(), ...form }
+    const entry = { id:genId(), ...form }
     setLogs([entry, ...logs])
     setModal(false)
     setForm({ med:'Paracetamol', dose:'', time:nowTime(), date:todayDate(), note:'' })
@@ -38,7 +39,7 @@ export default function MedsTab({uid,  babyId, ageMonths, weightKg, sectionAlert
 
   const addCustomMed = () => {
     if (!medForm.name.trim()) return
-    setCustomMeds([...customMeds, { id:uid(), ...medForm, name:medForm.name.trim() }])
+    setCustomMeds([...customMeds, { id:genId(), ...medForm, name:medForm.name.trim() }])
     setAddMedModal(false)
     setMedForm({ name:'', emoji:'💊', dosage:'', notes:'' })
   }
@@ -57,6 +58,25 @@ export default function MedsTab({uid,  babyId, ageMonths, weightKg, sectionAlert
         <div className="section-title">Leki</div>
         <div className="section-desc">Dawkowanie dla dziecka {weightKg} kg, {ageMonths} mies.</div>
       </div>
+      <div className="card">
+        <div className="card-header">Kalkulator dawek — wbudowane</div>
+        {BUILT_IN_MEDS.map(med => (
+          <div className="log-item" key={med}>
+            <div className="log-icon">{med==='Paracetamol'?'🌡️':med==='Ibuprofen'?'💊':med==='Sól fizjologiczna'?'🫁':'🦠'}</div>
+            <div className="log-body">
+              <div className="log-name">{med}</div>
+              <div className="log-detail">
+                {med==='Paracetamol' && `${parac.dose} mg → ${parac.mlStd} ml`}
+                {med==='Ibuprofen' && (ibu ? `${ibu.dose} mg → ${ibu.ml} ml` : 'Poniżej 3. miesiąca')}
+                {med==='Sól fizjologiczna' && '3–5 kropli / dziurkę'}
+                {med==='Probiotyk' && '5–10 kropli / dobę'}
+              </div>
+            </div>
+            <button onClick={()=>setDoseModal(DOSE_INFO[med])} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,minHeight:36}}>Dawka</button>
+          </div>
+        ))}
+      </div>
+
       <div className="warn-card"><strong>Ważne:</strong> Podane dawki są orientacyjne. Zawsze konsultuj się z lekarzem lub farmaceutą.</div>
 
       {/* Reminder permission banner */}
@@ -88,24 +108,7 @@ export default function MedsTab({uid,  babyId, ageMonths, weightKg, sectionAlert
       <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
 
 
-      <div className="card">
-        <div className="card-header">Kalkulator dawek — wbudowane</div>
-        {BUILT_IN_MEDS.map(med => (
-          <div className="log-item" key={med}>
-            <div className="log-icon">{med==='Paracetamol'?'🌡️':med==='Ibuprofen'?'💊':med==='Sól fizjologiczna'?'🫁':'🦠'}</div>
-            <div className="log-body">
-              <div className="log-name">{med}</div>
-              <div className="log-detail">
-                {med==='Paracetamol' && `${parac.dose} mg → ${parac.mlStd} ml`}
-                {med==='Ibuprofen' && (ibu ? `${ibu.dose} mg → ${ibu.ml} ml` : 'Poniżej 3. miesiąca')}
-                {med==='Sól fizjologiczna' && '3–5 kropli / dziurkę'}
-                {med==='Probiotyk' && '5–10 kropli / dobę'}
-              </div>
-            </div>
-            <button onClick={()=>setDoseModal(DOSE_INFO[med])} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,minHeight:36}}>Dawka</button>
-          </div>
-        ))}
-      </div>
+
 
       {customMeds.length > 0 && (
         <div className="card">

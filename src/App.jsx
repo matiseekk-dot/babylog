@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useStorage } from './hooks/useStorage'
 import { useFirestore, migrateAllLocalData, enableOffline } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
@@ -22,6 +21,10 @@ import ChildStatusCard from './components/ChildStatusCard'
 import PaywallScreen from './components/PaywallScreen'
 import DoctorNotesTab from './components/DoctorNotesTab'
 import OnboardingScreen from './components/OnboardingScreen'
+import ToastContainer from './components/Toast'
+import SleepIndicator from './components/SleepIndicator'
+import LanguageSwitcher from './components/LanguageSwitcher'
+import { useLocale, t } from './i18n'
 
 const DEFAULT_PROFILE = {
   id: 'default',
@@ -37,45 +40,52 @@ const NAV_TABS = [
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M8 3v3a4 4 0 0 0 8 0V3"/><path d="M12 6v6"/><ellipse cx="12" cy="18" rx="5" ry="3"/>
     </svg>
-  ), label:'Karmienie' },
+  ), labelKey:'nav.feed' },
   { id:'sleep', icon:(
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
     </svg>
-  ), label:'Sen' },
+  ), labelKey:'nav.sleep' },
   { id:'diaper', icon:(
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/>
     </svg>
-  ), label:'Pieluchy' },
+  ), labelKey:'nav.diaper' },
   { id:'more', icon:(
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
     </svg>
-  ), label:'Więcej' },
+  ), labelKey:'nav.more' },
 ]
 
 const MORE_TABS = [
-  { id:'milestones', emoji:'⭐', label:'Kamienie milowe' },
-  { id:'growth',     emoji:'📏', label:'Wzrost i waga' },
-  { id:'temp',       emoji:'🌡️', label:'Temperatura' },
-  { id:'meds',       emoji:'💊', label:'Leki' },
-  { id:'vacc',       emoji:'💉', label:'Szczepienia' },
-  { id:'diet',       emoji:'🥕', label:'Rozszerzanie diety' },
-  { id:'diary',      emoji:'📖', label:'Dziennik' },
-  { id:'doctor',     emoji:'🩺', label:'Notatki lekarskie' },
+  { id:'milestones', emoji:'⭐', labelKey:'nav.milestones' },
+  { id:'growth',     emoji:'📏', labelKey:'nav.growth' },
+  { id:'temp',       emoji:'🌡️', labelKey:'nav.temp' },
+  { id:'meds',       emoji:'💊', labelKey:'nav.meds' },
+  { id:'vacc',       emoji:'💉', labelKey:'nav.vacc' },
+  { id:'diet',       emoji:'🥕', labelKey:'nav.diet' },
+  { id:'diary',      emoji:'📖', labelKey:'nav.diary' },
+  { id:'doctor',     emoji:'🩺', labelKey:'nav.doctor' },
 ]
 
 // Status prosty dla free userów — bez szczegółów
-const FREE_STATUS = {
+const FREE_STATUS = () => ({
   status: 'ok',
-  title: 'Dane zapisane',
-  message: 'Odblokuj Premium, aby zobaczyć analizę i alerty.',
-}
+  title: t('status.free.title'),
+  message: t('status.free.message'),
+})
+
+const EMPTY_STATUS = () => ({
+  status: 'info',
+  title: t('status.empty.title'),
+  message: t('status.empty.message'),
+})
 
 export default function App() {
   const { user, loading: authLoading, login, logout } = useAuth()
   const uid = user?.uid ?? null
+  const { locale } = useLocale()  // re-render on language change
 
   // Włącz offline persistence
   useEffect(() => { enableOffline() }, [])
@@ -94,6 +104,7 @@ export default function App() {
   const [onboardingDone, setOnboardingDone] = useFirestore(uid, 'onboarding_done', false)
 
   const active = profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
+  const [sleepTimerTs] = useFirestore(uid, `sleep_timer_${active.id}`, null)
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
   const { isPremium, activate, deactivate } = usePremium(uid)
@@ -117,7 +128,7 @@ export default function App() {
       setShowPaywall(false)
     } else {
       // Pokaż instrukcję — zakup możliwy tylko przez Google Play
-      alert('Zakup Premium jest dostępny w aplikacji Android. Pobierz Spokojny Rodzic z Google Play.')
+      alert(t('paywall.web_only'))
     }
   }
 
@@ -127,7 +138,21 @@ export default function App() {
   )
 
   // Dla free — pusty zestaw alertów i uproszczony status
-  const visibleStatus    = isPremium ? globalStatus    : FREE_STATUS
+  // Check if user has any data today
+  const hasDataToday = (() => {
+    const today = new Date().toISOString().slice(0,10)
+    const keys = ['feed_','sleep_','diaper_','temp_']
+    try {
+      return keys.some(k => {
+        const v = localStorage.getItem('babylog_' + k + active.id)
+        if (!v) return false
+        const arr = JSON.parse(v)
+        return Array.isArray(arr) && arr.some(i => i.date === today)
+      })
+    } catch { return false }
+  })()
+
+  const visibleStatus    = isPremium ? globalStatus    : (hasDataToday ? FREE_STATUS() : EMPTY_STATUS())
   const visibleTopStatus = isPremium ? topStatus       : 'ok'
   const visibleMessages  = isPremium ? messages        : []
   const visibleSection   = (section) => isPremium ? sectionMessages(section) : []
@@ -188,7 +213,7 @@ export default function App() {
       <div className="app" style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
         <div style={{ textAlign:'center', color:'var(--text-3)' }}>
           <div style={{ fontSize:48, marginBottom:16 }}>🍼</div>
-          <div style={{ fontSize:14 }}>Ładowanie...</div>
+          <div style={{ fontSize:14 }}>{t('app.loading')}</div>
         </div>
       </div>
     )
@@ -207,7 +232,16 @@ export default function App() {
   if (!onboardingDone) {
     return (
       <div className="app">
-        <OnboardingScreen onComplete={() => setOnboardingDone(true)} />
+        <OnboardingScreen onComplete={(profileData) => {
+          if (profileData && profileData.name !== 'Moje dziecko') {
+            // Update the default profile with child's info
+            const updated = profiles.map(p =>
+              p.id === active.id ? { ...p, ...profileData } : p
+            )
+            setProfiles(updated)
+          }
+          setOnboardingDone(true)
+        }} />
       </div>
     )
   }
@@ -228,23 +262,20 @@ export default function App() {
         <div className="topbar-left">
           <div className="topbar-logo">🍼 BabyLog</div>
           <div className="topbar-sub">
-            {showProfiles ? 'Profile dzieci' : showMore ? 'Więcej modułów' : currentMoreTab ? currentMoreTab.label : NAV_TABS.find(t=>t.id===tab)?.label || 'Karmienie'}
+            {showProfiles ? t('topbar.profiles') : showMore ? t('topbar.more') : currentMoreTab ? t(currentMoreTab.labelKey) : t(NAV_TABS.find(x=>x.id===tab)?.labelKey || 'nav.feed')}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <LanguageSwitcher />
           {/* Premium badge / upgrade button */}
           {isPremium ? (
-            <button
-              onClick={deactivate}
-              title="Kliknij aby dezaktywować (dev)"
-              style={{
-                background: 'linear-gradient(135deg,#0F6E56,#1D9E75)',
-                color: '#fff', border: 'none', borderRadius: 20,
-                padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-              }}
-            >
-              ★ Premium
-            </button>
+            <span style={{
+              background: 'linear-gradient(135deg,#0F6E56,#1D9E75)',
+              color: '#fff', borderRadius: 20,
+              padding: '4px 10px', fontSize: 11, fontWeight: 700,
+            }}>
+              ★ {t('topbar.premium')}
+            </span>
           ) : (
             <button
               onClick={openPaywall}
@@ -254,14 +285,17 @@ export default function App() {
                 padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
               }}
             >
-              🔒 Free
+              🔒 {t('topbar.free')}
             </button>
           )}
+          {/* Sleep indicator */}
+          <SleepIndicator startTs={sleepTimerTs} onPress={() => selectTab('sleep')} />
           {/* Logout */}
-          <button onClick={logout} title="Wyloguj" style={{
+          <button onClick={logout} title={t('topbar.logout')} style={{
             background:'none', border:'none', cursor:'pointer',
-            color:'var(--text-3)', fontSize:18, padding:'4px 6px', minHeight:36,
-          }}>⎋</button>
+            color:'var(--text-3)', fontSize:13, fontWeight:600,
+            padding:'4px 8px', minHeight:36, borderRadius:8,
+          }}>{t('topbar.logout')}</button>
           {/* Baby chip */}
           <button className="baby-chip" onClick={() => { setShowProfiles(s=>!s); setShowMore(false) }}>
             <div className="baby-chip-avatar" style={{background:active.avatarColor,color:'var(--green-dark)',fontSize:13}}>
@@ -309,21 +343,21 @@ export default function App() {
         ) : showMore ? (
           <div style={{paddingBottom:8}}>
             <div className="section-header">
-              <div className="section-title">Wszystkie moduły</div>
-              <div className="section-desc">Wybierz sekcję</div>
+              <div className="section-title">{t('nav.all_modules')}</div>
+              <div className="section-desc">{t('nav.select_section')}</div>
             </div>
             <div style={{padding:'8px 16px 0',display:'flex',flexDirection:'column',gap:6}}>
-              {MORE_TABS.map(t => {
-                const count = visibleSection(t.id).length
+              {MORE_TABS.map(tab => {
+                const count = visibleSection(tab.id).length
                 return (
-                  <button key={t.id} onClick={()=>selectMoreTab(t.id)} style={{
+                  <button key={tab.id} onClick={()=>selectMoreTab(tab.id)} style={{
                     display:'flex',alignItems:'center',gap:14,padding:'14px 16px',
                     background:'var(--surface)',border:'0.5px solid var(--border)',
                     borderRadius:14,fontSize:15,fontWeight:500,color:'var(--text)',
                     textAlign:'left',minHeight:56,cursor:'pointer'
                   }}>
-                    <span style={{fontSize:22}}>{t.emoji}</span>
-                    {t.label}
+                    <span style={{fontSize:22}}>{tab.emoji}</span>
+                    {t(tab.labelKey)}
                     {count > 0 && (
                       <span style={{marginLeft:6,background:'#D85A30',color:'#fff',fontSize:10,fontWeight:700,borderRadius:20,padding:'1px 6px'}}>{count}</span>
                     )}
@@ -341,11 +375,11 @@ export default function App() {
         {NAV_TABS.map(n => {
           const count = n.id !== 'more'
             ? visibleSection(n.id).length
-            : MORE_TABS.reduce((s,t) => s + visibleSection(t.id).length, 0)
+            : MORE_TABS.reduce((s,tab) => s + visibleSection(tab.id).length, 0)
           return (
             <button key={n.id} className={`nav-item ${navActive(n.id)?'active':''}`} onClick={()=>selectTab(n.id)} style={{position:'relative'}}>
               {n.icon}
-              {n.label}
+              {t(n.labelKey)}
               {count > 0 && !navActive(n.id) && (
                 <span style={{
                   position:'absolute',top:6,right:'calc(50% - 18px)',
@@ -357,6 +391,7 @@ export default function App() {
           )
         })}
       </nav>
+      <ToastContainer />
     </div>
   )
 }

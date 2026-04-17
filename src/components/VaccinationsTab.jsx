@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { VACCINATIONS } from '../data/staticData'
-import { todayDate, uid } from '../utils/helpers'
+import { todayDate, genId} from '../utils/helpers'
 import Modal from './Modal'
 
-export default function VaccinationsTab({uid,  babyId, ageMonths }) {
+export default function VaccinationsTab({uid, babyId, ageMonths }) {
   const [done, setDone] = useFirestore(uid, `vacc_${babyId}`, {})
   const [customVacc, setCustomVacc] = useFirestore(uid, `vacc_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
@@ -21,7 +21,7 @@ export default function VaccinationsTab({uid,  babyId, ageMonths }) {
 
   const addCustom = () => {
     if (!form.name.trim()) return
-    const v = { id: uid(), name: form.name.trim(), when: form.when || `${form.months}. miesiąc`, months: Number(form.months), custom: true }
+    const v = { id: genId(), name: form.name.trim(), when: form.when || `${form.months}. miesiąc`, months: Number(form.months), custom: true }
     setCustomVacc([...customVacc, v])
     setModal(false)
     setForm({ name: '', when: '', months: String(ageMonths) })

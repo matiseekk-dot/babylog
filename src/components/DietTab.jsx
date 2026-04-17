@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { DIET_ITEMS } from '../data/staticData'
-import { uid } from '../utils/helpers'
+import { genId } from '../utils/helpers'
 import Modal from './Modal'
 
 const EMOJI_OPTIONS = ['🥕','🥦','🍠','🎃','🍎','🍐','🍌','🫐','🍓','🍇','🍑','🥑','🧅','🧄','🫛','🌽','🍅','🥝','🍋','🫚','🐔','🐟','🥩','🥚','🧀','🥛','🌾','🍚','🫘','🥜','🍯','🧇','🥞']
 
-export default function DietTab({uid,  babyId, ageMonths }) {
+export default function DietTab({uid, babyId, ageMonths }) {
   const [status, setStatus] = useFirestore(uid, `diet_${babyId}`, {})
   const [customItems, setCustomItems] = useFirestore(uid, `diet_custom_${babyId}`, [])
   const [filter, setFilter] = useState('all')
@@ -26,7 +26,7 @@ export default function DietTab({uid,  babyId, ageMonths }) {
 
   const addCustom = () => {
     if (!form.name.trim()) return
-    const item = { id: uid(), name: form.name.trim(), emoji: form.emoji, months: Number(form.months), custom: true }
+    const item = { id: genId(), name: form.name.trim(), emoji: form.emoji, months: Number(form.months), custom: true }
     setCustomItems([...customItems, item])
     setModal(false)
     setForm({ name: '', emoji: '🥕', months: String(ageMonths) })

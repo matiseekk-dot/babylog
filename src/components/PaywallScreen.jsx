@@ -1,22 +1,35 @@
 import React, { useState } from 'react'
+import { t, useLocale } from '../i18n'
 
-const FEATURES = [
-  { icon: '🌡️', title: 'Analiza temperatury',      desc: 'Trend rosnący / stabilny / spadający w czasie rzeczywistym' },
-  { icon: '🚨', title: 'Alerty zdrowotne',          desc: 'Powiadomienia o gorączce, niedoborze snu i lekach' },
-  { icon: '💡', title: 'Wskazówki co teraz zrobić', desc: 'Kontekstowe komunikaty dopasowane do stanu dziecka' },
-  { icon: '💊', title: 'Kalkulator leków',           desc: 'Informacja kiedy można podać kolejną dawkę' },
-  { icon: '☁️', title: 'Sync między urządzeniami',  desc: 'Dane dostępne na każdym telefonie' },
-  { icon: '🩺', title: 'Notatki lekarskie',          desc: 'Diagnoza i zalecenia po każdej wizycie' },
-]
+function getFeatures() {
+  return [
+    { icon:'🌡️', title:t('paywall.feat1.title'), desc:t('paywall.feat1.desc') },
+    { icon:'🚨', title:t('paywall.feat2.title'), desc:t('paywall.feat2.desc') },
+    { icon:'💡', title:t('paywall.feat3.title'), desc:t('paywall.feat3.desc') },
+    { icon:'💊', title:t('paywall.feat4.title'), desc:t('paywall.feat4.desc') },
+    { icon:'☁️', title:t('paywall.feat5.title'), desc:t('paywall.feat5.desc') },
+    { icon:'🩺', title:t('paywall.feat6.title'), desc:t('paywall.feat6.desc') },
+  ]
+}
 
-const PLANS = [
-  { id:'monthly',  label:'Miesięczny',  price:'14,99 zł', period:'/ miesiąc',    popular:true,  badge:null },
-  { id:'yearly',   label:'Roczny',      price:'99,99 zł', period:'/ rok',         popular:false, badge:'Oszczędzasz 44%' },
-  { id:'lifetime', label:'Dożywotni',   price:'199,99 zł',period:'jednorazowo',   popular:false, badge:null },
-]
+function getPlans() {
+  // Ceny różnią się dla rynku PL/EN
+  const locale = t('app.title') === 'Calm Parent' ? 'en' : 'pl'
+  const prices = locale === 'en'
+    ? { monthly:'$6.99', yearly:'$49.99', lifetime:'$99.99' }
+    : { monthly:'14,99 zł', yearly:'99,99 zł', lifetime:'199,99 zł' }
+  return [
+    { id:'monthly',  label:t('paywall.plan.monthly'),  price:prices.monthly,  period:t('paywall.per.monthly'),  popular:false, badge:null },
+    { id:'yearly',   label:t('paywall.plan.yearly'),   price:prices.yearly,   period:t('paywall.per.yearly'),   popular:true,  badge:t('paywall.badge.yearly') },
+    { id:'lifetime', label:t('paywall.plan.lifetime'), price:prices.lifetime, period:t('paywall.per.lifetime'), popular:false, badge:null },
+  ]
+}
 
 export default function PaywallScreen({ onActivate, onClose, checking }) {
-  const [selected, setSelected] = useState('monthly')
+  useLocale()
+  const FEATURES = getFeatures()
+  const PLANS = getPlans()
+  const [selected, setSelected] = useState('yearly')
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#fff'}}>
@@ -33,10 +46,10 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
       }}>
         <div style={{fontSize:44,marginBottom:10}}>🍼</div>
         <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:-0.5,lineHeight:1.2}}>
-          Spokojny Rodzic Premium
+          {t('paywall.title')}
         </div>
         <div style={{fontSize:13,color:'rgba(255,255,255,0.8)',marginTop:8,lineHeight:1.5}}>
-          Pełna analiza. Jasne wskazówki. Spokój głowy.
+          {t('paywall.subtitle')}
         </div>
       </div>
 
@@ -85,7 +98,7 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
                   position:'absolute',top:-10,right:12,
                   background:'#1D9E75',color:'#fff',
                   fontSize:10,fontWeight:700,borderRadius:20,padding:'2px 8px',
-                }}>Najpopularniejszy</div>
+                }}>{t('paywall.badge.popular')}</div>
               )}
             </div>
           ))}
@@ -102,10 +115,10 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
           color:'#fff',border:'none',borderRadius:14,fontSize:17,fontWeight:800,
           cursor:checking?'default':'pointer',
         }}>
-          {checking ? 'Weryfikowanie...' : 'Odblokuj spokój'}
+          {checking ? t('paywall.cta.loading') : t('paywall.cta')}
         </button>
         <div style={{textAlign:'center',fontSize:11,color:'#9a9a94',marginTop:10,lineHeight:1.5}}>
-          Płatność przez Google Play · Anuluj w każdej chwili
+          {t('paywall.footer')}
         </div>
       </div>
     </div>

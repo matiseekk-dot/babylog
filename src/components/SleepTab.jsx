@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { formatDuration, todayDate, uid } from '../utils/helpers'
+import { formatDuration, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
+import { toast } from './Toast'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretSleep } from '../engine/interpretations'
 
-export default function SleepTab({uid,  babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   const [logs, setLogs] = useFirestore(uid, `sleep_${babyId}`, [])
   const [running, setRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -39,12 +40,13 @@ export default function SleepTab({uid,  babyId, ageMonths, sectionAlerts = [], o
       clearInterval(intervalRef.current)
       const dur = Math.floor((Date.now() - startTs) / 1000)
       const mins = Math.round(dur / 60)
-      const entry = { id: uid(), date: todayDate(), durationMin: mins, label: 'Drzemka', manual: false }
+      const entry = { id: genId(), date: todayDate(), durationMin: mins, label: 'Drzemka', manual: false }
       setLogs([entry, ...logs])
       setStartTs(null)
       setRunning(false)
       setElapsed(0)
       onDataChange?.()
+      toast('Sen zakończony')
     }
   }
 
@@ -58,7 +60,7 @@ export default function SleepTab({uid,  babyId, ageMonths, sectionAlerts = [], o
     const [eh,em] = form.endTime.split(':').map(Number)
     let mins = (eh*60+em) - (sh*60+sm)
     if (mins < 0) mins += 24*60
-    const entry = { id: uid(), date: form.date, durationMin: mins, label: form.label, manual: true }
+    const entry = { id: genId(), date: form.date, durationMin: mins, label: form.label, manual: true }
     setLogs([entry, ...logs])
     setModal(false)
     onDataChange?.()
