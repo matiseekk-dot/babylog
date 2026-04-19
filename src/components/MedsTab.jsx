@@ -192,8 +192,8 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             ))}
           </div>
         </div>
-        <div className="form-group"><label className="form-label">{t('meds.add_custom.name')}</label><input className="form-input" type="text" placeholder="np. Fenistil, Vibovit..." value={medForm.name} onChange={e=>setMedForm(f=>({...f,name:e.target.value}))} /></div>
-        <div className="form-group"><label className="form-label">Dawkowanie</label><input className="form-input" type="text" placeholder="np. 3× dziennie 5 kropli" value={medForm.dosage} onChange={e=>setMedForm(f=>({...f,dosage:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('meds.add_custom.name')}</label><input className="form-input" type="text" placeholder={t("meds.custom.name_ph")} value={medForm.name} onChange={e=>setMedForm(f=>({...f,name:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('meds.add_custom.dosage')}</label><input className="form-input" type="text" placeholder={t("meds.custom.dosage_ph")} value={medForm.dosage} onChange={e=>setMedForm(f=>({...f,dosage:e.target.value}))} /></div>
         <div className="form-group"><label className="form-label">{t('meds.add_custom.notes')}</label><input className="form-input" type="text" placeholder={t('meds.add_custom.notes_ph')} value={medForm.notes} onChange={e=>setMedForm(f=>({...f,notes:e.target.value}))} /></div>
         <div className="modal-btns"><button className="btn-secondary" onClick={()=>setAddMedModal(false)}>{t('common.cancel')}</button><button className="btn-primary" onClick={addCustomMed}>{t('common.save')}</button></div>
       </Modal>
@@ -209,7 +209,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             </option>
           ))}</select></div>
         <div className="form-row">
-          <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" placeholder="np. 2.5 ml" value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" placeholder={t("meds.custom.dose_ph")} value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} /></div>
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
         </div>
         <div className="form-group"><label className="form-label">Notatka</label><input className="form-input" type="text" placeholder="opcjonalnie..." value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>

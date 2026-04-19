@@ -35,6 +35,7 @@ export default function OnboardingScreen({ onComplete }) {
   const [current, setCurrent] = useState(0)
   // Setup screen data
   const [name, setName] = useState('')
+  const [years, setYears] = useState('0')
   const [months, setMonths] = useState('4')
   const [weight, setWeight] = useState('')
   const [avatar, setAvatar] = useState('👶')
@@ -155,16 +156,57 @@ export default function OnboardingScreen({ onComplete }) {
               />
             </div>
 
-            {/* Age + weight */}
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">{t('onb.setup.age')}</label>
-                <input className="form-input" type="number" inputMode="numeric" min="0" max="60" value={months} onChange={e=>setMonths(e.target.value)} placeholder="np. 4" />
+            {/* Age: years + months */}
+            <div>
+              <label className="form-label">{t('onb.setup.age')}</label>
+              <div className="form-row" style={{marginTop:4}}>
+                <div className="form-group" style={{marginTop:0}}>
+                  <input
+                    className="form-input"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    max="10"
+                    value={years}
+                    onChange={e=>setYears(e.target.value)}
+                    placeholder={t("onb.years_ph")}
+                  />
+                  <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
+                    {t('age.unit.years')}
+                  </div>
+                </div>
+                <div className="form-group" style={{marginTop:0}}>
+                  <input
+                    className="form-input"
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    max="11"
+                    value={months}
+                    onChange={e=>setMonths(e.target.value)}
+                    placeholder={t("onb.months_ph")}
+                  />
+                  <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
+                    {t('age.unit.months')}
+                  </div>
+                </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">{t('onb.setup.weight')}</label>
-                <input className="form-input" type="number" inputMode="decimal" step="0.1" min="1" max="30" value={weight} onChange={e=>setWeight(e.target.value.replace(",","."))} placeholder="np. 6.5" />
-              </div>
+            </div>
+
+            {/* Weight */}
+            <div className="form-group">
+              <label className="form-label">{t('onb.setup.weight')}</label>
+              <input
+                className="form-input"
+                type="number"
+                inputMode="decimal"
+                step="0.1"
+                min="1"
+                max="50"
+                value={weight}
+                onChange={e=>setWeight(e.target.value.replace(",","."))}
+                placeholder={t("onb.weight_ph")}
+              />
             </div>
 
             <div style={{fontSize:12,color:'var(--text-3)',lineHeight:1.5}}>

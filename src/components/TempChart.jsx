@@ -54,7 +54,13 @@ function TempTooltip({ active, payload }) {
     }}>
       <div style={{ fontWeight: 700, color }}>{Number(d.temp).toFixed(1)}°C</div>
       <div style={{ color: '#5a5a56', marginTop: 2 }}>{d.label}</div>
-      {d.method && <div style={{ color: '#9a9a94' }}>{d.method}</div>}
+      {d.method && <div style={{ color: '#9a9a94' }}>{
+        d.method === 'Odbytniczo' ? t('temp.method.rectal')
+      : d.method === 'Pod pachą'  ? t('temp.method.axillary')
+      : d.method === 'W uchu'     ? t('temp.method.ear')
+      : d.method === 'Na czole'   ? t('temp.method.forehead')
+      : d.method
+    }</div>}
     </div>
   )
 }

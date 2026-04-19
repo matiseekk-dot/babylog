@@ -117,7 +117,7 @@ export default function DietTab({uid, babyId, ageMonths }) {
         </div>
         <div className="form-group">
           <label className="form-label">{t('diet.modal.name')}</label>
-          <input className="form-input" type="text" placeholder="np. Mango, Quinoa..." value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+          <input className="form-input" type="text" placeholder={t('diet.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
         </div>
         <div className="form-group">
           <label className="form-label">{t('diet.modal.months')}</label>

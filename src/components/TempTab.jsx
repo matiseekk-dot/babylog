@@ -65,7 +65,7 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
               <div className="log-icon">🌡️</div>
               <div className="log-body">
                 <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C — {getTempLabel(l.temp)}</div>
-                <div className="log-detail">{l.date} {l.time} · {l.method}{l.note?` · ${l.note}`:''}</div>
+                <div className="log-detail">{l.date} {l.time} · {displayMethod(l.method)}{l.note?` · ${l.note}`:''}</div>
               </div>
               <button onClick={()=>{ setLogs(logs.filter(x=>x.id!==l.id)); onDataChange?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
@@ -92,7 +92,7 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
           <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
         </div>
-        <div className="form-group"><label className="form-label">Notatka</label><input className="form-input" type="text" placeholder="np. po Paracetamolu" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('temp.note_label')}</label><input className="form-input" type="text" placeholder="np. po Paracetamolu" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
           <button className="btn-primary" onClick={add}>{t('common.save')}</button>

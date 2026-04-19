@@ -28,7 +28,11 @@ export default function SettingsScreen({
   const [doctorNotes] = useFirestore(uid, `doctor_notes_${profile.id}`, [])
   const { locale } = useLocale()
   const [name, setName] = useState(profile.name)
-  const [months, setMonths] = useState(String(profile.months))
+  const totalMonths = profile.months || 0
+  const initYears = Math.floor(totalMonths / 12)
+  const initRemainderMonths = totalMonths % 12
+  const [years, setYears] = useState(String(initYears))
+  const [months, setMonths] = useState(String(initRemainderMonths))
   const [weight, setWeight] = useState(String(profile.weight))
   const [avatar, setAvatar] = useState(profile.avatar)
   const [exporting, setExporting] = useState(false)
@@ -36,7 +40,7 @@ export default function SettingsScreen({
   const save = () => {
     onUpdate(profile.id, {
       name: name.trim() || profile.name,
-      months: Number(months) || 0,
+      months: (Number(years) || 0) * 12 + (Number(months) || 0),
       weight: Number(weight) || 0,
       avatar,
     })
@@ -48,7 +52,7 @@ export default function SettingsScreen({
     if (!isPremium) { onUpgrade(); return }
     setExporting(true)
     try {
-      const updatedProfile = { ...profile, name, months: Number(months), weight: Number(weight), avatar }
+      const updatedProfile = { ...profile, name, months: (Number(years) || 0) * 12 + (Number(months) || 0), weight: Number(weight), avatar }
       const data = { tempLogs, medLogs, feedLogs, sleepLogs, doctorNotes }
       await exportChildReport(updatedProfile, data, locale)
       toast(t('settings.export.success'))
@@ -127,15 +131,42 @@ export default function SettingsScreen({
             <label className="form-label">{t('onb.setup.name')}</label>
             <input className="form-input" type="text" value={name} onChange={e => setName(e.target.value)} />
           </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">{t('onb.setup.age')}</label>
-              <input className="form-input" type="number" inputMode="numeric" min="0" max="60" value={months} onChange={e => setMonths(e.target.value)} />
+          <div className="form-group">
+            <label className="form-label">{t('onb.setup.age')}</label>
+            <div className="form-row" style={{marginTop:0}}>
+              <div className="form-group" style={{marginTop:0}}>
+                <input
+                  className="form-input"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="10"
+                  value={years}
+                  onChange={e => setYears(e.target.value)}
+                />
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
+                  {t('age.unit.years')}
+                </div>
+              </div>
+              <div className="form-group" style={{marginTop:0}}>
+                <input
+                  className="form-input"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="11"
+                  value={months}
+                  onChange={e => setMonths(e.target.value)}
+                />
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
+                  {t('age.unit.months')}
+                </div>
+              </div>
             </div>
-            <div className="form-group">
-              <label className="form-label">{t('onb.setup.weight')}</label>
-              <input className="form-input" type="number" inputMode="decimal" step="0.1" min="1" max="30" value={weight} onChange={e => setWeight(e.target.value.replace(",","."))} />
-            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">{t('onb.setup.weight')}</label>
+            <input className="form-input" type="number" inputMode="decimal" step="0.1" min="1" max="50" value={weight} onChange={e => setWeight(e.target.value.replace(",","."))} />
           </div>
 
           <button onClick={save} style={{

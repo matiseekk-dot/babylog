@@ -107,7 +107,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
           <div className="stat-lbl">{t('sleep.today_total')}</div>
         </div>
         <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">sesje snu</div></div>
-        <div className="stat-card"><div className="stat-val">{norm}h</div><div className="stat-lbl">norma wiekowa</div></div>
+        <div className="stat-card"><div className="stat-val">{norm}h</div><div className="stat-lbl">{t('sleep.norm_label')}</div></div>
       </div>
 
       {isPremium

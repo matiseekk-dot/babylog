@@ -96,16 +96,16 @@ export default function GrowthTab({uid, babyId }) {
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">{t('growth.modal.weight')}</label>
-            <input className="form-input" type="number" step="0.1" placeholder="np. 6.5" value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
+            <input className="form-input" type="number" step="0.1" placeholder={t('growth.weight_ph')} value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
           </div>
           <div className="form-group">
             <label className="form-label">{t('growth.modal.height')}</label>
-            <input className="form-input" type="number" step="0.5" placeholder="np. 65" value={form.height} onChange={e=>setForm(f=>({...f,height:e.target.value}))} />
+            <input className="form-input" type="number" step="0.5" placeholder={t('growth.height_ph')} value={form.height} onChange={e=>setForm(f=>({...f,height:e.target.value}))} />
           </div>
         </div>
         <div className="form-group">
           <label className="form-label">{t('growth.modal.head')}</label>
-          <input className="form-input" type="number" step="0.5" placeholder="np. 41" value={form.headCirc} onChange={e=>setForm(f=>({...f,headCirc:e.target.value}))} />
+          <input className="form-input" type="number" step="0.5" placeholder={t('growth.head_ph')} value={form.headCirc} onChange={e=>setForm(f=>({...f,headCirc:e.target.value}))} />
         </div>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>

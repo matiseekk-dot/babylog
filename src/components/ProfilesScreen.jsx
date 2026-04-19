@@ -45,7 +45,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
     <>
       <div className="form-group">
         <label className="form-label">{t('onb.setup.name')}</label>
-        <input className="form-input" type="text" placeholder="np. Zosia" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+        <input className="form-input" type="text" placeholder={t('profiles.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
       </div>
       <div className="form-group">
         <label className="form-label">Avatar</label>
@@ -59,15 +59,54 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
           ))}
         </div>
       </div>
-      <div className="form-row">
-        <div className="form-group">
-          <label className="form-label">{t('onb.setup.age')}</label>
-          <input className="form-input" type="number" min="0" max="60" value={form.months} onChange={e=>setForm(f=>({...f,months:e.target.value}))} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">{t('onb.setup.weight')}</label>
-          <input className="form-input" type="number" step="0.1" min="1" max="30" value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
-        </div>
+      {/* Age: derived years + months from form.months total */}
+      {(() => {
+        const totalM = Number(form.months) || 0
+        const y = Math.floor(totalM / 12)
+        const mo = totalM % 12
+        const setAge = (newY, newMo) => {
+          const total = (Number(newY) || 0) * 12 + (Number(newMo) || 0)
+          setForm(f => ({ ...f, months: String(total) }))
+        }
+        return (
+          <div className="form-group">
+            <label className="form-label">{t('onb.setup.age')}</label>
+            <div className="form-row" style={{marginTop:0}}>
+              <div className="form-group" style={{marginTop:0}}>
+                <input
+                  className="form-input"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="10"
+                  value={y}
+                  onChange={e => setAge(e.target.value, mo)}
+                />
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
+                  {t('age.unit.years')}
+                </div>
+              </div>
+              <div className="form-group" style={{marginTop:0}}>
+                <input
+                  className="form-input"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="11"
+                  value={mo}
+                  onChange={e => setAge(y, e.target.value)}
+                />
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
+                  {t('age.unit.months')}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+      <div className="form-group">
+        <label className="form-label">{t('onb.setup.weight')}</label>
+        <input className="form-input" type="number" step="0.1" min="1" max="50" value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
       </div>
     </>
   )
