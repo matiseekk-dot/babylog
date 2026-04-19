@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { t } from '../i18n'
 
 /**
  * useCrisisDetection(tempLogs, ageMonths)
@@ -48,19 +49,19 @@ export function useCrisisDetection(tempLogs, ageMonths) {
 
       if (temp >= 40.0) {
         result = { id: `em-${latest.id}`, severity: 'emergency',
-          reason: `Temperatura ${temp.toFixed(1)}°C — bardzo wysoka gorączka` }
+          reason: t('crisis.reason.very_high', {temp: temp.toFixed(1)}) }
       } else if (ageMonths < 3 && temp >= 39.0) {
         result = { id: `em-${latest.id}`, severity: 'emergency',
-          reason: `Niemowlę < 3 mies. z temp. ${temp.toFixed(1)}°C` }
+          reason: t('crisis.reason.newborn_emergency', {temp: temp.toFixed(1)}) }
       } else if (ageMonths < 3 && temp >= 38.0) {
         result = { id: `call-${latest.id}`, severity: 'call',
-          reason: `Niemowlę < 3 mies. z gorączką ${temp.toFixed(1)}°C — skonsultuj z pediatrą` }
+          reason: t('crisis.reason.newborn_call', {temp: temp.toFixed(1)}) }
       } else if (temp >= 39.5) {
         result = { id: `call-${latest.id}`, severity: 'call',
-          reason: `Wysoka gorączka ${temp.toFixed(1)}°C` }
+          reason: t('crisis.reason.high_fever', {temp: temp.toFixed(1)}) }
       } else if (temp >= 38.5) {
         result = { id: `watch-${latest.id}`, severity: 'watch',
-          reason: `Gorączka ${temp.toFixed(1)}°C — monitoruj co 1-2h` }
+          reason: t('crisis.reason.watch', {temp: temp.toFixed(1)}) }
       }
 
       // Prolonged fever check
@@ -72,7 +73,7 @@ export function useCrisisDetection(tempLogs, ageMonths) {
           const hoursSpan = (Date.now() - firstTs) / 3600000
           if (hoursSpan >= 72) {
             result = { id: `call-prolonged-${last3[2].id}`, severity: 'call',
-              reason: `Gorączka utrzymuje się > 72h — konieczna konsultacja` }
+              reason: t('crisis.reason.prolonged') }
           }
         }
       }

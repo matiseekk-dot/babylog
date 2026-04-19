@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, genId} from '../utils/helpers'
 import Modal from './Modal'
+import { t, useLocale } from '../i18n'
 import PremiumTeaser from './PremiumTeaser'
 
 const VISIT_TYPES = ['Pediatra', 'Pogotowie', 'Teleporada', 'Specjalista', 'Kontrolna']
 
 export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
+  useLocale()
   const [notes, setNotes] = useFirestore(uid, `doctor_notes_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [viewNote, setViewNote] = useState(null)
@@ -41,16 +43,16 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
     return (
       <>
         <div className="section-header">
-          <div className="section-title">Notatki lekarskie</div>
-          <div className="section-desc">Zapisuj diagnozę i zalecenia po wizycie</div>
+          <div className="section-title">{t('doctor.title')}</div>
+          <div className="section-desc">{t('doctor.desc')}</div>
         </div>
-        <PremiumTeaser label="Notatki z wizyt lekarskich" onUpgrade={onUpgrade} />
+        <PremiumTeaser label={t('doctor.premium.label')} onUpgrade={onUpgrade} />
         <div className="card" style={{ margin: '12px 16px 0', padding: '16px 14px' }}>
           <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.65 }}>
-            Po wizycie u lekarza łatwo zapomnieć co powiedział. Premium pozwala zapisać:
+            {t('doctor.premium.intro')}
           </div>
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {['Diagnoza i objawy', 'Zalecenia i leki', 'Data kontroli', 'Nazwisko lekarza'].map(item => (
+            {[t('doctor.premium.f1'), t('doctor.premium.f2'), t('doctor.premium.f3'), t('doctor.premium.f4')].map(item => (
               <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--green)', flexShrink: 0 }} />
                 <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{item}</span>
@@ -65,15 +67,15 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
   return (
     <>
       <div className="section-header">
-        <div className="section-title">Notatki lekarskie</div>
-        <div className="section-desc">{notes.length ? `${notes.length} wizyt zapisanych` : 'Zapisuj diagnozy i zalecenia'}</div>
+        <div className="section-title">{t('doctor.title')}</div>
+        <div className="section-desc">{notes.length ? t('doctor.desc.count', {count: notes.length}) : t('doctor.desc')}</div>
       </div>
 
       {notes.length === 0 ? (
         <div className="card" style={{ margin: '8px 16px 0' }}>
           <div className="empty-state">
             <div className="empty-icon">🩺</div>
-            <p>Po wizycie u lekarza zapisz tu co powiedział.<br />Nigdy więcej nie zapomnisz o zaleceniach.</p>
+            <p>{t('doctor.empty')}</p>
           </div>
         </div>
       ) : (
@@ -136,25 +138,25 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
       )}
 
       <button className="btn-add" onClick={() => { resetForm(); setModal(true) }}>
-        + Dodaj notatkę z wizyty
+        {t('doctor.add')}
       </button>
 
       {/* Modal dodawania */}
-      <Modal open={modal} onClose={() => setModal(false)} title="Nowa notatka lekarska">
+      <Modal open={modal} onClose={() => setModal(false)} title={t('doctor.modal.title')}>
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Typ wizyty</label>
+            <label className="form-label">{t('doctor.modal.type')}</label>
             <select className="form-select" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
               {VISIT_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Data wizyty</label>
+            <label className="form-label">{t('doctor.modal.date')}</label>
             <input className="form-input" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Lekarz (opcjonalnie)</label>
+          <label className="form-label">{t('doctor.modal.doctor')}</label>
           <input className="form-input" type="text" placeholder="np. Kowalski" value={form.doctor} onChange={e => setForm(f => ({ ...f, doctor: e.target.value }))} />
         </div>
         <div className="form-group">
@@ -162,18 +164,18 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           <textarea
             className="form-input"
             rows={3}
-            placeholder="Co stwierdził lekarz? Jakie objawy?"
+            placeholder={t('doctor.modal.diagnosis_ph')}
             value={form.diagnosis}
             onChange={e => setForm(f => ({ ...f, diagnosis: e.target.value }))}
             style={{ resize: 'none' }}
           />
         </div>
         <div className="form-group">
-          <label className="form-label">Zalecenia</label>
+          <label className="form-label">{t('doctor.modal.recommendations')}</label>
           <textarea
             className="form-input"
             rows={3}
-            placeholder="Co robić? Jak postępować?"
+            placeholder={t('doctor.modal.recommendations_ph')}
             value={form.recommendations}
             onChange={e => setForm(f => ({ ...f, recommendations: e.target.value }))}
             style={{ resize: 'none' }}
@@ -188,8 +190,8 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           <input className="form-input" type="date" value={form.nextVisit} onChange={e => setForm(f => ({ ...f, nextVisit: e.target.value }))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={() => setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={save}>Zapisz</button>
+          <button className="btn-secondary" onClick={() => setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={save}>{t('common.save')}</button>
         </div>
       </Modal>
 

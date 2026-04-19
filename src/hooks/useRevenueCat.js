@@ -18,6 +18,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
+import { t, getLocale } from '../i18n'
 
 const RC_API = 'https://api.revenuecat.com/v1'
 const RC_KEY = 'test_dlpwNXCBXNyWZnEUuRbMbIjAqbn'
@@ -96,31 +97,37 @@ async function activateGooglePlayPurchase(uid, productId, purchaseToken) {
 export function useRevenueCat(uid, onActivate) {
   const [isActive, setIsActive]   = useState(false)
   const [checking, setChecking]   = useState(false)
-  const [offerings] = useState([
-    {
-      id: 'monthly',
-      label: 'Miesięczny',
-      price: '14,99 zł',
-      period: '/ miesiąc',
-      productId: 'spokojny_rodzic_premium_monthly',
-      popular: true,
-    },
-    {
-      id: 'yearly',
-      label: 'Roczny',
-      price: '99,99 zł',
-      period: '/ rok',
-      productId: 'spokojny_rodzic_premium_yearly',
-      badge: 'Oszczędzasz 44%',
-    },
-    {
-      id: 'lifetime',
-      label: 'Dożywotni',
-      price: '199,99 zł',
-      period: 'jednorazowo',
-      productId: 'spokojny_rodzic_premium_lifetime',
-    },
-  ])
+  const [offerings] = useState(() => {
+    const locale = getLocale()
+    const prices = locale === 'en'
+      ? { monthly: '$6.99', yearly: '$49.99', lifetime: '$99.99' }
+      : { monthly: '14,99 zł', yearly: '99,99 zł', lifetime: '199,99 zł' }
+    return [
+      {
+        id: 'monthly',
+        label: t('paywall.plan.monthly'),
+        price: prices.monthly,
+        period: t('paywall.per.monthly'),
+        productId: 'spokojny_rodzic_premium_monthly',
+        popular: true,
+      },
+      {
+        id: 'yearly',
+        label: t('paywall.plan.yearly'),
+        price: prices.yearly,
+        period: t('paywall.per.yearly'),
+        productId: 'spokojny_rodzic_premium_yearly',
+        badge: t('paywall.badge.yearly'),
+      },
+      {
+        id: 'lifetime',
+        label: t('paywall.plan.lifetime'),
+        price: prices.lifetime,
+        period: t('paywall.per.lifetime'),
+        productId: 'spokojny_rodzic_premium_lifetime',
+      },
+    ]
+  })
 
   // Sprawdź przy montowaniu i po zmianie uid
   useEffect(() => {

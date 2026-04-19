@@ -3,10 +3,12 @@ import { useFirestore } from '../hooks/useFirestore'
 import { MILESTONES } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
+import { t, useLocale } from '../i18n'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
 
 export default function MilestonesTab({uid, babyId, ageMonths }) {
+  useLocale()
   const [done, setDone] = useFirestore(uid, `milestones_${babyId}`, {})
   const [customMilestones, setCustomMilestones] = useFirestore(uid, `milestones_custom_${babyId}`, [])
   const [filter, setFilter] = useState('all')
@@ -24,7 +26,7 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
 
   const addCustom = () => {
     if (!form.name.trim()) return
-    const m = { id: genId(), name: form.name.trim(), emoji: form.emoji, age: form.age || `${form.months} mies.`, months: Number(form.months), custom: true }
+    const m = { id: genId(), name: form.name.trim(), emoji: form.emoji, age: form.age || `${form.months} ${t('vacc.month_suffix').slice(0,3)}.`, months: Number(form.months), custom: true }
     setCustomMilestones([...customMilestones, m])
     setModal(false)
     setForm({ name: '', emoji: '⭐', age: '', months: String(ageMonths) })
@@ -49,14 +51,14 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
   return (
     <>
       <div className="section-header">
-        <div className="section-title">Kamienie milowe</div>
-        <div className="section-desc">{doneCount}/{allMilestones.length} osiągniętych · Własne: {customMilestones.length}</div>
+        <div className="section-title">{t('milestones.title')}</div>
+        <div className="section-desc">{t('milestones.desc', {done: doneCount, total: allMilestones.length, custom: customMilestones.length})}</div>
       </div>
 
       <div className="segment">
         <button className={`seg-btn ${filter==='all'?'active':''}`} onClick={()=>setFilter('all')}>Wszystkie</button>
-        <button className={`seg-btn ${filter==='upcoming'?'active':''}`} onClick={()=>setFilter('upcoming')}>Nadchodzące</button>
-        <button className={`seg-btn ${filter==='done'?'active':''}`} onClick={()=>setFilter('done')}>Osiągnięte</button>
+        <button className={`seg-btn ${filter==='upcoming'?'active':''}`} onClick={()=>setFilter('upcoming')}>{t('milestones.filter.upcoming')}</button>
+        <button className={`seg-btn ${filter==='done'?'active':''}`} onClick={()=>setFilter('done')}>{t('milestones.filter.done')}</button>
       </div>
 
       <div className="milestone-grid">
@@ -80,15 +82,15 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
       {filtered.length === 0 && (
         <div className="empty-state" style={{marginTop:16}}>
           <div className="empty-icon">⭐</div>
-          <p>Brak kamieni milowych w tej kategorii</p>
+          <p>{t('milestones.empty')}</p>
         </div>
       )}
 
       <button className="btn-add" onClick={()=>{ setForm({name:'',emoji:'⭐',age:'',months:String(ageMonths)}); setModal(true) }}>
-        + Dodaj własny kamień milowy
+        {t('milestones.add')}
       </button>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title="Nowy kamień milowy">
+      <Modal open={modal} onClose={()=>setModal(false)} title={t('milestones.modal.title')}>
         <div className="form-group">
           <label className="form-label">Emoji</label>
           <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:4,maxHeight:110,overflowY:'auto'}}>
@@ -103,28 +105,28 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
         </div>
         <div className="form-group">
           <label className="form-label">Opis etapu</label>
-          <input className="form-input" type="text" placeholder="np. Pierwsze słowo 'tata'" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+          <input className="form-input" type="text" placeholder={t('milestones.modal.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Typowy wiek (mies.)</label>
+            <label className="form-label">{t('milestones.modal.age')}</label>
             <input className="form-input" type="number" min="0" max="60" value={form.months} onChange={e=>setForm(f=>({...f,months:e.target.value,age:`${e.target.value} mies.`}))} />
           </div>
           <div className="form-group">
-            <label className="form-label">Etykieta wieku</label>
-            <input className="form-input" type="text" placeholder="np. 10–12 mies." value={form.age} onChange={e=>setForm(f=>({...f,age:e.target.value}))} />
+            <label className="form-label">{t('milestones.modal.age_label')}</label>
+            <input className="form-input" type="text" placeholder={t('milestones.modal.age_ph')} value={form.age} onChange={e=>setForm(f=>({...f,age:e.target.value}))} />
           </div>
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={addCustom}>Dodaj</button>
+          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={addCustom}>{t('common.save')}</button>
         </div>
       </Modal>
 
-      <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title="Usuń kamień milowy">
+      <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title={t('milestones.delete_title')}>
         <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>Czy na pewno chcesz usunąć ten kamień milowy?</p>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setDeleteId(null)}>Anuluj</button>
+          <button className="btn-secondary" onClick={()=>setDeleteId(null)}>{t('common.cancel')}</button>
           <button className="btn-primary" style={{background:'var(--coral)'}} onClick={()=>removeCustom(deleteId)}>Usuń</button>
         </div>
       </Modal>

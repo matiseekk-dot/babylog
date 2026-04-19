@@ -1,3 +1,4 @@
+import { t, useLocale } from '../i18n'
 import React, { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -70,7 +71,7 @@ function TrendBadge({ data }) {
     else if (diff < -0.3) trend = 'falling'
   }
   const CFG = {
-    rising:  { label: '↑ Rośnie',  color: '#D85A30', bg: '#FAECE7' },
+    rising:  { label: t('temp.chart.rising'),  color: '#D85A30', bg: '#FAECE7' },
     falling: { label: '↓ Spada',   color: '#1D9E75', bg: '#E1F5EE' },
     stable:  { label: '→ Stabilna',color: '#185FA5', bg: '#E6F1FB' },
   }
@@ -152,9 +153,9 @@ export default function TempChart({ logs }) {
       <div style={{ display: 'flex', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         {[
           { label: 'Norma', color: '#1D9E75', range: '< 37.5°' },
-          { label: 'Podgorączkowanie', color: '#639922', range: '37.5–38°' },
-          { label: 'Gorączka', color: '#BA7517', range: '38–38.5°' },
-          { label: 'Wysoka', color: '#D85A30', range: '≥ 38.5°' },
+          { label: t('temp.chart.subfebrile'), color: '#639922', range: '37.5–38°' },
+          { label: t('temp.chart.fever'), color: '#BA7517', range: '38–38.5°' },
+          { label: t('temp.chart.high'), color: '#D85A30', range: '≥ 38.5°' },
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
@@ -211,7 +212,7 @@ export default function TempChart({ logs }) {
       {/* Pusty stan dla okna */}
       {chartData.length === 0 && (
         <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-3)', fontSize: 13 }}>
-          Brak pomiarów w ostatnich {window}h
+          {t('temp.chart.no_data', {hours: window})}
         </div>
       )}
     </div>

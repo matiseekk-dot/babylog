@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 /**
  * interpretations.js
  *
@@ -38,10 +39,10 @@ function fmtDuration(totalMin) {
 
 function fmtAgo(minutes) {
   if (minutes === Infinity || minutes == null) return null
-  if (minutes < 60) return `${minutes} min temu`
+  if (minutes < 60) return t('interp.ago.min', { min: minutes })
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
-  return m > 0 ? `${h}h ${m}m temu` : `${h}h temu`
+  return m > 0 ? t('interp.ago.hm', { h, m }) : t('interp.ago.h', { h })
 }
 
 // ─── Temperatura ─────────────────────────────────────────────────────────────
@@ -70,9 +71,9 @@ export function interpretTemp(logs) {
   }
 
   const TREND_LABEL = {
-    rising:  'Temperatura rośnie ↑',
-    falling: 'Temperatura spada ↓',
-    stable:  'Temperatura stabilna →',
+    rising:  t('interp.temp.rising'),
+    falling: t('interp.temp.falling'),
+    stable:  t('interp.temp.stable'),
   }
 
   // Status na podstawie wartości
@@ -86,7 +87,7 @@ export function interpretTemp(logs) {
   if (trend === 'rising' && status === 'ok')      status = 'info'
   else if (trend === 'rising' && status === 'info') status = 'warning'
 
-  const label = trend ? TREND_LABEL[trend] : `Ostatni: ${temp.toFixed(1)}°C`
+  const label = trend ? TREND_LABEL[trend] : t('interp.temp.last', { temp: temp.toFixed(1) })
   const detail = sorted.length >= 3
     ? sorted.slice(-3).map(l => `${Number(l.temp).toFixed(1)}°`).join(' → ')
     : `Ostatni pomiar: ${temp.toFixed(1)}°C`
@@ -118,7 +119,7 @@ export function interpretMeds(medLogs) {
     if (!anyLast) return null
     const ago = minutesSince(anyLast.time, anyLast.date)
     return {
-      label: `Ostatnia dawka: ${anyLast.med}`,
+      label: t('interp.meds.last_dose', { med: anyLast.med }),
       detail: fmtAgo(ago),
       status: 'ok',
     }
@@ -141,8 +142,8 @@ export function interpretMeds(medLogs) {
 
   if (minAgo >= maxInterval) {
     return {
-      label: 'Możliwy czas na kolejną dawkę',
-      detail: `${name} — podano ${agoStr}`,
+      label: t('interp.meds.due_now'),
+      detail: t('interp.meds.due_now_detail', { name, ago: agoStr }),
       status: 'info',
     }
   }
@@ -150,8 +151,8 @@ export function interpretMeds(medLogs) {
   if (minAgo >= safeInterval) {
     const remainMin = maxInterval - minAgo
     return {
-      label: 'Kolejna dawka możliwa wkrótce',
-      detail: `${name} podano ${agoStr} · za ~${remainMin} min`,
+      label: t('interp.meds.due_soon'),
+      detail: t('interp.meds.due_soon_detail', { name, ago: agoStr, min: remainMin }),
       status: 'info',
     }
   }
@@ -159,8 +160,8 @@ export function interpretMeds(medLogs) {
   // Za wcześnie na kolejną dawkę
   const remainMin = safeInterval - minAgo
   return {
-    label: `Ostatnia dawka: ${name}`,
-    detail: `${agoStr} · kolejna za ~${remainMin} min`,
+    label: t('interp.meds.last_dose', { med: name }),
+    detail: t('interp.meds.too_early_detail', { ago: agoStr, min: remainMin }),
     status: 'ok',
   }
 }
@@ -192,8 +193,8 @@ export function interpretSleep(sleepLogs, ageMonths) {
 
   if (!todayEntries.length) {
     return {
-      label: 'Brak snu dziś',
-      detail: `Norma: ${Math.floor(norm.min / 60)}–${Math.floor(norm.max / 60)}h`,
+      label: t('interp.sleep.none'),
+      detail: t('interp.sleep.none_detail', { min: Math.floor(norm.min/60), max: Math.floor(norm.max/60) }),
       status: 'info',
     }
   }
@@ -206,31 +207,31 @@ export function interpretSleep(sleepLogs, ageMonths) {
   if (totalMin < norm.min * 0.75) {
     const brakMin = norm.min - totalMin
     return {
-      label: 'Poniżej normy',
-      detail: `${totalStr} z ${normMinH}–${normMaxH}h · brakuje ~${fmtDuration(brakMin)}`,
+      label: t('interp.sleep.below'),
+      detail: t('interp.sleep.below_detail', { total: totalStr, min: normMinH, max: normMaxH, missing: fmtDuration(brakMin) }),
       status: 'warning',
     }
   }
 
   if (totalMin < norm.min) {
     return {
-      label: 'Nieco poniżej normy',
-      detail: `${totalStr} z ${normMinH}–${normMaxH}h`,
+      label: t('interp.sleep.slightly_below'),
+      detail: t('interp.sleep.of_norm', { total: totalStr, min: normMinH, max: normMaxH }),
       status: 'info',
     }
   }
 
   if (totalMin > norm.max) {
     return {
-      label: 'Powyżej normy',
-      detail: `${totalStr} — norma to ${normMinH}–${normMaxH}h`,
+      label: t('interp.sleep.above'),
+      detail: t('interp.sleep.above_detail', { total: totalStr, min: normMinH, max: normMaxH }),
       status: 'ok',
     }
   }
 
   return {
-    label: 'W normie',
-    detail: `${totalStr} z ${normMinH}–${normMaxH}h`,
+    label: t('interp.sleep.in_norm'),
+    detail: t('interp.sleep.of_norm', { total: totalStr, min: normMinH, max: normMaxH }),
     status: 'ok',
   }
 }

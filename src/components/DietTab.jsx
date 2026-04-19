@@ -3,10 +3,12 @@ import { useFirestore } from '../hooks/useFirestore'
 import { DIET_ITEMS } from '../data/staticData'
 import { genId } from '../utils/helpers'
 import Modal from './Modal'
+import { t, useLocale } from '../i18n'
 
 const EMOJI_OPTIONS = ['🥕','🥦','🍠','🎃','🍎','🍐','🍌','🫐','🍓','🍇','🍑','🥑','🧅','🧄','🫛','🌽','🍅','🥝','🍋','🫚','🐔','🐟','🥩','🥚','🧀','🥛','🌾','🍚','🫘','🥜','🍯','🧇','🥞']
 
 export default function DietTab({uid, babyId, ageMonths }) {
+  useLocale()
   const [status, setStatus] = useFirestore(uid, `diet_${babyId}`, {})
   const [customItems, setCustomItems] = useFirestore(uid, `diet_custom_${babyId}`, [])
   const [filter, setFilter] = useState('all')
@@ -48,18 +50,18 @@ export default function DietTab({uid, babyId, ageMonths }) {
   return (
     <>
       <div className="section-header">
-        <div className="section-title">Rozszerzanie diety</div>
-        <div className="section-desc">Wypróbowane: {triedCount} · Dostępne: {available.length} · Własne: {customItems.length}</div>
+        <div className="section-title">{t('diet.title')}</div>
+        <div className="section-desc">{t('diet.desc', {tried: triedCount, available: available.length, custom: customItems.length})}</div>
       </div>
 
       <div className="warn-card">
-        Wprowadzaj nowe produkty pojedynczo, co 3–4 dni. Obserwuj reakcje alergiczne.
+        {t('diet.warning')}
       </div>
 
       <div className="segment">
         <button className={`seg-btn ${filter==='all'?'active':''}`} onClick={()=>setFilter('all')}>Wszystkie</button>
-        <button className={`seg-btn ${filter==='available'?'active':''}`} onClick={()=>setFilter('available')}>Dostępne</button>
-        <button className={`seg-btn ${filter==='upcoming'?'active':''}`} onClick={()=>setFilter('upcoming')}>Wkrótce</button>
+        <button className={`seg-btn ${filter==='available'?'active':''}`} onClick={()=>setFilter('available')}>{t('diet.filter.available')}</button>
+        <button className={`seg-btn ${filter==='upcoming'?'active':''}`} onClick={()=>setFilter('upcoming')}>{t('diet.filter.upcoming')}</button>
       </div>
 
       <div className="diet-grid">
@@ -83,8 +85,8 @@ export default function DietTab({uid, babyId, ageMonths }) {
               )}
               <div className="diet-emoji">{d.emoji}</div>
               <div className="diet-name">{d.name}</div>
-              <div className="diet-age">od {d.months} mies.</div>
-              {s==='ok' && <div style={{fontSize:10,color:'var(--green-dark)',fontWeight:700,marginTop:3}}>✓ Próbowało</div>}
+              <div className="diet-age">{t('diet.from_month', {months: d.months})}</div>
+              {s==='ok' && <div style={{fontSize:10,color:'var(--green-dark)',fontWeight:700,marginTop:3}}>{t('diet.status.tried')}</div>}
               {s==='nope' && <div style={{fontSize:10,color:'var(--coral)',fontWeight:700,marginTop:3}}>✗ Reakcja</div>}
               {locked && <div style={{fontSize:10,color:'var(--text-3)',marginTop:3}}>🔒 Zbyt wcześnie</div>}
             </div>
@@ -93,11 +95,11 @@ export default function DietTab({uid, babyId, ageMonths }) {
       </div>
 
       <div style={{margin:'12px 16px 0',fontSize:12,color:'var(--text-3)',lineHeight:1.6}}>
-        Stuknij raz → Próbowało ✓ &nbsp;|&nbsp; Ponownie → Reakcja ✗ &nbsp;|&nbsp; Jeszcze raz → Usuń
+        {t('diet.tip')}
       </div>
 
       <button className="btn-add" onClick={()=>{ setForm({name:'',emoji:'🥕',months:String(ageMonths)}); setModal(true) }}>
-        + Dodaj własny produkt
+        {t('diet.add_custom')}
       </button>
 
       <Modal open={modal} onClose={()=>setModal(false)} title="Nowy produkt">
@@ -114,25 +116,25 @@ export default function DietTab({uid, babyId, ageMonths }) {
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Nazwa produktu</label>
+          <label className="form-label">{t('diet.modal.name')}</label>
           <input className="form-input" type="text" placeholder="np. Mango, Quinoa..." value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
         </div>
         <div className="form-group">
-          <label className="form-label">Dostępny od (miesięcy)</label>
+          <label className="form-label">{t('diet.modal.months')}</label>
           <input className="form-input" type="number" min="4" max="36" value={form.months} onChange={e=>setForm(f=>({...f,months:e.target.value}))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={addCustom}>Dodaj</button>
+          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={addCustom}>{t('common.save')}</button>
         </div>
       </Modal>
 
-      <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title="Usuń produkt">
+      <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title={t('diet.delete.title')}>
         <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>
           Czy na pewno chcesz usunąć ten produkt? Stracisz też jego status (próbowało/reakcja).
         </p>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setDeleteId(null)}>Anuluj</button>
+          <button className="btn-secondary" onClick={()=>setDeleteId(null)}>{t('common.cancel')}</button>
           <button className="btn-primary" style={{background:'var(--coral)'}} onClick={()=>removeCustom(deleteId)}>Usuń</button>
         </div>
       </Modal>

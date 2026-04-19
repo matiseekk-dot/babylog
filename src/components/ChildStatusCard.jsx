@@ -1,3 +1,4 @@
+import { t, useLocale } from '../i18n'
 import React from 'react'
 
 const CFG = {
@@ -53,6 +54,7 @@ function SubMessage({ msg, onNavigate }) {
  *   onUpgrade     – fn() otwiera paywall
  */
 export default function ChildStatusCard({ globalStatus, topStatus, messages, onNavigate, isPremium, onUpgrade }) {
+  useLocale()
   if (!globalStatus) return null
 
   const status = topStatus || globalStatus.status || 'ok'
@@ -110,7 +112,7 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
               display:'flex',alignItems:'center',justifyContent:'center',gap:6,
             }}
           >
-            🔒 Odblokuj analizę i alerty — Premium
+            {t('status.upgrade_cta')}
           </button>
         )}
       </div>

@@ -3,9 +3,11 @@ import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, genId} from '../utils/helpers'
 import Modal from './Modal'
 import { toast } from './Toast'
+import { t, useLocale } from '../i18n'
 import { MOOD_OPTIONS } from '../data/staticData'
 
 export default function DiaryTab({uid, babyId }) {
+  useLocale()
   const [entries, setEntries] = useFirestore(uid, `diary_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ date:todayDate(), mood:'😊', text:'' })
@@ -21,14 +23,14 @@ export default function DiaryTab({uid, babyId }) {
   return (
     <>
       <div className="section-header">
-        <div className="section-title">Dziennik</div>
-        <div className="section-desc">Wspomnienia i ważne chwile</div>
+        <div className="section-title">{t('diary.title')}</div>
+        <div className="section-desc">{t('diary.desc')}</div>
       </div>
 
       <div className="card">
         <div className="card-header">Wpisy ({entries.length})</div>
         {entries.length === 0
-          ? <div className="empty-state"><div className="empty-icon">📖</div><p>Zacznij zapisywać wspomnienia!</p></div>
+          ? <div className="empty-state"><div className="empty-icon">📖</div><p>{t('diary.empty')}</p></div>
           : entries.slice(0,30).map(e => (
             <div key={e.id} className="diary-entry">
               <div className="diary-date">{e.date}</div>
@@ -39,19 +41,19 @@ export default function DiaryTab({uid, babyId }) {
               <button onClick={()=>setEntries(entries.filter(x=>x.id!==e.id))} style={{
                 background:'none',border:'none',color:'var(--text-3)',fontSize:12,
                 marginTop:4,padding:0,cursor:'pointer'
-              }}>Usuń</button>
+              }}>{t('common.delete')}</button>
             </div>
           ))
         }
       </div>
 
       <button className="btn-add" onClick={()=>{ setForm(f=>({...f,date:todayDate()})); setModal(true) }}>
-        + Dodaj wspomnienie
+        {t('diary.add')}
       </button>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title="Nowy wpis">
+      <Modal open={modal} onClose={()=>setModal(false)} title={t('diary.modal.title')}>
         <div className="form-group">
-          <label className="form-label">Nastrój dziecka</label>
+          <label className="form-label">{t('diary.modal.mood')}</label>
           <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:4}}>
             {MOOD_OPTIONS.map(m => (
               <button key={m.emoji} onClick={()=>setForm(f=>({...f,mood:m.emoji}))} style={{
@@ -65,16 +67,16 @@ export default function DiaryTab({uid, babyId }) {
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Data</label>
+          <label className="form-label">{t('common.date')}</label>
           <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
         </div>
         <div className="form-group">
           <label className="form-label">Wpis</label>
-          <textarea className="form-input" rows={4} placeholder="Co się wydarzyło? Jakie osiągnięcia, śmieszne momenty, pierwsze razy..." value={form.text} onChange={e=>setForm(f=>({...f,text:e.target.value}))} style={{resize:'vertical'}} />
+          <textarea className="form-input" rows={4} placeholder={t('diary.modal.content_ph')} value={form.text} onChange={e=>setForm(f=>({...f,text:e.target.value}))} style={{resize:'vertical'}} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={add}>Zapisz</button>
+          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={add}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

@@ -109,22 +109,22 @@ export default function DiaperTab({uid, babyId, sectionAlerts = [], onNavigate, 
 
       <Modal open={modal} onClose={() => setModal(false)} title={t('diaper.modal.title')}>
         <div className="form-group">
-          <label className="form-label">Typ</label>
+          <label className="form-label">{t('common.type')}</label>
           <select className="form-select" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
             {TYPES.map(tp=><option key={tp.label} value={tp.label}>{tp.displayLabel}</option>)}
           </select>
         </div>
         <div className="form-row">
-          <div className="form-group"><label className="form-label">Godzina</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
-          <div className="form-group"><label className="form-label">Data</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
         </div>
         <div className="form-group">
-          <label className="form-label">Notatka (opcjonalna)</label>
+          <label className="form-label">{t('diaper.modal.note')}</label>
           <input className="form-input" type="text" value={form.note} placeholder="np. kolor, konsystencja..." onChange={e=>setForm(f=>({...f,note:e.target.value}))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={add}>Zapisz</button>
+          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={add}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

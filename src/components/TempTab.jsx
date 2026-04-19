@@ -10,6 +10,7 @@ import TempChart from './TempChart'
 import { interpretTemp } from '../engine/interpretations'
 
 export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+  useLocale()
   const [logs, setLogs] = useFirestore(uid, `temp_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
@@ -19,7 +20,7 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
     setModal(false)
     setForm({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
     onDataChange?.()
-    toast(`Temperatura: ${Number(form.temp).toFixed(1)}°C`)
+    toast(`${t('toast.temp')}: ${Number(form.temp).toFixed(1)}°C`)
   }
 
   const today = todayDate()
@@ -30,8 +31,8 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
   return (
     <>
       <div className="section-header">
-        <div className="section-title">Temperatura</div>
-        <div className="section-desc">Monitoruj gorączkę dziecka</div>
+        <div className="section-title">{t('temp.title')}</div>
+        <div className="section-desc">{t('temp.desc')}</div>
       </div>
 
       <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
@@ -52,12 +53,12 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
 
       {isPremium
         ? <InlineInsight insight={interpretTemp(logs)} />
-        : <PremiumTeaser label="Analiza temperatury" onUpgrade={onUpgrade} />}
+        : <PremiumTeaser label={t('temp.premium.analysis')} onUpgrade={onUpgrade} />}
 
       <div className="card">
-        <div className="card-header">Historia pomiarów</div>
+        <div className="card-header">{t('temp.history')}</div>
         {logs.length === 0
-          ? <div className="empty-state"><div className="empty-icon">🌡️</div><p>Brak pomiarów temperatury</p></div>
+          ? <div className="empty-state"><div className="empty-icon">🌡️</div><p>{t('temp.empty')}</p></div>
           : [...logs].sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time)).slice(0,20).map(l => (
             <div className="log-item" key={l.id}>
               <div className="log-icon">🌡️</div>
@@ -72,28 +73,28 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
       </div>
 
       <button className="btn-add" onClick={()=>{ setForm(f=>({...f,time:nowTime(),date:todayDate()})); setModal(true) }}>
-        + Dodaj pomiar
+        {t('temp.add')}
       </button>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title="Nowy pomiar temperatury">
+      <Modal open={modal} onClose={()=>setModal(false)} title={t('temp.modal.title')}>
         <div className="form-group">
-          <label className="form-label">Temperatura (°C)</label>
+          <label className="form-label">{t('temp.modal.value')}</label>
           <input className="form-input" type="number" step="0.1" min="35" max="42" value={form.temp} onChange={e=>setForm(f=>({...f,temp:e.target.value}))} />
         </div>
         <div className="form-group">
-          <label className="form-label">Metoda pomiaru</label>
+          <label className="form-label">{t('temp.modal.method')}</label>
           <select className="form-select" value={form.method} onChange={e=>setForm(f=>({...f,method:e.target.value}))}>
-            <option>Odbytniczo</option><option>Pod pachą</option><option>W uchu</option><option>Na czole</option>
+            <option value="Odbytniczo">{t('temp.method.rectal')}</option><option value="Pod pachą">{t('temp.method.axillary')}</option><option value="W uchu">{t('temp.method.ear')}</option><option value="Na czole">{t('temp.method.forehead')}</option>
           </select>
         </div>
         <div className="form-row">
-          <div className="form-group"><label className="form-label">Godzina</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
-          <div className="form-group"><label className="form-label">Data</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
         </div>
         <div className="form-group"><label className="form-label">Notatka</label><input className="form-input" type="text" placeholder="np. po Paracetamolu" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={add}>Zapisz</button>
+          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={add}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 /**
  * rulesEngine.js
  *
@@ -93,8 +94,8 @@ const RULES = [
       if (!last || last.temp < 38.5 || last.temp >= 39) return null
       return {
         status: 'alert',
-        title: 'Wysoka gorączka',
-        message: `Ostatni pomiar: ${last.temp.toFixed(1)}°C. Podaj lek przeciwgorączkowy i obserwuj dziecko.`,
+        title: t('rule.temp_alert.title'),
+        message: t('rule.temp_alert.msg', {temp: last.temp.toFixed(1)}),
       }
     },
   },
@@ -108,8 +109,8 @@ const RULES = [
       if (!last || last.temp < 39) return null
       return {
         status: 'critical',
-        title: 'Gorączka krytyczna',
-        message: `Temperatura ${last.temp.toFixed(1)}°C — zadzwoń do lekarza lub jedź na izbę przyjęć.`,
+        title: t('rule.temp_critical.title'),
+        message: t('rule.temp_critical.msg', {temp: last.temp.toFixed(1)}),
       }
     },
   },
@@ -131,8 +132,8 @@ const RULES = [
       const [t1, t2, t3] = last3.map(l => Number(l.temp).toFixed(1))
       return {
         status: 'warning',
-        title: 'Temperatura rośnie',
-        message: `Trzy kolejne pomiary: ${t1}° → ${t2}° → ${t3}°C. Tendencja wzrostowa — obserwuj uważnie.`,
+        title: t('rule.temp_rising.title'),
+        message: t('rule.temp_rising.msg', {t1, t2, t3}),
       }
     },
   },
@@ -168,8 +169,8 @@ const RULES = [
 
       return {
         status: 'alert',
-        title: 'Lek nie działa',
-        message: `Temperatura nie spadła po ${lastMed.med} (${Math.floor(minAgo / 60)}h temu). Skontaktuj się z lekarzem.`,
+        title: t('rule.med_not_working.title'),
+        message: t('rule.med_not_working.msg', {med: lastMed.med, hours: Math.floor(minAgo / 60)}),
       }
     },
   },
@@ -200,8 +201,8 @@ const RULES = [
       const ago  = paracExpired ? paracMin : ibuMin
       return {
         status: 'info',
-        title: 'Czas na kolejną dawkę',
-        message: `${name} podano ${Math.floor(ago / 60)}h ${ago % 60}m temu — czas działania minął. Możesz podać kolejną dawkę.`,
+        title: t('rule.med_expired.title'),
+        message: t('rule.med_expired.msg', {name, hours: Math.floor(ago/60), mins: ago % 60}),
       }
     },
   },
@@ -227,8 +228,8 @@ const RULES = [
       const m = totalMin % 60
       return {
         status: 'warning',
-        title: 'Niedobór snu',
-        message: `Dziś tylko ${h}h ${m}m snu (norma: ${norm.min}–${norm.max}h). Zadbaj o wyciszenie i rytuał zasypiania.`,
+        title: t('rule.sleep_deficit.title'),
+        message: t('rule.sleep_deficit.msg', {h, m, min: norm.min, max: norm.max}),
       }
     },
   },
@@ -256,8 +257,8 @@ const RULES = [
 
       return {
         status: 'critical',
-        title: 'Zły stan ogólny',
-        message: `Gorączka ${lastTemp.temp.toFixed(1)}°C + mało snu + mało karmień — dziecko wymaga natychmiastowej uwagi lekarza.`,
+        title: t('rule.combined.title'),
+        message: t('rule.combined.msg', {temp: lastTemp.temp.toFixed(1)}),
       }
     },
   },
@@ -270,8 +271,8 @@ const RULES = [
       // Zawsze aktywna — filtrowana gdy są inne alerty
       return {
         status: 'ok',
-        title: 'Wszystko w porządku',
-        message: 'Brak alertów. Kontynuuj regularne logowanie danych.',
+        title: t('rule.default.title'),
+        message: t('rule.default.msg'),
       }
     },
   },
@@ -305,8 +306,8 @@ const RULES = [
       const h = Math.floor(minAgo / 60)
       return {
         status: 'info',
-        title: 'Czas na karmienie',
-        message: `Ostatnie karmienie ${h}h ${minAgo % 60}min temu. Możliwe że dziecko jest głodne.`,
+        title: t('rule.feed_time.title'),
+        message: t('rule.feed_time.msg', {hours: h, mins: minAgo % 60}),
       }
     },
   },
@@ -324,8 +325,8 @@ const RULES = [
       if (hasAny) return null
       return {
         status: 'info',
-        title: 'Gotowy na pierwszy wpis?',
-        message: 'Dodaj karmienie lub sen jednym tapnięciem — aplikacja będzie analizować wzorce.',
+        title: t('rule.no_entries.title'),
+        message: t('rule.no_entries.msg'),
       }
     },
   },
@@ -348,8 +349,8 @@ const RULES = [
 
       return {
         status: 'ok',
-        title: 'Wszystko w normie',
-        message: `${feedsToday} karmień, ${sleepsToday} drzemek, brak gorączki. Dobra robota!`,
+        title: t('rule.all_ok.title'),
+        message: t('rule.all_ok.msg', {feeds: feedsToday, sleeps: sleepsToday}),
       }
     },
   },
@@ -405,7 +406,7 @@ export function getSectionMessages(messages, section) {
 export function getGlobalStatus(messages, topStatus) {
   if (topStatus === 'ok') {
     return messages.find(m => m.status === 'ok') || {
-      status: 'ok', title: 'Wszystko w porządku', message: ''
+      status: 'ok', title: t('rule.default.title'), message: ''
     }
   }
   // Priorytet: critical > alert > warning > info

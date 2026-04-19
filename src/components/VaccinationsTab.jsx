@@ -3,8 +3,10 @@ import { useFirestore } from '../hooks/useFirestore'
 import { VACCINATIONS } from '../data/staticData'
 import { todayDate, genId} from '../utils/helpers'
 import Modal from './Modal'
+import { t, useLocale } from '../i18n'
 
 export default function VaccinationsTab({uid, babyId, ageMonths }) {
+  useLocale()
   const [done, setDone] = useFirestore(uid, `vacc_${babyId}`, {})
   const [customVacc, setCustomVacc] = useFirestore(uid, `vacc_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
@@ -21,7 +23,7 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
 
   const addCustom = () => {
     if (!form.name.trim()) return
-    const v = { id: genId(), name: form.name.trim(), when: form.when || `${form.months}. miesiąc`, months: Number(form.months), custom: true }
+    const v = { id: genId(), name: form.name.trim(), when: form.when || `${form.months}. ${t('vacc.month_suffix')}`, months: Number(form.months), custom: true }
     setCustomVacc([...customVacc, v])
     setModal(false)
     setForm({ name: '', when: '', months: String(ageMonths) })
@@ -40,16 +42,16 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
   return (
     <>
       <div className="section-header">
-        <div className="section-title">Szczepienia</div>
-        <div className="section-desc">Kalendarz PSO · {doneCount}/{allVacc.length} wykonanych · Własne: {customVacc.length}</div>
+        <div className="section-title">{t('vacc.title')}</div>
+        <div className="section-desc">{t('vacc.desc', {scheme: t('vacc.scheme'), done: doneCount, total: allVacc.length, custom: customVacc.length})}</div>
       </div>
 
       <div className="warn-card">
-        <strong>Uwaga:</strong> To kalendarz poglądowy wg PSO. Szczegółowy harmonogram ustal z lekarzem.
+        <strong>{t('vacc.important')}</strong> {t('vacc.warning')}
       </div>
 
       <div className="card">
-        <div className="card-header">Szczepienia wg PSO</div>
+        <div className="card-header">{t('vacc.scheme_header')}</div>
         {VACCINATIONS.map(v => {
           const isDone = !!done[v.id]
           const isUpcoming = !isDone && v.months <= ageMonths + 2
@@ -62,7 +64,7 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
                 <div className="vacc-when">{v.when}{isDone && done[v.id] ? ` · Wykonano: ${done[v.id]}` : ''}</div>
               </div>
               {isDone && <span style={{fontSize:18}}>✅</span>}
-              {isUpcoming && !isDone && <span className="badge badge-amber">Zbliża się</span>}
+              {isUpcoming && !isDone && <span className="badge badge-amber">{t('vacc.upcoming')}</span>}
             </div>
           )
         })}
@@ -70,7 +72,7 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
 
       {customVacc.length > 0 && (
         <div className="card">
-          <div className="card-header">Własne / dodatkowe szczepienia</div>
+          <div className="card-header">{t('vacc.custom_header')}</div>
           {customVacc.map(v => {
             const isDone = !!done[v.id]
             const isUpcoming = !isDone && v.months <= ageMonths + 2
@@ -83,7 +85,7 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
                   <div className="vacc-when">{v.when}{isDone && done[v.id] ? ` · Wykonano: ${done[v.id]}` : ''}</div>
                 </div>
                 {isDone && <span style={{fontSize:18}}>✅</span>}
-                {isUpcoming && !isDone && <span className="badge badge-amber">Zbliża się</span>}
+                {isUpcoming && !isDone && <span className="badge badge-amber">{t('vacc.upcoming')}</span>}
                 <button onClick={e=>{e.stopPropagation();setDeleteId(v.id)}} style={{
                   background:'none',border:'none',color:'var(--text-3)',fontSize:16,
                   padding:'0 0 0 6px',minHeight:44,minWidth:36,cursor:'pointer'
@@ -95,34 +97,34 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
       )}
 
       <button className="btn-add" onClick={()=>{ setForm({name:'',when:'',months:String(ageMonths)}); setModal(true) }}>
-        + Dodaj własne szczepienie
+        {t('vacc.add')}
       </button>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title="Nowe szczepienie">
+      <Modal open={modal} onClose={()=>setModal(false)} title={t('vacc.modal.title')}>
         <div className="form-group">
-          <label className="form-label">Nazwa szczepionki</label>
+          <label className="form-label">{t('vacc.modal.name')}</label>
           <input className="form-input" type="text" placeholder="np. Meningokoki, Rotawirusy..." value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Termin (mies.)</label>
+            <label className="form-label">{t('vacc.modal.when')}</label>
             <input className="form-input" type="number" min="0" max="60" value={form.months} onChange={e=>setForm(f=>({...f,months:e.target.value,when:`${e.target.value}. miesiąc`}))} />
           </div>
           <div className="form-group">
-            <label className="form-label">Etykieta terminu</label>
-            <input className="form-input" type="text" placeholder="np. 2. miesiąc" value={form.when} onChange={e=>setForm(f=>({...f,when:e.target.value}))} />
+            <label className="form-label">{t('vacc.modal.when_label')}</label>
+            <input className="form-input" type="text" placeholder={t('vacc.modal.when_ph')} value={form.when} onChange={e=>setForm(f=>({...f,when:e.target.value}))} />
           </div>
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={addCustom}>Dodaj</button>
+          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={addCustom}>{t('common.save')}</button>
         </div>
       </Modal>
 
-      <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title="Usuń szczepienie">
+      <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title={t('vacc.delete_title')}>
         <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>Czy na pewno chcesz usunąć to szczepienie?</p>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setDeleteId(null)}>Anuluj</button>
+          <button className="btn-secondary" onClick={()=>setDeleteId(null)}>{t('common.cancel')}</button>
           <button className="btn-primary" style={{background:'var(--coral)'}} onClick={()=>removeCustom(deleteId)}>Usuń</button>
         </div>
       </Modal>

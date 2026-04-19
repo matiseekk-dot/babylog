@@ -43,7 +43,7 @@ import { useLocale, t } from './i18n'
 
 const DEFAULT_PROFILE = {
   id: 'default',
-  name: 'Moje dziecko',
+  name: 'Baby',  // placeholder; real name set in onboarding
   months: 4,
   weight: 6.5,
   avatar: '👶',

@@ -10,6 +10,7 @@ import PremiumTeaser from './PremiumTeaser'
 import { interpretSleep } from '../engine/interpretations'
 
 export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+  useLocale()
   const [logs, setLogs] = useFirestore(uid, `sleep_${babyId}`, [])
   const [running, setRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
@@ -84,8 +85,8 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
   return (
     <>
       <div className="section-header">
-        <div className="section-title">Sen i drzemki</div>
-        <div className="section-desc">Śledź czas snu dziecka</div>
+        <div className="section-title">{t('sleep.title')}</div>
+        <div className="section-desc">{t('sleep.desc')}</div>
       </div>
 
       <SectionAlerts alerts={sectionAlerts} onAction={onNavigate} />
@@ -93,9 +94,9 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
       <div className="card">
         <div className="timer-display">
           <div className="timer-digits">{formatDuration(elapsed)}</div>
-          <div className="timer-label">{running ? 'Trwa pomiar snu...' : 'Naciśnij, aby rozpocząć'}</div>
+          <div className="timer-label">{running ? t('sleep.timer_running') : t('sleep.timer_idle')}</div>
           <button className={`timer-btn ${running?'stop':'start'}`} onClick={toggle}>
-            {running ? 'Obudził/-a się ☀️' : 'Zasnął/-a 🌙'}
+            {running ? t('sleep.btn.wake') : t('sleep.btn.sleep')}
           </button>
         </div>
       </div>
@@ -103,7 +104,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
       <div className="stat-row">
         <div className="stat-card">
           <div className="stat-val">{totalMin >= 60 ? `${Math.floor(totalMin/60)}h${totalMin%60>0?` ${totalMin%60}m`:''}` : `${totalMin}m`}</div>
-          <div className="stat-lbl">łącznie dziś</div>
+          <div className="stat-lbl">{t('sleep.today_total')}</div>
         </div>
         <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">sesje snu</div></div>
         <div className="stat-card"><div className="stat-val">{norm}h</div><div className="stat-lbl">norma wiekowa</div></div>
@@ -111,12 +112,12 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
 
       {isPremium
         ? <InlineInsight insight={interpretSleep(logs, ageMonths)} />
-        : <PremiumTeaser label="Ocena jakości snu" onUpgrade={onUpgrade} />}
+        : <PremiumTeaser label={t('sleep.premium.quality')} onUpgrade={onUpgrade} />}
 
       <div className="card">
         <div className="card-header">Historia snu</div>
         {logs.slice(0,20).length === 0
-          ? <div className="empty-state"><div className="empty-icon">🌙</div><p>Brak zapisanych drzemek</p></div>
+          ? <div className="empty-state"><div className="empty-icon">🌙</div><p>{t('sleep.empty')}</p></div>
           : logs.slice(0,20).map(l => {
               const h = Math.floor(l.durationMin/60)
               const m = l.durationMin % 60
@@ -135,29 +136,29 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
       </div>
 
       <button className="btn-add" onClick={() => { setForm(f=>({...f,date:todayDate()})); setModal(true) }}>
-        + Dodaj ręcznie
+        {t('sleep.add_manual')}
       </button>
 
-      <Modal open={modal} onClose={() => setModal(false)} title="Dodaj sen">
+      <Modal open={modal} onClose={() => setModal(false)} title={t('sleep.modal.title')}>
         <div className="form-group">
-          <label className="form-label">Typ</label>
+          <label className="form-label">{t('sleep.modal.type')}</label>
           <select className="form-select" value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))}>
-            <option>Drzemka</option>
-            <option>Sen nocny</option>
+            <option value="Drzemka">{t('sleep.type.nap')}</option>
+            <option value="Sen nocny">{t('sleep.type.night')}</option>
           </select>
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Zasnął/-a</label>
+            <label className="form-label">{t('common.fell_asleep')}</label>
             <input className="form-input" type="time" value={form.startTime} onChange={e=>setForm(f=>({...f,startTime:e.target.value}))} />
           </div>
           <div className="form-group">
-            <label className="form-label">Obudził/-a się</label>
+            <label className="form-label">{t('common.woke_up')}</label>
             <input className="form-input" type="time" value={form.endTime} onChange={e=>setForm(f=>({...f,endTime:e.target.value}))} />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Data</label>
+          <label className="form-label">{t('common.date')}</label>
           <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
         </div>
         <div className="modal-btns">

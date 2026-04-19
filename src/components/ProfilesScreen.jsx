@@ -1,3 +1,4 @@
+import { t, useLocale } from '../i18n'
 import React, { useState } from 'react'
 import Modal from './Modal'
 import { genId } from '../utils/helpers'
@@ -6,6 +7,7 @@ const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 const AVATAR_COLORS = ['#E1F5EE','#FAEEDA','#EEEDFE','#FAECE7','#E6F1FB','#FBEAF0','#EAF3DE','#FCEBEB']
 
 export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, onUpdate, onDelete }) {
+  useLocale()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(null)
   const [form, setForm] = useState({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE' })
@@ -34,15 +36,15 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
 
   const ageLabel = (m) => {
     if (m < 1) return 'Noworodek'
-    if (m < 12) return `${m} miesięcy`
+    if (m < 12) return t('profiles.age.months', {count: m})
     const y = Math.floor(m/12); const mo = m%12
-    return mo > 0 ? `${y} r. ${mo} mies.` : `${y} rok`
+    return mo > 0 ? t('profiles.age.years_months', {years: y, months: mo}) : (y === 1 ? t('profiles.age.year', {count: y}) : t('profiles.age.months', {count: m}))
   }
 
   const FormContent = () => (
     <>
       <div className="form-group">
-        <label className="form-label">Imię dziecka</label>
+        <label className="form-label">{t('onb.setup.name')}</label>
         <input className="form-input" type="text" placeholder="np. Zosia" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
       </div>
       <div className="form-group">
@@ -59,11 +61,11 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
       </div>
       <div className="form-row">
         <div className="form-group">
-          <label className="form-label">Wiek (miesiące)</label>
+          <label className="form-label">{t('onb.setup.age')}</label>
           <input className="form-input" type="number" min="0" max="60" value={form.months} onChange={e=>setForm(f=>({...f,months:e.target.value}))} />
         </div>
         <div className="form-group">
-          <label className="form-label">Waga (kg)</label>
+          <label className="form-label">{t('onb.setup.weight')}</label>
           <input className="form-input" type="number" step="0.1" min="1" max="30" value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
         </div>
       </div>
@@ -73,8 +75,8 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
   return (
     <div style={{paddingBottom:24}}>
       <div className="section-header">
-        <div className="section-title">Profile dzieci</div>
-        <div className="section-desc">Wybierz aktywne dziecko lub dodaj nowe</div>
+        <div className="section-title">{t('profiles.title')}</div>
+        <div className="section-desc">{t('profiles.desc')}</div>
       </div>
 
       <div className="profile-list">
@@ -102,16 +104,16 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
       <Modal open={modal} onClose={()=>setModal(false)} title="Nowe dziecko">
         <FormContent />
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={save}>Dodaj</button>
+          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={save}>{t('common.save')}</button>
         </div>
       </Modal>
 
-      <Modal open={!!editModal} onClose={()=>setEditModal(null)} title="Edytuj profil">
+      <Modal open={!!editModal} onClose={()=>setEditModal(null)} title={t('profiles.edit.title')}>
         <FormContent />
         <div className="modal-btns">
-          <button className="btn-secondary" style={{background:'var(--coral-light)',color:'var(--coral)',border:'none'}} onClick={()=>{onDelete(editModal);setEditModal(null)}}>Usuń</button>
-          <button className="btn-primary" onClick={saveEdit}>Zapisz</button>
+          <button className="btn-secondary" style={{background:'var(--coral-light)',color:'var(--coral)',border:'none'}} onClick={()=>{onDelete(editModal);setEditModal(null)}}>{t('common.delete')}</button>
+          <button className="btn-primary" onClick={saveEdit}>{t('common.save')}</button>
         </div>
       </Modal>
     </div>

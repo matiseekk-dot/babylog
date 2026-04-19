@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { t } from '../i18n'
 import { loadFromStorage } from './useStorage'
 
 // Czas działania leków w minutach
@@ -134,8 +135,12 @@ export function useMedReminder(babyId) {
 
     sendToSW('SCHEDULE_MED_REMINDER', {
       tag,
-      title: 'Czas na kolejną dawkę 💊',
-      body: `Możesz podać ${log.med}${log.dose ? ` (${log.dose})` : ''} — minęło ${Math.floor(dur / 60)}h od ostatniej dawki.`,
+      title: t('reminder.med.title'),
+      body: t('reminder.med.body', {
+        med: log.med,
+        dose: log.dose ? ` (${log.dose})` : '',
+        hours: Math.floor(dur / 60),
+      }),
       delayMs,
     })
   }, [permission])

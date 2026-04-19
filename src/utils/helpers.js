@@ -1,3 +1,4 @@
+import { t } from '../i18n'
 export function nowTime() {
   const d = new Date()
   return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0')
@@ -15,14 +16,13 @@ export function formatDuration(seconds) {
 }
 
 export function formatAge(months) {
-  if (months < 1) return 'Noworodek'
-  if (months === 1) return '1 miesiąc'
-  if (months < 5) return `${months} miesiące`
-  if (months < 12) return `${months} miesięcy`
+  if (months < 1) return t('age.newborn')
+  if (months === 1) return t('profiles.age.month', { count: 1 })
+  if (months < 12) return t('profiles.age.months', { count: months })
   const y = Math.floor(months / 12)
   const m = months % 12
-  if (m === 0) return y === 1 ? '1 rok' : `${y} lata`
-  return `${y} r. ${m} mies.`
+  if (m === 0) return y === 1 ? t('profiles.age.year', { count: 1 }) : t('age.years', { count: y })
+  return t('profiles.age.years_months', { years: y, months: m })
 }
 
 export function formatDate(dateStr) {
@@ -55,10 +55,10 @@ export function getTempClass(temp) {
 }
 
 export function getTempLabel(temp) {
-  if (temp < 36.0) return 'Podgorączkowanie'
-  if (temp < 37.5) return 'Prawidłowa'
-  if (temp < 38.5) return 'Gorączka'
-  return 'Wysoka gorączka'
+  if (temp < 36.0) return t('temp.label.hypothermia')
+  if (temp < 37.5) return t('temp.label.normal')
+  if (temp < 38.5) return t('temp.label.fever')
+  return t('temp.label.high_fever')
 }
 
 export function uid() {
