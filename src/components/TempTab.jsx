@@ -8,6 +8,7 @@ import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import TempChart from './TempChart'
 import { interpretTemp } from '../engine/interpretations'
+import { t, useLocale } from '../i18n'
 
 export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   useLocale()
