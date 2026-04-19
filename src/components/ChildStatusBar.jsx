@@ -1,11 +1,14 @@
 import React, { useState } from 'react'
+import { t, useLocale } from '../i18n'
 
-const STATUS_CONFIG = {
-  ok:       { bg: '#E1F5EE', border: '#9FE1CB', dot: '#1D9E75', text: '#085041', label: 'OK'      },
-  info:     { bg: '#E6F1FB', border: '#85B7EB', dot: '#378ADD', text: '#0C447C', label: 'INFO'    },
-  warning:  { bg: '#FAEEDA', border: '#FAC775', dot: '#BA7517', text: '#633806', label: 'UWAGA'   },
-  alert:    { bg: '#FAECE7', border: '#F0997B', dot: '#D85A30', text: '#712B13', label: 'ALERT'   },
-  critical: { bg: '#FCEBEB', border: '#F09595', dot: '#A32D2D', text: '#501313', label: 'PILNE'   },
+function getStatusConfig() {
+  return {
+    ok:       { bg: '#E1F5EE', border: '#9FE1CB', dot: '#1D9E75', text: '#085041', label: t('status.ok')       },
+    info:     { bg: '#E6F1FB', border: '#85B7EB', dot: '#378ADD', text: '#0C447C', label: t('status.info')     },
+    warning:  { bg: '#FAEEDA', border: '#FAC775', dot: '#BA7517', text: '#633806', label: t('status.warning')  },
+    alert:    { bg: '#FAECE7', border: '#F0997B', dot: '#D85A30', text: '#712B13', label: t('status.alert')    },
+    critical: { bg: '#FCEBEB', border: '#F09595', dot: '#A32D2D', text: '#501313', label: t('status.critical') },
+  }
 }
 
 /**
@@ -13,6 +16,8 @@ const STATUS_CONFIG = {
  * Tapnięcie rozwija listę wszystkich aktywnych komunikatów.
  */
 export default function ChildStatusBar({ globalStatus, topStatus, allMessages, onNavigate }) {
+  useLocale()
+  const STATUS_CONFIG = getStatusConfig()
   const [expanded, setExpanded] = useState(false)
 
   if (!globalStatus) return null

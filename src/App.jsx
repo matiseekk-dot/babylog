@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useFirestore, migrateAllLocalData, enableOffline } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
+import MedicalConsentScreen from './components/MedicalConsentScreen'
 import { useRevenueCat } from './hooks/useRevenueCat'
 import { useChildStatus } from './hooks/useChildStatus'
 import { usePremium } from './hooks/usePremium'
@@ -99,6 +100,16 @@ const EMPTY_STATUS = () => ({
 
 export default function App() {
   const { user, loading: authLoading, login, logout } = useAuth()
+
+  // Medical consent — must be accepted ONCE before first use
+  const [consentAccepted, setConsentAccepted] = useState(() => {
+    try { return localStorage.getItem('babylog_medical_consent_v1') === '1' }
+    catch { return false }
+  })
+  const acceptConsent = () => {
+    try { localStorage.setItem('babylog_medical_consent_v1', '1') } catch {}
+    setConsentAccepted(true)
+  }
   const [guestMode, setGuestMode] = useState(() => {
     try { return localStorage.getItem('babylog_guest') === '1' } catch { return false }
   })
@@ -238,6 +249,11 @@ export default function App() {
 
   const currentMoreTab = MORE_TABS.find(t => t.id === tab)
 
+  // ── Medical consent gate (shown once before first use) ───────────────────
+  if (!consentAccepted) {
+    return <MedicalConsentScreen onAccept={acceptConsent} />
+  }
+
   // ── Auth loading / migration ─────────────────────────────────────────────
   if (authLoading || migrating) {
     return (
@@ -339,7 +355,7 @@ export default function App() {
       {/* TOPBAR */}
       <div className="topbar">
         <div className="topbar-left">
-          <div className="topbar-logo">🍼 BabyLog</div>
+          <div className="topbar-logo">🍼 {t('app.title')}</div>
           <div className="topbar-sub">
             {showProfiles ? t('topbar.profiles') : showMore ? t('topbar.more') : currentMoreTab ? t(currentMoreTab.labelKey) : t(NAV_TABS.find(x=>x.id===tab)?.labelKey || 'nav.feed')}
           </div>
@@ -387,7 +403,7 @@ export default function App() {
             <div className="baby-chip-avatar" style={{background:active.avatarColor,color:'var(--green-dark)',fontSize:13}}>
               {active.avatar}
             </div>
-            {active.name}
+            {active.name === 'Moje dziecko' ? t('default.child_name') : active.name}
           </button>
         </div>
       </div>

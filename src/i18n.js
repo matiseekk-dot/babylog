@@ -181,8 +181,23 @@ const TRANSLATIONS = {
     'toast.entry':        'Wpis zapisany',
 
     // Medical
-    'med.important':      'Ważne:',
-    'med.disclaimer':     'Podane dawki są orientacyjne. Zawsze konsultuj się z lekarzem lub farmaceutą.',
+    'med.important':      '⚠️ Ważne — przeczytaj:',
+    'med.disclaimer':     'Podane dawki to wartości orientacyjne na podstawie ogólnych wytycznych. Przed każdym podaniem leku skonsultuj się z pediatrą lub farmaceutą. Aplikacja nie zastępuje porady medycznej i nie ponosi odpowiedzialności za decyzje dotyczące leczenia Twojego dziecka.',
+    // Dose modal disclaimers
+    'dose.modal.warning':          '⚠️ Skonsultuj się z lekarzem przed pierwszym podaniem.',
+    'dose.modal.footer':           'Te wartości są orientacyjne. Zawsze weryfikuj dawkę z pediatrą lub farmaceutą, szczególnie gdy dziecko waży mniej niż 5 kg, ma przewlekłe choroby, lub przyjmuje inne leki.',
+
+    // Medical consent (first-run)
+    'consent.title':               'Zanim zaczniesz',
+    'consent.intro':                'Spokojny Rodzic to narzędzie pomocnicze dla rodziców — nie zastępuje lekarza.',
+    'consent.p1':                  'Aplikacja pomaga śledzić stan zdrowia dziecka i sugeruje kiedy skontaktować się z lekarzem, ale nie diagnozuje i nie leczy.',
+    'consent.p2':                  'W przypadku alarmujących objawów, wysokiej gorączki lub nagłej zmiany stanu dziecka — zadzwoń do pediatry lub na pogotowie (112).',
+    'consent.p3':                  'Kalkulator dawek leków podaje wartości orientacyjne. Zawsze weryfikuj je z lekarzem lub farmaceutą przed pierwszym podaniem.',
+    'consent.p4':                  'SkuDev nie ponosi odpowiedzialności za decyzje medyczne podejmowane na podstawie aplikacji.',
+    'consent.accept':              'Rozumiem — to nie zastępuje lekarza',
+    'consent.emergency_title':     'W sytuacji zagrożenia życia',
+    'consent.emergency_text':      'Zadzwoń na 112 lub jedź bezpośrednio do najbliższego szpitala.',
+
     'med.remind_enable':  'Włącz powiadomienia, żeby dostać alert gdy będzie można podać kolejną dawkę.',
     'med.remind_btn':     'Włącz',
     // Settings
@@ -565,6 +580,16 @@ const TRANSLATIONS = {
     'dose.probiotic.2':            'Stosować min. 2h po antybiotyku',
     'dose.probiotic.3':            'Można mieszać z mlekiem lub papką',
     'meds.custom.delete_msg':       'Czy na pewno chcesz usunąć ten lek z kalkulatora?',
+    // Status bar severity labels (BabyLog UI)
+    'status.ok':                   'OK',
+    'status.info':                 'INFO',
+    'status.warning':              'UWAGA',
+    'status.alert':                'ALERT',
+    'status.critical':             'PILNE',
+
+    // Temp chart
+    'tempchart.last':              'Ostatnie {hours}h',
+
     'milestones.delete_msg':        'Czy na pewno chcesz usunąć ten kamień milowy?',
     'vacc.delete_msg':              'Czy na pewno chcesz usunąć to szczepienie?',
 
@@ -735,8 +760,23 @@ const TRANSLATIONS = {
     'toast.entry':        'Entry saved',
 
     // Medical
-    'med.important':      'Important:',
-    'med.disclaimer':     'These doses are guidelines. Always consult your doctor or pharmacist.',
+    'med.important':      '⚠️ Important — please read:',
+    'med.disclaimer':     'These doses are reference values based on general guidelines. Always consult your pediatrician or pharmacist before giving any medication. This app does not replace medical advice and bears no responsibility for treatment decisions regarding your child.',
+    // Dose modal disclaimers
+    'dose.modal.warning':          '⚠️ Consult your doctor before the first dose.',
+    'dose.modal.footer':           "These values are guidelines only. Always verify doses with your pediatrician or pharmacist, especially if your child weighs less than 5 kg, has chronic conditions, or takes other medications.",
+
+    // Medical consent (first-run)
+    'consent.title':               'Before you start',
+    'consent.intro':               'Calm Parent is a support tool for parents — it does not replace your doctor.',
+    'consent.p1':                  "The app helps you track your baby's health and suggests when to contact a doctor, but it does not diagnose or treat.",
+    'consent.p2':                  "In case of concerning symptoms, high fever, or sudden changes in your baby's condition — call your pediatrician or emergency services (112 in EU / 911 in US).",
+    'consent.p3':                  'The medicine dose calculator provides reference values only. Always verify doses with your doctor or pharmacist before the first administration.',
+    'consent.p4':                  'SkuDev bears no responsibility for medical decisions made based on this app.',
+    'consent.accept':              'I understand — this does not replace a doctor',
+    'consent.emergency_title':     'In a life-threatening emergency',
+    'consent.emergency_text':      'Call 112 (EU) / 911 (US) or go directly to the nearest hospital.',
+
     'med.remind_enable':  'Enable notifications to get an alert when the next dose can be given.',
     'med.remind_btn':     'Enable',
     // Settings
@@ -1117,6 +1157,16 @@ const TRANSLATIONS = {
     'dose.probiotic.2':            'Apply at least 2h after antibiotic',
     'dose.probiotic.3':            'Can be mixed with milk or puree',
     'meds.custom.delete_msg':       'Are you sure you want to delete this medicine from the calculator?',
+    // Status bar severity labels
+    'status.ok':                   'OK',
+    'status.info':                 'INFO',
+    'status.warning':              'WARNING',
+    'status.alert':                'ALERT',
+    'status.critical':             'URGENT',
+
+    // Temp chart
+    'tempchart.last':              'Last {hours}h',
+
     'milestones.delete_msg':        'Are you sure you want to delete this milestone?',
     'vacc.delete_msg':              'Are you sure you want to delete this vaccination?',
 

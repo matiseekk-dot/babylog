@@ -62,6 +62,7 @@ function TempTooltip({ active, payload }) {
 // ─── Trend badge ─────────────────────────────────────────────────────────────
 
 function TrendBadge({ data }) {
+  useLocale()
   if (data.length < 2) return null
   const recent = data.slice(-3)
   let trend = 'stable'
@@ -72,8 +73,8 @@ function TrendBadge({ data }) {
   }
   const CFG = {
     rising:  { label: t('temp.chart.rising'),  color: '#D85A30', bg: '#FAECE7' },
-    falling: { label: '↓ Spada',   color: '#1D9E75', bg: '#E1F5EE' },
-    stable:  { label: '→ Stabilna',color: '#185FA5', bg: '#E6F1FB' },
+    falling: { label: t('temp.chart.falling'), color: '#1D9E75', bg: '#E1F5EE' },
+    stable:  { label: t('temp.chart.stable'),  color: '#185FA5', bg: '#E6F1FB' },
   }
   const c = CFG[trend]
   return (
@@ -125,7 +126,7 @@ export default function TempChart({ logs }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)' }}>
-            Ostatnie {window}h
+            {t('tempchart.last', { hours: window })}
           </span>
           <TrendBadge data={chartData} />
         </div>

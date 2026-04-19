@@ -15,6 +15,14 @@ const EMOJI_OPTIONS = ['💊','🌡️','🫁','🦠','🩹','🧴','💉','🩺
 
 export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   useLocale()
+  // Translate stored Polish med names for display
+  const displayMedName = (name) => {
+    if (name === 'Paracetamol') return t('med.name.paracetamol')
+    if (name === 'Ibuprofen') return t('med.name.ibuprofen')
+    if (name === 'Sól fizjologiczna') return t('med.name.saline')
+    if (name === 'Probiotyk') return t('med.name.probiotic')
+    return name  // custom meds keep their name
+  }
   const [logs, setLogs] = useFirestore(uid, `meds_${babyId}`, [])
   const [customMeds, setCustomMeds] = useFirestore(uid, `meds_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
@@ -91,7 +99,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           <div className="log-item" key={med}>
             <div className="log-icon">{med==='Paracetamol'?'🌡️':med==='Ibuprofen'?'💊':med==='Sól fizjologiczna'?'🫁':'🦠'}</div>
             <div className="log-body">
-              <div className="log-name">{med}</div>
+              <div className="log-name">{displayMedName(med)}</div>
               <div className="log-detail">
                 {med==='Paracetamol' && `${parac.dose} mg → ${parac.mlStd} ml`}
                 {med==='Ibuprofen' && (ibu ? `${ibu.dose} mg → ${ibu.ml} ml` : t('meds.below_3mo'))}
@@ -154,7 +162,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         </div>
       )}
 
-      <button className="btn-add" onClick={()=>{ setMedForm({name:'',emoji:'💊',dosage:'',notes:''}); setAddMedModal(true) }}>{t('meds.add_custom')} do kalkulatora</button>
+      <button className="btn-add" onClick={()=>{ setMedForm({name:'',emoji:'💊',dosage:'',notes:''}); setAddMedModal(true) }}>{t('meds.add_custom')}</button>
 
       {isPremium
         ? <InlineInsight insight={interpretMeds(logs)} />
@@ -167,7 +175,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           : logs.slice(0,20).map(l => (
             <div className="log-item" key={l.id}>
               <div className="log-icon">💊</div>
-              <div className="log-body"><div className="log-name">{l.med}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.date} {l.time}{l.note?` · ${l.note}`:''}</div></div>
+              <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.date} {l.time}{l.note?` · ${l.note}`:''}</div></div>
               <button onClick={()=>remove(l.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
@@ -209,8 +217,33 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
       </Modal>
 
       <Modal open={!!doseModal} onClose={()=>setDoseModal(null)} title={doseModal?.title}>
-        {doseModal?.content.map((line,i) => (<div key={i} style={{fontSize:14,color:'var(--text)',padding:'5px 0',borderBottom:i<doseModal.content.length-1?'0.5px solid var(--border)':'none'}}>{line}</div>))}
-        <div className="modal-btns" style={{marginTop:16}}><button className="btn-primary" onClick={()=>setDoseModal(null)}>Zamknij</button></div>
+        {/* Prominent warning AT TOP of dose modal */}
+        <div style={{
+          background:'#FEF3EE', border:'1.5px solid #F0997B', borderRadius:10,
+          padding:'12px 14px', marginBottom:14, fontSize:13, lineHeight:1.5,
+          color:'#712B13', fontWeight:600,
+        }}>
+          {t('dose.modal.warning')}
+        </div>
+
+        {doseModal?.content.map((line,i) => (
+          <div key={i} style={{fontSize:14,color:'var(--text)',padding:'6px 0',borderBottom:i<doseModal.content.length-1?'0.5px solid var(--border)':'none'}}>
+            {line}
+          </div>
+        ))}
+
+        {/* Footer disclaimer */}
+        <div style={{
+          marginTop:16, padding:'10px 12px',
+          background:'#F7F7F5', borderRadius:8,
+          fontSize:11, lineHeight:1.45, color:'var(--text-3)',
+        }}>
+          {t('dose.modal.footer')}
+        </div>
+
+        <div className="modal-btns" style={{marginTop:16}}>
+          <button className="btn-primary" onClick={()=>setDoseModal(null)}>{t('common.close')}</button>
+        </div>
       </Modal>
 
       <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title={t('meds.custom.delete_title')}>

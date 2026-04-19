@@ -160,9 +160,44 @@ const TRANSLIT_MAP = {
   'ą':'a','ć':'c','ę':'e','ł':'l','ń':'n','ó':'o','ś':'s','ź':'z','ż':'z',
   'Ą':'A','Ć':'C','Ę':'E','Ł':'L','Ń':'N','Ó':'O','Ś':'S','Ź':'Z','Ż':'Z',
 }
+
+// Common Polish data values → English equivalents (for EN PDF output)
+const POLISH_TO_EN = {
+  'Moje dziecko':      'My baby',
+  'Pierś lewa':        'Left breast',
+  'Pierś prawa':       'Right breast',
+  'Butelka':           'Bottle',
+  'Odciągnięte mleko': 'Pumped milk',
+  'Mokra':             'Wet',
+  'Brudna':            'Dirty',
+  'Obydwie':           'Both',
+  'Drzemka':           'Nap',
+  'Sen nocny':         'Night sleep',
+  'Odbytniczo':        'Rectal',
+  'Pod pachą':         'Underarm',
+  'W uchu':            'Ear',
+  'Na czole':          'Forehead',
+  'Sól fizjologiczna': 'Saline drops',
+  'Probiotyk':         'Probiotic',
+  'Pediatra':          'Pediatrician',
+  'Pogotowie':         'Emergency',
+  'Teleporada':        'Telehealth',
+  'Specjalista':       'Specialist',
+  'Kontrolna':         'Routine check-up',
+}
+
 function transliterate(str, locale) {
-  if (locale === 'en') return str
-  return String(str).replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, ch => TRANSLIT_MAP[ch] || ch)
+  const s = String(str)
+  if (locale === 'en') {
+    // First replace whole-word Polish values with English equivalents
+    let result = s
+    for (const [pl, en] of Object.entries(POLISH_TO_EN)) {
+      result = result.split(pl).join(en)
+    }
+    return result
+  }
+  // For PL: transliterate Polish chars to ASCII (jsPDF font limitation)
+  return s.replace(/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, ch => TRANSLIT_MAP[ch] || ch)
 }
 
 const PL = {

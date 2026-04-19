@@ -133,7 +133,13 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
             <div className="log-item" key={l.id}>
               <div className="log-icon">{l.type.startsWith('Pierś') ? '🤱' : '🍼'}</div>
               <div className="log-body">
-                <div className="log-name">{l.type}</div>
+                <div className="log-name">{
+                  l.type === 'Pierś lewa'       ? t('feed.type.left')
+                : l.type === 'Pierś prawa'      ? t('feed.type.right')
+                : l.type === 'Butelka'          ? t('feed.type.bottle')
+                : l.type === 'Odciągnięte mleko'? t('feed.type.pumped')
+                : l.type
+              }</div>
                 <div className="log-detail">{l.type==='Butelka'||l.type==='Odciągnięte mleko' ? `${l.amount} ml` : `${l.amount} min`}</div>
               </div>
               <div className="log-time">{l.time}</div>
