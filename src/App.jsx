@@ -7,6 +7,7 @@ import { useRevenueCat } from './hooks/useRevenueCat'
 import { useChildStatus } from './hooks/useChildStatus'
 import { usePremium } from './hooks/usePremium'
 import FeedTab from './components/FeedTab'
+import EmptyStateHero from './components/EmptyStateHero'
 import SleepTab from './components/SleepTab'
 import DiaperTab from './components/DiaperTab'
 import MilestonesTab from './components/MilestonesTab'
@@ -106,6 +107,14 @@ export default function App() {
     try { return localStorage.getItem('babylog_medical_consent_v1') === '1' }
     catch { return false }
   })
+  const [emptyHeroDismissed, setEmptyHeroDismissed] = useState(() => {
+    try { return localStorage.getItem('babylog_empty_hero_dismissed') === '1' }
+    catch { return false }
+  })
+  const dismissEmptyHero = () => {
+    try { localStorage.setItem('babylog_empty_hero_dismissed', '1') } catch {}
+    setEmptyHeroDismissed(true)
+  }
   const acceptConsent = () => {
     try { localStorage.setItem('babylog_medical_consent_v1', '1') } catch {}
     setConsentAccepted(true)
@@ -193,6 +202,19 @@ export default function App() {
     } catch { return false }
   })()
 
+  // Check if user has ANY data ever (for empty state hero)
+  const hasAnyData = (() => {
+    const keys = ['feed_','sleep_','diaper_','temp_','meds_','growth_']
+    try {
+      return keys.some(k => {
+        const v = localStorage.getItem('babylog_' + k + active.id)
+        if (!v) return false
+        const arr = JSON.parse(v)
+        return Array.isArray(arr) && arr.length > 0
+      })
+    } catch { return false }
+  })()
+
   const visibleStatus    = isPremium ? globalStatus    : (hasDataToday ? FREE_STATUS() : EMPTY_STATUS())
   const visibleTopStatus = isPremium ? topStatus       : 'ok'
   const visibleMessages  = isPremium ? messages        : []
@@ -232,7 +254,14 @@ export default function App() {
 
   const renderTab = () => {
     switch(tab) {
-      case 'feed':       return <FeedTab       {...sharedProps} sectionAlerts={visibleSection('feed')}   onNavigate={navigate} />
+      case 'feed':       return (
+        <>
+          {!hasAnyData && !emptyHeroDismissed && (
+            <EmptyStateHero onNavigate={navigate} onDismiss={dismissEmptyHero} />
+          )}
+          <FeedTab {...sharedProps} sectionAlerts={visibleSection('feed')} onNavigate={navigate} />
+        </>
+      )
       case 'sleep':      return <SleepTab      {...sharedProps} sectionAlerts={visibleSection('sleep')}  onNavigate={navigate} />
       case 'diaper':     return <DiaperTab     {...sharedProps} sectionAlerts={visibleSection('diaper')} onNavigate={navigate} />
       case 'milestones': return <MilestonesTab {...sharedProps} />

@@ -75,7 +75,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
         <>
       <div className="form-group">
         <label className="form-label">{t('onb.setup.name')}</label>
-        <input className="form-input" type="text" placeholder={t('profiles.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+        <input className="form-input" type="text" maxLength={40} placeholder={t('profiles.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
       </div>
       <div className="form-group">
         <label className="form-label">Avatar</label>
@@ -146,7 +146,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
         <>
       <div className="form-group">
         <label className="form-label">{t('onb.setup.name')}</label>
-        <input className="form-input" type="text" placeholder={t('profiles.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+        <input className="form-input" type="text" maxLength={40} placeholder={t('profiles.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
       </div>
       <div className="form-group">
         <label className="form-label">Avatar</label>

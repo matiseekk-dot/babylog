@@ -58,7 +58,7 @@ export default function OnboardingScreen({ onComplete }) {
     }
   }
 
-  const skip = () => onComplete({ name: t('app.title') === 'Calm Parent' ? 'My baby' : 'Moje dziecko', months:4, weight:0, avatar:'👶' })
+  const skip = () => onComplete({ name: t('app.title') === 'Calm Parent' ? 'My baby' : 'Moje dziecko', months:4, weight:6.5, avatar:'👶' })
 
   const canProceed = !isSetup || name.trim().length > 0
 
@@ -147,7 +147,7 @@ export default function OnboardingScreen({ onComplete }) {
               <label className="form-label">{t('onb.setup.name')}</label>
               <input
                 className="form-input"
-                type="text"
+                type="text" maxLength={40}
                 placeholder={t('onb.setup.name_ph')}
                 value={name}
                 onChange={e=>setName(e.target.value)}

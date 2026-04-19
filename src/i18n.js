@@ -82,6 +82,7 @@ const TRANSLATIONS = {
     'login.loading':      'Logowanie...',
     'login.error':        'Nie udało się zalogować. Spróbuj ponownie.',
     'login.footer':       'Kontynuując, akceptujesz naszą Politykę Prywatności.\nTwoje dane zdrowotne są przechowywane tylko na Twoim koncie Google.',
+    'login.guest_note':             'Możesz się zalogować później w Ustawieniach',
     'login.use_without_account': 'Używaj bez konta',
     'login.guest_upgrade':'Zaloguj się, aby zsynchronizować dane',
 
@@ -212,6 +213,32 @@ const TRANSLATIONS = {
     'meds.dosage_ph':  'np. Paracetamol 120mg',
     'meds.dose_ph':  'np. 2 ml',
     'onb.months_ph':  'np. 4',
+    // Medicine — weight validation
+    'meds.no_weight.title':        'Brakuje wagi dziecka',
+    'meds.no_weight.desc':         'Aby wyliczyć bezpieczne dawki leków, podaj aktualną wagę dziecka w Ustawieniach.',
+    'meds.no_weight.cta':          'Przejdź do Ustawień',
+
+    // Placeholders
+    'temp.note_after_med_ph':      'np. po Paracetamolu',
+    'common.optional_ph':          'opcjonalnie...',
+    'chart.loading':               'Ładowanie wykresu...',
+    // Empty state hero (first-time users)
+    'empty_hero.title':            'Witaj w Spokojny Rodzic',
+    'empty_hero.subtitle':         'Zacznij od jednej z poniższych funkcji — najważniejszych dla zdrowia dziecka.',
+    'empty_hero.temp.title':       'Zmierz temperaturę',
+    'empty_hero.temp.desc':        'Najważniejsza wskazówka gdy dziecko jest chore',
+    'empty_hero.meds.title':       'Sprawdź bezpieczną dawkę',
+    'empty_hero.meds.desc':        'Kalkulator dawek dla Paracetamolu i Ibuprofenu',
+    'empty_hero.feed.title':       'Zapisz karmienie',
+    'empty_hero.feed.desc':        'Jedno tapnięcie — pełna historia dnia',
+    'dose.modal.log_btn':          'Zapisałam podanie {dose}',
+    'meds.toast.logged':           '{med} — zapisane',
+    'temp.invalid':                'Nieprawidłowa temperatura — wpisz wartość między 30 a 45°C',
+
+    // Age unit labels (if missing)
+    'age.unit.years':              'lata',
+    'age.unit.months':             'miesiące',
+    'onb.years_ph':                '0',
     'onb.weight_ph':  'np. 6.5',
     'temp.note_label':  'Notatka',
     'temp.note_ph':  'np. po kąpieli, kaszel...',
@@ -681,6 +708,7 @@ const TRANSLATIONS = {
     'login.loading':      'Signing in...',
     'login.error':        'Sign in failed. Please try again.',
     'login.footer':       'By continuing, you agree to our Privacy Policy.\nYour health data is stored only in your Google account.',
+    'login.guest_note':             'You can sign in later from Settings',
     'login.use_without_account': 'Use without account',
     'login.guest_upgrade':'Sign in to sync your data',
 
@@ -811,6 +839,32 @@ const TRANSLATIONS = {
     'meds.dosage_ph':  'e.g. Paracetamol 120mg',
     'meds.dose_ph':  'e.g. 2 ml',
     'onb.months_ph':  'e.g. 4',
+    // Medicine — weight validation
+    'meds.no_weight.title':        "Baby's weight is missing",
+    'meds.no_weight.desc':         "To calculate safe medicine doses, please enter your baby's current weight in Settings.",
+    'meds.no_weight.cta':          'Go to Settings',
+
+    // Placeholders
+    'temp.note_after_med_ph':      'e.g. after paracetamol',
+    'common.optional_ph':          'optional...',
+    'chart.loading':               'Loading chart...',
+    // Empty state hero (first-time users)
+    'empty_hero.title':            'Welcome to Calm Parent',
+    'empty_hero.subtitle':         "Start with one of the features below — they matter most for your baby's health.",
+    'empty_hero.temp.title':       'Take temperature',
+    'empty_hero.temp.desc':        'The most important signal when your baby is sick',
+    'empty_hero.meds.title':       'Check a safe dose',
+    'empty_hero.meds.desc':        'Dose calculator for paracetamol and ibuprofen',
+    'empty_hero.feed.title':       'Log a feeding',
+    'empty_hero.feed.desc':        "One tap — full day's history",
+    'dose.modal.log_btn':          'I gave this dose ({dose})',
+    'meds.toast.logged':           '{med} — logged',
+    'temp.invalid':                'Invalid temperature — enter a value between 30 and 45°C',
+
+    // Age unit labels (if missing)
+    'age.unit.years':              'years',
+    'age.unit.months':             'months',
+    'onb.years_ph':                '0',
     'onb.weight_ph':  'e.g. 6.5',
     'temp.note_label':  'Note',
     'temp.note_ph':  'e.g. after bath, coughing...',

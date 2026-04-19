@@ -47,6 +47,22 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   }
   const remove = (id) => setLogs(logs.filter(l=>l.id!==id))
 
+  const logDoseFromModal = () => {
+    if (!doseModal?.med) return
+    const entry = {
+      id: genId(),
+      med: doseModal.med,
+      dose: doseModal.suggestedDose || '',
+      time: nowTime(),
+      date: todayDate(),
+      note: '',
+    }
+    setLogs([entry, ...logs])
+    if (permission === 'granted') scheduleReminder(entry)
+    setDoseModal(null)
+    toast(t('meds.toast.logged', { med: displayMedName(doseModal.med) }))
+  }
+
   const addCustomMed = () => {
     if (!medForm.name.trim()) return
     setCustomMeds([...customMeds, { id:genId(), ...medForm, name:medForm.name.trim() }])
@@ -56,22 +72,22 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   const removeCustomMed = (id) => { setCustomMeds(customMeds.filter(m=>m.id!==id)); setDeleteId(null) }
 
   const DOSE_INFO = {
-    Paracetamol: { title:t('med.name.paracetamol'), content:[
+    Paracetamol: { med:'Paracetamol', suggestedDose: parac.mlStd ? `${parac.mlStd} ml` : '', title:t('med.name.paracetamol'), content:[
       t('dose.paracetamol.single', {dose: parac.dose}),
       t('dose.paracetamol.susp120', {ml: parac.mlStd}),
       t('dose.paracetamol.susp240', {ml: parac.mlFort}),
       t('dose.paracetamol.max', {max: parac.maxDaily}),
       t('dose.for_weight', {kg: weightKg}),
     ] },
-    Ibuprofen: { title:t('med.name.ibuprofen'), content: ibu ? [
+    Ibuprofen: { med:'Ibuprofen', suggestedDose: ibu?.ml ? `${ibu.ml} ml` : '', title:t('med.name.ibuprofen'), content: ibu ? [
       t('dose.ibuprofen.single', {dose: ibu.dose}),
       t('dose.ibuprofen.susp', {ml: ibu.ml}),
       t('dose.ibuprofen.max', {max: ibu.maxDaily}),
       t('dose.ibuprofen.min_age'),
       t('dose.for_weight', {kg: weightKg}),
     ] : [t('dose.ibuprofen.not_for_infants')] },
-    'Sól fizjologiczna': { title:t('med.name.saline'), content:[t('dose.saline.1'),t('dose.saline.2'),t('dose.saline.3'),t('dose.saline.4')] },
-    Probiotyk: { title:t('med.name.probiotic'), content:[t('dose.probiotic.1'),t('dose.probiotic.2'),t('dose.probiotic.3')] }
+    'Sól fizjologiczna': { med:'Sól fizjologiczna', suggestedDose:'', title:t('med.name.saline'), content:[t('dose.saline.1'),t('dose.saline.2'),t('dose.saline.3'),t('dose.saline.4')] },
+    Probiotyk: { med:'Probiotyk', suggestedDose:'', title:t('med.name.probiotic'), content:[t('dose.probiotic.1'),t('dose.probiotic.2'),t('dose.probiotic.3')] }
   }
 
   return (
@@ -110,7 +126,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             <button onClick={()=>setDoseModal(DOSE_INFO[med])} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,minHeight:36}}>{t('meds.dose_btn')}</button>
           </div>
         ))}
-      </div>
+      </div>}
 
       <div className="warn-card"><strong>{t('med.important')}</strong> {t('med.disclaimer')}</div>
 
@@ -155,7 +171,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
                 <div className="log-name">{m.name}</div>
                 <div className="log-detail">{m.dosage || 'Wg ulotki / zalecenia lekarza'}</div>
               </div>
-              <button onClick={()=>setDoseModal({ title:m.name, content:[m.dosage,m.notes].filter(Boolean) })} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:600,minHeight:36,marginRight:4}}>Info</button>
+              <button onClick={()=>setDoseModal({ med:m.name, suggestedDose:'', title:m.name, content:[m.dosage,m.notes].filter(Boolean) })} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:600,minHeight:36,marginRight:4}}>Info</button>
               <button onClick={()=>setDeleteId(m.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,minHeight:44,minWidth:36,cursor:'pointer'}}>✕</button>
             </div>
           ))}
@@ -192,9 +208,9 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             ))}
           </div>
         </div>
-        <div className="form-group"><label className="form-label">{t('meds.add_custom.name')}</label><input className="form-input" type="text" placeholder={t("meds.custom.name_ph")} value={medForm.name} onChange={e=>setMedForm(f=>({...f,name:e.target.value}))} /></div>
-        <div className="form-group"><label className="form-label">{t('meds.add_custom.dosage')}</label><input className="form-input" type="text" placeholder={t("meds.custom.dosage_ph")} value={medForm.dosage} onChange={e=>setMedForm(f=>({...f,dosage:e.target.value}))} /></div>
-        <div className="form-group"><label className="form-label">{t('meds.add_custom.notes')}</label><input className="form-input" type="text" placeholder={t('meds.add_custom.notes_ph')} value={medForm.notes} onChange={e=>setMedForm(f=>({...f,notes:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('meds.add_custom.name')}</label><input className="form-input" type="text" maxLength={100} placeholder={t("meds.custom.name_ph")} value={medForm.name} onChange={e=>setMedForm(f=>({...f,name:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('meds.add_custom.dosage')}</label><input className="form-input" type="text" maxLength={100} placeholder={t("meds.custom.dosage_ph")} value={medForm.dosage} onChange={e=>setMedForm(f=>({...f,dosage:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('meds.add_custom.notes')}</label><input className="form-input" type="text" maxLength={200} placeholder={t('meds.add_custom.notes_ph')} value={medForm.notes} onChange={e=>setMedForm(f=>({...f,notes:e.target.value}))} /></div>
         <div className="modal-btns"><button className="btn-secondary" onClick={()=>setAddMedModal(false)}>{t('common.cancel')}</button><button className="btn-primary" onClick={addCustomMed}>{t('common.save')}</button></div>
       </Modal>
 
@@ -209,10 +225,10 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             </option>
           ))}</select></div>
         <div className="form-row">
-          <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" placeholder={t("meds.custom.dose_ph")} value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" maxLength={100} placeholder={t("meds.custom.dose_ph")} value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} /></div>
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
         </div>
-        <div className="form-group"><label className="form-label">Notatka</label><input className="form-input" type="text" placeholder="opcjonalnie..." value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">Notatka</label><input className="form-input" type="text" maxLength={200} placeholder={t("common.optional_ph")} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
         <div className="modal-btns"><button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button><button className="btn-primary" onClick={add}>{t('common.save')}</button></div>
       </Modal>
 
@@ -241,8 +257,27 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           {t('dose.modal.footer')}
         </div>
 
-        <div className="modal-btns" style={{marginTop:16}}>
-          <button className="btn-primary" onClick={()=>setDoseModal(null)}>{t('common.close')}</button>
+        <div className="modal-btns" style={{marginTop:16, gap:8, flexDirection:'column'}}>
+          {doseModal?.med && (
+            <button
+              onClick={logDoseFromModal}
+              style={{
+                width:'100%', background:'var(--green)', color:'#fff',
+                border:'none', borderRadius:12, padding:'12px 16px',
+                fontSize:14, fontWeight:700, cursor:'pointer', minHeight:48,
+                display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+              }}
+            >
+              ✓ {t('dose.modal.log_btn', { dose: doseModal.suggestedDose || '' })}
+            </button>
+          )}
+          <button
+            className="btn-secondary"
+            style={{width:'100%'}}
+            onClick={()=>setDoseModal(null)}
+          >
+            {t('common.close')}
+          </button>
         </div>
       </Modal>
 

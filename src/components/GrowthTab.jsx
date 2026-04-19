@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, genId} from '../utils/helpers'
 import Modal from './Modal'
 import { toast } from './Toast'
 import { t, useLocale } from '../i18n'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+const GrowthChart = React.lazy(() => import('./GrowthChart'))
 
 export default function GrowthTab({uid, babyId }) {
   useLocale()
@@ -53,14 +53,9 @@ export default function GrowthTab({uid, babyId }) {
             <button className={`seg-btn ${view==='headCirc'?'active':''}`} onClick={()=>setView('headCirc')}>{t('growth.view.head')}</button>
           </div>
           <div className="chart-wrap">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <XAxis dataKey="date" tick={{fontSize:11}} />
-                <YAxis tick={{fontSize:11}} width={36} />
-                <Tooltip />
-                <Line type="monotone" dataKey={view} stroke="var(--green)" strokeWidth={2} dot={{ r:4 }} connectNulls />
-              </LineChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div style={{padding:'20px',textAlign:'center',color:'var(--text-3)',fontSize:13}}>{t('chart.loading')}</div>}>
+              <GrowthChart data={chartData} dataKey={view} />
+            </Suspense>
           </div>
         </div>
       )}

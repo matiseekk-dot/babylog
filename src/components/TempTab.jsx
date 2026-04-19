@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, genId, getTempClass, getTempLabel } from '../utils/helpers'
 import Modal from './Modal'
@@ -6,7 +6,7 @@ import { toast } from './Toast'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
-import TempChart from './TempChart'
+const TempChart = React.lazy(() => import('./TempChart'))
 import { interpretTemp } from '../engine/interpretations'
 import { t, useLocale } from '../i18n'
 
@@ -17,7 +17,12 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
   const [form, setForm] = useState({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
 
   const add = () => {
-    setLogs([{ id:genId(), ...form, temp:Number(form.temp) }, ...logs])
+    const tempValue = Number(form.temp)
+    if (isNaN(tempValue) || tempValue < 30 || tempValue > 45) {
+      toast(t('temp.invalid'))
+      return
+    }
+    setLogs([{ id:genId(), ...form, temp:tempValue }, ...logs])
     setModal(false)
     setForm({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
     onDataChange?.()
@@ -44,13 +49,15 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
             <div style={{fontSize:40,fontWeight:700}} className={getTempClass(last.temp)}>{last.temp.toFixed(1)}°C</div>
             <div>
               <div style={{fontSize:15,fontWeight:600,color:'var(--text)'}}>{getTempLabel(last.temp)}</div>
-              <div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>{last.time} · {last.method}</div>
+              <div style={{fontSize:12,color:'var(--text-3)',marginTop:2}}>{last.time} · {displayMethod(last.method)}</div>
             </div>
           </div>
         </div>
       )}
 
-      <TempChart logs={logs} />
+      <Suspense fallback={<div style={{padding:'20px',textAlign:'center',color:'var(--text-3)',fontSize:13}}>{t('chart.loading')}</div>}>
+        <TempChart logs={logs} />
+      </Suspense>
 
       {isPremium
         ? <InlineInsight insight={interpretTemp(logs)} />
@@ -92,7 +99,7 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
           <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
         </div>
-        <div className="form-group"><label className="form-label">{t('temp.note_label')}</label><input className="form-input" type="text" placeholder="np. po Paracetamolu" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('temp.note_label')}</label><input className="form-input" type="text" maxLength={200} placeholder={t("temp.note_after_med_ph")} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
           <button className="btn-primary" onClick={add}>{t('common.save')}</button>

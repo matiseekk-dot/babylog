@@ -120,7 +120,7 @@ export default function DiaperTab({uid, babyId, sectionAlerts = [], onNavigate, 
         </div>
         <div className="form-group">
           <label className="form-label">{t('diaper.modal.note')}</label>
-          <input className="form-input" type="text" value={form.note} placeholder={t('diaper.note_ph')} onChange={e=>setForm(f=>({...f,note:e.target.value}))} />
+          <input className="form-input" type="text" maxLength={200} value={form.note} placeholder={t('diaper.note_ph')} onChange={e=>setForm(f=>({...f,note:e.target.value}))} />
         </div>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>

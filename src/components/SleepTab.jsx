@@ -42,7 +42,10 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
       clearInterval(intervalRef.current)
       const dur = Math.floor((Date.now() - startTs) / 1000)
       const mins = Math.round(dur / 60)
-      const entry = { id: genId(), date: todayDate(), durationMin: mins, label: 'Drzemka', manual: false }
+      // Use SLEEP START date, not wake-up date — so sleep crossing midnight
+      // is attributed to the day you went to bed, not the day you woke up
+      const startDate = new Date(startTs).toISOString().slice(0,10)
+      const entry = { id: genId(), date: startDate, durationMin: mins, label: 'Drzemka', manual: false, startTs, endTs: Date.now() }
       setLogs([entry, ...logs])
       setStartTs(null)
       setRunning(false)
@@ -56,8 +59,8 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
         .reduce((s, l) => s + (l.durationMin || 0), 0)
       const h = Math.floor(todaysTotalMin / 60)
       const m = todaysTotalMin % 60
-      const sessionH = Math.floor(duration / 3600)
-      const sessionM = Math.floor((duration % 3600) / 60)
+      const sessionH = Math.floor(dur / 3600)
+      const sessionM = Math.floor((dur % 3600) / 60)
       const sessionStr = sessionH > 0 ? `${sessionH}h ${sessionM}m` : `${sessionM}m`
       const totalStr = h > 0 ? `${h}h ${m}m` : `${m}m`
       toast(`${t('toast.sleep_ended')}: ${sessionStr} • ${t('sleep.today_total')}: ${totalStr}`)

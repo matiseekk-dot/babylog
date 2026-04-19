@@ -103,7 +103,7 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
       <Modal open={modal} onClose={()=>setModal(false)} title={t('vacc.modal.title')}>
         <div className="form-group">
           <label className="form-label">{t('vacc.modal.name')}</label>
-          <input className="form-input" type="text" placeholder={t('vacc.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+          <input className="form-input" type="text" maxLength={40} placeholder={t('vacc.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
         </div>
         <div className="form-row">
           <div className="form-group">
@@ -112,7 +112,7 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
           </div>
           <div className="form-group">
             <label className="form-label">{t('vacc.modal.when_label')}</label>
-            <input className="form-input" type="text" placeholder={t('vacc.modal.when_ph')} value={form.when} onChange={e=>setForm(f=>({...f,when:e.target.value}))} />
+            <input className="form-input" type="text" maxLength={100} placeholder={t('vacc.modal.when_ph')} value={form.when} onChange={e=>setForm(f=>({...f,when:e.target.value}))} />
           </div>
         </div>
         <div className="modal-btns">

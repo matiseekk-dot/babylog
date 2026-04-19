@@ -166,7 +166,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
         </div>
         <div className="form-group">
           <label className="form-label">{t('doctor.modal.doctor')}</label>
-          <input className="form-input" type="text" placeholder={t('doctor.doctor_ph_short')} value={form.doctor} onChange={e => setForm(f => ({ ...f, doctor: e.target.value }))} />
+          <input className="form-input" type="text" maxLength={80} placeholder={t('doctor.doctor_ph_short')} value={form.doctor} onChange={e => setForm(f => ({ ...f, doctor: e.target.value }))} />
         </div>
         <div className="form-group">
           <label className="form-label">Diagnoza / objawy</label>
@@ -192,7 +192,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
         </div>
         <div className="form-group">
           <label className="form-label">Przepisane leki</label>
-          <input className="form-input" type="text" placeholder={t('doctor.meds_ph')} value={form.medications} onChange={e => setForm(f => ({ ...f, medications: e.target.value }))} />
+          <input className="form-input" type="text" maxLength={80} placeholder={t('doctor.meds_ph')} value={form.medications} onChange={e => setForm(f => ({ ...f, medications: e.target.value }))} />
         </div>
         <div className="form-group">
           <label className="form-label">Data kontroli</label>

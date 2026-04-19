@@ -129,7 +129,7 @@ export default function SettingsScreen({
           {/* Fields */}
           <div className="form-group">
             <label className="form-label">{t('onb.setup.name')}</label>
-            <input className="form-input" type="text" value={name} onChange={e => setName(e.target.value)} />
+            <input className="form-input" type="text" maxLength={40} value={name} onChange={e => setName(e.target.value)} />
           </div>
           <div className="form-group">
             <label className="form-label">{t('onb.setup.age')}</label>

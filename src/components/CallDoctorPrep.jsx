@@ -16,6 +16,16 @@ import { useFirestore } from '../hooks/useFirestore'
  */
 
 export default function CallDoctorPrep({ profile, uid, onClose, onCall }) {
+
+  useLocale()
+  const displayMedName = (name) => {
+    if (name === 'Paracetamol') return t('med.name.paracetamol')
+    if (name === 'Ibuprofen') return t('med.name.ibuprofen')
+    if (name === 'Sól fizjologiczna') return t('med.name.saline')
+    if (name === 'Probiotyk') return t('med.name.probiotic')
+    return name
+  }
+
   useLocale()
 
   const babyId = profile.id
@@ -127,7 +137,7 @@ export default function CallDoctorPrep({ profile, uid, onClose, onCall }) {
               fontSize: 13, color: '#3a3a36',
             }}>
               <div>
-                <strong>{l.med}</strong>
+                <strong>{displayMedName(l.med)}</strong>
                 {l.dose && <span> — {l.dose}</span>}
               </div>
               <div style={{ fontSize: 11, color: '#9a9a94' }}>

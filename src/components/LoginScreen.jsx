@@ -121,19 +121,31 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
           {t('login.footer').split('\n').map((l,i)=><span key={i}>{l}{i===0?<br />:null}</span>)}
         </p>
 
-        {/* Guest mode */}
+        {/* Guest mode - prominent secondary button */}
         <button
           onClick={onSkip}
           style={{
-            width: '100%', marginTop: 12, padding: '12px',
-            background: 'transparent', color: '#5a5a56',
-            border: 'none', borderRadius: 10,
-            fontSize: 13, fontWeight: 500, cursor: 'pointer',
-            textDecoration: 'underline',
+            width: '100%', marginTop: 14, padding: '14px',
+            background: '#F5F9F7',
+            color: '#0F6E56',
+            border: '1px solid #C5E8D9',
+            borderRadius: 12,
+            fontSize: 15, fontWeight: 600, cursor: 'pointer',
+            minHeight: 50,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
         >
+          <span style={{fontSize:16}}>🚀</span>
           {t('login.use_without_account')}
         </button>
+
+        {/* Small note - sync is optional */}
+        <p style={{
+          fontSize: 11, color: '#9a9a94', textAlign: 'center',
+          marginTop: 8, lineHeight: 1.4,
+        }}>
+          {t('login.guest_note')}
+        </p>
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
