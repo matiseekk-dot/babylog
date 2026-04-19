@@ -147,7 +147,16 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           <div className="form-group">
             <label className="form-label">{t('doctor.modal.type')}</label>
             <select className="form-select" value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value }))}>
-              {VISIT_TYPES.map(t => <option key={t}>{t}</option>)}
+              {VISIT_TYPES.map(vt => (
+                <option key={vt} value={vt}>
+                  {vt === 'Pediatra'     ? t('doctor.visit.pediatrician')
+                   : vt === 'Pogotowie'  ? t('doctor.visit.emergency')
+                   : vt === 'Teleporada' ? t('doctor.visit.telehealth')
+                   : vt === 'Specjalista'? t('doctor.visit.specialist')
+                   : vt === 'Kontrolna'  ? t('doctor.visit.routine')
+                   : vt}
+                </option>
+              ))}
             </select>
           </div>
           <div className="form-group">

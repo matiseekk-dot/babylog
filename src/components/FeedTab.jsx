@@ -151,7 +151,15 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
         <div className="form-group">
           <label className="form-label">{t('feed.modal.type')}</label>
           <select className="form-select" value={form.type} onChange={e => setForm(f=>({...f,type:e.target.value,amount:e.target.value.startsWith('Pierś')?'15':'120'}))}>
-            {TYPES.map(t => <option key={t}>{t}</option>)}
+            {TYPES.map(type => (
+              <option key={type} value={type}>
+                {type === 'Pierś lewa'       ? t('feed.type.left')
+                 : type === 'Pierś prawa'    ? t('feed.type.right')
+                 : type === 'Butelka'        ? t('feed.type.bottle')
+                 : type === 'Odciągnięte mleko' ? t('feed.type.pumped')
+                 : type}
+              </option>
+            ))}
           </select>
         </div>
         <div className="form-row">

@@ -48,10 +48,22 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   const removeCustomMed = (id) => { setCustomMeds(customMeds.filter(m=>m.id!==id)); setDeleteId(null) }
 
   const DOSE_INFO = {
-    Paracetamol: { title:'Paracetamol', content:[`Dawka jednorazowa: ${parac.dose} mg (15 mg/kg)`,`Zawiesina 120 mg/5 ml → ${parac.mlStd} ml`,`Zawiesina 240 mg/5 ml → ${parac.mlFort} ml`,`Maks. dobowa: ${parac.maxDaily} mg (co 4–6h, maks. 4× dziennie)`,`Dla wagi: ${weightKg} kg`] },
-    Ibuprofen: { title:'Ibuprofen', content: ibu ? [`Dawka jednorazowa: ${ibu.dose} mg (10 mg/kg)`,`Zawiesina 100 mg/5 ml → ${ibu.ml} ml`,`Maks. dobowa: ${ibu.maxDaily} mg (co 6–8h, maks. 3× dziennie)`,`Stosować od 3. miesiąca życia`,`Dla wagi: ${weightKg} kg`] : [`Ibuprofen nie jest zalecany poniżej 3. miesiąca życia.`] },
-    'Sól fizjologiczna': { title:'Sól fizjologiczna', content:['3–5 kropli do każdej dziurki nosa','Podawać 3–4× dziennie','Wkraplać w pozycji leżącej z lekko odchyloną głową','Można stosować od urodzenia'] },
-    Probiotyk: { title:'Probiotyk', content:['1× dziennie, 5–10 kropli lub 1 saszetka (wg ulotki)','Stosować min. 2h po antybiotyku','Można mieszać z mlekiem lub papką'] }
+    Paracetamol: { title:t('med.name.paracetamol'), content:[
+      t('dose.paracetamol.single', {dose: parac.dose}),
+      t('dose.paracetamol.susp120', {ml: parac.mlStd}),
+      t('dose.paracetamol.susp240', {ml: parac.mlFort}),
+      t('dose.paracetamol.max', {max: parac.maxDaily}),
+      t('dose.for_weight', {kg: weightKg}),
+    ] },
+    Ibuprofen: { title:t('med.name.ibuprofen'), content: ibu ? [
+      t('dose.ibuprofen.single', {dose: ibu.dose}),
+      t('dose.ibuprofen.susp', {ml: ibu.ml}),
+      t('dose.ibuprofen.max', {max: ibu.maxDaily}),
+      t('dose.ibuprofen.min_age'),
+      t('dose.for_weight', {kg: weightKg}),
+    ] : [t('dose.ibuprofen.not_for_infants')] },
+    'Sól fizjologiczna': { title:t('med.name.saline'), content:[t('dose.saline.1'),t('dose.saline.2'),t('dose.saline.3'),t('dose.saline.4')] },
+    Probiotyk: { title:t('med.name.probiotic'), content:[t('dose.probiotic.1'),t('dose.probiotic.2'),t('dose.probiotic.3')] }
   }
 
   return (
@@ -151,7 +163,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
       <div className="card" style={{marginTop:8}}>
         <div className="card-header">{t('meds.history')}</div>
         {logs.length === 0
-          ? <div className="empty-state"><div className="empty-icon">💊</div><p>Brak podanych leków</p></div>
+          ? <div className="empty-state"><div className="empty-icon">💊</div><p>{t('meds.history.empty')}</p></div>
           : logs.slice(0,20).map(l => (
             <div className="log-item" key={l.id}>
               <div className="log-icon">💊</div>
@@ -179,7 +191,15 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
       </Modal>
 
       <Modal open={modal} onClose={()=>setModal(false)} title={t('meds.modal.title')}>
-        <div className="form-group"><label className="form-label">{t('meds.modal.drug')}</label><select className="form-select" value={form.med} onChange={e=>setForm(f=>({...f,med:e.target.value}))}>{allMedNames.map(m=><option key={m}>{m}</option>)}</select></div>
+        <div className="form-group"><label className="form-label">{t('meds.modal.drug')}</label><select className="form-select" value={form.med} onChange={e=>setForm(f=>({...f,med:e.target.value}))}>{allMedNames.map(mn => (
+            <option key={mn} value={mn}>
+              {mn === 'Paracetamol'        ? t('med.name.paracetamol')
+               : mn === 'Ibuprofen'        ? t('med.name.ibuprofen')
+               : mn === 'Sól fizjologiczna'? t('med.name.saline')
+               : mn === 'Probiotyk'        ? t('med.name.probiotic')
+               : mn}
+            </option>
+          ))}</select></div>
         <div className="form-row">
           <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" placeholder="np. 2.5 ml" value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} /></div>
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
@@ -194,7 +214,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
       </Modal>
 
       <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title={t('meds.custom.delete_title')}>
-        <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>Czy na pewno chcesz usunąć ten lek z kalkulatora?</p>
+        <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>{t('meds.custom.delete_msg')}</p>
         <div className="modal-btns"><button className="btn-secondary" onClick={()=>setDeleteId(null)}>{t('common.cancel')}</button><button className="btn-primary" style={{background:'var(--coral)'}} onClick={()=>removeCustomMed(deleteId)}>{t('common.delete')}</button></div>
       </Modal>
     </>

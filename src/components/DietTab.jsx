@@ -88,7 +88,7 @@ export default function DietTab({uid, babyId, ageMonths }) {
               <div className="diet-age">{t('diet.from_month', {months: d.months})}</div>
               {s==='ok' && <div style={{fontSize:10,color:'var(--green-dark)',fontWeight:700,marginTop:3}}>{t('diet.status.tried')}</div>}
               {s==='nope' && <div style={{fontSize:10,color:'var(--coral)',fontWeight:700,marginTop:3}}>✗ Reakcja</div>}
-              {locked && <div style={{fontSize:10,color:'var(--text-3)',marginTop:3}}>🔒 Zbyt wcześnie</div>}
+              {locked && <div style={{fontSize:10,color:'var(--text-3)',marginTop:3}}>{t('diet.status.too_early')}</div>}
             </div>
           )
         })}
@@ -135,7 +135,7 @@ export default function DietTab({uid, babyId, ageMonths }) {
         </p>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={()=>setDeleteId(null)}>{t('common.cancel')}</button>
-          <button className="btn-primary" style={{background:'var(--coral)'}} onClick={()=>removeCustom(deleteId)}>Usuń</button>
+          <button className="btn-primary" style={{background:'var(--coral)'}} onClick={()=>removeCustom(deleteId)}>{t('common.delete')}</button>
         </div>
       </Modal>
     </>

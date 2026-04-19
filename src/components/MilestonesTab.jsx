@@ -124,10 +124,10 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
       </Modal>
 
       <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title={t('milestones.delete_title')}>
-        <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>Czy na pewno chcesz usunąć ten kamień milowy?</p>
+        <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>{t('milestones.delete_msg')}</p>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={()=>setDeleteId(null)}>{t('common.cancel')}</button>
-          <button className="btn-primary" style={{background:'var(--coral)'}} onClick={()=>removeCustom(deleteId)}>Usuń</button>
+          <button className="btn-primary" style={{background:'var(--coral)'}} onClick={()=>removeCustom(deleteId)}>{t('common.delete')}</button>
         </div>
       </Modal>
     </>

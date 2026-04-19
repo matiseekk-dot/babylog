@@ -527,6 +527,48 @@ const TRANSLATIONS = {
     'milestones.delete_title':     'Usuń kamień milowy',
     'vacc.delete_title':           'Usuń szczepienie',
     'meds.add_custom.notes_ph':    'np. Przed posiłkiem...',
+    // Feed types (dropdown labels — Polish values remain as data)
+    'feed.type.left':              'Pierś lewa',
+    'feed.type.right':             'Pierś prawa',
+    'feed.type.bottle':            'Butelka',
+    'feed.type.pumped':            'Odciągnięte mleko',
+
+    // Medicine names (dropdown labels)
+    'med.name.paracetamol':        'Paracetamol',
+    'med.name.ibuprofen':          'Ibuprofen',
+    'med.name.saline':             'Sól fizjologiczna',
+    'med.name.probiotic':          'Probiotyk',
+
+    // Doctor visit types
+    'doctor.visit.pediatrician':   'Pediatra',
+    'doctor.visit.emergency':      'Pogotowie',
+    'doctor.visit.telehealth':     'Teleporada',
+    'doctor.visit.specialist':     'Specjalista',
+    'doctor.visit.routine':        'Wizyta kontrolna',
+
+    // Dose info - content bullets
+    'dose.paracetamol.single':     'Dawka jednorazowa: {dose} mg (15 mg/kg)',
+    'dose.paracetamol.susp120':    'Zawiesina 120 mg/5 ml → {ml} ml',
+    'dose.paracetamol.susp240':    'Zawiesina 240 mg/5 ml → {ml} ml',
+    'dose.paracetamol.max':        'Maks. dobowa: {max} mg (co 4–6h, maks. 4× dziennie)',
+    'dose.ibuprofen.single':       'Dawka jednorazowa: {dose} mg (10 mg/kg)',
+    'dose.ibuprofen.susp':         'Zawiesina 100 mg/5 ml → {ml} ml',
+    'dose.ibuprofen.max':          'Maks. dobowa: {max} mg (co 6–8h, maks. 3× dziennie)',
+    'dose.ibuprofen.min_age':      'Stosować od 3. miesiąca życia',
+    'dose.ibuprofen.not_for_infants':'Ibuprofen nie jest zalecany poniżej 3. miesiąca życia.',
+    'dose.for_weight':             'Dla wagi: {kg} kg',
+    'dose.saline.1':               '3–5 kropli do każdej dziurki nosa',
+    'dose.saline.2':               'Podawać 3–4× dziennie',
+    'dose.saline.3':               'Wkraplać w pozycji leżącej z lekko odchyloną głową',
+    'dose.saline.4':               'Można stosować od urodzenia',
+    'dose.probiotic.1':            '1× dziennie, 5–10 kropli lub 1 saszetka (wg ulotki)',
+    'dose.probiotic.2':            'Stosować min. 2h po antybiotyku',
+    'dose.probiotic.3':            'Można mieszać z mlekiem lub papką',
+    'meds.custom.delete_msg':       'Czy na pewno chcesz usunąć ten lek z kalkulatora?',
+    'milestones.delete_msg':        'Czy na pewno chcesz usunąć ten kamień milowy?',
+    'vacc.delete_msg':              'Czy na pewno chcesz usunąć to szczepienie?',
+
+
 
 
 
@@ -1037,6 +1079,48 @@ const TRANSLATIONS = {
     'milestones.delete_title':     'Delete milestone',
     'vacc.delete_title':           'Delete vaccination',
     'meds.add_custom.notes_ph':    'e.g. Before meal...',
+    // Feed types (dropdown labels)
+    'feed.type.left':              'Left breast',
+    'feed.type.right':             'Right breast',
+    'feed.type.bottle':            'Bottle',
+    'feed.type.pumped':            'Pumped milk',
+
+    // Medicine names
+    'med.name.paracetamol':        'Paracetamol',
+    'med.name.ibuprofen':          'Ibuprofen',
+    'med.name.saline':             'Saline drops',
+    'med.name.probiotic':          'Probiotic',
+
+    // Doctor visit types
+    'doctor.visit.pediatrician':   'Pediatrician',
+    'doctor.visit.emergency':      'Emergency',
+    'doctor.visit.telehealth':     'Telehealth',
+    'doctor.visit.specialist':     'Specialist',
+    'doctor.visit.routine':        'Routine check-up',
+
+    // Dose info - content bullets
+    'dose.paracetamol.single':     'Single dose: {dose} mg (15 mg/kg)',
+    'dose.paracetamol.susp120':    'Suspension 120 mg/5 ml → {ml} ml',
+    'dose.paracetamol.susp240':    'Suspension 240 mg/5 ml → {ml} ml',
+    'dose.paracetamol.max':        'Max daily: {max} mg (every 4–6h, max 4×/day)',
+    'dose.ibuprofen.single':       'Single dose: {dose} mg (10 mg/kg)',
+    'dose.ibuprofen.susp':         'Suspension 100 mg/5 ml → {ml} ml',
+    'dose.ibuprofen.max':          'Max daily: {max} mg (every 6–8h, max 3×/day)',
+    'dose.ibuprofen.min_age':      'Only from 3 months of age',
+    'dose.ibuprofen.not_for_infants':'Ibuprofen is not recommended under 3 months of age.',
+    'dose.for_weight':             'For weight: {kg} kg',
+    'dose.saline.1':               '3–5 drops in each nostril',
+    'dose.saline.2':               'Apply 3–4× per day',
+    'dose.saline.3':               'Apply lying down with head slightly tilted back',
+    'dose.saline.4':               'Safe from birth',
+    'dose.probiotic.1':            '1× daily, 5–10 drops or 1 sachet (per leaflet)',
+    'dose.probiotic.2':            'Apply at least 2h after antibiotic',
+    'dose.probiotic.3':            'Can be mixed with milk or puree',
+    'meds.custom.delete_msg':       'Are you sure you want to delete this medicine from the calculator?',
+    'milestones.delete_msg':        'Are you sure you want to delete this milestone?',
+    'vacc.delete_msg':              'Are you sure you want to delete this vaccination?',
+
+
 
 
 
