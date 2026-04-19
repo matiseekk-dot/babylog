@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "pl.skudev.spokojnyrodzic",
-        "sha256_cert_fingerprints": ["6A:A2:BD:08:11:C8:CB:76:B0:75:74:52:42:77:62:FF:BF:1E:41:A3:08:5A:A9:25:2C:04:02:CF:F5:75:0B:8A"]
+        "package_name": "io.github.matiseekk_dot.twa",
+        "sha256_cert_fingerprints": ["E5:F7:52:FF:07:A5:D6:74:49:B4:F3:CD:AD:AB:70:B4:31:C0:E9:9A:0D:04:B5:34:E9:84:1B:66:6B:98:C5:DC"]
       }
     }]
