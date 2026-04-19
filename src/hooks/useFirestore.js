@@ -1,17 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  doc, collection, getDocs, setDoc, deleteDoc,
-  onSnapshot, enableIndexedDbPersistence
+  doc, collection, getDocs, setDoc, deleteDoc, onSnapshot
 } from 'firebase/firestore'
 import { db } from '../firebase'
 
-// Włącz offline persistence (działa jak localStorage gdy brak internetu)
-let persistenceEnabled = false
-export function enableOffline() {
-  if (persistenceEnabled) return
-  persistenceEnabled = true
-  enableIndexedDbPersistence(db).catch(() => {})
-}
+// Offline persistence jest teraz skonfigurowana w firebase.js
+// przez initializeFirestore z persistentLocalCache
+export function enableOffline() { /* no-op, handled at init */ }
 
 const LS_PREFIX = 'babylog_'
 
@@ -100,12 +95,22 @@ export function useFirestore(uid, key, fallback) {
  */
 export async function migrateAllLocalData(uid) {
   const keys = Object.keys(localStorage).filter(k => k.startsWith(LS_PREFIX))
-  const promises = keys.map(fullKey => {
+  const migratedKeys = []
+  const promises = keys.map(async fullKey => {
     const key = fullKey.slice(LS_PREFIX.length)
     try {
       const value = JSON.parse(localStorage.getItem(fullKey))
-      return setDoc(doc(db, 'users', uid, 'data', key), { value })
-    } catch { return Promise.resolve() }
+      await setDoc(doc(db, 'users', uid, 'data', key), { value })
+      migratedKeys.push(fullKey)
+    } catch { /* skip */ }
   })
   await Promise.all(promises)
+  // BUG-010: Po udanej migracji usuń z localStorage żeby nie duplikować
+  // Ale zachowaj guest flag i locale preference
+  const PRESERVE = ['babylog_locale', 'babylog_guest']
+  migratedKeys.forEach(k => {
+    if (!PRESERVE.includes(k)) {
+      try { localStorage.removeItem(k) } catch {}
+    }
+  })
 }

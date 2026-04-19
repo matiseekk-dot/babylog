@@ -3,7 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
-import { toast } from './Toast'
+import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
@@ -21,6 +21,12 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
   useLocale()
   const QUICK_BTNS = getQuickBtns()
   const [logs, setLogs] = useFirestore(uid, `feed_${babyId}`, [])
+
+  // Smart suggestion — suggest opposite breast from last feed
+  const lastBreastFeed = logs.find(l => l.type?.startsWith('Pierś'))
+  const suggestedType = lastBreastFeed
+    ? (lastBreastFeed.type === 'Pierś lewa' ? 'Pierś prawa' : 'Pierś lewa')
+    : null
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
 
@@ -53,7 +59,16 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
     toast(t('feed.toast.saved'))
   }
 
-  const remove = (id) => { setLogs(logs.filter(l => l.id !== id)); onDataChange?.() }
+  const remove = (id) => {
+    const removed = logs.find(l => l.id === id)
+    if (!removed) return
+    setLogs(logs.filter(l => l.id !== id))
+    onDataChange?.()
+    toastWithUndo(t('common.deleted'), () => {
+      setLogs(prev => [removed, ...prev])
+      onDataChange?.()
+    })
+  }
   const isBottle = form.type==='Butelka'||form.type==='Odciągnięte mleko'
 
   return (
@@ -67,23 +82,38 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
 
       {/* Szybkie przyciski — jedno tapnięcie */}
       <div style={{ display:'flex', gap:8, margin:'10px 16px 0' }}>
-        {QUICK_BTNS.map(b => (
-          <button
-            key={b.type}
-            onClick={() => quickAdd(b.type, b.amount)}
-            style={{
-              flex:1, minHeight:64, border:'none', borderRadius:14,
-              background:b.color, color:b.textColor,
-              fontSize:12, fontWeight:700, cursor:'pointer',
-              display:'flex', flexDirection:'column',
-              alignItems:'center', justifyContent:'center', gap:4,
-              whiteSpace:'pre-line', lineHeight:1.2,
-            }}
-          >
-            <span style={{fontSize:22}}>{b.emoji}</span>
-            {b.label}
-          </button>
-        ))}
+        {QUICK_BTNS.map(b => {
+          const isSuggested = b.type === suggestedType
+          return (
+            <button
+              key={b.type}
+              onClick={() => quickAdd(b.type, b.amount)}
+              style={{
+                flex:1, minHeight:64, border: isSuggested ? '2px solid #1D9E75' : 'none',
+                borderRadius:14,
+                background: isSuggested ? '#C5E8D9' : b.color,
+                color:b.textColor,
+                fontSize:12, fontWeight:700, cursor:'pointer',
+                display:'flex', flexDirection:'column',
+                alignItems:'center', justifyContent:'center', gap:2,
+                whiteSpace:'pre-line', lineHeight:1.2, position:'relative',
+              }}
+            >
+              {isSuggested && (
+                <div style={{
+                  position:'absolute', top:-7, right:-4,
+                  fontSize:9, fontWeight:800, color:'#fff',
+                  background:'#1D9E75', borderRadius:10,
+                  padding:'2px 6px',
+                }}>
+                  ↻
+                </div>
+              )}
+              <span style={{fontSize:22}}>{b.emoji}</span>
+              {b.label}
+            </button>
+          )
+        })}
       </div>
 
       <div className="stat-row">

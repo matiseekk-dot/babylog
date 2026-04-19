@@ -82,6 +82,8 @@ const TRANSLATIONS = {
     'login.loading':      'Logowanie...',
     'login.error':        'Nie udało się zalogować. Spróbuj ponownie.',
     'login.footer':       'Kontynuując, akceptujesz naszą Politykę Prywatności.\nTwoje dane zdrowotne są przechowywane tylko na Twoim koncie Google.',
+    'login.use_without_account': 'Używaj bez konta',
+    'login.guest_upgrade':'Zaloguj się, aby zsynchronizować dane',
 
     // Paywall
     'paywall.title':      'Spokojny Rodzic Premium',
@@ -110,6 +112,8 @@ const TRANSLATIONS = {
     'paywall.cta.loading':'Weryfikowanie...',
     'paywall.footer':     'Płatność przez Google Play · Anuluj w każdej chwili',
     'paywall.web_only':   'Zakup Premium jest dostępny w aplikacji Android. Pobierz Spokojny Rodzic z Google Play.',
+    'paywall.testimonials.title': 'Co mówią rodzice',
+    'paywall.testimonials.disclaimer': 'Przykładowe opinie. Po pierwszym launchu — opinie z Google Play.',
 
     // Status card
     'status.free.title':    'Dane zapisane',
@@ -164,10 +168,13 @@ const TRANSLATIONS = {
     'common.note':        'Notatka',
     'common.saved':       'Zapisano',
     'common.today':       'Dzisiaj',
+    'common.deleted':     'Usunięto',
+    'tip.label':          'Ciekawostka dnia',
 
     // Toast
     'toast.saved':        'Zapisano',
     'toast.sleep_ended':  'Sen zakończony',
+    'sleep.today_total':  'łącznie dziś',
     'toast.temp':         'Temperatura zapisana',
     'toast.med':          'Lek zapisany',
     'toast.growth':       'Pomiar zapisany',
@@ -178,6 +185,61 @@ const TRANSLATIONS = {
     'med.disclaimer':     'Podane dawki są orientacyjne. Zawsze konsultuj się z lekarzem lub farmaceutą.',
     'med.remind_enable':  'Włącz powiadomienia, żeby dostać alert gdy będzie można podać kolejną dawkę.',
     'med.remind_btn':     'Włącz',
+    // Settings
+    'settings.title':         'Ustawienia',
+    'settings.child.title':   'Profil dziecka',
+    'settings.saved':         'Zapisano zmiany',
+    'settings.trial.title':   'Premium trial: {days} dni',
+    'settings.trial.desc':    'Korzystasz z pełnej wersji. Kup Premium przed końcem trialu.',
+    'settings.trial.cta':     'Kup Premium',
+    'settings.export.title':  'Eksport danych',
+    'settings.export.desc':   'Pobierz raport PDF z pomiarami, karmieniami i lekami — do pokazania lekarzowi.',
+    'settings.export.cta':    'Pobierz raport PDF',
+    'settings.export.loading':'Generuję PDF...',
+    'settings.export.success':'Raport PDF zapisany',
+    'settings.export.error':  'Nie udało się wygenerować PDF',
+    'settings.account.title': 'Konto',
+    'settings.account.premium':'Premium aktywny',
+    'settings.account.free':  'Wersja darmowa',
+    'settings.account.guest': 'Używasz bez konta. Zaloguj się, aby zsynchronizować dane.',
+
+    // Crisis detection
+    'crisis.watch.title':     'Monitoruj dziecko',
+    'crisis.watch.action1':   'Zmierz temperaturę ponownie',
+    'crisis.call.title':      'Skonsultuj z pediatrą',
+    'crisis.emergency.title': 'Zadzwoń na pogotowie',
+    'crisis.emergency.disclaimer': 'W przypadku zagrożenia życia dziecka NATYCHMIAST dzwoń 112 lub udaj się na SOR.',
+    'crisis.action.call_doctor':'Zadzwoń do pediatry',
+    'crisis.action.call_112':   'Zadzwoń pod 112',
+    'crisis.action.what_to_prepare':'Co powiedzieć lekarzowi',
+
+    // Topbar settings
+    'topbar.settings':        'Ustawienia',
+    // Streak
+    'streak.milestone':   '{days} dni z rzędu z apką!',
+    'streak.tooltip':     'Seria: {days} dni',
+
+    // Call Doctor Prep
+    'prep.title':         'Co powiedzieć lekarzowi',
+    'prep.subtitle':      'Gotowe informacje dla {name}',
+    'prep.intro':         'Otwórz ten ekran gdy dzwonisz do lekarza. Wszystkie ważne informacje są uporządkowane — wystarczy czytać.',
+    'prep.months':        'mies.',
+    'prep.at':            'o',
+    'prep.yesterday':     'Wczoraj',
+    'prep.section.child': 'Dane dziecka',
+    'prep.section.temp':  'Temperatura (ostatnie pomiary)',
+    'prep.section.meds':  'Podane leki',
+    'prep.section.today': 'Dzisiaj',
+    'prep.section.mention':'Dodatkowo wspomnij',
+    'prep.feeds_today':   'Karmienia: {count}',
+    'prep.wet_today':     'Pieluchy mokre: {count}',
+    'prep.dirty_today':   'Pieluchy brudne: {count}',
+    'prep.mention.1':     'Czy dziecko jest apatyczne, senne, trudno je obudzić',
+    'prep.mention.2':     'Czy odmawia jedzenia / picia dłużej niż 6h',
+    'prep.mention.3':     'Czy pojawiła się wysypka, zmiana koloru skóry',
+    'prep.mention.4':     'Czy ma inne objawy: wymioty, biegunka, kaszel, duszność',
+    'prep.free':          'Teleplatforma NFZ — połączenie bezpłatne, 24/7',
+
   },
 
   en: {
@@ -241,6 +303,8 @@ const TRANSLATIONS = {
     'login.loading':      'Signing in...',
     'login.error':        'Sign in failed. Please try again.',
     'login.footer':       'By continuing, you agree to our Privacy Policy.\nYour health data is stored only in your Google account.',
+    'login.use_without_account': 'Use without account',
+    'login.guest_upgrade':'Sign in to sync your data',
 
     // Paywall
     'paywall.title':      'Calm Parent Premium',
@@ -269,6 +333,8 @@ const TRANSLATIONS = {
     'paywall.cta.loading':'Verifying...',
     'paywall.footer':     'Google Play billing · Cancel anytime',
     'paywall.web_only':   'Premium is available in the Android app. Download Calm Parent on Google Play.',
+    'paywall.testimonials.title': 'What parents say',
+    'paywall.testimonials.disclaimer': 'Example reviews. After launch — real reviews from Google Play.',
 
     // Status card
     'status.free.title':    'Data saved',
@@ -323,10 +389,13 @@ const TRANSLATIONS = {
     'common.note':        'Note',
     'common.saved':       'Saved',
     'common.today':       'Today',
+    'common.deleted':     'Deleted',
+    'tip.label':          'Daily tip',
 
     // Toast
     'toast.saved':        'Saved',
     'toast.sleep_ended':  'Sleep ended',
+    'sleep.today_total':  'total today',
     'toast.temp':         'Temperature saved',
     'toast.med':          'Medicine saved',
     'toast.growth':       'Measurement saved',
@@ -337,6 +406,61 @@ const TRANSLATIONS = {
     'med.disclaimer':     'These doses are guidelines. Always consult your doctor or pharmacist.',
     'med.remind_enable':  'Enable notifications to get an alert when the next dose can be given.',
     'med.remind_btn':     'Enable',
+    // Settings
+    'settings.title':         'Settings',
+    'settings.child.title':   'Child profile',
+    'settings.saved':         'Changes saved',
+    'settings.trial.title':   'Premium trial: {days} days left',
+    'settings.trial.desc':    'You have full access. Buy Premium before trial ends.',
+    'settings.trial.cta':     'Buy Premium',
+    'settings.export.title':  'Export data',
+    'settings.export.desc':   'Download a PDF report with measurements, feeds, and meds — for your doctor.',
+    'settings.export.cta':    'Download PDF report',
+    'settings.export.loading':'Generating PDF...',
+    'settings.export.success':'PDF report saved',
+    'settings.export.error':  'Failed to generate PDF',
+    'settings.account.title': 'Account',
+    'settings.account.premium':'Premium active',
+    'settings.account.free':  'Free version',
+    'settings.account.guest': 'Using without account. Sign in to sync your data.',
+
+    // Crisis detection
+    'crisis.watch.title':     'Watch your baby',
+    'crisis.watch.action1':   'Take temperature again',
+    'crisis.call.title':      'Call your pediatrician',
+    'crisis.emergency.title': 'Call emergency services',
+    'crisis.emergency.disclaimer': 'In case of life-threatening emergency, call 112 (EU) / 911 (US) IMMEDIATELY or go to ER.',
+    'crisis.action.call_doctor':'Call pediatrician',
+    'crisis.action.call_112':   'Call 112',
+    'crisis.action.what_to_prepare':'What to tell the doctor',
+
+    // Topbar settings
+    'topbar.settings':        'Settings',
+    // Streak
+    'streak.milestone':   '{days} day streak!',
+    'streak.tooltip':     '{days} day streak',
+
+    // Call Doctor Prep
+    'prep.title':         'What to tell the doctor',
+    'prep.subtitle':      'Info ready for {name}',
+    'prep.intro':         'Open this screen when calling your doctor. All important info is organized — just read it out.',
+    'prep.months':        'months',
+    'prep.at':            'at',
+    'prep.yesterday':     'Yesterday',
+    'prep.section.child': 'Child info',
+    'prep.section.temp':  'Temperature (recent)',
+    'prep.section.meds':  'Medications given',
+    'prep.section.today': 'Today',
+    'prep.section.mention':'Also mention',
+    'prep.feeds_today':   'Feeds: {count}',
+    'prep.wet_today':     'Wet diapers: {count}',
+    'prep.dirty_today':   'Dirty diapers: {count}',
+    'prep.mention.1':     'If baby is lethargic, hard to wake',
+    'prep.mention.2':     'If refusing food/drink for more than 6h',
+    'prep.mention.3':     'If rash or skin color changes appeared',
+    'prep.mention.4':     'Other symptoms: vomiting, diarrhea, cough, breathing difficulty',
+    'prep.free':          'Free medical hotline — 24/7',
+
   },
 }
 
@@ -377,8 +501,14 @@ export function setLocale(locale) {
  * t(key) — zwraca przetłumaczony string.
  * Jeśli klucza nie ma, zwraca sam klucz (żeby łatwo wyłapać brakujące).
  */
-export function t(key) {
-  return TRANSLATIONS[_currentLocale]?.[key] ?? TRANSLATIONS.pl[key] ?? key
+export function t(key, params) {
+  let str = TRANSLATIONS[_currentLocale]?.[key] ?? TRANSLATIONS.pl[key] ?? key
+  if (params) {
+    Object.keys(params).forEach(p => {
+      str = str.replace(new RegExp('\\{' + p + '\\}', 'g'), params[p])
+    })
+  }
+  return str
 }
 
 /**

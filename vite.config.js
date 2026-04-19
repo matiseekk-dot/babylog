@@ -4,9 +4,25 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/babylog/',
-  build: {
-    // Ensure public dir files including hidden .well-known are copied
-    assetsDir: 'assets',
-  },
   publicDir: 'public',
+  build: {
+    assetsDir: 'assets',
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React i core
+          'react-vendor': ['react', 'react-dom'],
+          // Firebase — duża biblioteka, własny chunk
+          'firebase-vendor': [
+            'firebase/app',
+            'firebase/auth',
+            'firebase/firestore',
+          ],
+          // Recharts — tylko dla wykresów
+          'charts': ['recharts'],
+        },
+      },
+    },
+  },
 })

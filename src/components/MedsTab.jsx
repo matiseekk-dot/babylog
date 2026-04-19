@@ -60,7 +60,20 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
       </div>
       <div className="card">
         <div className="card-header">Kalkulator dawek — wbudowane</div>
-        {BUILT_IN_MEDS.map(med => (
+        {(!weightKg || weightKg <= 0) ? (
+          <div style={{ padding:'16px', textAlign:'center' }}>
+            <div style={{ fontSize:28, marginBottom:8 }}>⚠️</div>
+            <div style={{ fontSize:13, color:'var(--text-2)', marginBottom:10, lineHeight:1.5 }}>
+              Podaj wagę dziecka w ustawieniach, żeby zobaczyć bezpieczne dawki.
+            </div>
+            <button onClick={onNavigate ? () => onNavigate('settings') : undefined} style={{
+              background:'var(--blue)', color:'#fff', border:'none', borderRadius:10,
+              padding:'10px 18px', fontSize:13, fontWeight:700, cursor:'pointer',
+            }}>
+              Otwórz ustawienia
+            </button>
+          </div>
+        ) : BUILT_IN_MEDS.map(med => (
           <div className="log-item" key={med}>
             <div className="log-icon">{med==='Paracetamol'?'🌡️':med==='Ibuprofen'?'💊':med==='Sól fizjologiczna'?'🫁':'🦠'}</div>
             <div className="log-body">

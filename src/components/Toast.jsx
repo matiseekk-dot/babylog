@@ -6,6 +6,10 @@ export function toast(message, type = 'success') {
   _showToast?.({ message, type, id: Date.now() })
 }
 
+export function toastWithUndo(message, onUndo) {
+  _showToast?.({ message, type: 'warn', id: Date.now(), undo: onUndo })
+}
+
 const STYLES = {
   success: { bg: '#1D9E75', icon: '✓' },
   info:    { bg: '#185FA5', icon: 'ℹ' },
@@ -19,9 +23,10 @@ export default function ToastContainer() {
   useEffect(() => {
     _showToast = (item) => {
       setItems(prev => [...prev, item])
+      const duration = item.undo ? 5000 : 2200
       setTimeout(() => {
         setItems(prev => prev.filter(i => i.id !== item.id))
-      }, 2200)
+      }, duration)
     }
     return () => { _showToast = null }
   }, [])
@@ -59,7 +64,24 @@ export default function ToastContainer() {
             whiteSpace: 'nowrap',
           }}>
             <span style={{ fontSize: 15 }}>{s.icon}</span>
-            {item.message}
+            <span>{item.message}</span>
+            {item.undo && (
+              <button
+                onClick={() => {
+                  item.undo()
+                  setItems(prev => prev.filter(i => i.id !== item.id))
+                }}
+                style={{
+                  background: 'rgba(255,255,255,0.25)',
+                  border: 'none', borderRadius: 12,
+                  color: '#fff', fontSize: 12, fontWeight: 700,
+                  padding: '4px 10px', cursor: 'pointer', marginLeft: 4,
+                  pointerEvents: 'auto',
+                }}
+              >
+                ↶
+              </button>
+            )}
           </div>
         )
       })}

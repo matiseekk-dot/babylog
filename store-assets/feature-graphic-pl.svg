@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F6E56"/>
+      <stop offset="100%" stop-color="#1D9E75"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bottleGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f3f3f0"/>
+    </linearGradient>
+    <linearGradient id="milkGrad2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFBE0" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFF5C2" stop-opacity="0.7"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="500" fill="url(#bg)"/>
+  <rect width="1024" height="500" fill="url(#glow)"/>
+
+  <circle cx="880" cy="80"  r="60" fill="#fff" opacity="0.08"/>
+  <circle cx="950" cy="420" r="90" fill="#fff" opacity="0.06"/>
+  <circle cx="90"  cy="430" r="50" fill="#fff" opacity="0.1"/>
+  <circle cx="160" cy="100" r="30" fill="#fff" opacity="0.12"/>
+
+  <g transform="translate(130, 175)" filter="url(#shadow)">
+    <circle cx="75" cy="75" r="75" fill="#fff"/>
+    <g transform="translate(48, 15)">
+      <ellipse cx="27" cy="7" rx="17" ry="7" fill="#EAD9B8"/>
+      <rect x="13" y="5" width="28" height="7" rx="3" fill="#D9C193"/>
+      <rect x="10" y="12" width="34" height="8" rx="2" fill="#0F6E56"/>
+      <path d="M 6,20 L 48,20 Q 52,20 52,25 L 52,110 Q 52,120 40,120 L 14,120 Q 2,120 2,110 L 2,25 Q 2,20 6,20 Z"
+            fill="url(#bottleGrad2)" stroke="#e0e0dd" stroke-width="1"/>
+      <path d="M 6,55 L 48,55 L 48,110 Q 48,115 40,115 L 14,115 Q 6,115 6,110 Z" fill="url(#milkGrad2)"/>
+    </g>
+  </g>
+
+  <g transform="translate(320, 150)">
+    <text x="0" y="50" font-family="-apple-system, system-ui, sans-serif" font-size="54" font-weight="800" fill="#fff" letter-spacing="-1">
+      Spokojny Rodzic
+    </text>
+
+    <text x="0" y="100" font-family="-apple-system, system-ui, sans-serif" font-size="22" fill="#fff" opacity="0.95" font-weight="400">
+      Wiedz co robić, gdy dziecko jest chore.
+    </text>
+
+    <g transform="translate(0, 135)">
+      <g>
+        <rect x="0" y="0" width="175" height="40" rx="20" fill="#fff" opacity="0.2"/>
+        <circle cx="22" cy="20" r="8" fill="#fff" opacity="0.9"/>
+        <rect x="20" y="8" width="4" height="14" rx="2" fill="#fff" opacity="0.9"/>
+        <text x="42" y="26" font-family="sans-serif" font-size="14" fill="#fff" font-weight="600">
+          Analiza temp.
+        </text>
+      </g>
+      <g transform="translate(190, 0)">
+        <rect x="0" y="0" width="185" height="40" rx="20" fill="#fff" opacity="0.2"/>
+        <rect x="15" y="14" width="18" height="12" rx="6" fill="#fff" opacity="0.9"/>
+        <rect x="24" y="14" width="9"  height="12" fill="#D85A30" opacity="0.8"/>
+        <text x="45" y="26" font-family="sans-serif" font-size="14" fill="#fff" font-weight="600">
+          Kalkulator leków
+        </text>
+      </g>
+      <g transform="translate(395, 0)">
+        <rect x="0" y="0" width="165" height="40" rx="20" fill="#fff" opacity="0.2"/>
+        <path d="M 22,10 L 31,26 L 13,26 Z" fill="#fff" opacity="0.9"/>
+        <rect x="21" y="15" width="2" height="6" fill="#D85A30"/>
+        <circle cx="22" cy="24" r="1.2" fill="#D85A30"/>
+        <text x="42" y="26" font-family="sans-serif" font-size="14" fill="#fff" font-weight="600">
+          Alerty zdrowia
+        </text>
+      </g>
+    </g>
+
+    <text x="0" y="215" font-family="-apple-system, system-ui, sans-serif" font-size="16" fill="#fff" opacity="0.85" font-style="italic">
+      Apka, która pomaga Ci wiedzieć co robić o 3 w nocy.
+    </text>
+  </g>
+</svg>

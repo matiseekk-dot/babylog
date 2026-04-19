@@ -3,7 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
-import { toast } from './Toast'
+import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
 
 function getTypes() {
@@ -41,7 +41,12 @@ export default function DiaperTab({uid, babyId, sectionAlerts = [], onNavigate, 
     toast(t('diaper.toast.saved'))
   }
 
-  const remove = (id) => setLogs(logs.filter(l=>l.id!==id))
+  const remove = (id) => {
+    const removed = logs.find(l => l.id === id)
+    if (!removed) return
+    setLogs(logs.filter(l => l.id !== id))
+    toastWithUndo(t('common.deleted'), () => setLogs(prev => [removed, ...prev]))
+  }
 
   return (
     <>

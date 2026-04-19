@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { t, useLocale } from '../i18n'
 
-export default function LoginScreen({ onLogin, loading }) {
+export default function LoginScreen({ onLogin, onSkip, loading }) {
   useLocale()  // re-render on language change
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -120,6 +120,20 @@ export default function LoginScreen({ onLogin, loading }) {
         }}>
           {t('login.footer').split('\n').map((l,i)=><span key={i}>{l}{i===0?<br />:null}</span>)}
         </p>
+
+        {/* Guest mode */}
+        <button
+          onClick={onSkip}
+          style={{
+            width: '100%', marginTop: 12, padding: '12px',
+            background: 'transparent', color: '#5a5a56',
+            border: 'none', borderRadius: 10,
+            fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
+        >
+          {t('login.use_without_account')}
+        </button>
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>

@@ -36,7 +36,7 @@ export default function OnboardingScreen({ onComplete }) {
   // Setup screen data
   const [name, setName] = useState('')
   const [months, setMonths] = useState('4')
-  const [weight, setWeight] = useState('6.5')
+  const [weight, setWeight] = useState('')
   const [avatar, setAvatar] = useState('👶')
 
   const totalSlides = SLIDES.length + 1 // +1 for setup screen
@@ -57,7 +57,7 @@ export default function OnboardingScreen({ onComplete }) {
     }
   }
 
-  const skip = () => onComplete({ name: t('app.title') === 'Calm Parent' ? 'My baby' : 'Moje dziecko', months:4, weight:6.5, avatar:'👶' })
+  const skip = () => onComplete({ name: t('app.title') === 'Calm Parent' ? 'My baby' : 'Moje dziecko', months:4, weight:0, avatar:'👶' })
 
   const canProceed = !isSetup || name.trim().length > 0
 
@@ -159,11 +159,11 @@ export default function OnboardingScreen({ onComplete }) {
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">{t('onb.setup.age')}</label>
-                <input className="form-input" type="number" min="0" max="60" value={months} onChange={e=>setMonths(e.target.value)} />
+                <input className="form-input" type="number" inputMode="numeric" min="0" max="60" value={months} onChange={e=>setMonths(e.target.value)} placeholder="np. 4" />
               </div>
               <div className="form-group">
                 <label className="form-label">{t('onb.setup.weight')}</label>
-                <input className="form-input" type="number" step="0.1" min="1" max="30" value={weight} onChange={e=>setWeight(e.target.value)} />
+                <input className="form-input" type="number" inputMode="decimal" step="0.1" min="1" max="30" value={weight} onChange={e=>setWeight(e.target.value.replace(",","."))} placeholder="np. 6.5" />
               </div>
             </div>
 

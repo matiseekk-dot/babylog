@@ -275,6 +275,84 @@ const RULES = [
       }
     },
   },
+
+  // ── Reguła 9: czas na karmienie (>3h od ostatniego) → info ─────────────────
+  // BUG-008: pomijaj gdy dziecko śpi (aktywny stoper lub sleep log bez endTime)
+  {
+    id: 'feed_time',
+    section: 'feed',
+    check({ feedLogs, sleepLogs, ageMonths }) {
+      const last = lastOf(feedLogs)
+      if (!last) return null
+
+      // Sprawdź czy dziecko obecnie śpi
+      const activeSleep = (sleepLogs || []).find(s => s.endTime == null || s.endTime === '')
+      if (activeSleep) return null  // dziecko śpi — nie budź
+
+      // Lub ostatni sleep w ciągu ostatniej godziny (świeżo się obudziło — daj chwilę)
+      const recentSleep = (sleepLogs || [])
+        .filter(s => s.endTime)
+        .sort((a,b) => (b.date+b.endTime).localeCompare(a.date+a.endTime))[0]
+      if (recentSleep) {
+        const endedMinAgo = minutesSince(recentSleep.endTime, recentSleep.date)
+        if (endedMinAgo < 30) return null
+      }
+
+      const minAgo = minutesSince(last.time, last.date)
+      const expected = ageMonths < 3 ? 150 : ageMonths < 6 ? 180 : 240
+      if (minAgo < expected) return null
+      if (minAgo > 720) return null
+      const h = Math.floor(minAgo / 60)
+      return {
+        status: 'info',
+        title: 'Czas na karmienie',
+        message: `Ostatnie karmienie ${h}h ${minAgo % 60}min temu. Możliwe że dziecko jest głodne.`,
+      }
+    },
+  },
+
+  // ── Reguła 10: brak wpisów do południa → info (BUG-009 — neutralny ton) ───
+  {
+    id: 'no_entries_today',
+    section: 'global',
+    check({ feedLogs, diaperLogs, sleepLogs, tempLogs }) {
+      const now = new Date()
+      if (now.getHours() < 12) return null
+      const today = todayStr()
+      const hasAny = [...(feedLogs||[]), ...(diaperLogs||[]), ...(sleepLogs||[]), ...(tempLogs||[])]
+        .some(l => l.date === today)
+      if (hasAny) return null
+      return {
+        status: 'info',
+        title: 'Gotowy na pierwszy wpis?',
+        message: 'Dodaj karmienie lub sen jednym tapnięciem — aplikacja będzie analizować wzorce.',
+      }
+    },
+  },
+
+  // ── Reguła 11: all OK — wszystko w normie → ok ─────────────────────────────
+  {
+    id: 'all_ok',
+    section: 'global',
+    check({ feedLogs, tempLogs, sleepLogs }) {
+      const today = todayStr()
+      const feedsToday = (feedLogs||[]).filter(l => l.date === today).length
+      const tempsToday = (tempLogs||[]).filter(l => l.date === today)
+      const sleepsToday = (sleepLogs||[]).filter(l => l.date === today).length
+
+      // All OK requires: at least 3 feeds, no fever, at least 1 sleep
+      if (feedsToday < 3) return null
+      if (sleepsToday < 1) return null
+      const latestTemp = lastOf(tempsToday)
+      if (latestTemp && latestTemp.temp >= 37.5) return null
+
+      return {
+        status: 'ok',
+        title: 'Wszystko w normie',
+        message: `${feedsToday} karmień, ${sleepsToday} drzemek, brak gorączki. Dobra robota!`,
+      }
+    },
+  },
 ]
 
 // ─── Public API ───────────────────────────────────────────────────────────────

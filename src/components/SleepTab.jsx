@@ -3,6 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { formatDuration, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toast } from './Toast'
+import { t } from '../i18n'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
@@ -46,7 +47,19 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
       setRunning(false)
       setElapsed(0)
       onDataChange?.()
-      toast('Sen zakończony')
+      // Enhanced: show total daily sleep after wake-up
+      const today = todayDate()
+      const updatedLogs = [entry, ...logs]
+      const todaysTotalMin = updatedLogs
+        .filter(l => l.date === today)
+        .reduce((s, l) => s + (l.durationMin || 0), 0)
+      const h = Math.floor(todaysTotalMin / 60)
+      const m = todaysTotalMin % 60
+      const sessionH = Math.floor(duration / 3600)
+      const sessionM = Math.floor((duration % 3600) / 60)
+      const sessionStr = sessionH > 0 ? `${sessionH}h ${sessionM}m` : `${sessionM}m`
+      const totalStr = h > 0 ? `${h}h ${m}m` : `${m}m`
+      toast(`${t('toast.sleep_ended')}: ${sessionStr} • ${t('sleep.today_total')}: ${totalStr}`)
     }
   }
 

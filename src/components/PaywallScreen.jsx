@@ -1,6 +1,22 @@
 import React, { useState } from 'react'
 import { t, useLocale } from '../i18n'
 
+function getTestimonials() {
+  const locale = t('app.title') === 'Calm Parent' ? 'en' : 'pl'
+  if (locale === 'en') {
+    return [
+      { name: 'Sarah M.', child: 'mom of 4-month-old', quote: 'The fever alerts probably saved us a trip to the ER. I knew exactly when to call the pediatrician.', rating: 5 },
+      { name: 'Emily R.', child: 'mom of twins',       quote: 'Finally an app that tells me what to DO, not just tracks numbers.', rating: 5 },
+      { name: 'James K.', child: 'dad of 7-month-old', quote: 'The medicine calculator alone is worth it. No more 3 AM Google searches.', rating: 5 },
+    ]
+  }
+  return [
+    { name: 'Ania K.',    child: 'mama 4-miesięcznej Zosi',  quote: 'Alerty temperatury uratowały nas przed wizytą na SOR. Wiedziałam kiedy dzwonić do pediatry.', rating: 5 },
+    { name: 'Martyna P.', child: 'mama bliźniaków',          quote: 'Wreszcie aplikacja, która mówi CO zrobić, a nie tylko zbiera dane.', rating: 5 },
+    { name: 'Kuba D.',    child: 'tata 7-miesięcznego Adama',quote: 'Sam kalkulator leków jest wart ceny. Koniec z szukaniem w Google o 3 nad ranem.', rating: 5 },
+  ]
+}
+
 function getFeatures() {
   return [
     { icon:'🌡️', title:t('paywall.feat1.title'), desc:t('paywall.feat1.desc') },
@@ -102,6 +118,37 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
               )}
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Testimonials */}
+      <div style={{ padding:'8px 20px 16px' }}>
+        <div style={{
+          fontSize:11, fontWeight:700, color:'#5a5a56',
+          textTransform:'uppercase', letterSpacing:0.5,
+          marginBottom:10, marginTop:8,
+        }}>
+          {t('paywall.testimonials.title')}
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          {getTestimonials().map((tst, i) => (
+            <div key={i} style={{
+              padding:'12px 14px',
+              background:'#F7F7F5', borderRadius:12,
+              border:'0.5px solid rgba(0,0,0,0.05)',
+            }}>
+              <div style={{ fontSize:12, color:'#3a3a36', lineHeight:1.5, marginBottom:6, fontStyle:'italic' }}>
+                "{tst.quote}"
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                <span style={{ fontSize:11, color:'#EF9F27' }}>{'★'.repeat(tst.rating)}</span>
+                <span style={{ fontSize:11, color:'#9a9a94' }}>— {tst.name}, {tst.child}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize:9, color:'#c0c0b8', textAlign:'center', marginTop:8 }}>
+          {t('paywall.testimonials.disclaimer')}
         </div>
       </div>
 

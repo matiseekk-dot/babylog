@@ -24,6 +24,21 @@ import OnboardingScreen from './components/OnboardingScreen'
 import ToastContainer from './components/Toast'
 import SleepIndicator from './components/SleepIndicator'
 import LanguageSwitcher from './components/LanguageSwitcher'
+import SettingsScreen from './components/SettingsScreen'
+import CallDoctorCard from './components/CallDoctorCard'
+import DailyTipCard from './components/DailyTipCard'
+import StreakBadge from './components/StreakBadge'
+import CallDoctorPrep from './components/CallDoctorPrep'
+import { useCrisisDetection } from './hooks/useCrisisDetection'
+
+// BUG-003 FIX: Per-locale emergency phones
+function getEmergencyPhone() {
+  try {
+    const lang = (localStorage.getItem('babylog_locale') || navigator.language || 'pl').toLowerCase()
+    if (lang.startsWith('pl')) return '800190590'     // NFZ Poland 24/7
+    return '112'  // EU-wide emergency
+  } catch { return '112' }
+}
 import { useLocale, t } from './i18n'
 
 const DEFAULT_PROFILE = {
@@ -84,15 +99,24 @@ const EMPTY_STATUS = () => ({
 
 export default function App() {
   const { user, loading: authLoading, login, logout } = useAuth()
+  const [guestMode, setGuestMode] = useState(() => {
+    try { return localStorage.getItem('babylog_guest') === '1' } catch { return false }
+  })
   const uid = user?.uid ?? null
   const { locale } = useLocale()  // re-render on language change
 
   // Włącz offline persistence
   useEffect(() => { enableOffline() }, [])
 
-  // Migruj localStorage → Firestore przy pierwszym logowaniu
+  // Migruj localStorage → Firestore przy pierwszym logowaniu (BUG-002 + BUG-010)
+  const [migrating, setMigrating] = useState(false)
   useEffect(() => {
-    if (uid) migrateAllLocalData(uid).catch(() => {})
+    if (uid) {
+      setMigrating(true)
+      migrateAllLocalData(uid)
+        .catch(() => {})
+        .finally(() => setMigrating(false))
+    }
   }, [uid])
 
   const [profiles, setProfiles] = useFirestore(uid, 'profiles', [DEFAULT_PROFILE])
@@ -101,13 +125,15 @@ export default function App() {
   const [showProfiles, setShowProfiles] = useState(false)
   const [showMore, setShowMore] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [showPrep, setShowPrep] = useState(false)
   const [onboardingDone, setOnboardingDone] = useFirestore(uid, 'onboarding_done', false)
 
   const active = profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
   const [sleepTimerTs] = useFirestore(uid, `sleep_timer_${active.id}`, null)
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
-  const { isPremium, activate, deactivate } = usePremium(uid)
+  const { isPremium, isOnTrial, trialDaysLeft, activate, deactivate } = usePremium(uid)
 
   const openPaywall = () => setShowPaywall(true)
   const closePaywall = () => setShowPaywall(false)
@@ -137,6 +163,10 @@ export default function App() {
     active.id, active.months, active.weight
   )
 
+  // Crisis detection — reads tempLogs from Firestore (nie localStorage)
+  const [tempLogsForCrisis] = useFirestore(uid, `temp_${active.id}`, [])
+  const { crisis, dismiss: dismissCrisis } = useCrisisDetection(tempLogsForCrisis, active.months)
+
   // Dla free — pusty zestaw alertów i uproszczony status
   // Check if user has any data today
   const hasDataToday = (() => {
@@ -159,6 +189,7 @@ export default function App() {
 
   const navigate = (targetTab) => {
     if (!targetTab) return
+    if (targetTab === 'settings') { setShowSettings(true); return }
     if (MORE_TABS.some(t => t.id === targetTab)) {
       setTab(targetTab); setShowMore(false); setShowProfiles(false)
     } else {
@@ -207,8 +238,8 @@ export default function App() {
 
   const currentMoreTab = MORE_TABS.find(t => t.id === tab)
 
-  // ── Auth loading ─────────────────────────────────────────────────────────
-  if (authLoading) {
+  // ── Auth loading / migration ─────────────────────────────────────────────
+  if (authLoading || migrating) {
     return (
       <div className="app" style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
         <div style={{ textAlign:'center', color:'var(--text-3)' }}>
@@ -220,10 +251,17 @@ export default function App() {
   }
 
   // ── Login screen ──────────────────────────────────────────────────────────
-  if (!user) {
+  if (!user && !guestMode) {
     return (
       <div className="app">
-        <LoginScreen onLogin={login} loading={authLoading} />
+        <LoginScreen
+          onLogin={login}
+          onSkip={() => {
+            try { localStorage.setItem('babylog_guest', '1') } catch {}
+            setGuestMode(true)
+          }}
+          loading={authLoading}
+        />
       </div>
     )
   }
@@ -242,6 +280,47 @@ export default function App() {
           }
           setOnboardingDone(true)
         }} />
+      </div>
+    )
+  }
+
+  // ── Call Doctor Prep overlay ─────────────────────────────────────────────
+  if (showPrep) {
+    return (
+      <div className="app" style={{ overflowY: 'auto' }}>
+        <CallDoctorPrep
+          profile={active}
+          uid={uid}
+          onClose={() => setShowPrep(false)}
+          onCall={() => { window.location.href = 'tel:' + getEmergencyPhone() }}
+        />
+        <ToastContainer />
+      </div>
+    )
+  }
+
+  // ── Settings overlay ─────────────────────────────────────────────────────
+  if (showSettings) {
+    return (
+      <div className="app" style={{ overflowY: 'auto' }}>
+        <SettingsScreen
+          profile={active}
+          uid={uid}
+          onUpdate={updateProfile}
+          onDelete={deleteProfile}
+          isPremium={isPremium}
+          isOnTrial={isOnTrial}
+          trialDaysLeft={trialDaysLeft}
+          onUpgrade={() => { setShowSettings(false); openPaywall() }}
+          user={user}
+          onLogout={user ? logout : () => {
+            try { localStorage.removeItem('babylog_guest') } catch {}
+            setGuestMode(false)
+            setShowSettings(false)
+          }}
+          onClose={() => setShowSettings(false)}
+        />
+        <ToastContainer />
       </div>
     )
   }
@@ -267,6 +346,7 @@ export default function App() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <LanguageSwitcher />
+          <StreakBadge />
           {/* Premium badge / upgrade button */}
           {isPremium ? (
             <span style={{
@@ -290,12 +370,18 @@ export default function App() {
           )}
           {/* Sleep indicator */}
           <SleepIndicator startTs={sleepTimerTs} onPress={() => selectTab('sleep')} />
-          {/* Logout */}
-          <button onClick={logout} title={t('topbar.logout')} style={{
+          {/* Settings (replaces logout — logout moved to settings screen) */}
+          <button onClick={() => setShowSettings(true)} title={t('topbar.settings')} style={{
             background:'none', border:'none', cursor:'pointer',
-            color:'var(--text-3)', fontSize:13, fontWeight:600,
-            padding:'4px 8px', minHeight:36, borderRadius:8,
-          }}>{t('topbar.logout')}</button>
+            color:'var(--text-3)', fontSize:20,
+            padding:'4px 6px', minHeight:36, borderRadius:8,
+            display:'flex', alignItems:'center', justifyContent:'center',
+          }} aria-label={t('topbar.settings')}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
           {/* Baby chip */}
           <button className="baby-chip" onClick={() => { setShowProfiles(s=>!s); setShowMore(false) }}>
             <div className="baby-chip-avatar" style={{background:active.avatarColor,color:'var(--green-dark)',fontSize:13}}>
@@ -318,6 +404,22 @@ export default function App() {
 
       {/* CONTENT */}
       <div className="content">
+
+        {/* CRISIS CARD — killer feature, highest priority */}
+        {crisis && !showProfiles && !showMore && (
+          <CallDoctorCard
+            severity={crisis.severity}
+            reason={crisis.reason}
+            onDismiss={dismissCrisis}
+            onNavigate={navigate}
+            onPrep={() => setShowPrep(true)}
+          />
+        )}
+
+        {/* DAILY TIP — retention hook */}
+        {!showProfiles && !showMore && !crisis && (
+          <DailyTipCard ageMonths={active.months} />
+        )}
 
         {/* STATUS CARD */}
         {!showProfiles && !showMore && (
