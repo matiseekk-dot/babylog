@@ -10,27 +10,35 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
   useLocale()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(null)
-  const [form, setForm] = useState({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE' })
+  const [form, setForm] = useState({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE', toiletMode:'diapers' })
 
   const openAdd = () => {
-    setForm({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE' })
+    setForm({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE', toiletMode:'diapers' })
     setModal(true)
   }
 
+  // Smart default for toilet mode based on age in months
+  const suggestedToiletMode = (months) => {
+    const m = Number(months) || 0
+    if (m < 18) return 'diapers'
+    if (m < 42) return 'potty'  // 1.5 - 3.5 years
+    return 'toilet'
+  }
+
   const openEdit = (p) => {
-    setForm({ name:p.name, months:String(p.months), weight:String(p.weight), avatar:p.avatar, avatarColor:p.avatarColor })
+    setForm({ name:p.name, months:String(p.months), weight:String(p.weight), avatar:p.avatar, avatarColor:p.avatarColor, toiletMode:p.toiletMode || suggestedToiletMode(p.months) })
     setEditModal(p.id)
   }
 
   const save = () => {
     if (!form.name.trim()) return
-    onAdd({ id: genId(), name: form.name.trim(), months: Number(form.months), weight: Number(form.weight), avatar: form.avatar, avatarColor: form.avatarColor })
+    onAdd({ id: genId(), name: form.name.trim(), months: Number(form.months), weight: Number(form.weight), avatar: form.avatar, avatarColor: form.avatarColor, toiletMode: form.toiletMode })
     setModal(false)
   }
 
   const saveEdit = () => {
     if (!form.name.trim()) return
-    onUpdate(editModal, { name: form.name.trim(), months: Number(form.months), weight: Number(form.weight), avatar: form.avatar, avatarColor: form.avatarColor })
+    onUpdate(editModal, { name: form.name.trim(), months: Number(form.months), weight: Number(form.weight), avatar: form.avatarColor ? form.avatar : '👶', avatarColor: form.avatarColor, toiletMode: form.toiletMode })
     setEditModal(null)
   }
 
@@ -132,6 +140,35 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
         </div>
       </div>
       <div className="form-group">
+        <label className="form-label">{t('profiles.toilet_mode.label')}</label>
+        <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:4}}>
+          {[
+            {id:'diapers', emoji:'👶', label:t('profiles.toilet_mode.diapers'), desc:t('profiles.toilet_mode.diapers_desc')},
+            {id:'potty',   emoji:'🚽', label:t('profiles.toilet_mode.potty'),   desc:t('profiles.toilet_mode.potty_desc')},
+            {id:'toilet',  emoji:'🚾', label:t('profiles.toilet_mode.toilet'),  desc:t('profiles.toilet_mode.toilet_desc')},
+          ].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setForm(f => ({...f, toiletMode: opt.id}))}
+              style={{
+                display:'flex', alignItems:'center', gap:10,
+                padding:'10px 12px',
+                border: `2px solid ${form.toiletMode === opt.id ? 'var(--green)' : 'var(--border)'}`,
+                borderRadius:10,
+                background: form.toiletMode === opt.id ? '#F5F9F7' : '#fff',
+                cursor:'pointer', textAlign:'left',
+              }}
+            >
+              <span style={{fontSize:22}}>{opt.emoji}</span>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{fontSize:14, fontWeight:700, color:'var(--text)'}}>{opt.label}</div>
+                <div style={{fontSize:11, color:'var(--text-3)', marginTop:2}}>{opt.desc}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="form-group">
         <label className="form-label">{t('onb.setup.weight')}</label>
         <input className="form-input" type="number" step="0.1" min="1" max="50" value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
       </div>
@@ -200,6 +237,35 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
               {t('age.unit.months')}
             </div>
           </div>
+        </div>
+      </div>
+      <div className="form-group">
+        <label className="form-label">{t('profiles.toilet_mode.label')}</label>
+        <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:4}}>
+          {[
+            {id:'diapers', emoji:'👶', label:t('profiles.toilet_mode.diapers'), desc:t('profiles.toilet_mode.diapers_desc')},
+            {id:'potty',   emoji:'🚽', label:t('profiles.toilet_mode.potty'),   desc:t('profiles.toilet_mode.potty_desc')},
+            {id:'toilet',  emoji:'🚾', label:t('profiles.toilet_mode.toilet'),  desc:t('profiles.toilet_mode.toilet_desc')},
+          ].map(opt => (
+            <button
+              key={opt.id}
+              onClick={() => setForm(f => ({...f, toiletMode: opt.id}))}
+              style={{
+                display:'flex', alignItems:'center', gap:10,
+                padding:'10px 12px',
+                border: `2px solid ${form.toiletMode === opt.id ? 'var(--green)' : 'var(--border)'}`,
+                borderRadius:10,
+                background: form.toiletMode === opt.id ? '#F5F9F7' : '#fff',
+                cursor:'pointer', textAlign:'left',
+              }}
+            >
+              <span style={{fontSize:22}}>{opt.emoji}</span>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{fontSize:14, fontWeight:700, color:'var(--text)'}}>{opt.label}</div>
+                <div style={{fontSize:11, color:'var(--text-3)', marginTop:2}}>{opt.desc}</div>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
       <div className="form-group">

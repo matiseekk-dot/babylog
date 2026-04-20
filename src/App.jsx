@@ -8,6 +8,7 @@ import { useChildStatus } from './hooks/useChildStatus'
 import { usePremium } from './hooks/usePremium'
 import FeedTab from './components/FeedTab'
 import EmptyStateHero from './components/EmptyStateHero'
+import TeethingTab from './components/TeethingTab'
 import SleepTab from './components/SleepTab'
 import DiaperTab from './components/DiaperTab'
 import MilestonesTab from './components/MilestonesTab'
@@ -50,6 +51,7 @@ const DEFAULT_PROFILE = {
   weight: 6.5,
   avatar: '👶',
   avatarColor: '#E1F5EE',
+  toiletMode: 'diapers',
 }
 
 const NAV_TABS = [
@@ -77,6 +79,7 @@ const NAV_TABS = [
 
 const MORE_TABS = [
   { id:'milestones', emoji:'⭐', labelKey:'nav.milestones' },
+  { id:'teething',   emoji:'🦷', labelKey:'nav.teething' },
   { id:'growth',     emoji:'📏', labelKey:'nav.growth' },
   { id:'temp',       emoji:'🌡️', labelKey:'nav.temp' },
   { id:'meds',       emoji:'💊', labelKey:'nav.meds' },
@@ -247,6 +250,7 @@ export default function App() {
     babyId: active.id,
     ageMonths: active.months,
     weightKg: active.weight,
+    toiletMode: active.toiletMode || 'diapers',
     onDataChange: refresh,
     isPremium,
     onUpgrade: openPaywall,
@@ -265,6 +269,7 @@ export default function App() {
       case 'sleep':      return <SleepTab      {...sharedProps} sectionAlerts={visibleSection('sleep')}  onNavigate={navigate} />
       case 'diaper':     return <DiaperTab     {...sharedProps} sectionAlerts={visibleSection('diaper')} onNavigate={navigate} />
       case 'milestones': return <MilestonesTab {...sharedProps} />
+      case 'teething':   return <TeethingTab {...sharedProps} />
       case 'growth':     return <GrowthTab     {...sharedProps} />
       case 'temp':       return <TempTab       {...sharedProps} sectionAlerts={visibleSection('temp')}   onNavigate={navigate} />
       case 'meds':       return <MedsTab       {...sharedProps} sectionAlerts={visibleSection('meds')}   onNavigate={navigate} />

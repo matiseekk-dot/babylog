@@ -165,8 +165,8 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
           <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>Anuluj</button>
-          <button className="btn-primary" onClick={addManual}>Zapisz</button>
+          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={addManual}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

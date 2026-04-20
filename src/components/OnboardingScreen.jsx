@@ -54,11 +54,12 @@ export default function OnboardingScreen({ onComplete }) {
         months: Number(months) || 4,
         weight: Number(weight) || 6.5,
         avatar,
+        toiletMode: (Number(months) || 4) < 18 ? 'diapers' : (Number(months) || 4) < 42 ? 'potty' : 'toilet',
       })
     }
   }
 
-  const skip = () => onComplete({ name: t('app.title') === 'Calm Parent' ? 'My baby' : 'Moje dziecko', months:4, weight:6.5, avatar:'👶' })
+  const skip = () => onComplete({ name: t('app.title') === 'Calm Parent' ? 'My baby' : 'Moje dziecko', months:4, weight:6.5, avatar:'👶', toiletMode:'diapers' })
 
   const canProceed = !isSetup || name.trim().length > 0
 

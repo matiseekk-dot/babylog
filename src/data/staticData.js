@@ -1,4 +1,5 @@
 export const MILESTONES = [
+  // 0-12 months (original)
   { id:'m1', emoji:'😊', name:'Uśmiech społeczny', age:'2 mies.', months:2 },
   { id:'m2', emoji:'👀', name:'Śledzi wzrokiem', age:'2–3 mies.', months:2 },
   { id:'m3', emoji:'🙃', name:'Trzyma główkę', age:'3 mies.', months:3 },
@@ -15,6 +16,36 @@ export const MILESTONES = [
   { id:'m14', emoji:'👟', name:'Pierwsze kroki', age:'12 mies.', months:12 },
   { id:'m15', emoji:'🤌', name:'Pokazuje palcem', age:'12 mies.', months:12 },
   { id:'m16', emoji:'🏃', name:'Samodzielnie chodzi', age:'12–15 mies.', months:12 },
+  // 12-24 months (toddler)
+  { id:'m17', emoji:'🗣️', name:'Używa 2-3 słów', age:'12–15 mies.', months:13 },
+  { id:'m18', emoji:'🍴', name:'Je sam łyżką', age:'15–18 mies.', months:15 },
+  { id:'m19', emoji:'🤗', name:'Macha na pożegnanie', age:'12–15 mies.', months:12 },
+  { id:'m20', emoji:'🏗️', name:'Układa wieżę z 2 klocków', age:'15–18 mies.', months:15 },
+  { id:'m21', emoji:'📖', name:'Rozpoznaje obrazki w książce', age:'15–18 mies.', months:15 },
+  { id:'m22', emoji:'🗣️', name:'Pierwsze zdanie (2 słowa)', age:'18–24 mies.', months:18 },
+  { id:'m23', emoji:'🏃', name:'Biega', age:'18 mies.', months:18 },
+  { id:'m24', emoji:'🎨', name:'Bazgra kredką', age:'18 mies.', months:18 },
+  { id:'m25', emoji:'👕', name:'Pomaga się ubierać', age:'18–24 mies.', months:18 },
+  { id:'m26', emoji:'🚽', name:'Sygnalizuje potrzebę toalety', age:'18–24 mies.', months:20 },
+  // 2-3 years (preschool)
+  { id:'m27', emoji:'🗣️', name:'Mówi zdaniami 3-4 słowa', age:'2–3 lata', months:24 },
+  { id:'m28', emoji:'👖', name:'Ściąga spodnie sam', age:'2–3 lata', months:24 },
+  { id:'m29', emoji:'🏃', name:'Skacze obunóż', age:'2 lata', months:24 },
+  { id:'m30', emoji:'🚽', name:'Korzysta z nocnika', age:'2–3 lata', months:24 },
+  { id:'m31', emoji:'🧼', name:'Myje ręce samodzielnie', age:'2–3 lata', months:28 },
+  { id:'m32', emoji:'🎨', name:'Rysuje koło', age:'3 lata', months:36 },
+  { id:'m33', emoji:'🤝', name:'Bawi się z innymi dziećmi', age:'3 lata', months:36 },
+  { id:'m34', emoji:'🧩', name:'Układa proste puzzle', age:'3 lata', months:36 },
+  { id:'m35', emoji:'🚽', name:'Suche noce', age:'3–4 lata', months:36 },
+  // 3-5 years
+  { id:'m36', emoji:'🚴', name:'Jeździ na rowerku biegowym', age:'3–4 lata', months:36 },
+  { id:'m37', emoji:'✂️', name:'Używa nożyczek', age:'3–4 lata', months:40 },
+  { id:'m38', emoji:'🔢', name:'Liczy do 10', age:'4 lata', months:48 },
+  { id:'m39', emoji:'🎨', name:'Rysuje postać (głowa+nogi)', age:'4 lata', months:48 },
+  { id:'m40', emoji:'📖', name:'Opowiada prostą historię', age:'4 lata', months:48 },
+  { id:'m41', emoji:'👕', name:'Ubiera się samodzielnie', age:'4–5 lat', months:48 },
+  { id:'m42', emoji:'🚴', name:'Jeździ na rowerze', age:'4–5 lat', months:54 },
+  { id:'m43', emoji:'✏️', name:'Pisze swoje imię', age:'5 lat', months:60 },
 ]
 
 export const VACCINATIONS = [
