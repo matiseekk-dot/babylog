@@ -138,6 +138,14 @@ const TRANSLATIONS = {
     'teeth.lower.first_molar_r':   'Dolny zęb trzonowy 1 prawy',
     'teeth.lower.second_molar_l':  'Dolny zęb trzonowy 2 lewy',
     'teeth.lower.second_molar_r':  'Dolny zęb trzonowy 2 prawy',
+    // Vaccination date picker
+    'vacc.done_on':                'Wykonano:',
+    'vacc.done_on_label':          'Data szczepienia',
+    'vacc.mark_date_hint':         'Termin zalecany: {when}. Ustaw datę kiedy dziecko rzeczywiście zostało zaszczepione.',
+    'vacc.edit_date_hint':         'Edytujesz istniejący wpis — możesz zmienić datę lub usunąć.',
+    'vacc.mark_done':              'Oznacz jako wykonane',
+    'vacc.unmark':                 'Usuń wpis',
+    'vacc.date_hint':              'Możesz wpisać dzisiejszą lub wcześniejszą datę',
     'login.use_without_account': 'Używaj bez konta',
     'login.guest_upgrade':'Zaloguj się, aby zsynchronizować dane',
 
@@ -819,6 +827,14 @@ const TRANSLATIONS = {
     'teeth.lower.first_molar_r':   'Lower right first molar',
     'teeth.lower.second_molar_l':  'Lower left second molar',
     'teeth.lower.second_molar_r':  'Lower right second molar',
+    // Vaccination date picker
+    'vacc.done_on':                'Done:',
+    'vacc.done_on_label':          'Vaccination date',
+    'vacc.mark_date_hint':         'Recommended at: {when}. Set the date when the vaccine was actually given.',
+    'vacc.edit_date_hint':         "You're editing an existing entry — change the date or remove it.",
+    'vacc.mark_done':              'Mark as done',
+    'vacc.unmark':                 'Remove entry',
+    'vacc.date_hint':              'You can enter today or an earlier date',
     'login.use_without_account': 'Use without account',
     'login.guest_upgrade':'Sign in to sync your data',
 
