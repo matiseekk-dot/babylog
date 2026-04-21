@@ -1,6 +1,6 @@
 import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, genId, getTempClass, getTempLabel } from '../utils/helpers'
+import { nowTime, todayDate, genId, getTempClass, getTempLabel, displayMethod } from '../utils/helpers'
 import Modal from './Modal'
 import { toast } from './Toast'
 import { SectionAlerts } from './AlertBanner'
@@ -14,19 +14,44 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
   useLocale()
   const [logs, setLogs] = useFirestore(uid, `temp_${babyId}`, [])
   const [modal, setModal] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
 
-  const add = () => {
+  const openAdd = () => {
+    setEditingId(null)
+    setForm({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
+    setModal(true)
+  }
+
+  const openEdit = (entry) => {
+    setEditingId(entry.id)
+    setForm({
+      temp: String(entry.temp),
+      time: entry.time,
+      date: entry.date,
+      method: entry.method || 'Odbytniczo',
+      note: entry.note || '',
+    })
+    setModal(true)
+  }
+
+  const save = () => {
     const tempValue = Number(form.temp)
     if (isNaN(tempValue) || tempValue < 30 || tempValue > 45) {
       toast(t('temp.invalid'))
       return
     }
-    setLogs([{ id:genId(), ...form, temp:tempValue }, ...logs])
+    if (editingId) {
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form, temp: tempValue } : l))
+      toast(t('common.saved'))
+    } else {
+      setLogs([{ id: genId(), ...form, temp: tempValue }, ...logs])
+      toast(`${t('toast.temp')}: ${tempValue.toFixed(1)}°C`)
+    }
     setModal(false)
+    setEditingId(null)
     setForm({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
     onDataChange?.()
-    toast(`${t('toast.temp')}: ${Number(form.temp).toFixed(1)}°C`)
   }
 
   const today = todayDate()
@@ -68,23 +93,23 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
         {logs.length === 0
           ? <div className="empty-state"><div className="empty-icon">🌡️</div><p>{t('temp.empty')}</p></div>
           : [...logs].sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time)).slice(0,20).map(l => (
-            <div className="log-item" key={l.id}>
+            <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">🌡️</div>
               <div className="log-body">
                 <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C — {getTempLabel(l.temp)}</div>
                 <div className="log-detail">{l.date} {l.time} · {displayMethod(l.method)}{l.note?` · ${l.note}`:''}</div>
               </div>
-              <button onClick={()=>{ setLogs(logs.filter(x=>x.id!==l.id)); onDataChange?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)); onDataChange?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }
       </div>
 
-      <button className="btn-add" onClick={()=>{ setForm(f=>({...f,time:nowTime(),date:todayDate()})); setModal(true) }}>
+      <button className="btn-add" onClick={openAdd}>
         {t('temp.add')}
       </button>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title={t('temp.modal.title')}>
+      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('temp.modal.title')}>
         <div className="form-group">
           <label className="form-label">{t('temp.modal.value')}</label>
           <input className="form-input" type="number" step="0.1" min="35" max="42" value={form.temp} onChange={e=>setForm(f=>({...f,temp:e.target.value}))} />
@@ -101,8 +126,8 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
         </div>
         <div className="form-group"><label className="form-label">{t('temp.note_label')}</label><input className="form-input" type="text" maxLength={200} placeholder={t("temp.note_after_med_ph")} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
-          <button className="btn-primary" onClick={add}>{t('common.save')}</button>
+          <button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={save}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

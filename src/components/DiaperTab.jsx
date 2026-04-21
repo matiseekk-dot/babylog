@@ -61,6 +61,7 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
   const TYPES = getTypesByMode(toiletMode)
   const [logs, setLogs] = useFirestore(uid, `diaper_${babyId}`, [])
   const [modal, setModal] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ type: TYPES[0].label, time: nowTime(), date: todayDate(), note:'' })
 
   const today = todayDate()
@@ -103,12 +104,35 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
     toast(`${t('common.saved')}: ${displayType(type)}`)
   }
 
-  const add = () => {
-    setLogs([{ id: genId(), ...form }, ...logs])
+  const openAdd = () => {
+    setEditingId(null)
+    setForm({ type: TYPES[0].label, time: nowTime(), date: todayDate(), note:'' })
+    setModal(true)
+  }
+
+  const openEdit = (entry) => {
+    setEditingId(entry.id)
+    setForm({
+      type: entry.type,
+      time: entry.time,
+      date: entry.date,
+      note: entry.note || '',
+    })
+    setModal(true)
+  }
+
+  const save = () => {
+    if (editingId) {
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      toast(t('common.saved'))
+    } else {
+      setLogs([{ id: genId(), ...form }, ...logs])
+      toast(t('diaper.toast.saved'))
+    }
     setModal(false)
+    setEditingId(null)
     setForm({ type: TYPES[0].label, time: nowTime(), date: todayDate(), note:'' })
     onDataChange?.()
-    toast(t('diaper.toast.saved'))
   }
 
   const remove = (id) => {
@@ -184,24 +208,24 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
         {todayLogs.length === 0
           ? <div className="empty-state"><div className="empty-icon">👶</div><p>{t('diaper.empty')}</p></div>
           : todayLogs.map(l => (
-              <div className="log-item" key={l.id}>
+              <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
                 <div className="log-icon">{displayEmoji(l.type)}</div>
                 <div className="log-body">
                   <div className="log-name">{displayType(l.type)}</div>
                   {l.note && <div className="log-detail">{l.note}</div>}
                 </div>
                 <div className="log-time">{l.time}</div>
-                <button onClick={()=>remove(l.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+                <button onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
               </div>
             ))
         }
       </div>
 
-      <button className="btn-add" onClick={() => { setForm(f=>({...f,time:nowTime(),date:todayDate()})); setModal(true) }}>
+      <button className="btn-add" onClick={openAdd}>
         {t('diaper.add_note')}
       </button>
 
-      <Modal open={modal} onClose={() => setModal(false)} title={t('diaper.modal.title')}>
+      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('diaper.modal.title')}>
         <div className="form-group">
           <label className="form-label">{t('common.type')}</label>
           <select className="form-select" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
@@ -217,8 +241,8 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
           <input className="form-input" type="text" maxLength={200} value={form.note} placeholder={t('diaper.note_ph')} onChange={e=>setForm(f=>({...f,note:e.target.value}))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
-          <button className="btn-primary" onClick={add}>{t('common.save')}</button>
+          <button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={save}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

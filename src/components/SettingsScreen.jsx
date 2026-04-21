@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { t, useLocale } from '../i18n'
 import { exportChildReport } from '../utils/pdfExport'
+import { exportAllToCsv } from '../utils/csvExport'
 import { toast } from './Toast'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
@@ -25,6 +26,8 @@ export default function SettingsScreen({
   const [medLogs]   = useFirestore(uid, `meds_${profile.id}`,  [])
   const [feedLogs]  = useFirestore(uid, `feed_${profile.id}`,  [])
   const [sleepLogs] = useFirestore(uid, `sleep_${profile.id}`, [])
+  const [diaperLogs] = useFirestore(uid, `diaper_${profile.id}`, [])
+  const [growthLogs] = useFirestore(uid, `growth_${profile.id}`, [])
   const [doctorNotes] = useFirestore(uid, `doctor_notes_${profile.id}`, [])
   const { locale } = useLocale()
   const [name, setName] = useState(profile.name)
@@ -61,6 +64,25 @@ export default function SettingsScreen({
       toast(t('settings.export.error'), 'error')
     } finally {
       setExporting(false)
+    }
+  }
+
+  const handleCsvExport = () => {
+    // CSV export działa nawet dla free userów — to podstawowe prawo użytkownika
+    // do własnych danych (RODO). Płatne jest tylko PDF z formatowaniem dla lekarza.
+    try {
+      exportAllToCsv(name || profile.name, {
+        feed: feedLogs,
+        sleep: sleepLogs,
+        diaper: diaperLogs,
+        temp: tempLogs,
+        meds: medLogs,
+        growth: growthLogs,
+      })
+      toast('Dane wyeksportowane do CSV')
+    } catch (e) {
+      console.error(e)
+      toast('Błąd eksportu CSV', 'error')
     }
   }
 
@@ -197,11 +219,32 @@ export default function SettingsScreen({
               fontSize: 14, fontWeight: 700,
               cursor: exporting ? 'default' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              marginBottom: 8,
             }}
           >
             {!isPremium && '🔒 '}
             📄 {exporting ? t('settings.export.loading') : t('settings.export.cta')}
           </button>
+
+          {/* CSV Export — dostępne zawsze (RODO: prawo do danych) */}
+          <button
+            onClick={handleCsvExport}
+            style={{
+              width: '100%', padding: '12px', minHeight: 44,
+              background: '#F7F7F5',
+              color: '#3a3a36',
+              border: '0.5px solid rgba(0,0,0,0.12)',
+              borderRadius: 10,
+              fontSize: 14, fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            📊 Eksportuj wszystko do CSV
+          </button>
+          <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 6, lineHeight: 1.4 }}>
+            CSV zawiera wszystkie Twoje dane — karmienia, sen, pieluchy, temperaturę, leki, wzrost. Otwiera się w Excelu i Google Sheets.
+          </div>
         </div>
       </div>
 

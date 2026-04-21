@@ -16,42 +16,40 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
   const [elapsed, setElapsed] = useState(0)
   const [startTs, setStartTs] = useFirestore(uid, `sleep_timer_${babyId}`, null)
   const [modal, setModal] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ date: todayDate(), startTime: '20:00', endTime: '07:00', label: 'Drzemka' })
   const intervalRef = useRef(null)
 
+  // FIX: Dependency [startTs] zamiast [] — żeby effect reagował gdy Firestore
+  // załaduje zapisany timestamp async (po otwarciu apki). Bez tego stoper
+  // po re-otwarciu apki nie widział że sesja trwa i pokazywał 0.
   useEffect(() => {
+    clearInterval(intervalRef.current)
+
     if (startTs) {
       setRunning(true)
+      setElapsed(Math.floor((Date.now() - startTs) / 1000))
       intervalRef.current = setInterval(() => {
         setElapsed(Math.floor((Date.now() - startTs) / 1000))
       }, 1000)
+    } else {
+      setRunning(false)
+      setElapsed(0)
     }
     return () => clearInterval(intervalRef.current)
-  }, [])
+  }, [startTs])
 
   const toggle = () => {
     if (!running) {
-      const ts = Date.now()
-      setStartTs(ts)
-      setRunning(true)
-      setElapsed(0)
-      intervalRef.current = setInterval(() => {
-        setElapsed(Math.floor((Date.now() - ts) / 1000))
-      }, 1000)
+      setStartTs(Date.now())
     } else {
-      clearInterval(intervalRef.current)
       const dur = Math.floor((Date.now() - startTs) / 1000)
       const mins = Math.round(dur / 60)
-      // Use SLEEP START date, not wake-up date — so sleep crossing midnight
-      // is attributed to the day you went to bed, not the day you woke up
       const startDate = new Date(startTs).toISOString().slice(0,10)
       const entry = { id: genId(), date: startDate, durationMin: mins, label: 'Drzemka', manual: false, startTs, endTs: Date.now() }
       setLogs([entry, ...logs])
       setStartTs(null)
-      setRunning(false)
-      setElapsed(0)
       onDataChange?.()
-      // Enhanced: show total daily sleep after wake-up
       const today = todayDate()
       const updatedLogs = [entry, ...logs]
       const todaysTotalMin = updatedLogs
@@ -72,14 +70,77 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
   const totalMin = todayLogs.reduce((s,l)=>s+(l.durationMin||0),0)
   const norm = ageMonths < 3 ? 16 : ageMonths < 6 ? 14 : ageMonths < 12 ? 12 : 11
 
-  const addManual = () => {
+  // Pomocnik: z durationMin + ewentualnego startTs wyciągnij startTime/endTime
+  // do wyświetlenia w modalu edycji. Jeśli wpis był manualny, rekonstruujemy
+  // na podstawie durationMin (start = 20:00 domyślnie, end = start + duration).
+  const durationToTimes = (entry) => {
+    if (entry.startTs && entry.endTs) {
+      const s = new Date(entry.startTs)
+      const e = new Date(entry.endTs)
+      return {
+        startTime: `${String(s.getHours()).padStart(2,'0')}:${String(s.getMinutes()).padStart(2,'0')}`,
+        endTime:   `${String(e.getHours()).padStart(2,'0')}:${String(e.getMinutes()).padStart(2,'0')}`,
+      }
+    }
+    // Fallback dla starych manualnych wpisów: zakładamy start 20:00
+    const startH = 20
+    const startM = 0
+    const totalM = startH * 60 + startM + (entry.durationMin || 0)
+    const endH = Math.floor((totalM / 60) % 24)
+    const endM = totalM % 60
+    return {
+      startTime: `${String(startH).padStart(2,'0')}:${String(startM).padStart(2,'0')}`,
+      endTime:   `${String(endH).padStart(2,'0')}:${String(endM).padStart(2,'0')}`,
+    }
+  }
+
+  const openAdd = () => {
+    setEditingId(null)
+    setForm({ date: todayDate(), startTime: '20:00', endTime: '07:00', label: 'Drzemka' })
+    setModal(true)
+  }
+
+  const openEdit = (entry) => {
+    setEditingId(entry.id)
+    const { startTime, endTime } = durationToTimes(entry)
+    setForm({
+      date: entry.date,
+      startTime,
+      endTime,
+      label: entry.label || 'Drzemka',
+    })
+    setModal(true)
+  }
+
+  const save = () => {
     const [sh,sm] = form.startTime.split(':').map(Number)
     const [eh,em] = form.endTime.split(':').map(Number)
     let mins = (eh*60+em) - (sh*60+sm)
     if (mins < 0) mins += 24*60
-    const entry = { id: genId(), date: form.date, durationMin: mins, label: form.label, manual: true }
-    setLogs([entry, ...logs])
+
+    if (editingId) {
+      // Przy edycji: zachowujemy startTs/endTs jeśli oryginalnie były (ze stopera),
+      // ale aktualizujemy durationMin + label + date na podstawie nowych wartości
+      setLogs(logs.map(l => {
+        if (l.id !== editingId) return l
+        const updated = { ...l, date: form.date, durationMin: mins, label: form.label }
+        // Jeśli wpis miał startTs/endTs — przeliczamy na nowe godziny z form
+        if (l.startTs) {
+          const newStart = new Date(form.date + 'T' + form.startTime + ':00').getTime()
+          const newEnd = newStart + mins * 60000
+          updated.startTs = newStart
+          updated.endTs = newEnd
+        }
+        return updated
+      }))
+      toast(t('common.saved'))
+    } else {
+      const entry = { id: genId(), date: form.date, durationMin: mins, label: form.label, manual: true }
+      setLogs([entry, ...logs])
+    }
     setModal(false)
+    setEditingId(null)
+    setForm({ date: todayDate(), startTime: '20:00', endTime: '07:00', label: 'Drzemka' })
     onDataChange?.()
   }
 
@@ -125,24 +186,24 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
               const h = Math.floor(l.durationMin/60)
               const m = l.durationMin % 60
               return (
-                <div className="log-item" key={l.id}>
+                <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
                   <div className="log-icon">🌙</div>
                   <div className="log-body">
                     <div className="log-name">{l.label}</div>
                     <div className="log-detail">{h > 0 ? `${h}h ` : ''}{m > 0 ? `${m} min` : ''} · {l.date}</div>
                   </div>
-                  <button onClick={()=>remove(l.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+                  <button onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
                 </div>
               )
             })
         }
       </div>
 
-      <button className="btn-add" onClick={() => { setForm(f=>({...f,date:todayDate()})); setModal(true) }}>
+      <button className="btn-add" onClick={openAdd}>
         {t('sleep.add_manual')}
       </button>
 
-      <Modal open={modal} onClose={() => setModal(false)} title={t('sleep.modal.title')}>
+      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('sleep.modal.title')}>
         <div className="form-group">
           <label className="form-label">{t('sleep.modal.type')}</label>
           <select className="form-select" value={form.label} onChange={e=>setForm(f=>({...f,label:e.target.value}))}>
@@ -165,8 +226,8 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
           <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
-          <button className="btn-primary" onClick={addManual}>{t('common.save')}</button>
+          <button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={save}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

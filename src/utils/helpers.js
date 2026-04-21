@@ -28,7 +28,22 @@ export function formatAge(months) {
 export function formatDate(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
-  return d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+/**
+ * displayMethod — mapuje wewnętrzną (polską) nazwę metody pomiaru temperatury
+ * na przetłumaczony label z i18n.
+ * Wartości w state to stringi polskie (legacy), ale wyświetlany tekst idzie przez i18n.
+ */
+export function displayMethod(method) {
+  switch (method) {
+    case 'Odbytniczo': return t('temp.method.rectal')
+    case 'Pod pachą':  return t('temp.method.axillary')
+    case 'W uchu':     return t('temp.method.ear')
+    case 'Na czole':   return t('temp.method.forehead')
+    default:           return method || ''
+  }
 }
 
 export function calcParacetamol(weightKg) {

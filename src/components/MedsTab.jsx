@@ -26,6 +26,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   const [logs, setLogs] = useFirestore(uid, `meds_${babyId}`, [])
   const [customMeds, setCustomMeds] = useFirestore(uid, `meds_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [doseModal, setDoseModal] = useState(null)
   const [addMedModal, setAddMedModal] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
@@ -38,13 +39,38 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   const ibu = calcIbuprofen(weightKg, ageMonths)
   const allMedNames = [...BUILT_IN_MEDS, ...customMeds.map(m=>m.name), t('meds.other')]
 
-  const add = () => {
-    const entry = { id:genId(), ...form }
-    setLogs([entry, ...logs])
-    setModal(false)
+  const openAdd = () => {
+    setEditingId(null)
     setForm({ med:'Paracetamol', dose:'', time:nowTime(), date:todayDate(), note:'' })
-    if (permission === 'granted') scheduleReminder(entry)
+    setModal(true)
   }
+
+  const openEdit = (entry) => {
+    setEditingId(entry.id)
+    setForm({
+      med: entry.med,
+      dose: entry.dose || '',
+      time: entry.time,
+      date: entry.date,
+      note: entry.note || '',
+    })
+    setModal(true)
+  }
+
+  const save = () => {
+    if (editingId) {
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      toast(t('common.saved'))
+    } else {
+      const entry = { id:genId(), ...form }
+      setLogs([entry, ...logs])
+      if (permission === 'granted') scheduleReminder(entry)
+    }
+    setModal(false)
+    setEditingId(null)
+    setForm({ med:'Paracetamol', dose:'', time:nowTime(), date:todayDate(), note:'' })
+  }
+
   const remove = (id) => setLogs(logs.filter(l=>l.id!==id))
 
   const logDoseFromModal = () => {
@@ -126,7 +152,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             <button onClick={()=>setDoseModal(DOSE_INFO[med])} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,minHeight:36}}>{t('meds.dose_btn')}</button>
           </div>
         ))}
-      </div>}
+      </div>
 
       <div className="warn-card"><strong>{t('med.important')}</strong> {t('med.disclaimer')}</div>
 
@@ -189,15 +215,15 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         {logs.length === 0
           ? <div className="empty-state"><div className="empty-icon">💊</div><p>{t('meds.history.empty')}</p></div>
           : logs.slice(0,20).map(l => (
-            <div className="log-item" key={l.id}>
+            <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">💊</div>
               <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.date} {l.time}{l.note?` · ${l.note}`:''}</div></div>
-              <button onClick={()=>remove(l.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }
       </div>
-      <button className="btn-add" onClick={()=>{ setForm(f=>({...f,time:nowTime(),date:todayDate()})); setModal(true) }}>+ Zapisz podanie leku</button>
+      <button className="btn-add" onClick={openAdd}>+ Zapisz podanie leku</button>
 
       <Modal open={addMedModal} onClose={()=>setAddMedModal(false)} title={t('meds.add_custom.modal')}>
         <div className="form-group">
@@ -214,7 +240,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         <div className="modal-btns"><button className="btn-secondary" onClick={()=>setAddMedModal(false)}>{t('common.cancel')}</button><button className="btn-primary" onClick={addCustomMed}>{t('common.save')}</button></div>
       </Modal>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title={t('meds.modal.title')}>
+      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('meds.modal.title')}>
         <div className="form-group"><label className="form-label">{t('meds.modal.drug')}</label><select className="form-select" value={form.med} onChange={e=>setForm(f=>({...f,med:e.target.value}))}>{allMedNames.map(mn => (
             <option key={mn} value={mn}>
               {mn === 'Paracetamol'        ? t('med.name.paracetamol')
@@ -228,8 +254,9 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" maxLength={100} placeholder={t("meds.custom.dose_ph")} value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} /></div>
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
         </div>
+        <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
         <div className="form-group"><label className="form-label">Notatka</label><input className="form-input" type="text" maxLength={200} placeholder={t("common.optional_ph")} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
-        <div className="modal-btns"><button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button><button className="btn-primary" onClick={add}>{t('common.save')}</button></div>
+        <div className="modal-btns"><button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button><button className="btn-primary" onClick={save}>{t('common.save')}</button></div>
       </Modal>
 
       <Modal open={!!doseModal} onClose={()=>setDoseModal(null)} title={doseModal?.title}>

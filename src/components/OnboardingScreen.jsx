@@ -27,7 +27,12 @@ function Dot({ active, color }) {
 /**
  * OnboardingScreen
  * Props:
- *   onComplete(profileData) – called with { name, months, weight, avatar } on finish
+ *   onComplete(profileData) – called with { name, months, weight, avatar, toiletMode } on finish
+ *
+ * ZMIANY 2026-04-21:
+ *   - Wymuszenie wagi (required) — bez tego kalkulator leków nie działa
+ *   - Skip USUNIĘTY z setup screen — user musi wypełnić, nie może uciec
+ *   - Auto-toiletMode na podstawie wieku (diapers < 18m < potty < 42m < toilet)
  */
 export default function OnboardingScreen({ onComplete }) {
   useLocale()
@@ -39,29 +44,47 @@ export default function OnboardingScreen({ onComplete }) {
   const [months, setMonths] = useState('4')
   const [weight, setWeight] = useState('')
   const [avatar, setAvatar] = useState('👶')
+  const [weightError, setWeightError] = useState('')
 
   const totalSlides = SLIDES.length + 1 // +1 for setup screen
   const isSetup = current === SLIDES.length
   const slide = SLIDES[current]
 
+  // Waga musi być liczbą w rozsądnym zakresie 1-50 kg
+  const weightNum = Number(weight.replace(',', '.'))
+  const weightValid = !isNaN(weightNum) && weightNum >= 1 && weightNum <= 50
+
   const next = () => {
     if (current < SLIDES.length) {
       setCurrent(c => c + 1)
-    } else {
-      // Setup screen → complete
-      onComplete({
-        name: name.trim() || (t('app.title') === 'Calm Parent' ? 'My baby' : 'Moje dziecko'),
-        months: Number(months) || 4,
-        weight: Number(weight) || 6.5,
-        avatar,
-        toiletMode: (Number(months) || 4) < 18 ? 'diapers' : (Number(months) || 4) < 42 ? 'potty' : 'toilet',
-      })
+      return
     }
+    // Setup screen → walidacja
+    if (!name.trim()) {
+      return
+    }
+    if (!weight.trim() || !weightValid) {
+      setWeightError(t('onb.setup.weight_error') || 'Waga jest wymagana (1-50 kg)')
+      return
+    }
+    const totalMonths = (Number(years) || 0) * 12 + (Number(months) || 0)
+    onComplete({
+      name: name.trim(),
+      months: totalMonths,
+      weight: weightNum,
+      avatar,
+      toiletMode: totalMonths < 18 ? 'diapers' : totalMonths < 42 ? 'potty' : 'toilet',
+    })
   }
 
-  const skip = () => onComplete({ name: t('app.title') === 'Calm Parent' ? 'My baby' : 'Moje dziecko', months:4, weight:6.5, avatar:'👶', toiletMode:'diapers' })
+  // Skip TYLKO dla slide'ów edukacyjnych, NIE dla setup
+  const skip = () => {
+    if (!isSetup) setCurrent(SLIDES.length)  // idź do setup, nie pomiń całkowicie
+  }
 
-  const canProceed = !isSetup || name.trim().length > 0
+  const canProceed = !isSetup
+    ? true
+    : (name.trim().length > 0 && weightValid)
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%', background:'#fff', userSelect:'none' }}>
@@ -114,7 +137,7 @@ export default function OnboardingScreen({ onComplete }) {
       )}
 
       {/* Content */}
-      <div style={{ flex:1, padding:'28px 28px 0', display:'flex', flexDirection:'column' }}>
+      <div style={{ flex:1, padding:'28px 28px 0', display:'flex', flexDirection:'column', overflowY:'auto' }}>
         {!isSetup ? (
           <>
             <p style={{ fontSize:16, color:'#3a3a36', lineHeight:1.65, margin:0 }}>
@@ -145,7 +168,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             {/* Name */}
             <div className="form-group">
-              <label className="form-label">{t('onb.setup.name')}</label>
+              <label className="form-label">{t('onb.setup.name')} *</label>
               <input
                 className="form-input"
                 type="text" maxLength={40}
@@ -194,9 +217,11 @@ export default function OnboardingScreen({ onComplete }) {
               </div>
             </div>
 
-            {/* Weight */}
+            {/* Weight — REQUIRED, z komunikatem */}
             <div className="form-group">
-              <label className="form-label">{t('onb.setup.weight')}</label>
+              <label className="form-label">
+                {t('onb.setup.weight')} *
+              </label>
               <input
                 className="form-input"
                 type="number"
@@ -205,9 +230,23 @@ export default function OnboardingScreen({ onComplete }) {
                 min="1"
                 max="50"
                 value={weight}
-                onChange={e=>setWeight(e.target.value.replace(",","."))}
+                onChange={e=>{
+                  setWeight(e.target.value.replace(",","."))
+                  if (weightError) setWeightError('')
+                }}
                 placeholder={t("onb.weight_ph")}
+                style={{
+                  borderColor: weightError ? '#E05D44' : undefined,
+                }}
               />
+              {weightError && (
+                <div style={{fontSize:12, color:'#E05D44', marginTop:6, fontWeight:500}}>
+                  ⚠️ {weightError}
+                </div>
+              )}
+              <div style={{fontSize:11, color:'var(--text-3)', marginTop:6, lineHeight:1.5}}>
+                💊 Waga jest niezbędna do poprawnego liczenia dawek paracetamolu i ibuprofenu.
+              </div>
             </div>
 
             <div style={{fontSize:12,color:'var(--text-3)',lineHeight:1.5}}>
@@ -219,9 +258,11 @@ export default function OnboardingScreen({ onComplete }) {
 
       {/* Bottom */}
       <div style={{
-        padding:'24px 28px',
-        paddingBottom:'max(28px, env(safe-area-inset-bottom))',
-        display:'flex', flexDirection:'column', gap:16, alignItems:'center',
+        padding:'20px 28px',
+        paddingBottom:'max(20px, env(safe-area-inset-bottom))',
+        display:'flex', flexDirection:'column', gap:14, alignItems:'center',
+        background: '#fff',
+        borderTop: isSetup ? '0.5px solid rgba(0,0,0,0.06)' : 'none',
       }}>
         {/* Dots */}
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>

@@ -2,36 +2,62 @@ import React, { useState } from 'react'
 import { t, useLocale } from '../i18n'
 
 function getTestimonials() {
-  const locale = t('app.title') === 'Calm Parent' ? 'en' : 'pl'
-  if (locale === 'en') {
+  const isEN = t('app.title') === 'Calm Parent'
+  if (isEN) {
     return [
-      { name: 'Sarah M.', child: 'mom of 4-month-old', quote: 'The fever alerts probably saved us a trip to the ER. I knew exactly when to call the pediatrician.', rating: 5 },
-      { name: 'Emily R.', child: 'mom of twins',       quote: 'Finally an app that tells me what to DO, not just tracks numbers.', rating: 5 },
-      { name: 'James K.', child: 'dad of 7-month-old', quote: 'The medicine calculator alone is worth it. No more 3 AM Google searches.', rating: 5 },
+      { name: 'Sarah M.', child: 'mom of 4-month-old', quote: 'Share with my husband changed everything — we both see feedings in real time.', rating: 5 },
+      { name: 'Emily R.', child: 'mom of twins',       quote: 'Growth charts with percentiles save us a visit to the pediatrician every month.', rating: 5 },
+      { name: 'James K.', child: 'dad of 7-month-old', quote: 'Worth it just for the backup — I lost my phone, all data was safe.', rating: 5 },
     ]
   }
   return [
-    { name: 'Ania K.',    child: 'mama 4-miesięcznej Zosi',  quote: 'Alerty temperatury uratowały nas przed wizytą na SOR. Wiedziałam kiedy dzwonić do pediatry.', rating: 5 },
-    { name: 'Martyna P.', child: 'mama bliźniaków',          quote: 'Wreszcie aplikacja, która mówi CO zrobić, a nie tylko zbiera dane.', rating: 5 },
-    { name: 'Kuba D.',    child: 'tata 7-miesięcznego Adama',quote: 'Sam kalkulator leków jest wart ceny. Koniec z szukaniem w Google o 3 nad ranem.', rating: 5 },
+    { name: 'Ania K.',    child: 'mama 4-miesięcznej Zosi',  quote: 'Share z mężem to game changer — oboje widzimy karmienia w czasie rzeczywistym.', rating: 5 },
+    { name: 'Martyna P.', child: 'mama bliźniaków',          quote: 'Wykresy wzrostu z percentylami oszczędzają nam wizytę u pediatry co miesiąc.', rating: 5 },
+    { name: 'Kuba D.',    child: 'tata 7-miesięcznego Adama',quote: 'Sam backup jest wart ceny. Zgubiłem telefon, wszystkie dane bezpieczne.', rating: 5 },
   ]
 }
 
+/**
+ * NOWA OFERTA PREMIUM (2026-04-21):
+ *
+ * Bezpieczeństwo ZAWSZE za darmo:
+ *   - Kalkulator dawek paracetamolu/ibuprofenu
+ *   - Alerty temperatury + crisis detection
+ *   - Podstawowe tracking (karmienie, sen, pieluchy, temp)
+ *
+ * Premium = wartość dodana (nie etyczne minimum):
+ *   - Share z partnerem (true killer feature)
+ *   - Wykresy wzrostu z percentylami WHO
+ *   - Unlimited dzieci (bliźnięta, rodzeństwo)
+ *   - Eksport CSV + PDF raport
+ *   - Backup chmurowy + sync między urządzeniami
+ *   - Notatki z wizyt lekarskich
+ */
 function getFeatures() {
+  const isEN = t('app.title') === 'Calm Parent'
+  if (isEN) {
+    return [
+      { icon:'👨‍👩‍👧', title:'Share with partner',      desc:'Both parents see the same data in real time. One shared child.' },
+      { icon:'📊', title:'Growth charts with WHO percentiles', desc:'See where your child ranks compared to the global norm.' },
+      { icon:'👶', title:'Unlimited children',        desc:'Twins, siblings — one subscription, no limits.' },
+      { icon:'📥', title:'Export & backup',           desc:'Full data export to CSV. Never lose what you tracked.' },
+      { icon:'☁️', title:'Cross-device sync',         desc:'Phone, tablet, partner\'s phone — always up to date.' },
+      { icon:'🩺', title:'Pediatrician notes',        desc:'Diagnoses and recommendations saved between visits.' },
+    ]
+  }
   return [
-    { icon:'🌡️', title:t('paywall.feat1.title'), desc:t('paywall.feat1.desc') },
-    { icon:'🚨', title:t('paywall.feat2.title'), desc:t('paywall.feat2.desc') },
-    { icon:'💡', title:t('paywall.feat3.title'), desc:t('paywall.feat3.desc') },
-    { icon:'💊', title:t('paywall.feat4.title'), desc:t('paywall.feat4.desc') },
-    { icon:'☁️', title:t('paywall.feat5.title'), desc:t('paywall.feat5.desc') },
-    { icon:'🩺', title:t('paywall.feat6.title'), desc:t('paywall.feat6.desc') },
+    { icon:'👨‍👩‍👧', title:'Udostępnij partnerowi',    desc:'Oboje rodziców widzi te same dane w czasie rzeczywistym. Jedno dziecko, dwa konta.' },
+    { icon:'📊', title:'Wykresy wzrostu z percentylami', desc:'Zobacz w którym percentylu jest twoje dziecko wg WHO.' },
+    { icon:'👶', title:'Nielimitowane dzieci',      desc:'Bliźnięta, rodzeństwo — jedna subskrypcja, bez limitów.' },
+    { icon:'📥', title:'Eksport i backup',          desc:'Pełny eksport danych do CSV. Nigdy nie stracisz historii.' },
+    { icon:'☁️', title:'Sync między urządzeniami', desc:'Telefon, tablet, telefon partnera — zawsze aktualne.' },
+    { icon:'🩺', title:'Notatki lekarskie',         desc:'Diagnoza i zalecenia zapisane między wizytami.' },
   ]
 }
 
 function getPlans() {
-  // Ceny różnią się dla rynku PL/EN
-  const locale = t('app.title') === 'Calm Parent' ? 'en' : 'pl'
-  const prices = locale === 'en'
+  const isEN = t('app.title') === 'Calm Parent'
+  const prices = isEN
     ? { monthly:'$6.99', yearly:'$49.99', lifetime:'$99.99' }
     : { monthly:'14,99 zł', yearly:'99,99 zł', lifetime:'199,99 zł' }
   return [
@@ -46,6 +72,12 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
   const FEATURES = getFeatures()
   const PLANS = getPlans()
   const [selected, setSelected] = useState('yearly')
+  const isEN = t('app.title') === 'Calm Parent'
+
+  // Komunikat o tym co jest za DARMO — żeby user nie czuł że kupuje "bezpieczeństwo"
+  const freeBanner = isEN
+    ? 'Medicine calculator, temperature alerts and basic tracking are always FREE.'
+    : 'Kalkulator leków, alerty temperatury i podstawowy tracking zawsze ZA DARMO.'
 
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#fff'}}>
@@ -70,7 +102,26 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
       </div>
 
       <div style={{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch'}}>
-        <div style={{padding:'16px 20px 0'}}>
+
+        {/* FREE banner — kluczowy komunikat etyczny */}
+        <div style={{
+          margin:'14px 20px 0',
+          padding:'10px 14px',
+          background:'#E1F5EE',
+          border:'0.5px solid #9FE1CB',
+          borderRadius:10,
+          fontSize:12,
+          color:'#085041',
+          lineHeight:1.5,
+          display:'flex',
+          alignItems:'center',
+          gap:8,
+        }}>
+          <span style={{fontSize:16}}>✅</span>
+          <span>{freeBanner}</span>
+        </div>
+
+        <div style={{padding:'8px 20px 0'}}>
           {FEATURES.map((f,i) => (
             <div key={i} style={{
               display:'flex',alignItems:'flex-start',gap:12,padding:'10px 0',

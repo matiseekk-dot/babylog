@@ -10,14 +10,38 @@ export default function GrowthTab({uid, babyId }) {
   useLocale()
   const [logs, setLogs] = useFirestore(uid, `growth_${babyId}`, [])
   const [modal, setModal] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ date: todayDate(), weight:'', height:'', headCirc:'' })
   const [view, setView] = useState('weight')
 
-  const add = () => {
-    if (!form.weight && !form.height) return
-    setLogs([{ id:genId(), ...form }, ...logs])
+  const openAdd = () => {
+    setEditingId(null)
+    setForm({ date: todayDate(), weight:'', height:'', headCirc:'' })
+    setModal(true)
+  }
+
+  const openEdit = (entry) => {
+    setEditingId(entry.id)
+    setForm({
+      date: entry.date,
+      weight: entry.weight ? String(entry.weight) : '',
+      height: entry.height ? String(entry.height) : '',
+      headCirc: entry.headCirc ? String(entry.headCirc) : '',
+    })
+    setModal(true)
+  }
+
+  const save = () => {
+    if (!form.weight && !form.height && !form.headCirc) return
+    if (editingId) {
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      toast(t('common.saved'))
+    } else {
+      setLogs([{ id: genId(), ...form }, ...logs])
+    }
     setModal(false)
-    setForm({ date:todayDate(), weight:'', height:'', headCirc:'' })
+    setEditingId(null)
+    setForm({ date: todayDate(), weight:'', height:'', headCirc:'' })
   }
 
   const sorted = [...logs].sort((a,b)=>a.date.localeCompare(b.date))
@@ -65,7 +89,7 @@ export default function GrowthTab({uid, babyId }) {
         {logs.length === 0
           ? <div className="empty-state"><div className="empty-icon">📏</div><p>{t('growth.empty')}</p></div>
           : [...logs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,20).map(l => (
-            <div className="log-item" key={l.id}>
+            <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">📏</div>
               <div className="log-body">
                 <div className="log-name">{l.date}</div>
@@ -73,17 +97,17 @@ export default function GrowthTab({uid, babyId }) {
                   {l.weight && `${l.weight} kg`}{l.weight && l.height ? ' · ' : ''}{l.height && `${l.height} cm`}{l.headCirc ? ` · ${t('growth.head_short')} ${l.headCirc} cm` : ''}
                 </div>
               </div>
-              <button onClick={()=>setLogs(logs.filter(x=>x.id!==l.id))} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }
       </div>
 
-      <button className="btn-add" onClick={()=>{ setForm(f=>({...f,date:todayDate()})); setModal(true) }}>
+      <button className="btn-add" onClick={openAdd}>
         {t('growth.add')}
       </button>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title={t('growth.modal.title')}>
+      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('growth.modal.title')}>
         <div className="form-group">
           <label className="form-label">{t('growth.modal.date')}</label>
           <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
@@ -103,8 +127,8 @@ export default function GrowthTab({uid, babyId }) {
           <input className="form-input" type="number" step="0.5" placeholder={t('growth.head_ph')} value={form.headCirc} onChange={e=>setForm(f=>({...f,headCirc:e.target.value}))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
-          <button className="btn-primary" onClick={add}>{t('common.save')}</button>
+          <button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={save}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

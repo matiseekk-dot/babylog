@@ -28,6 +28,7 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
     ? (lastBreastFeed.type === 'Pierś lewa' ? 'Pierś prawa' : 'Pierś lewa')
     : null
   const [modal, setModal] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
 
   const today = todayDate()
@@ -50,13 +51,35 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
     toast(`${t('common.saved')}: ${type}`)
   }
 
-  const add = () => {
-    const entry = { id: genId(), ...form }
-    setLogs([entry, ...logs])
+  const openAdd = () => {
+    setEditingId(null)
+    setForm({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
+    setModal(true)
+  }
+
+  const openEdit = (entry) => {
+    setEditingId(entry.id)
+    setForm({
+      type: entry.type,
+      amount: String(entry.amount ?? ''),
+      time: entry.time,
+      date: entry.date,
+    })
+    setModal(true)
+  }
+
+  const save = () => {
+    if (editingId) {
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      toast(t('common.saved'))
+    } else {
+      setLogs([{ id: genId(), ...form }, ...logs])
+      toast(t('feed.toast.saved'))
+    }
     setModal(false)
+    setEditingId(null)
     setForm({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
     onDataChange?.()
-    toast(t('feed.toast.saved'))
   }
 
   const remove = (id) => {
@@ -130,7 +153,7 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
               <p>{t('feed.empty')}</p>
             </div>
           : todayLogs.map(l => (
-            <div className="log-item" key={l.id}>
+            <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">{l.type.startsWith('Pierś') ? '🤱' : '🍼'}</div>
               <div className="log-body">
                 <div className="log-name">{
@@ -143,17 +166,17 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
                 <div className="log-detail">{l.type==='Butelka'||l.type==='Odciągnięte mleko' ? `${l.amount} ml` : `${l.amount} min`}</div>
               </div>
               <div className="log-time">{l.time}</div>
-              <button onClick={() => remove(l.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }
       </div>
 
-      <button className="btn-add" onClick={() => { setForm(f=>({...f,time:nowTime(),date:todayDate()})); setModal(true) }}>
+      <button className="btn-add" onClick={openAdd}>
         {t('feed.add_detail')}
       </button>
 
-      <Modal open={modal} onClose={() => setModal(false)} title={t('feed.modal.title')}>
+      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('feed.modal.title')}>
         <div className="form-group">
           <label className="form-label">{t('feed.modal.type')}</label>
           <select className="form-select" value={form.type} onChange={e => setForm(f=>({...f,type:e.target.value,amount:e.target.value.startsWith('Pierś')?'15':'120'}))}>
@@ -183,8 +206,8 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
           <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={() => setModal(false)}>{t('common.cancel')}</button>
-          <button className="btn-primary" onClick={add}>{t('common.save')}</button>
+          <button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button>
+          <button className="btn-primary" onClick={save}>{t('common.save')}</button>
         </div>
       </Modal>
     </>

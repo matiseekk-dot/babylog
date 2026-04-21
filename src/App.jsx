@@ -16,8 +16,8 @@ import MedsTab from './components/MedsTab'
 import GrowthTab from './components/GrowthTab'
 import TempTab from './components/TempTab'
 import VaccinationsTab from './components/VaccinationsTab'
-import DiaryTab from './components/DiaryTab'
 import DietTab from './components/DietTab'
+import QuickDoseCard from './components/QuickDoseCard'
 import ProfilesScreen from './components/ProfilesScreen'
 import ChildStatusBar from './components/ChildStatusBar'
 import ChildStatusCard from './components/ChildStatusCard'
@@ -29,8 +29,6 @@ import SleepIndicator from './components/SleepIndicator'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import SettingsScreen from './components/SettingsScreen'
 import CallDoctorCard from './components/CallDoctorCard'
-import DailyTipCard from './components/DailyTipCard'
-import StreakBadge from './components/StreakBadge'
 import CallDoctorPrep from './components/CallDoctorPrep'
 import { useCrisisDetection } from './hooks/useCrisisDetection'
 
@@ -85,7 +83,6 @@ const MORE_TABS = [
   { id:'meds',       emoji:'💊', labelKey:'nav.meds' },
   { id:'vacc',       emoji:'💉', labelKey:'nav.vacc' },
   { id:'diet',       emoji:'🥕', labelKey:'nav.diet' },
-  { id:'diary',      emoji:'📖', labelKey:'nav.diary' },
   { id:'doctor',     emoji:'🩺', labelKey:'nav.doctor' },
 ]
 
@@ -263,6 +260,11 @@ export default function App() {
           {!hasAnyData && !emptyHeroDismissed && (
             <EmptyStateHero onNavigate={navigate} onDismiss={dismissEmptyHero} />
           )}
+          <QuickDoseCard
+            weightKg={active.weight}
+            ageMonths={active.months}
+            onNavigateToMeds={() => navigate('meds')}
+          />
           <FeedTab {...sharedProps} sectionAlerts={visibleSection('feed')} onNavigate={navigate} />
         </>
       )
@@ -275,7 +277,6 @@ export default function App() {
       case 'meds':       return <MedsTab       {...sharedProps} sectionAlerts={visibleSection('meds')}   onNavigate={navigate} />
       case 'vacc':       return <VaccinationsTab {...sharedProps} />
       case 'diet':       return <DietTab       {...sharedProps} />
-      case 'diary':      return <DiaryTab      {...sharedProps} />
       case 'doctor':     return <DoctorNotesTab {...sharedProps} />
       default:           return <FeedTab       {...sharedProps} sectionAlerts={visibleSection('feed')}   onNavigate={navigate} />
     }
@@ -396,7 +397,6 @@ export default function App() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <LanguageSwitcher />
-          <StreakBadge />
           {/* Premium badge / upgrade button */}
           {isPremium ? (
             <span style={{
@@ -464,11 +464,6 @@ export default function App() {
             onNavigate={navigate}
             onPrep={() => setShowPrep(true)}
           />
-        )}
-
-        {/* DAILY TIP — retention hook */}
-        {!showProfiles && !showMore && !crisis && (
-          <DailyTipCard ageMonths={active.months} />
         )}
 
         {/* STATUS CARD */}
