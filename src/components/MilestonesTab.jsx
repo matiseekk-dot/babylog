@@ -7,29 +7,79 @@ import { t, useLocale } from '../i18n'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
 
+/**
+ * MilestonesTab
+ *
+ * ZMIANY 2026-04-21 (v2):
+ *   1. Usunięte pole "Etykieta wieku" w modalu dodawania — nadmiarowe,
+ *      apka sama generuje "X. miesiąc" z liczby
+ *   2. Dodana EDYCJA daty osiągnięcia dla KAŻDEGO milestone'a (nie tylko custom):
+ *      - Tap w już zaznaczony milestone → modal z datą do edycji
+ *      - Pozwala wpisać "zaczął raczkować 2 tygodnie temu" (data wstecz)
+ *   3. Edycja custom milestones (nazwa, emoji, miesiąc) przez "długi" tap
+ *
+ * Flow:
+ *   - Krótki tap na niezaznaczony → toggle + data = dziś
+ *   - Krótki tap na zaznaczony → modal edycji daty
+ *   - ✕ (tylko na custom) → usuwa całkowicie milestone
+ */
 export default function MilestonesTab({uid, babyId, ageMonths }) {
   useLocale()
   const [done, setDone] = useFirestore(uid, `milestones_${babyId}`, {})
   const [customMilestones, setCustomMilestones] = useFirestore(uid, `milestones_custom_${babyId}`, [])
   const [filter, setFilter] = useState('all')
+
+  // Modal dodawania nowego
   const [modal, setModal] = useState(false)
+  const [form, setForm] = useState({ name: '', emoji: '⭐', months: String(ageMonths) })
+
+  // Modal edycji daty osiągnięcia (dla zaznaczonych)
+  const [editDateMilestone, setEditDateMilestone] = useState(null)
+  const [editDateValue, setEditDateValue] = useState(todayDate())
+
   const [deleteId, setDeleteId] = useState(null)
-  const [form, setForm] = useState({ name: '', emoji: '⭐', age: '', months: String(ageMonths) })
 
   const allMilestones = [...MILESTONES, ...customMilestones]
 
-  const toggle = (id) => {
+  const handleClick = (m) => {
+    if (done[m.id]) {
+      // Już zaznaczony → otwórz edycję daty (nie odzaznacza od razu)
+      setEditDateMilestone(m)
+      setEditDateValue(done[m.id])
+    } else {
+      // Niezaznaczony → zaznacz z dzisiejszą datą
+      setDone({ ...done, [m.id]: todayDate() })
+    }
+  }
+
+  const saveEditDate = () => {
+    if (!editDateMilestone) return
+    setDone({ ...done, [editDateMilestone.id]: editDateValue })
+    setEditDateMilestone(null)
+  }
+
+  const unmark = () => {
+    if (!editDateMilestone) return
     const next = { ...done }
-    if (next[id]) { delete next[id] } else { next[id] = todayDate() }
+    delete next[editDateMilestone.id]
     setDone(next)
+    setEditDateMilestone(null)
   }
 
   const addCustom = () => {
     if (!form.name.trim()) return
-    const m = { id: genId(), name: form.name.trim(), emoji: form.emoji, age: form.age || `${form.months} ${t('vacc.month_suffix').slice(0,3)}.`, months: Number(form.months), custom: true }
+    const monthsNum = Number(form.months) || 0
+    const m = {
+      id: genId(),
+      name: form.name.trim(),
+      emoji: form.emoji,
+      age: `${monthsNum}. mies.`,
+      months: monthsNum,
+      custom: true,
+    }
     setCustomMilestones([...customMilestones, m])
     setModal(false)
-    setForm({ name: '', emoji: '⭐', age: '', months: String(ageMonths) })
+    setForm({ name: '', emoji: '⭐', months: String(ageMonths) })
   }
 
   const removeCustom = (id) => {
@@ -63,7 +113,12 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
 
       <div className="milestone-grid">
         {filtered.map(m => (
-          <div key={m.id} className={`milestone-card ${done[m.id]?'done':''}`} style={{position:'relative'}} onClick={()=>toggle(m.id)}>
+          <div
+            key={m.id}
+            className={`milestone-card ${done[m.id]?'done':''}`}
+            style={{position:'relative'}}
+            onClick={() => handleClick(m)}
+          >
             {m.custom && (
               <button onClick={e=>{e.stopPropagation();setDeleteId(m.id)}} style={{
                 position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.08)',border:'none',
@@ -86,10 +141,11 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
         </div>
       )}
 
-      <button className="btn-add" onClick={()=>{ setForm({name:'',emoji:'⭐',age:'',months:String(ageMonths)}); setModal(true) }}>
+      <button className="btn-add" onClick={()=>{ setForm({name:'',emoji:'⭐',months:String(ageMonths)}); setModal(true) }}>
         {t('milestones.add')}
       </button>
 
+      {/* Modal: DODAJ nowy milestone */}
       <Modal open={modal} onClose={()=>setModal(false)} title={t('milestones.modal.title')}>
         <div className="form-group">
           <label className="form-label">Emoji</label>
@@ -105,16 +161,27 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
         </div>
         <div className="form-group">
           <label className="form-label">Opis etapu</label>
-          <input className="form-input" type="text" maxLength={40} placeholder={t('milestones.modal.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+          <input
+            className="form-input"
+            type="text"
+            maxLength={40}
+            placeholder={t('milestones.modal.name_ph')}
+            value={form.name}
+            onChange={e=>setForm(f=>({...f,name:e.target.value}))}
+          />
         </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">{t('milestones.modal.age')}</label>
-            <input className="form-input" type="number" min="0" max="60" value={form.months} onChange={e=>setForm(f=>({...f,months:e.target.value,age:`${e.target.value} mies.`}))} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">{t('milestones.modal.age_label')}</label>
-            <input className="form-input" type="text" maxLength={100} placeholder={t('milestones.modal.age_ph')} value={form.age} onChange={e=>setForm(f=>({...f,age:e.target.value}))} />
+        <div className="form-group">
+          <label className="form-label">Miesiąc życia dziecka</label>
+          <input
+            className="form-input"
+            type="number"
+            min="0"
+            max="60"
+            value={form.months}
+            onChange={e=>setForm(f=>({...f,months:e.target.value}))}
+          />
+          <div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>
+            0 = noworodek, 12 = rok, 24 = 2 lata itd.
           </div>
         </div>
         <div className="modal-btns">
@@ -123,6 +190,59 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
         </div>
       </Modal>
 
+      {/* Modal: EDYTUJ datę osiągnięcia */}
+      <Modal
+        open={!!editDateMilestone}
+        onClose={()=>setEditDateMilestone(null)}
+        title={editDateMilestone ? `${editDateMilestone.emoji} ${editDateMilestone.name}` : ''}
+      >
+        {editDateMilestone && (
+          <>
+            <div style={{
+              padding:'10px 12px',
+              background:'#E1F5EE',
+              borderRadius:8,
+              fontSize:12,
+              color:'#085041',
+              marginBottom:14,
+              lineHeight:1.5,
+            }}>
+              Możesz zmienić datę osiągnięcia — np. jeśli dziecko zaczęło to robić wcześniej, a teraz dopiero zaznaczasz.
+            </div>
+            <div className="form-group">
+              <label className="form-label">Data osiągnięcia</label>
+              <input
+                className="form-input"
+                type="date"
+                value={editDateValue}
+                onChange={e=>setEditDateValue(e.target.value)}
+                max={todayDate()}
+              />
+            </div>
+            <div className="modal-btns" style={{flexDirection:'column',gap:8}}>
+              <button className="btn-primary" style={{width:'100%'}} onClick={saveEditDate}>
+                {t('common.save')}
+              </button>
+              <button
+                className="btn-secondary"
+                style={{width:'100%',background:'var(--coral-light)',color:'var(--coral)',border:'none'}}
+                onClick={unmark}
+              >
+                Odznacz ten etap
+              </button>
+              <button
+                className="btn-secondary"
+                style={{width:'100%'}}
+                onClick={()=>setEditDateMilestone(null)}
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      {/* Modal: POTWIERDŹ usunięcie custom milestone */}
       <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title={t('milestones.delete_title')}>
         <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>{t('milestones.delete_msg')}</p>
         <div className="modal-btns">

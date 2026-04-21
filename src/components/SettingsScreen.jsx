@@ -38,6 +38,7 @@ export default function SettingsScreen({
   const [months, setMonths] = useState(String(initRemainderMonths))
   const [weight, setWeight] = useState(String(profile.weight))
   const [avatar, setAvatar] = useState(profile.avatar)
+  const [sex, setSex] = useState(profile.sex || 'M')
   const [exporting, setExporting] = useState(false)
 
   const save = () => {
@@ -46,6 +47,7 @@ export default function SettingsScreen({
       months: (Number(years) || 0) * 12 + (Number(months) || 0),
       weight: Number(weight) || 0,
       avatar,
+      sex,
     })
     toast(t('settings.saved'))
     onClose()
@@ -189,6 +191,41 @@ export default function SettingsScreen({
           <div className="form-group">
             <label className="form-label">{t('onb.setup.weight')}</label>
             <input className="form-input" type="number" inputMode="decimal" step="0.1" min="1" max="50" value={weight} onChange={e => setWeight(e.target.value.replace(",","."))} />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Płeć</label>
+            <div style={{display:'flex',gap:8,marginTop:4}}>
+              <button
+                onClick={()=>setSex('M')}
+                style={{
+                  flex:1,padding:'10px',minHeight:44,
+                  borderRadius:10,
+                  border:sex==='M' ? '2px solid #185FA5' : '0.5px solid var(--border)',
+                  background:sex==='M' ? '#E6F1FB' : '#fff',
+                  fontSize:13,fontWeight:700,color:sex==='M'?'#0C447C':'var(--text-2)',
+                  cursor:'pointer',
+                }}
+              >
+                👦 Chłopiec
+              </button>
+              <button
+                onClick={()=>setSex('F')}
+                style={{
+                  flex:1,padding:'10px',minHeight:44,
+                  borderRadius:10,
+                  border:sex==='F' ? '2px solid #C95A48' : '0.5px solid var(--border)',
+                  background:sex==='F' ? '#FEE7DF' : '#fff',
+                  fontSize:13,fontWeight:700,color:sex==='F'?'#7A1F0C':'var(--text-2)',
+                  cursor:'pointer',
+                }}
+              >
+                👧 Dziewczynka
+              </button>
+            </div>
+            <div style={{fontSize:10,color:'var(--text-3)',marginTop:4}}>
+              Potrzebne do percentyli WHO wzrostu i wagi.
+            </div>
           </div>
 
           <button onClick={save} style={{

@@ -51,6 +51,7 @@ const DEFAULT_PROFILE = {
   avatar: '👶',
   avatarColor: '#E1F5EE',
   toiletMode: 'diapers',
+  sex: 'M',  // 'M' | 'F' — required for WHO percentiles
 }
 
 const NAV_TABS = [
@@ -249,6 +250,7 @@ export default function App() {
     babyId: active.id,
     ageMonths: active.months,
     weightKg: active.weight,
+    sex: active.sex || null,
     toiletMode: active.toiletMode || 'diapers',
     onDataChange: refresh,
     isPremium,
@@ -382,7 +384,7 @@ export default function App() {
   // ── Paywall overlay ───────────────────────────────────────────────────────
   if (showPaywall) {
     return (
-      <div className="app" style={{ position: 'relative', overflowY: 'auto' }}>
+      <div className="app" style={{ position: 'relative' }}>
         <PaywallScreen onActivate={handleActivate} onClose={closePaywall} checking={rcChecking} />
       </div>
     )

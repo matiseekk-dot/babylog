@@ -44,6 +44,7 @@ export default function OnboardingScreen({ onComplete }) {
   const [months, setMonths] = useState('4')
   const [weight, setWeight] = useState('')
   const [avatar, setAvatar] = useState('👶')
+  const [sex, setSex] = useState('M')  // M / F — potrzebne do percentyli WHO
   const [weightError, setWeightError] = useState('')
 
   const totalSlides = SLIDES.length + 1 // +1 for setup screen
@@ -73,6 +74,7 @@ export default function OnboardingScreen({ onComplete }) {
       months: totalMonths,
       weight: weightNum,
       avatar,
+      sex,
       toiletMode: totalMonths < 18 ? 'diapers' : totalMonths < 42 ? 'potty' : 'toilet',
     })
   }
@@ -178,6 +180,44 @@ export default function OnboardingScreen({ onComplete }) {
                 autoFocus
                 style={{fontSize:16}}
               />
+            </div>
+
+            {/* Sex — WYMAGANE do percentyli WHO */}
+            <div className="form-group">
+              <label className="form-label">Płeć *</label>
+              <div style={{display:'flex',gap:8,marginTop:4}}>
+                <button
+                  onClick={()=>setSex('M')}
+                  style={{
+                    flex:1,padding:'12px',minHeight:48,
+                    borderRadius:12,
+                    border:sex==='M' ? '2px solid #185FA5' : '0.5px solid var(--border)',
+                    background:sex==='M' ? '#E6F1FB' : '#fff',
+                    fontSize:14,fontWeight:700,color:sex==='M'?'#0C447C':'var(--text-2)',
+                    cursor:'pointer',
+                    display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+                  }}
+                >
+                  👦 Chłopiec
+                </button>
+                <button
+                  onClick={()=>setSex('F')}
+                  style={{
+                    flex:1,padding:'12px',minHeight:48,
+                    borderRadius:12,
+                    border:sex==='F' ? '2px solid #C95A48' : '0.5px solid var(--border)',
+                    background:sex==='F' ? '#FEE7DF' : '#fff',
+                    fontSize:14,fontWeight:700,color:sex==='F'?'#7A1F0C':'var(--text-2)',
+                    cursor:'pointer',
+                    display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+                  }}
+                >
+                  👧 Dziewczynka
+                </button>
+              </div>
+              <div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>
+                Potrzebne do poprawnego porównania wzrostu z normami WHO.
+              </div>
             </div>
 
             {/* Age: years + months */}

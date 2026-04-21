@@ -4,9 +4,10 @@ import { todayDate, genId} from '../utils/helpers'
 import Modal from './Modal'
 import { toast } from './Toast'
 import { t, useLocale } from '../i18n'
+import { getWhoPercentiles, calculatePercentile, interpretPercentile } from '../data/whoNorms'
 const GrowthChart = React.lazy(() => import('./GrowthChart'))
 
-export default function GrowthTab({uid, babyId }) {
+export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUpgrade }) {
   useLocale()
   const [logs, setLogs] = useFirestore(uid, `growth_${babyId}`, [])
   const [modal, setModal] = useState(false)
@@ -44,15 +45,38 @@ export default function GrowthTab({uid, babyId }) {
     setForm({ date: todayDate(), weight:'', height:'', headCirc:'' })
   }
 
+  // Ocenia ageMonths w dacie wpisu (obecny wiek - miesiące od wpisu)
+  // Uproszczenie: zakładamy że różnica w miesiącach = (dzisiaj - data wpisu) / 30
+  const entryAgeMonths = (date) => {
+    if (ageMonths == null) return null
+    const daysDiff = Math.max(0, (new Date(todayDate()) - new Date(date)) / (1000 * 60 * 60 * 24))
+    return Math.max(0, ageMonths - daysDiff / 30)
+  }
+
   const sorted = [...logs].sort((a,b)=>a.date.localeCompare(b.date))
   const chartData = sorted.map(l=>({
     date: l.date.slice(5),
     weight: l.weight ? Number(l.weight) : undefined,
     height: l.height ? Number(l.height) : undefined,
     headCirc: l.headCirc ? Number(l.headCirc) : undefined,
+    ageMonths: entryAgeMonths(l.date),
   }))
 
   const last = sorted[sorted.length-1]
+
+  // Dla ostatniego pomiaru — oblicz percentyle dla każdego typu
+  const whoType = view === 'weight' ? 'weight' : view === 'height' ? 'height' : 'head'
+  const lastAgeMonths = last ? entryAgeMonths(last.date) : null
+  const lastValue = last ? Number(last[view === 'headCirc' ? 'headCirc' : view]) : null
+  const lastPercentiles = (sex && lastAgeMonths != null && lastValue)
+    ? getWhoPercentiles(whoType, sex, lastAgeMonths)
+    : null
+  const lastPercentile = lastPercentiles
+    ? calculatePercentile(lastValue, lastPercentiles)
+    : null
+  const percentileInterpretation = lastPercentile
+    ? interpretPercentile(lastPercentile, whoType)
+    : null
 
   return (
     <>
@@ -76,9 +100,76 @@ export default function GrowthTab({uid, babyId }) {
             <button className={`seg-btn ${view==='height'?'active':''}`} onClick={()=>setView('height')}>{t('growth.view.height')}</button>
             <button className={`seg-btn ${view==='headCirc'?'active':''}`} onClick={()=>setView('headCirc')}>{t('growth.view.head')}</button>
           </div>
+
+          {/* Premium badge: percentyl WHO */}
+          {isPremium && sex && lastPercentile != null && (
+            <div style={{
+              margin:'0 6px 10px',
+              padding:'10px 12px',
+              background: percentileInterpretation?.level === 'warning' ? '#FEE7DF' : '#E1F5EE',
+              border: `1px solid ${percentileInterpretation?.level === 'warning' ? '#E05D44' : '#9FE1CB'}`,
+              borderRadius:10,
+              display:'flex',
+              alignItems:'center',
+              gap:10,
+            }}>
+              <div style={{
+                fontSize:22,fontWeight:800,
+                color: percentileInterpretation?.level === 'warning' ? '#7A1F0C' : '#085041',
+                lineHeight:1,minWidth:52,textAlign:'center',
+              }}>
+                {typeof lastPercentile === 'number' ? `P${lastPercentile}` : lastPercentile}
+              </div>
+              <div style={{flex:1,fontSize:12,lineHeight:1.45}}>
+                <div style={{fontWeight:700,color:'#1a1a18',marginBottom:2}}>
+                  Percentyl WHO ({sex === 'M' ? 'chłopcy' : 'dziewczynki'})
+                </div>
+                <div style={{color:'#5a5a56'}}>{percentileInterpretation?.text}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Premium teaser dla free userów */}
+          {!isPremium && sex && (
+            <div
+              onClick={onUpgrade}
+              style={{
+                margin:'0 6px 10px',
+                padding:'10px 12px',
+                background:'#FAEEDA',
+                border:'1px solid #EACE95',
+                borderRadius:10,
+                cursor:'pointer',
+                display:'flex',alignItems:'center',gap:10,
+              }}
+            >
+              <span style={{fontSize:20}}>📊</span>
+              <div style={{flex:1,fontSize:12,lineHeight:1.45}}>
+                <div style={{fontWeight:700,color:'#633806',marginBottom:2}}>Percentyle WHO — Premium</div>
+                <div style={{color:'#8A5A12'}}>Zobacz w którym percentylu jest dziecko wg norm WHO →</div>
+              </div>
+            </div>
+          )}
+
+          {/* Brak sex — prompt ustawić */}
+          {!sex && (
+            <div style={{
+              margin:'0 6px 10px',padding:'10px 12px',
+              background:'#E6F1FB',border:'1px solid #9FCBEA',
+              borderRadius:10,fontSize:12,color:'#0C447C',lineHeight:1.45,
+            }}>
+              ℹ️ Ustaw płeć dziecka w profilu, aby porównać wagę/wzrost z normami WHO.
+            </div>
+          )}
+
           <div className="chart-wrap">
             <Suspense fallback={<div style={{padding:'20px',textAlign:'center',color:'var(--text-3)',fontSize:13}}>{t('chart.loading')}</div>}>
-              <GrowthChart data={chartData} dataKey={view} />
+              <GrowthChart
+                data={chartData}
+                dataKey={view}
+                sex={sex}
+                showWhoNorms={isPremium && !!sex}
+              />
             </Suspense>
           </div>
         </div>

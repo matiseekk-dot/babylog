@@ -191,7 +191,12 @@ export default function TeethingTab({ uid, babyId }) {
               const tooth = TEETH.find(t => t.id === toothId)
               if (!tooth) return null
               return (
-                <div className="log-item" key={toothId}>
+                <div
+                  className="log-item"
+                  key={toothId}
+                  onClick={() => openTooth(tooth)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <div className="log-icon">🦷</div>
                   <div className="log-body">
                     <div className="log-name">{t(tooth.nameKey)}</div>
