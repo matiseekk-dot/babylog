@@ -17,6 +17,7 @@ import GrowthTab from './components/GrowthTab'
 import TempTab from './components/TempTab'
 import VaccinationsTab from './components/VaccinationsTab'
 import DietTab from './components/DietTab'
+import CoughTab from './components/CoughTab'
 import QuickDoseCard from './components/QuickDoseCard'
 import ProfilesScreen from './components/ProfilesScreen'
 import ChildStatusBar from './components/ChildStatusBar'
@@ -80,6 +81,7 @@ const MORE_TABS = [
   { id:'teething',   emoji:'🦷', labelKey:'nav.teething' },
   { id:'growth',     emoji:'📏', labelKey:'nav.growth' },
   { id:'temp',       emoji:'🌡️', labelKey:'nav.temp' },
+  { id:'cough',      emoji:'🫁', labelKey:'nav.cough' },
   { id:'meds',       emoji:'💊', labelKey:'nav.meds' },
   { id:'vacc',       emoji:'💉', labelKey:'nav.vacc' },
   { id:'diet',       emoji:'🥕', labelKey:'nav.diet' },
@@ -274,6 +276,7 @@ export default function App() {
       case 'teething':   return <TeethingTab {...sharedProps} />
       case 'growth':     return <GrowthTab     {...sharedProps} />
       case 'temp':       return <TempTab       {...sharedProps} sectionAlerts={visibleSection('temp')}   onNavigate={navigate} />
+      case 'cough':      return <CoughTab      {...sharedProps} />
       case 'meds':       return <MedsTab       {...sharedProps} sectionAlerts={visibleSection('meds')}   onNavigate={navigate} />
       case 'vacc':       return <VaccinationsTab {...sharedProps} />
       case 'diet':       return <DietTab       {...sharedProps} />
