@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <defs>
+    <!-- Coral gradient jak w ikonie -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D97056"/>
+      <stop offset="60%" stop-color="#C95A48"/>
+      <stop offset="100%" stop-color="#B84A3A"/>
+    </linearGradient>
+
+    <!-- Subtle glow top -->
+    <linearGradient id="glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Buzia cream gradient -->
+    <linearGradient id="faceGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FDF8F0"/>
+      <stop offset="100%" stop-color="#FBF3E4"/>
+    </linearGradient>
+
+    <!-- Blush -->
+    <radialGradient id="blush" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F5B5A8" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#F5B5A8" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Drop shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="15" flood-color="#000" flood-opacity="0.2"/>
+    </filter>
+
+    <!-- Pill chip background -->
+    <linearGradient id="chip" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tło coral -->
+  <rect width="1024" height="500" fill="url(#bg)"/>
+  <rect width="1024" height="500" fill="url(#glow)"/>
+
+  <!-- Delikatne bokeh circles w tle (miękkie dekoracyjne) -->
+  <circle cx="900" cy="70"  r="80" fill="#fff" opacity="0.06"/>
+  <circle cx="950" cy="440" r="110" fill="#fff" opacity="0.05"/>
+  <circle cx="50"  cy="440" r="60" fill="#fff" opacity="0.08"/>
+  <circle cx="130" cy="60"  r="35" fill="#fff" opacity="0.1"/>
+
+  <!-- LEWA: ikona apki w większym formacie -->
+  <g transform="translate(90, 160)" filter="url(#shadow)">
+    <!-- Tło kwadratu (cream, jak adaptive icon ale odwrócone kolory dla kontrastu) -->
+    <rect x="0" y="0" width="180" height="180" rx="40" ry="40" fill="#FDF8F0"/>
+
+    <!-- Buzia -->
+    <circle cx="90" cy="95" r="55" fill="url(#faceGrad)" stroke="#E8D9BC" stroke-width="1"/>
+
+    <!-- Highlight top-left -->
+    <circle cx="55" cy="40" r="40" fill="#ffffff" opacity="0.25"/>
+
+    <!-- Policzki blush -->
+    <ellipse cx="60" cy="106" rx="10" ry="7" fill="url(#blush)"/>
+    <ellipse cx="120" cy="106" rx="10" ry="7" fill="url(#blush)"/>
+
+    <!-- Zamknięte oczy -->
+    <path d="M 67 91 Q 73 86 79 91" stroke="#1E2618" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M 101 91 Q 107 86 113 91" stroke="#1E2618" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+    <!-- Uśmiech -->
+    <path d="M 80 116 Q 90 122 100 116" stroke="#1E2618" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+    <!-- ZZZ w prawym górnym -->
+    <g stroke="#C95A48" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" fill="none">
+      <path d="M 135 45 L 150 45 L 137 59 L 151 59"/>
+      <path d="M 155 22 L 173 22 L 157 40 L 175 40"/>
+    </g>
+  </g>
+
+  <!-- CENTRAL: tytuł i tagline -->
+  <g transform="translate(310, 130)">
+    <!-- Tytuł "Calm Parent" -->
+    <text x="0" y="50" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+          font-size="62" font-weight="800" fill="#FDF8F0" letter-spacing="-1.5">
+      Calm Parent
+    </text>
+
+    <!-- Underline akcent -->
+    <rect x="0" y="68" width="80" height="4" rx="2" fill="#FDF8F0" opacity="0.6"/>
+
+    <!-- Tagline -->
+    <text x="0" y="110" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+          font-size="24" fill="#FDF8F0" opacity="0.95" font-weight="500">
+      Know what to do when baby is sick
+    </text>
+
+    <!-- Feature chips -->
+    <g transform="translate(0, 150)">
+      <!-- Chip 1: Dose calculator -->
+      <g>
+        <rect x="0" y="0" width="200" height="46" rx="23" fill="url(#chip)" stroke="#FDF8F0" stroke-opacity="0.3" stroke-width="1"/>
+        <!-- Ikona pigułki -->
+        <g transform="translate(16, 14)">
+          <rect x="0" y="3" width="20" height="12" rx="6" fill="#FDF8F0"/>
+          <rect x="10" y="3" width="10" height="12" fill="#D97056"/>
+          <rect x="0" y="3" width="20" height="12" rx="6" fill="none" stroke="#FDF8F0" stroke-width="0.5"/>
+        </g>
+        <text x="48" y="30" font-family="sans-serif" font-size="15" fill="#FDF8F0" font-weight="700">
+          Dose calculator
+        </text>
+      </g>
+
+      <!-- Chip 2: WHO percentiles -->
+      <g transform="translate(215, 0)">
+        <rect x="0" y="0" width="210" height="46" rx="23" fill="url(#chip)" stroke="#FDF8F0" stroke-opacity="0.3" stroke-width="1"/>
+        <!-- Ikona wykresu -->
+        <g transform="translate(16, 12)" stroke="#FDF8F0" stroke-width="2" fill="none" stroke-linecap="round">
+          <path d="M 2 20 L 8 14 L 14 17 L 20 8"/>
+          <circle cx="20" cy="8" r="2" fill="#FDF8F0"/>
+        </g>
+        <text x="48" y="30" font-family="sans-serif" font-size="15" fill="#FDF8F0" font-weight="700">
+          WHO percentiles
+        </text>
+      </g>
+
+      <!-- Chip 3: Fever alerts -->
+      <g transform="translate(0, 58)">
+        <rect x="0" y="0" width="200" height="46" rx="23" fill="url(#chip)" stroke="#FDF8F0" stroke-opacity="0.3" stroke-width="1"/>
+        <!-- Ikona termometru -->
+        <g transform="translate(18, 10)">
+          <rect x="5" y="2" width="5" height="18" rx="2.5" fill="none" stroke="#FDF8F0" stroke-width="1.5"/>
+          <circle cx="7.5" cy="22" r="4" fill="#FDF8F0"/>
+          <rect x="6" y="8" width="3" height="14" rx="1" fill="#FDF8F0"/>
+        </g>
+        <text x="48" y="30" font-family="sans-serif" font-size="15" fill="#FDF8F0" font-weight="700">
+          Fever alerts
+        </text>
+      </g>
+
+      <!-- Chip 4: Pediatrician Q&amp;A -->
+      <g transform="translate(215, 58)">
+        <rect x="0" y="0" width="210" height="46" rx="23" fill="url(#chip)" stroke="#FDF8F0" stroke-opacity="0.3" stroke-width="1"/>
+        <!-- Ikona dymka -->
+        <g transform="translate(16, 12)" stroke="#FDF8F0" stroke-width="1.8" fill="none">
+          <path d="M 2 3 L 22 3 Q 24 3 24 5 L 24 16 Q 24 18 22 18 L 10 18 L 5 22 L 5 18 L 4 18 Q 2 18 2 16 L 2 5 Q 2 3 2 3 Z" fill="#FDF8F0"/>
+        </g>
+        <text x="48" y="30" font-family="sans-serif" font-size="15" fill="#FDF8F0" font-weight="700">
+          Pediatrician Q&amp;A
+        </text>
+      </g>
+    </g>
+  </g>
+
+  <!-- DELIKATNY mini-badge w prawym dolnym -->
+  <g transform="translate(820, 420)">
+    <rect x="0" y="0" width="180" height="40" rx="20" fill="#FDF8F0" opacity="0.15" stroke="#FDF8F0" stroke-opacity="0.3" stroke-width="1"/>
+    <text x="90" y="26" font-family="sans-serif" font-size="13" fill="#FDF8F0" font-weight="600" text-anchor="middle">
+      Medical-grade • Ad-free
+    </text>
+  </g>
+</svg>
