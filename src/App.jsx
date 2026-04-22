@@ -82,7 +82,7 @@ const MORE_TABS = [
   { id:'teething',   emoji:'🦷', labelKey:'nav.teething' },
   { id:'growth',     emoji:'📏', labelKey:'nav.growth' },
   { id:'temp',       emoji:'🌡️', labelKey:'nav.temp' },
-  { id:'cough',      emoji:'🫁', labelKey:'nav.cough' },
+  { id:'cough',      emoji:'💨', labelKey:'nav.cough' },
   { id:'meds',       emoji:'💊', labelKey:'nav.meds' },
   { id:'vacc',       emoji:'💉', labelKey:'nav.vacc' },
   { id:'diet',       emoji:'🥕', labelKey:'nav.diet' },

@@ -58,6 +58,14 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
   const parac = calcParacetamol(weightKg)
   const ibu = calcIbuprofen(weightKg, ageMonths)
 
+  // OSTRZEŻENIE dla bardzo małych dzieci — paracetamol OK od urodzenia,
+  // ale waga < 3 kg (wcześniak / noworodek w pierwszych dniach) wymaga
+  // konsultacji z pediatrą przed podaniem.
+  const isPreemie = weightKg < 3
+
+  // OSTRZEŻENIE dla niemowlaków < 1 miesiąca
+  const isNewborn = ageMonths < 1
+
   const DoseRow = ({ med, emoji, title, dose, ml, maxDaily, disabled, disabledReason }) => {
     const isExpanded = expanded === med
 
@@ -185,6 +193,29 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
         <span>💊</span>
         <span>Szybka dawka — dla {weightKg} kg</span>
       </div>
+
+      {/* Ostrzeżenie dla wcześniaków / noworodków */}
+      {(isPreemie || isNewborn) && (
+        <div style={{
+          padding:'10px 14px',
+          background:'#FEE7DF',
+          borderBottom:'0.5px solid #E05D44',
+          fontSize:12,
+          color:'#7A1F0C',
+          lineHeight:1.5,
+          display:'flex',
+          alignItems:'flex-start',
+          gap:8,
+        }}>
+          <span style={{fontSize:16,flexShrink:0,marginTop:-1}}>⚠️</span>
+          <span>
+            {isPreemie
+              ? <>Dziecko &lt; 3 kg — <strong>skonsultuj dawki z pediatrą</strong> przed podaniem jakiegokolwiek leku.</>
+              : <>Noworodek &lt; 1 mies. — <strong>skonsultuj dawki z pediatrą</strong> przed podaniem.</>
+            }
+          </span>
+        </div>
+      )}
 
       <DoseRow
         med="paracetamol"

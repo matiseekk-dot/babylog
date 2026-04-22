@@ -33,7 +33,7 @@ const COUGH_TYPES = [
     desc: 'Bez wydzieliny, podrażnienie gardła' },
   { key: 'wet',      label: 'Mokry',       emoji: '💧', color: '#E6F1FB', textColor: '#0C447C',
     desc: 'Z wydzieliną, flegma' },
-  { key: 'wheezing', label: 'Świszczący',  emoji: '🫁', color: '#EEEDFE', textColor: '#3C3489',
+  { key: 'wheezing', label: 'Świszczący',  emoji: '💨', color: '#EEEDFE', textColor: '#3C3489',
     desc: 'Ze świstami, ciężki oddech' },
   { key: 'barking',  label: 'Szczekający', emoji: '🐕', color: '#FAECE7', textColor: '#712B13',
     desc: 'Jak szczekanie psa (krup)' },
@@ -160,7 +160,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
     if (wheezingToday) {
       out.push({
         level: 'high',
-        text: '🫁 Kaszel świszczący — świsty mogą oznaczać obturację oskrzeli. W przypadku duszności natychmiast zgłoś się do pediatry.',
+        text: '💨 Kaszel świszczący — świsty mogą oznaczać obturację oskrzeli. W przypadku duszności natychmiast zgłoś się do pediatry.',
       })
     }
 
@@ -179,7 +179,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
   return (
     <>
       <div className="section-header">
-        <div className="section-title">🫁 Kaszel</div>
+        <div className="section-title">💨 Kaszel</div>
         <div className="section-desc">
           {logs.length === 0
             ? 'Zapisuj epizody kaszlu — pokażesz pediatrze konkretne dane'
@@ -291,7 +291,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
       {logs.length === 0 ? (
         <div className="card" style={{margin:'8px 16px 0'}}>
           <div className="empty-state">
-            <div className="empty-icon">🫁</div>
+            <div className="empty-icon">💨</div>
             <p>Brak zapisanych epizodów. Dotknij któregoś z przycisków powyżej, żeby dodać.</p>
           </div>
         </div>

@@ -139,7 +139,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           </div>
         ) : BUILT_IN_MEDS.map(med => (
           <div className="log-item" key={med}>
-            <div className="log-icon">{med==='Paracetamol'?'🌡️':med==='Ibuprofen'?'💊':med==='Sól fizjologiczna'?'🫁':'🦠'}</div>
+            <div className="log-icon">{med==='Paracetamol'?'🌡️':med==='Ibuprofen'?'💊':med==='Sól fizjologiczna'?'💧':'🦠'}</div>
             <div className="log-body">
               <div className="log-name">{displayMedName(med)}</div>
               <div className="log-detail">

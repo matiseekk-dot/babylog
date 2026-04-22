@@ -11,35 +11,48 @@ const VISIT_TYPES = ['Pediatra', 'Pogotowie', 'Teleporada', 'Specjalista', 'Kont
 /**
  * DoctorNotesTab
  *
- * Dwie główne sekcje:
- *   1. Pytania do następnej wizyty (NOWE 2026-04-21)
- *      - Quick add input + lista pending + sekcja answered
- *      - Tap checkbox → pytanie przechodzi w "asked" z polem na odpowiedź
- *   2. Historia wizyt lekarskich (istniejąca)
- *      - Lista notatek z wizyt
+ * Sekcje:
+ *   1. Pytania do następnej wizyty
+ *      - Quick add
+ *      - Pending: tap w pytanie → ikonka edycji / checkbox (odpowiedź)
+ *      - Answered: line-through, możliwość edycji odpowiedzi
+ *   2. Historia wizyt
+ *      - Tap w wpis → modal podglądu z przyciskiem "Edytuj"
+ *      - Edit mode: full form
  */
 export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
   useLocale()
 
-  // ── WIZYTY (istniejące) ──────────────────────────────────────────────────
+  // ── WIZYTY ────────────────────────────────────────────────────────────────
   const [notes, setNotes] = useFirestore(uid, `doctor_notes_${babyId}`, [])
   const [modal, setModal] = useState(false)
+  const [editingNoteId, setEditingNoteId] = useState(null)  // jeśli nie null → edit mode
   const [viewNote, setViewNote] = useState(null)
-  const [form, setForm] = useState({
-    date: todayDate(),
-    type: 'Pediatra',
-    doctor: '',
-    diagnosis: '',
-    recommendations: '',
-    nextVisit: '',
-    medications: '',
-  })
+  const [form, setForm] = useState(emptyNoteForm())
 
-  // ── PYTANIA DO PEDIATRY (nowe) ────────────────────────────────────────────
+  function emptyNoteForm() {
+    return {
+      date: todayDate(),
+      type: 'Pediatra',
+      doctor: '',
+      diagnosis: '',
+      recommendations: '',
+      nextVisit: '',
+      medications: '',
+    }
+  }
+
+  // ── PYTANIA ───────────────────────────────────────────────────────────────
   const [questions, setQuestions] = useFirestore(uid, `doctor_questions_${babyId}`, [])
   const [newQuestion, setNewQuestion] = useState('')
-  const [answeringId, setAnsweringId] = useState(null)  // id pytania w trakcie wpisywania odpowiedzi
+  const [answeringId, setAnsweringId] = useState(null)
   const [answerText, setAnswerText] = useState('')
+  // NEW: edycja samego pytania
+  const [editingQuestionId, setEditingQuestionId] = useState(null)
+  const [editedQuestionText, setEditedQuestionText] = useState('')
+  // NEW: edycja odpowiedzi na zadane pytanie
+  const [editingAnswerId, setEditingAnswerId] = useState(null)
+  const [editedAnswerText, setEditedAnswerText] = useState('')
 
   const pendingQuestions = questions.filter(q => q.status !== 'asked')
   const askedQuestions = questions.filter(q => q.status === 'asked')
@@ -55,10 +68,30 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
     toast('Pytanie dodane')
   }
 
-  // Tap checkbox → przechodzi w tryb wpisywania odpowiedzi
+  // Edycja TEKSTU pytania (pending)
+  const startEditQuestion = (q) => {
+    setEditingQuestionId(q.id)
+    setEditedQuestionText(q.question)
+    setAnsweringId(null)  // zamknij inne tryby
+  }
+
+  const saveEditedQuestion = () => {
+    const txt = editedQuestionText.trim()
+    if (!txt) { toast('Pytanie nie może być puste'); return }
+    setQuestions(questions.map(q => q.id === editingQuestionId
+      ? { ...q, question: txt }
+      : q
+    ))
+    setEditingQuestionId(null)
+    setEditedQuestionText('')
+    toast('Pytanie zaktualizowane')
+  }
+
+  // Odpowiedź na pytanie (przejście pending → asked)
   const startAnswering = (id) => {
     setAnsweringId(id)
     setAnswerText('')
+    setEditingQuestionId(null)
   }
 
   const saveAnswer = () => {
@@ -71,8 +104,6 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
     toast('Odpowiedź zapisana')
   }
 
-  // Można zaznaczyć "zadane" bez wpisywania odpowiedzi (np. pediatra już odpowiedział
-  // że to nieważne) — klik od razu bez wchodzenia w answer mode
   const markAskedNoAnswer = () => {
     setQuestions(questions.map(q => q.id === answeringId
       ? { ...q, status: 'asked', answer: '(bez szczegółowej odpowiedzi)', date_asked: todayDate() }
@@ -82,6 +113,22 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
     setAnswerText('')
   }
 
+  // Edycja ODPOWIEDZI na zadane pytanie
+  const startEditAnswer = (q) => {
+    setEditingAnswerId(q.id)
+    setEditedAnswerText(q.answer === '(bez szczegółowej odpowiedzi)' ? '' : q.answer)
+  }
+
+  const saveEditedAnswer = () => {
+    setQuestions(questions.map(q => q.id === editingAnswerId
+      ? { ...q, answer: editedAnswerText.trim() || '(bez szczegółowej odpowiedzi)' }
+      : q
+    ))
+    setEditingAnswerId(null)
+    setEditedAnswerText('')
+    toast('Odpowiedź zaktualizowana')
+  }
+
   const removeQuestion = (id) => {
     const removed = questions.find(q => q.id === id)
     if (!removed) return
@@ -89,22 +136,53 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
     toastWithUndo('Usunięto pytanie', () => setQuestions(prev => [removed, ...prev]))
   }
 
-  // ── WIZYTY — funkcje (istniejące) ────────────────────────────────────────
-  const save = () => {
-    if (!form.diagnosis.trim() && !form.recommendations.trim()) return
-    setNotes([{ id: genId(), ...form }, ...notes])
-    setModal(false)
-    resetForm()
+  // ── WIZYTY — save & edit ──────────────────────────────────────────────────
+  const openAddNote = () => {
+    setEditingNoteId(null)
+    setForm(emptyNoteForm())
+    setModal(true)
   }
 
-  const resetForm = () => setForm({
-    date: todayDate(), type: 'Pediatra', doctor: '',
-    diagnosis: '', recommendations: '', nextVisit: '', medications: '',
-  })
+  const openEditNote = (note) => {
+    setEditingNoteId(note.id)
+    setForm({
+      date: note.date || todayDate(),
+      type: note.type || 'Pediatra',
+      doctor: note.doctor || '',
+      diagnosis: note.diagnosis || '',
+      recommendations: note.recommendations || '',
+      nextVisit: note.nextVisit || '',
+      medications: note.medications || '',
+    })
+    setViewNote(null)  // zamknij modal podglądu
+    setModal(true)
+  }
+
+  const save = () => {
+    if (!form.diagnosis.trim() && !form.recommendations.trim()) {
+      toast('Wpisz przynajmniej diagnozę lub zalecenia', 'error')
+      return
+    }
+    if (editingNoteId) {
+      // UPDATE existing
+      setNotes(notes.map(n => n.id === editingNoteId ? { ...n, ...form } : n))
+      toast('Wizyta zaktualizowana')
+    } else {
+      // CREATE new
+      setNotes([{ id: genId(), ...form }, ...notes])
+      toast('Wizyta zapisana')
+    }
+    setModal(false)
+    setEditingNoteId(null)
+    setForm(emptyNoteForm())
+  }
 
   const remove = (id) => {
+    const removed = notes.find(n => n.id === id)
+    if (!removed) return
     setNotes(notes.filter(n => n.id !== id))
     if (viewNote?.id === id) setViewNote(null)
+    toastWithUndo('Usunięto wizytę', () => setNotes(prev => [removed, ...prev]))
   }
 
   // ── Paywall dla free ─────────────────────────────────────────────────────
@@ -195,66 +273,42 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           <div>
             {pendingQuestions.map(q => {
               const isAnsweringThis = answeringId === q.id
+              const isEditingThis   = editingQuestionId === q.id
               return (
                 <div
                   key={q.id}
                   style={{
                     padding: '10px 14px',
                     borderTop: '0.5px solid rgba(0,0,0,0.05)',
-                    background: isAnsweringThis ? '#F4FCF9' : 'transparent',
+                    background: (isAnsweringThis || isEditingThis) ? '#F4FCF9' : 'transparent',
                   }}
                 >
-                  <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
-                    <button
-                      onClick={() => isAnsweringThis ? setAnsweringId(null) : startAnswering(q.id)}
-                      style={{
-                        width:22,height:22,borderRadius:6,
-                        border:'2px solid var(--green)',
-                        background: isAnsweringThis ? 'var(--green)' : 'transparent',
-                        color:'#fff',fontSize:14,cursor:'pointer',
-                        flexShrink:0,marginTop:2,
-                        display:'flex',alignItems:'center',justifyContent:'center',
-                      }}
-                      title="Oznacz jako zadane"
-                    >
-                      {isAnsweringThis && '✓'}
-                    </button>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:14,color:'var(--text)',lineHeight:1.4}}>
-                        {q.question}
-                      </div>
-                      <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
-                        Dodane: {formatDate(q.date_added)}
-                      </div>
-                    </div>
-                    {!isAnsweringThis && (
-                      <button
-                        onClick={() => removeQuestion(q.id)}
-                        style={{
-                          background:'none',border:'none',color:'var(--text-3)',
-                          fontSize:16,cursor:'pointer',minHeight:32,minWidth:32,
-                        }}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Answer input — pokazuje się po klik checkbox */}
-                  {isAnsweringThis && (
-                    <div style={{marginTop:10,paddingLeft:32}}>
-                      <textarea
+                  {/* Tryb edycji pytania */}
+                  {isEditingThis ? (
+                    <div>
+                      <input
                         className="form-input"
-                        rows={2}
-                        placeholder="Co powiedział pediatra? (opcjonalnie)"
-                        value={answerText}
-                        onChange={e => setAnswerText(e.target.value)}
-                        style={{resize:'none',fontSize:13}}
+                        type="text"
+                        maxLength={200}
+                        value={editedQuestionText}
+                        onChange={e => setEditedQuestionText(e.target.value)}
                         autoFocus
+                        style={{fontSize:14,width:'100%'}}
                       />
-                      <div style={{display:'flex',gap:6,marginTop:8}}>
+                      <div style={{display:'flex',gap:6,marginTop:8,justifyContent:'flex-end'}}>
                         <button
-                          onClick={saveAnswer}
+                          onClick={() => { setEditingQuestionId(null); setEditedQuestionText('') }}
+                          style={{
+                            background:'transparent',color:'var(--text-3)',
+                            border:'0.5px solid var(--border)',borderRadius:8,
+                            padding:'6px 12px',fontSize:12,fontWeight:600,
+                            cursor:'pointer',minHeight:36,
+                          }}
+                        >
+                          Anuluj
+                        </button>
+                        <button
+                          onClick={saveEditedQuestion}
                           style={{
                             background:'var(--green)',color:'#fff',border:'none',
                             borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:700,
@@ -263,29 +317,107 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                         >
                           ✓ Zapisz
                         </button>
-                        <button
-                          onClick={markAskedNoAnswer}
-                          style={{
-                            background:'transparent',color:'var(--text-2)',
-                            border:'0.5px solid var(--border)',
-                            borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,
-                            cursor:'pointer',minHeight:36,
-                          }}
-                        >
-                          Pomiń
-                        </button>
-                        <button
-                          onClick={() => setAnsweringId(null)}
-                          style={{
-                            background:'transparent',color:'var(--text-3)',
-                            border:'none',padding:'6px 8px',fontSize:12,
-                            cursor:'pointer',marginLeft:'auto',minHeight:36,
-                          }}
-                        >
-                          Anuluj
-                        </button>
                       </div>
                     </div>
+                  ) : (
+                    <>
+                      <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+                        <button
+                          onClick={() => isAnsweringThis ? setAnsweringId(null) : startAnswering(q.id)}
+                          style={{
+                            width:22,height:22,borderRadius:6,
+                            border:'2px solid var(--green)',
+                            background: isAnsweringThis ? 'var(--green)' : 'transparent',
+                            color:'#fff',fontSize:14,cursor:'pointer',
+                            flexShrink:0,marginTop:2,
+                            display:'flex',alignItems:'center',justifyContent:'center',
+                          }}
+                          title="Oznacz jako zadane"
+                        >
+                          {isAnsweringThis && '✓'}
+                        </button>
+                        <div style={{flex:1}}>
+                          <div style={{fontSize:14,color:'var(--text)',lineHeight:1.4}}>
+                            {q.question}
+                          </div>
+                          <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
+                            Dodane: {formatDate(q.date_added)}
+                          </div>
+                        </div>
+                        {!isAnsweringThis && (
+                          <>
+                            <button
+                              onClick={() => startEditQuestion(q)}
+                              style={{
+                                background:'none',border:'none',color:'var(--text-3)',
+                                fontSize:14,cursor:'pointer',minHeight:32,minWidth:32,
+                              }}
+                              title="Edytuj pytanie"
+                            >
+                              ✎
+                            </button>
+                            <button
+                              onClick={() => removeQuestion(q.id)}
+                              style={{
+                                background:'none',border:'none',color:'var(--text-3)',
+                                fontSize:16,cursor:'pointer',minHeight:32,minWidth:32,
+                              }}
+                              title="Usuń"
+                            >
+                              ✕
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Answer input */}
+                      {isAnsweringThis && (
+                        <div style={{marginTop:10,paddingLeft:32}}>
+                          <textarea
+                            className="form-input"
+                            rows={2}
+                            placeholder="Co powiedział pediatra? (opcjonalnie)"
+                            value={answerText}
+                            onChange={e => setAnswerText(e.target.value)}
+                            style={{resize:'none',fontSize:13}}
+                            autoFocus
+                          />
+                          <div style={{display:'flex',gap:6,marginTop:8}}>
+                            <button
+                              onClick={saveAnswer}
+                              style={{
+                                background:'var(--green)',color:'#fff',border:'none',
+                                borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:700,
+                                cursor:'pointer',minHeight:36,
+                              }}
+                            >
+                              ✓ Zapisz
+                            </button>
+                            <button
+                              onClick={markAskedNoAnswer}
+                              style={{
+                                background:'transparent',color:'var(--text-2)',
+                                border:'0.5px solid var(--border)',
+                                borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,
+                                cursor:'pointer',minHeight:36,
+                              }}
+                            >
+                              Pomiń
+                            </button>
+                            <button
+                              onClick={() => setAnsweringId(null)}
+                              style={{
+                                background:'transparent',color:'var(--text-3)',
+                                border:'none',padding:'6px 8px',fontSize:12,
+                                cursor:'pointer',marginLeft:'auto',minHeight:36,
+                              }}
+                            >
+                              Anuluj
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )
@@ -293,7 +425,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           </div>
         )}
 
-        {/* Answered questions (collapsed by default — show last 3) */}
+        {/* Answered questions — tu dodajemy edycję odpowiedzi */}
         {askedQuestions.length > 0 && (
           <>
             <div style={{
@@ -303,47 +435,104 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
             }}>
               Odpowiedzi z ostatnich wizyt ({askedQuestions.length})
             </div>
-            {askedQuestions.slice(0, 5).map(q => (
-              <div key={q.id} style={{
-                padding:'10px 14px',borderTop:'0.5px solid rgba(0,0,0,0.05)',
-                background:'#fafaf8',
-              }}>
-                <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
-                  <span style={{fontSize:14,color:'var(--green)',marginTop:2}}>✓</span>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.4,textDecoration:'line-through'}}>
-                      {q.question}
-                    </div>
-                    {q.answer && (
-                      <div style={{
-                        fontSize:13,color:'var(--text)',lineHeight:1.5,
-                        marginTop:6,padding:'8px 10px',background:'#E1F5EE',borderRadius:8,
-                      }}>
-                        💬 {q.answer}
+            {askedQuestions.slice(0, 5).map(q => {
+              const isEditingThisAnswer = editingAnswerId === q.id
+              return (
+                <div key={q.id} style={{
+                  padding:'10px 14px',borderTop:'0.5px solid rgba(0,0,0,0.05)',
+                  background: isEditingThisAnswer ? '#F4FCF9' : '#fafaf8',
+                }}>
+                  <div style={{display:'flex',alignItems:'flex-start',gap:10}}>
+                    <span style={{fontSize:14,color:'var(--green)',marginTop:2}}>✓</span>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:13,color:'var(--text-2)',lineHeight:1.4,textDecoration:'line-through'}}>
+                        {q.question}
                       </div>
-                    )}
-                    <div style={{fontSize:10,color:'var(--text-3)',marginTop:4}}>
-                      Zadane: {q.date_asked ? formatDate(q.date_asked) : '—'}
+
+                      {isEditingThisAnswer ? (
+                        <div style={{marginTop:6}}>
+                          <textarea
+                            className="form-input"
+                            rows={2}
+                            value={editedAnswerText}
+                            onChange={e => setEditedAnswerText(e.target.value)}
+                            placeholder="Odpowiedź pediatry..."
+                            style={{resize:'none',fontSize:13}}
+                            autoFocus
+                          />
+                          <div style={{display:'flex',gap:6,marginTop:6}}>
+                            <button
+                              onClick={saveEditedAnswer}
+                              style={{
+                                background:'var(--green)',color:'#fff',border:'none',
+                                borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:700,
+                                cursor:'pointer',minHeight:34,
+                              }}
+                            >
+                              ✓ Zapisz
+                            </button>
+                            <button
+                              onClick={() => { setEditingAnswerId(null); setEditedAnswerText('') }}
+                              style={{
+                                background:'transparent',color:'var(--text-3)',
+                                border:'0.5px solid var(--border)',borderRadius:8,
+                                padding:'6px 12px',fontSize:12,fontWeight:600,
+                                cursor:'pointer',minHeight:34,
+                              }}
+                            >
+                              Anuluj
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        q.answer && (
+                          <div style={{
+                            fontSize:13,color:'var(--text)',lineHeight:1.5,
+                            marginTop:6,padding:'8px 10px',background:'#E1F5EE',borderRadius:8,
+                          }}>
+                            💬 {q.answer}
+                          </div>
+                        )
+                      )}
+
+                      <div style={{fontSize:10,color:'var(--text-3)',marginTop:4}}>
+                        Zadane: {q.date_asked ? formatDate(q.date_asked) : '—'}
+                      </div>
                     </div>
+                    {!isEditingThisAnswer && (
+                      <>
+                        <button
+                          onClick={() => startEditAnswer(q)}
+                          style={{
+                            background:'none',border:'none',color:'var(--text-3)',
+                            fontSize:13,cursor:'pointer',minHeight:32,minWidth:32,
+                          }}
+                          title="Edytuj odpowiedź"
+                        >
+                          ✎
+                        </button>
+                        <button
+                          onClick={() => removeQuestion(q.id)}
+                          style={{
+                            background:'none',border:'none',color:'var(--text-3)',
+                            fontSize:14,cursor:'pointer',minHeight:32,minWidth:32,
+                          }}
+                          title="Usuń"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    )}
                   </div>
-                  <button
-                    onClick={() => removeQuestion(q.id)}
-                    style={{
-                      background:'none',border:'none',color:'var(--text-3)',
-                      fontSize:14,cursor:'pointer',minHeight:32,minWidth:32,
-                    }}
-                  >
-                    ✕
-                  </button>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </>
         )}
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SEKCJA 2: HISTORIA WIZYT (istniejąca, niezmienna)                     */}
+      {/* SEKCJA 2: HISTORIA WIZYT                                              */}
       {/* ════════════════════════════════════════════════════════════════════ */}
 
       <div className="section-header" style={{marginTop:16}}>
@@ -413,12 +602,16 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
         </div>
       )}
 
-      <button className="btn-add" onClick={() => { resetForm(); setModal(true) }}>
+      <button className="btn-add" onClick={openAddNote}>
         {t('doctor.add')}
       </button>
 
-      {/* Modal dodawania wizyty */}
-      <Modal open={modal} onClose={() => setModal(false)} title={t('doctor.modal.title')}>
+      {/* MODAL: dodawania/edycji wizyty */}
+      <Modal
+        open={modal}
+        onClose={() => { setModal(false); setEditingNoteId(null) }}
+        title={editingNoteId ? 'Edytuj wizytę' : t('doctor.modal.title')}
+      >
         <div className="form-row">
           <div className="form-group">
             <label className="form-label">{t('doctor.modal.type')}</label>
@@ -475,11 +668,14 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           <input className="form-input" type="date" value={form.nextVisit} onChange={e => setForm(f => ({ ...f, nextVisit: e.target.value }))} />
         </div>
         <div className="modal-btns">
-          <button className="btn-secondary" onClick={() => setModal(false)}>{t('common.cancel')}</button>
+          <button className="btn-secondary" onClick={() => { setModal(false); setEditingNoteId(null) }}>
+            {t('common.cancel')}
+          </button>
           <button className="btn-primary" onClick={save}>{t('common.save')}</button>
         </div>
       </Modal>
 
+      {/* MODAL: podgląd wizyty z opcją edycji */}
       <Modal open={!!viewNote} onClose={() => setViewNote(null)} title={viewNote ? `${viewNote.type} · ${viewNote.date}` : ''}>
         {viewNote && (
           <>
@@ -499,15 +695,24 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                 <div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.55 }}>{f.value}</div>
               </div>
             ))}
-            <div className="modal-btns">
+            <div className="modal-btns" style={{flexDirection:'column',gap:8}}>
+              <button
+                className="btn-primary"
+                style={{width:'100%'}}
+                onClick={() => openEditNote(viewNote)}
+              >
+                ✎ Edytuj wizytę
+              </button>
               <button
                 className="btn-secondary"
-                style={{ background: 'var(--coral-light)', color: 'var(--coral)', border: 'none' }}
+                style={{ width:'100%', background: 'var(--coral-light)', color: 'var(--coral)', border: 'none' }}
                 onClick={() => remove(viewNote.id)}
               >
                 Usuń
               </button>
-              <button className="btn-primary" onClick={() => setViewNote(null)}>Zamknij</button>
+              <button className="btn-secondary" style={{width:'100%'}} onClick={() => setViewNote(null)}>
+                Zamknij
+              </button>
             </div>
           </>
         )}
