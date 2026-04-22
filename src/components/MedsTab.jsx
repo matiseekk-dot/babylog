@@ -7,11 +7,15 @@ import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretMeds } from '../engine/interpretations'
 import { toast } from './Toast'
-import { t, useLocale } from '../i18n'
+import { t, useLocale, isEN } from '../i18n'
 import { useMedReminder } from '../hooks/useMedReminder'
 
-const BUILT_IN_MEDS = ['Paracetamol','Ibuprofen','Sól fizjologiczna','Probiotyk']
-const EMOJI_OPTIONS = ['💊','🌡️','🫁','🦠','🩹','🧴','💉','🩺','🌿','🍯','🧪','💧','🫀','🧬','⚕️']
+// W PL: cały built-in list. W EN: tylko Paracetamol + Ibuprofen (uniwersalne).
+// Sól fizjologiczna i Probiotyk mają polskie instrukcje dawkowania w i18n —
+// w EN można je dodać ręcznie jako custom jeśli user chce.
+const BUILT_IN_MEDS_PL = ['Paracetamol','Ibuprofen','Sól fizjologiczna','Probiotyk']
+const BUILT_IN_MEDS_EN = ['Paracetamol','Ibuprofen']
+const EMOJI_OPTIONS = ['💊','🌡️','💨','🦠','🩹','🧴','💉','🩺','🌿','🍯','🧪','💧','🫀','🧬','⚕️']
 
 export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   useLocale()
@@ -37,6 +41,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
 
   const parac = calcParacetamol(weightKg)
   const ibu = calcIbuprofen(weightKg, ageMonths)
+  const BUILT_IN_MEDS = isEN() ? BUILT_IN_MEDS_EN : BUILT_IN_MEDS_PL
   const allMedNames = [...BUILT_IN_MEDS, ...customMeds.map(m=>m.name), t('meds.other')]
 
   const openAdd = () => {

@@ -35,10 +35,10 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
         <span style={{fontSize:24}}>⚠️</span>
         <div style={{flex:1}}>
           <div style={{fontSize:13, fontWeight:700, color:'#712B13', marginBottom:2}}>
-            Kalkulator dawek — ustaw wagę
+            {t('dose.quick.setup')}
           </div>
           <div style={{fontSize:12, color:'#8A3E1F', lineHeight:1.4}}>
-            Bez wagi dziecka nie wyliczę bezpiecznej dawki leku
+            {t('dose.quick.setup_desc')}
           </div>
         </div>
         <button
@@ -49,7 +49,7 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
             fontWeight:700, cursor:'pointer', minHeight:36, whiteSpace:'nowrap',
           }}
         >
-          Ustaw
+          {t('dose.quick.setup_btn')}
         </button>
       </div>
     )
@@ -112,7 +112,7 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
               <div style={{fontSize:12, color:'#5a5a56'}}>
                 <strong style={{color:'#1a1a18', fontSize:14}}>{ml} ml</strong>
                 <span style={{margin:'0 6px', color:'#c0c0b8'}}>·</span>
-                {dose} mg dla {weightKg} kg
+                {t('dose.quick.for_weight', {dose, weight: weightKg})}
               </div>
             )}
           </div>
@@ -136,18 +136,18 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
           }}>
             {med === 'paracetamol' && (
               <>
-                <div>🟢 Pojedyncza dawka: <strong>{parac.dose} mg</strong> (15 mg/kg)</div>
-                <div>🟢 Zawiesina 120mg/5ml: <strong>{parac.mlStd} ml</strong></div>
-                <div>🟢 Zawiesina 240mg/5ml: <strong>{parac.mlFort} ml</strong></div>
-                <div>🔴 Max dobowa: <strong>{parac.maxDaily} mg</strong> (4× dziennie co 6h)</div>
+                <div>🟢 {t('dose.quick.single')}: <strong>{parac.dose} mg</strong> (15 mg/kg)</div>
+                <div>🟢 {t('dose.quick.suspension', {strength: '120mg/5ml'})}: <strong>{parac.mlStd} ml</strong></div>
+                <div>🟢 {t('dose.quick.suspension', {strength: '240mg/5ml'})}: <strong>{parac.mlFort} ml</strong></div>
+                <div>🔴 {t('dose.quick.max_daily')}: <strong>{parac.maxDaily} mg</strong> ({t('dose.quick.max_daily_para')})</div>
               </>
             )}
             {med === 'ibuprofen' && ibu && (
               <>
-                <div>🟢 Pojedyncza dawka: <strong>{ibu.dose} mg</strong> (10 mg/kg)</div>
-                <div>🟢 Zawiesina 100mg/5ml: <strong>{ibu.ml} ml</strong></div>
-                <div>🔴 Max dobowa: <strong>{ibu.maxDaily} mg</strong> (3× dziennie co 8h)</div>
-                <div style={{marginTop:4, fontSize:11, color:'#8A3E1F'}}>⚠️ Ibuprofen tylko od 3. miesiąca życia</div>
+                <div>🟢 {t('dose.quick.single')}: <strong>{ibu.dose} mg</strong> (10 mg/kg)</div>
+                <div>🟢 {t('dose.quick.suspension', {strength: '100mg/5ml'})}: <strong>{ibu.ml} ml</strong></div>
+                <div>🔴 {t('dose.quick.max_daily')}: <strong>{ibu.maxDaily} mg</strong> ({t('dose.quick.max_daily_ibu')})</div>
+                <div style={{marginTop:4, fontSize:11, color:'#8A3E1F'}}>⚠️ {t('dose.quick.ibu_age_limit')}</div>
               </>
             )}
             <button
@@ -161,7 +161,7 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
                 cursor:'pointer', minHeight:32,
               }}
             >
-              Zapisz podanie
+              {t('dose.quick.save_action')}
             </button>
           </div>
         )}
@@ -191,7 +191,7 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
         gap:6,
       }}>
         <span>💊</span>
-        <span>Szybka dawka — dla {weightKg} kg</span>
+        <span>{t('dose.quick.title', {weight: weightKg})}</span>
       </div>
 
       {/* Ostrzeżenie dla wcześniaków / noworodków */}
@@ -209,10 +209,7 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
         }}>
           <span style={{fontSize:16,flexShrink:0,marginTop:-1}}>⚠️</span>
           <span>
-            {isPreemie
-              ? <>Dziecko &lt; 3 kg — <strong>skonsultuj dawki z pediatrą</strong> przed podaniem jakiegokolwiek leku.</>
-              : <>Noworodek &lt; 1 mies. — <strong>skonsultuj dawki z pediatrą</strong> przed podaniem.</>
-            }
+            {isPreemie ? t('dose.quick.warn_preemie') : t('dose.quick.warn_newborn')}
           </span>
         </div>
       )}
@@ -235,7 +232,7 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
         ml={ibu?.ml}
         maxDaily={ibu?.maxDaily}
         disabled={!ibu}
-        disabledReason={`Tylko od 3. miesiąca (obecnie ${ageMonths} mies.)`}
+        disabledReason={t('dose.quick.ibu_disabled', {months: ageMonths})}
       />
 
       <div style={{
@@ -246,7 +243,7 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
         lineHeight:1.4,
         borderTop:'0.5px solid rgba(0,0,0,0.05)',
       }}>
-        ℹ️ Kalkulator informacyjny. Zawsze weryfikuj dawki z pediatrą lub farmaceutą.
+        ℹ️ {t('dose.quick.disclaimer')}
       </div>
     </div>
   )

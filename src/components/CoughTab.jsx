@@ -28,30 +28,35 @@ import { t, useLocale } from '../i18n'
  *   - Historia z edycją (tap) + usuń (✕)
  */
 
-const COUGH_TYPES = [
-  { key: 'dry',      label: 'Suchy',       emoji: '🌵', color: '#FAEEDA', textColor: '#633806',
-    desc: 'Bez wydzieliny, podrażnienie gardła' },
-  { key: 'wet',      label: 'Mokry',       emoji: '💧', color: '#E6F1FB', textColor: '#0C447C',
-    desc: 'Z wydzieliną, flegma' },
-  { key: 'wheezing', label: 'Świszczący',  emoji: '💨', color: '#EEEDFE', textColor: '#3C3489',
-    desc: 'Ze świstami, ciężki oddech' },
-  { key: 'barking',  label: 'Szczekający', emoji: '🐕', color: '#FAECE7', textColor: '#712B13',
-    desc: 'Jak szczekanie psa (krup)' },
-]
+// Meta COUGH_TYPES i TIME_OF_DAY są teraz definiowane wewnątrz komponentu
+// (poniżej), żeby t() działało zgodnie z aktualnym locale
 
-const TIME_OF_DAY = [
-  { key: 'morning', label: 'Rano' },
-  { key: 'day',     label: 'W ciągu dnia' },
-  { key: 'evening', label: 'Wieczorem' },
-  { key: 'night',   label: 'W nocy' },
-]
-
-function typeMeta(key) {
-  return COUGH_TYPES.find(t => t.key === key) || COUGH_TYPES[0]
+// Constant style properties per key — nie tłumaczy się
+const COUGH_STYLES = {
+  dry:      { emoji: '🌵', color: '#FAEEDA', textColor: '#633806' },
+  wet:      { emoji: '💧', color: '#E6F1FB', textColor: '#0C447C' },
+  wheezing: { emoji: '💨', color: '#EEEDFE', textColor: '#3C3489' },
+  barking:  { emoji: '🐕', color: '#FAECE7', textColor: '#712B13' },
 }
 
 export default function CoughTab({ uid, babyId, ageMonths }) {
   useLocale()
+
+  // COUGH_TYPES i TIME_OF_DAY zależne od locale — obliczane w każdym renderze
+  const COUGH_TYPES = [
+    { key: 'dry',      label: t('cough.type.dry'),      desc: t('cough.type.dry.desc'),      ...COUGH_STYLES.dry },
+    { key: 'wet',      label: t('cough.type.wet'),      desc: t('cough.type.wet.desc'),      ...COUGH_STYLES.wet },
+    { key: 'wheezing', label: t('cough.type.wheezing'), desc: t('cough.type.wheezing.desc'), ...COUGH_STYLES.wheezing },
+    { key: 'barking',  label: t('cough.type.barking'),  desc: t('cough.type.barking.desc'),  ...COUGH_STYLES.barking },
+  ]
+  const TIME_OF_DAY = [
+    { key: 'morning', label: t('cough.time.morning') },
+    { key: 'day',     label: t('cough.time.day') },
+    { key: 'evening', label: t('cough.time.evening') },
+    { key: 'night',   label: t('cough.time.night') },
+  ]
+  const typeMeta = (key) => COUGH_TYPES.find(tp => tp.key === key) || COUGH_TYPES[0]
+
   const [logs, setLogs] = useFirestore(uid, `cough_${babyId}`, [])
   const [modal, setModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -90,10 +95,10 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
   const save = () => {
     if (editingId) {
       setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
-      toast('Wpis zaktualizowany')
+      toast(t('cough.toast.updated'))
     } else {
       setLogs([{ id: genId(), ...form }, ...logs])
-      toast('Epizod kaszlu zapisany')
+      toast(t('cough.toast.saved'))
     }
     setModal(false)
     setEditingId(null)
@@ -104,14 +109,14 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
       { id: genId(), ...defaultForm(), type: typeKey },
       ...logs,
     ])
-    toast(`${typeMeta(typeKey).label} — zapisane`)
+    toast(t('cough.toast.quick', {type: typeMeta(typeKey).label}))
   }
 
   const remove = (id) => {
     const removed = logs.find(l => l.id === id)
     if (!removed) return
     setLogs(logs.filter(l => l.id !== id))
-    toastWithUndo('Usunięto', () => setLogs(prev => [removed, ...prev]))
+    toastWithUndo(t('cough.toast.deleted'), () => setLogs(prev => [removed, ...prev]))
   }
 
   // ── STATS ────────────────────────────────────────────────────────────────
@@ -151,7 +156,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
     if (barkingToday) {
       out.push({
         level: 'high',
-        text: '🐕 Kaszel szczekający — może wskazywać na krup (zapalenie krtani). Zadzwoń do pediatry, szczególnie jeśli jest gorączka lub świsty.',
+        text: t('cough.alert.barking'),
       })
     }
 
@@ -160,7 +165,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
     if (wheezingToday) {
       out.push({
         level: 'high',
-        text: '💨 Kaszel świszczący — świsty mogą oznaczać obturację oskrzeli. W przypadku duszności natychmiast zgłoś się do pediatry.',
+        text: t('cough.alert.wheezing'),
       })
     }
 
@@ -168,7 +173,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
     if (stats.uniqueDays >= 5) {
       out.push({
         level: 'medium',
-        text: `⚠️ Dziecko kaszle od ${stats.uniqueDays} z ostatnich 7 dni — warto umówić wizytę u pediatry.`,
+        text: t('cough.alert.long', {days: stats.uniqueDays}),
       })
     }
 
@@ -179,11 +184,11 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
   return (
     <>
       <div className="section-header">
-        <div className="section-title">💨 Kaszel</div>
+        <div className="section-title">{t('cough.title')}</div>
         <div className="section-desc">
           {logs.length === 0
-            ? 'Zapisuj epizody kaszlu — pokażesz pediatrze konkretne dane'
-            : `${stats.todayCount} dziś · ${stats.uniqueDays}/7 dni z kaszlem`}
+            ? t('cough.desc.empty')
+            : t('cough.desc.stats', {today: stats.todayCount, days: stats.uniqueDays})}
         </div>
       </div>
 
@@ -212,7 +217,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
           fontSize:11,fontWeight:700,color:'var(--text-3)',
           textTransform:'uppercase',letterSpacing:0.4,marginBottom:8,
         }}>
-          Szybki zapis
+          {t('cough.quick')}
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
           {COUGH_TYPES.map(type => (
@@ -248,35 +253,35 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
             fontSize:11,fontWeight:700,color:'var(--text-3)',
             textTransform:'uppercase',letterSpacing:0.4,marginBottom:8,
           }}>
-            Ostatnie 7 dni
+            {t('cough.last7')}
           </div>
           <div style={{display:'flex',gap:14,flexWrap:'wrap'}}>
             <div>
               <div style={{fontSize:22,fontWeight:800,color:'var(--text)',lineHeight:1}}>
                 {stats.last7Count}
               </div>
-              <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>epizodów</div>
+              <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{t('cough.stats.episodes')}</div>
             </div>
             <div>
               <div style={{fontSize:22,fontWeight:800,color:'var(--text)',lineHeight:1}}>
                 {stats.uniqueDays}
               </div>
-              <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>dni z kaszlem</div>
+              <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{t('cough.stats.days')}</div>
             </div>
             {stats.dominantType && stats.dominantType[1] >= 2 && (
               <div>
                 <div style={{fontSize:15,fontWeight:700,color:'var(--text)',lineHeight:1.2}}>
                   {typeMeta(stats.dominantType[0]).emoji} {typeMeta(stats.dominantType[0]).label}
                 </div>
-                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>dominujący typ</div>
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{t('cough.stats.dominant_type')}</div>
               </div>
             )}
             {stats.dominantTime && stats.dominantTime[1] >= 2 && (
               <div>
                 <div style={{fontSize:15,fontWeight:700,color:'var(--text)',lineHeight:1.2}}>
-                  {TIME_OF_DAY.find(t => t.key === stats.dominantTime[0])?.label}
+                  {TIME_OF_DAY.find(tp => tp.key === stats.dominantTime[0])?.label}
                 </div>
-                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>najczęściej</div>
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>{t('cough.stats.dominant_time')}</div>
               </div>
             )}
           </div>
@@ -285,21 +290,21 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
 
       {/* HISTORIA */}
       <div className="section-header" style={{marginTop:16}}>
-        <div className="section-title" style={{fontSize:15}}>Historia</div>
+        <div className="section-title" style={{fontSize:15}}>{t('cough.history')}</div>
       </div>
 
       {logs.length === 0 ? (
         <div className="card" style={{margin:'8px 16px 0'}}>
           <div className="empty-state">
             <div className="empty-icon">💨</div>
-            <p>Brak zapisanych epizodów. Dotknij któregoś z przycisków powyżej, żeby dodać.</p>
+            <p>{t('cough.empty')}</p>
           </div>
         </div>
       ) : (
         <div style={{display:'flex',flexDirection:'column',gap:6,margin:'8px 16px 0'}}>
           {logs.slice(0, 50).map(log => {
             const meta = typeMeta(log.type)
-            const timeLabel = TIME_OF_DAY.find(t => t.key === log.timeOfDay)?.label
+            const timeLabel = TIME_OF_DAY.find(tp => tp.key === log.timeOfDay)?.label
             return (
               <div
                 key={log.id}
@@ -327,7 +332,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>
                     {meta.label}
-                    {log.severity >= 4 && <span style={{marginLeft:6,fontSize:11,color:'#C95A48'}}>• silny</span>}
+                    {log.severity >= 4 && <span style={{marginLeft:6,fontSize:11,color:'#C95A48'}}>• {t('cough.log.strong')}</span>}
                   </div>
                   <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
                     {formatDate(log.date)} · {log.time}
@@ -358,17 +363,17 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
       )}
 
       <button className="btn-add" onClick={() => openAdd()}>
-        + Dodaj epizod kaszlu
+        {t('cough.add')}
       </button>
 
       {/* Modal dodawania/edycji */}
       <Modal
         open={modal}
         onClose={() => { setModal(false); setEditingId(null) }}
-        title={editingId ? 'Edytuj epizod' : 'Dodaj epizod kaszlu'}
+        title={editingId ? t('cough.modal.edit') : t('cough.modal.add')}
       >
         <div className="form-group">
-          <label className="form-label">Typ kaszlu</label>
+          <label className="form-label">{t('cough.modal.type')}</label>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:4}}>
             {COUGH_TYPES.map(type => (
               <button
@@ -396,7 +401,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label">Nasilenie</label>
+          <label className="form-label">{t('cough.modal.severity')}</label>
           <div style={{display:'flex',gap:4,marginTop:4}}>
             {[1,2,3,4,5].map(n => (
               <button
@@ -416,19 +421,19 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
             ))}
           </div>
           <div style={{fontSize:10,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
-            1 = lekki, 5 = bardzo silny / męczący
+            {t('cough.modal.severity_hint')}
           </div>
         </div>
 
         <div className="form-group">
-          <label className="form-label">Pora dnia</label>
+          <label className="form-label">{t('cough.modal.time_of_day')}</label>
           <select
             className="form-select"
             value={form.timeOfDay}
             onChange={e => setForm(f => ({ ...f, timeOfDay: e.target.value }))}
           >
-            {TIME_OF_DAY.map(t => (
-              <option key={t.key} value={t.key}>{t.label}</option>
+            {TIME_OF_DAY.map(tp => (
+              <option key={tp.key} value={tp.key}>{tp.label}</option>
             ))}
           </select>
         </div>
@@ -459,7 +464,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
           <textarea
             className="form-input"
             rows={2}
-            placeholder="np. po spacerze, w zimnym powietrzu"
+            placeholder={t('cough.modal.note_ph')}
             value={form.note}
             onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
             style={{resize:'none'}}

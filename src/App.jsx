@@ -401,7 +401,9 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <LanguageSwitcher />
+          {/* EN ukryty tymczasowo — tłumaczenie niekompletne w nowych funkcjach.
+              Włączymy w v2.x po Production launch + decyzji o ekspansji. */}
+          {/* <LanguageSwitcher /> */}
           {/* Premium badge / upgrade button */}
           {isPremium ? (
             <span style={{

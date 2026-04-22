@@ -3,7 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { VACCINATIONS } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
-import { t, useLocale } from '../i18n'
+import { t, useLocale, isEN } from '../i18n'
 
 export default function VaccinationsTab({uid, babyId, ageMonths }) {
   useLocale()
@@ -17,7 +17,10 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
   // Lets them mark done with a CUSTOM date (not just today).
   const [dateModal, setDateModal] = useState(null)
 
-  const allVacc = [...VACCINATIONS, ...customVacc]
+  // W wersji EN ukrywamy polskie PSO (nie mamy anglojęzycznej listy US CDC)
+  // User może dodać custom szczepienia — pokazujemy tylko te.
+  const builtInVaccines = isEN() ? [] : VACCINATIONS
+  const allVacc = [...builtInVaccines, ...customVacc]
 
   const openDateModal = (vacc) => {
     const existingDate = done[vacc.id]
@@ -97,7 +100,7 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
 
       <div className="card">
         <div className="card-header">{t('vacc.scheme_header')}</div>
-        {VACCINATIONS.map(v => renderVaccItem(v, false))}
+        {builtInVaccines.map(v => renderVaccItem(v, false))}
       </div>
 
       {customVacc.length > 0 && (

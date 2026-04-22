@@ -65,7 +65,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
       ...questions,
     ])
     setNewQuestion('')
-    toast('Pytanie dodane')
+    toast(t('doctor.questions.added'))
   }
 
   // Edycja TEKSTU pytania (pending)
@@ -77,14 +77,14 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
 
   const saveEditedQuestion = () => {
     const txt = editedQuestionText.trim()
-    if (!txt) { toast('Pytanie nie może być puste'); return }
+    if (!txt) { toast(t('doctor.questions.empty_err')); return }
     setQuestions(questions.map(q => q.id === editingQuestionId
       ? { ...q, question: txt }
       : q
     ))
     setEditingQuestionId(null)
     setEditedQuestionText('')
-    toast('Pytanie zaktualizowane')
+    toast(t('doctor.questions.updated'))
   }
 
   // Odpowiedź na pytanie (przejście pending → asked)
@@ -101,12 +101,12 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
     ))
     setAnsweringId(null)
     setAnswerText('')
-    toast('Odpowiedź zapisana')
+    toast(t('doctor.questions.answer_saved'))
   }
 
   const markAskedNoAnswer = () => {
     setQuestions(questions.map(q => q.id === answeringId
-      ? { ...q, status: 'asked', answer: '(bez szczegółowej odpowiedzi)', date_asked: todayDate() }
+      ? { ...q, status: 'asked', answer: t('doctor.questions.no_answer'), date_asked: todayDate() }
       : q
     ))
     setAnsweringId(null)
@@ -116,24 +116,24 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
   // Edycja ODPOWIEDZI na zadane pytanie
   const startEditAnswer = (q) => {
     setEditingAnswerId(q.id)
-    setEditedAnswerText(q.answer === '(bez szczegółowej odpowiedzi)' ? '' : q.answer)
+    setEditedAnswerText(q.answer === t('doctor.questions.no_answer') ? '' : q.answer)
   }
 
   const saveEditedAnswer = () => {
     setQuestions(questions.map(q => q.id === editingAnswerId
-      ? { ...q, answer: editedAnswerText.trim() || '(bez szczegółowej odpowiedzi)' }
+      ? { ...q, answer: editedAnswerText.trim() || t('doctor.questions.no_answer') }
       : q
     ))
     setEditingAnswerId(null)
     setEditedAnswerText('')
-    toast('Odpowiedź zaktualizowana')
+    toast(t('doctor.questions.answer_updated'))
   }
 
   const removeQuestion = (id) => {
     const removed = questions.find(q => q.id === id)
     if (!removed) return
     setQuestions(questions.filter(q => q.id !== id))
-    toastWithUndo('Usunięto pytanie', () => setQuestions(prev => [removed, ...prev]))
+    toastWithUndo(t('doctor.questions.deleted'), () => setQuestions(prev => [removed, ...prev]))
   }
 
   // ── WIZYTY — save & edit ──────────────────────────────────────────────────
@@ -160,17 +160,17 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
 
   const save = () => {
     if (!form.diagnosis.trim() && !form.recommendations.trim()) {
-      toast('Wpisz przynajmniej diagnozę lub zalecenia', 'error')
+      toast(t('doctor.visits.required_err'), 'error')
       return
     }
     if (editingNoteId) {
       // UPDATE existing
       setNotes(notes.map(n => n.id === editingNoteId ? { ...n, ...form } : n))
-      toast('Wizyta zaktualizowana')
+      toast(t('doctor.visits.updated'))
     } else {
       // CREATE new
       setNotes([{ id: genId(), ...form }, ...notes])
-      toast('Wizyta zapisana')
+      toast(t('doctor.visits.saved'))
     }
     setModal(false)
     setEditingNoteId(null)
@@ -182,7 +182,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
     if (!removed) return
     setNotes(notes.filter(n => n.id !== id))
     if (viewNote?.id === id) setViewNote(null)
-    toastWithUndo('Usunięto wizytę', () => setNotes(prev => [removed, ...prev]))
+    toastWithUndo(t('doctor.visits.deleted'), () => setNotes(prev => [removed, ...prev]))
   }
 
   // ── Paywall dla free ─────────────────────────────────────────────────────
@@ -226,7 +226,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
 
       <div className="card" style={{ margin: '8px 16px 0' }}>
         <div className="card-header" style={{display:'flex',alignItems:'center',gap:8}}>
-          <span>💬 Pytania do następnej wizyty</span>
+          <span>{t('doctor.questions.title')}</span>
           {pendingQuestions.length > 0 && (
             <span style={{
               background:'#185FA5',color:'#fff',fontSize:10,fontWeight:700,
@@ -243,7 +243,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
             className="form-input"
             type="text"
             maxLength={200}
-            placeholder="Napisz pytanie..."
+            placeholder={t('doctor.questions.placeholder')}
             value={newQuestion}
             onChange={e => setNewQuestion(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') addQuestion() }}
@@ -267,7 +267,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
         {/* Pending questions */}
         {pendingQuestions.length === 0 ? (
           <div style={{padding:'10px 14px 16px',fontSize:12,color:'var(--text-3)',lineHeight:1.5}}>
-            Brak pytań do zadania. Dodaj gdy coś Ci przyjdzie do głowy — wrócisz tu przed wizytą.
+            {t('doctor.questions.empty')}
           </div>
         ) : (
           <div>
@@ -305,7 +305,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             cursor:'pointer',minHeight:36,
                           }}
                         >
-                          Anuluj
+                          {t('common.cancel')}
                         </button>
                         <button
                           onClick={saveEditedQuestion}
@@ -315,7 +315,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             cursor:'pointer',minHeight:36,
                           }}
                         >
-                          ✓ Zapisz
+                          ✓ {t('common.save')}
                         </button>
                       </div>
                     </div>
@@ -341,7 +341,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             {q.question}
                           </div>
                           <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
-                            Dodane: {formatDate(q.date_added)}
+                            {t('doctor.questions.added_on', {date: formatDate(q.date_added)})}
                           </div>
                         </div>
                         {!isAnsweringThis && (
@@ -352,7 +352,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                                 background:'none',border:'none',color:'var(--text-3)',
                                 fontSize:14,cursor:'pointer',minHeight:32,minWidth:32,
                               }}
-                              title="Edytuj pytanie"
+                              title={t('doctor.questions.edit_title')}
                             >
                               ✎
                             </button>
@@ -376,7 +376,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                           <textarea
                             className="form-input"
                             rows={2}
-                            placeholder="Co powiedział pediatra? (opcjonalnie)"
+                            placeholder={t('doctor.questions.answer_ph')}
                             value={answerText}
                             onChange={e => setAnswerText(e.target.value)}
                             style={{resize:'none',fontSize:13}}
@@ -391,7 +391,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                                 cursor:'pointer',minHeight:36,
                               }}
                             >
-                              ✓ Zapisz
+                              ✓ {t('common.save')}
                             </button>
                             <button
                               onClick={markAskedNoAnswer}
@@ -402,7 +402,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                                 cursor:'pointer',minHeight:36,
                               }}
                             >
-                              Pomiń
+                              {t('doctor.questions.skip')}
                             </button>
                             <button
                               onClick={() => setAnsweringId(null)}
@@ -412,7 +412,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                                 cursor:'pointer',marginLeft:'auto',minHeight:36,
                               }}
                             >
-                              Anuluj
+                              {t('common.cancel')}
                             </button>
                           </div>
                         </div>
@@ -433,7 +433,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
               fontSize:11,fontWeight:700,color:'var(--text-3)',
               textTransform:'uppercase',letterSpacing:0.4,background:'#f7f7f5',
             }}>
-              Odpowiedzi z ostatnich wizyt ({askedQuestions.length})
+              {t('doctor.questions.answered_header', {count: askedQuestions.length})}
             </div>
             {askedQuestions.slice(0, 5).map(q => {
               const isEditingThisAnswer = editingAnswerId === q.id
@@ -456,7 +456,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             rows={2}
                             value={editedAnswerText}
                             onChange={e => setEditedAnswerText(e.target.value)}
-                            placeholder="Odpowiedź pediatry..."
+                            placeholder={t('doctor.questions.answer_ph')}
                             style={{resize:'none',fontSize:13}}
                             autoFocus
                           />
@@ -469,7 +469,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                                 cursor:'pointer',minHeight:34,
                               }}
                             >
-                              ✓ Zapisz
+                              ✓ {t('common.save')}
                             </button>
                             <button
                               onClick={() => { setEditingAnswerId(null); setEditedAnswerText('') }}
@@ -480,7 +480,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                                 cursor:'pointer',minHeight:34,
                               }}
                             >
-                              Anuluj
+                              {t('common.cancel')}
                             </button>
                           </div>
                         </div>
@@ -496,7 +496,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                       )}
 
                       <div style={{fontSize:10,color:'var(--text-3)',marginTop:4}}>
-                        Zadane: {q.date_asked ? formatDate(q.date_asked) : '—'}
+                        {q.date_asked ? t('doctor.questions.asked_on', {date: formatDate(q.date_asked)}) : '—'}
                       </div>
                     </div>
                     {!isEditingThisAnswer && (
@@ -507,7 +507,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             background:'none',border:'none',color:'var(--text-3)',
                             fontSize:13,cursor:'pointer',minHeight:32,minWidth:32,
                           }}
-                          title="Edytuj odpowiedź"
+                          title={t('doctor.questions.edit_answer')}
                         >
                           ✎
                         </button>
@@ -536,7 +536,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
       {/* ════════════════════════════════════════════════════════════════════ */}
 
       <div className="section-header" style={{marginTop:16}}>
-        <div className="section-title" style={{fontSize:15}}>📋 Historia wizyt</div>
+        <div className="section-title" style={{fontSize:15}}>{t('doctor.visits.header')}</div>
       </div>
 
       {notes.length === 0 ? (
@@ -583,17 +583,17 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {n.medications && (
                   <span style={{ fontSize: 11, background: '#FAECE7', color: '#712B13', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>
-                    💊 Leki
+                    {t('doctor.visits.tag.meds')}
                   </span>
                 )}
                 {n.nextVisit && (
                   <span style={{ fontSize: 11, background: '#FAEEDA', color: '#633806', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>
-                    📅 Kontrola: {n.nextVisit}
+                    {t('doctor.visits.tag.next_visit', {date: n.nextVisit})}
                   </span>
                 )}
                 {n.recommendations && (
                   <span style={{ fontSize: 11, background: '#E1F5EE', color: '#085041', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>
-                    ✓ Zalecenia
+                    {t('doctor.visits.tag.recs')}
                   </span>
                 )}
               </div>
@@ -610,7 +610,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
       <Modal
         open={modal}
         onClose={() => { setModal(false); setEditingNoteId(null) }}
-        title={editingNoteId ? 'Edytuj wizytę' : t('doctor.modal.title')}
+        title={editingNoteId ? t('doctor.visits.edit_title') : t('doctor.modal.title')}
       >
         <div className="form-row">
           <div className="form-group">
@@ -638,7 +638,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           <input className="form-input" type="text" maxLength={80} placeholder={t('doctor.doctor_ph_short')} value={form.doctor} onChange={e => setForm(f => ({ ...f, doctor: e.target.value }))} />
         </div>
         <div className="form-group">
-          <label className="form-label">Diagnoza / objawy</label>
+          <label className="form-label">{t('doctor.visits.field.diagnosis')}</label>
           <textarea
             className="form-input"
             rows={3}
@@ -660,11 +660,11 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           />
         </div>
         <div className="form-group">
-          <label className="form-label">Przepisane leki</label>
+          <label className="form-label">{t('doctor.visits.field.meds')}</label>
           <input className="form-input" type="text" maxLength={80} placeholder={t('doctor.meds_ph')} value={form.medications} onChange={e => setForm(f => ({ ...f, medications: e.target.value }))} />
         </div>
         <div className="form-group">
-          <label className="form-label">Data kontroli</label>
+          <label className="form-label">{t('doctor.visits.field.next')}</label>
           <input className="form-input" type="date" value={form.nextVisit} onChange={e => setForm(f => ({ ...f, nextVisit: e.target.value }))} />
         </div>
         <div className="modal-btns">
@@ -683,10 +683,10 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
               <div style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 12 }}>dr {viewNote.doctor}</div>
             )}
             {[
-              { label: 'Diagnoza', value: viewNote.diagnosis },
-              { label: 'Zalecenia', value: viewNote.recommendations },
-              { label: 'Przepisane leki', value: viewNote.medications },
-              { label: 'Data kontroli', value: viewNote.nextVisit },
+              { label: t('doctor.visits.field.diagnosis'), value: viewNote.diagnosis },
+              { label: t('doctor.visits.field.recs'), value: viewNote.recommendations },
+              { label: t('doctor.visits.field.meds'), value: viewNote.medications },
+              { label: t('doctor.visits.field.next'), value: viewNote.nextVisit },
             ].filter(f => f.value).map(f => (
               <div key={f.label} style={{ marginBottom: 14 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
@@ -701,17 +701,17 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                 style={{width:'100%'}}
                 onClick={() => openEditNote(viewNote)}
               >
-                ✎ Edytuj wizytę
+                {t('doctor.visits.edit_btn')}
               </button>
               <button
                 className="btn-secondary"
                 style={{ width:'100%', background: 'var(--coral-light)', color: 'var(--coral)', border: 'none' }}
                 onClick={() => remove(viewNote.id)}
               >
-                Usuń
+                {t('common.delete')}
               </button>
               <button className="btn-secondary" style={{width:'100%'}} onClick={() => setViewNote(null)}>
-                Zamknij
+                {t('common.close')}
               </button>
             </div>
           </>

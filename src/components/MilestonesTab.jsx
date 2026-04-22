@@ -3,7 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { MILESTONES } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
-import { t, useLocale } from '../i18n'
+import { t, useLocale, isEN } from '../i18n'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
 
@@ -39,7 +39,8 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
 
   const [deleteId, setDeleteId] = useState(null)
 
-  const allMilestones = [...MILESTONES, ...customMilestones]
+  const builtInMilestones = isEN() ? [] : MILESTONES
+  const allMilestones = [...builtInMilestones, ...customMilestones]
 
   const handleClick = (m) => {
     if (done[m.id]) {
