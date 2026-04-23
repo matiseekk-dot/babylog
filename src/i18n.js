@@ -867,6 +867,75 @@ const TRANSLATIONS = {
     'visibility.banner.hide':       'Ukryj',
     'visibility.banner.keep':       'Zostaw',
 
+    // Plural summarize strings for HistorySection callbacks
+    'summary.entries.one':          '{count} wpis',
+    'summary.entries.many':         '{count} wpisów',
+    'summary.cough_episodes.one':   '{count} epizod',
+    'summary.cough_episodes.many':  '{count} epizodów',
+    'summary.feed_breast':          '{count}× pierś',
+    'summary.feed_bottle_ml':       '{ml} ml',
+    'summary.meds_doses':           '{count}× podań',
+    'summary.diapers.one':          '{count} pielucha',
+    'summary.diapers.many':         '{count} pieluch',
+
+    // Hardcoded strings rozrzucone po komponentach (audyt EN)
+    'diet.confirm_delete':          'Czy na pewno chcesz usunąć ten produkt? Stracisz też jego status (próbowało/reakcja).',
+    'growth.percentile_who':        'Percentyl WHO ({sex})',
+    'growth.sex_boys':              'chłopcy',
+    'growth.sex_girls':             'dziewczynki',
+    'growth.premium_cta':           'Zobacz w którym percentylu jest dziecko wg norm WHO →',
+    'growth.need_sex':              'ℹ️ Ustaw płeć dziecka w profilu, aby porównać wagę/wzrost z normami WHO.',
+    'milestones.month_of_life':     'Miesiąc życia dziecka',
+    'milestones.edit_hint':         'Możesz zmienić datę osiągnięcia — np. jeśli dziecko zaczęło to robić wcześniej, a teraz dopiero zaznaczasz.',
+    'milestones.date_achieved':     'Data osiągnięcia',
+    'milestones.month_hint':        '0 = noworodek, 12 = rok, 24 = 2 lata itd.',
+    'onb.sex_label':                'Płeć *',
+    'onb.sex_boy':                  '👦 Chłopiec',
+    'onb.sex_girl':                 '👧 Dziewczynka',
+    'onb.sex_hint':                 'Potrzebne do poprawnego porównania wzrostu z normami WHO.',
+    'onb.weight_hint':              '💊 Waga jest niezbędna do poprawnego liczenia dawek paracetamolu i ibuprofenu.',
+    'settings.sex_label':           'Płeć',
+    'settings.sex_boy':             '👦 Chłopiec',
+    'settings.sex_girl':            '👧 Dziewczynka',
+    'settings.sex_hint':            'Potrzebne do percentyli WHO wzrostu i wagi.',
+    'settings.export.error':        'Błąd eksportu CSV',
+    'settings.export.success':      'Dane wyeksportowane do CSV',
+    'settings.export.title':        '📊 Eksportuj wszystko do CSV',
+    'settings.export.desc':         'CSV zawiera wszystkie Twoje dane — karmienia, sen, pieluchy, temperaturę, leki, wzrost. Otwiera się w Excelu i Google Sheets.',
+    'vacc.month_of_life':           '{month}. miesiąc',
+    'vacc.month_hint':              'Miesiąc życia dziecka (0 = noworodek, 12 = rok, itd.)',
+    'common.delete_aria':           'Usuń',
+
+    // Paywall — testimoniale + features + pricing
+    'paywall.testimonial1.name':    'Ania K.',
+    'paywall.testimonial1.child':   'mama 4-miesięcznej Zosi',
+    'paywall.testimonial1.quote':   'Share z mężem to game changer — oboje widzimy karmienia w czasie rzeczywistym.',
+    'paywall.testimonial2.name':    'Martyna P.',
+    'paywall.testimonial2.child':   'mama bliźniaków',
+    'paywall.testimonial2.quote':   'Wykresy wzrostu z percentylami oszczędzają nam wizytę u pediatry co miesiąc.',
+    'paywall.testimonial3.name':    'Kuba D.',
+    'paywall.testimonial3.child':   'tata 7-miesięcznego Adama',
+    'paywall.testimonial3.quote':   'Pytania do pediatry — żadnych zapomnianych tematów na wizycie.',
+    'paywall.feature1.title':       'Udostępnij partnerowi',
+    'paywall.feature1.desc':        'Oboje rodziców śledzi razem w czasie rzeczywistym. Jedno dziecko, dwa konta.',
+    'paywall.feature2.title':       'Wykresy wzrostu z percentylami WHO',
+    'paywall.feature2.desc':        'Zobacz w którym percentylu jest twoje dziecko wg norm WHO.',
+    'paywall.feature3.title':       'Analityka i normy',
+    'paywall.feature3.desc':        'Wykresy trendów i porównanie do norm WHO dla ząbków, kaszlu, milestone\'ów.',
+    'paywall.feature4.title':       'Nielimitowane dzieci',
+    'paywall.feature4.desc':        'Bliźnięta, rodzeństwo — jedna subskrypcja, bez limitów.',
+    'paywall.feature5.title':       'Raport PDF dla pediatry',
+    'paywall.feature5.desc':        'Sformatowane podsumowanie: temperatury, dawki, karmienia za dowolny okres.',
+    'paywall.feature6.title':       'Notatki i pytania do pediatry',
+    'paywall.feature6.desc':        'Historia wizyt, recepty, pytania do zadania na następnej wizycie.',
+    'paywall.feature7.title':       'Priorytetowe wsparcie',
+    'paywall.feature7.desc':        'Bezpośredni kontakt ze mną (solo founder). Pytasz, odpowiadam w 24h.',
+    'paywall.coming_soon':          'Już wkrótce',
+    'paywall.price.monthly':        '14,99 zł',
+    'paywall.price.yearly':         '99,99 zł',
+    'paywall.price.lifetime':       '199,99 zł',
+    'paywall.free.desc':            'Kalkulator leków, alerty temperatury, CSV export i sync chmurowy — zawsze ZA DARMO.',
+
 
 
 
@@ -1716,6 +1785,75 @@ const TRANSLATIONS = {
     'visibility.banner.hide':       'Hide',
     'visibility.banner.keep':       'Keep visible',
 
+    // Plural summarize strings (uproszczone: używamy generycznej formy dla EN)
+    'summary.entries.one':          '{count} entry',
+    'summary.entries.many':         '{count} entries',
+    'summary.cough_episodes.one':   '{count} episode',
+    'summary.cough_episodes.many':  '{count} episodes',
+    'summary.feed_breast':          '{count}× breast',
+    'summary.feed_bottle_ml':       '{ml} ml',
+    'summary.meds_doses':           '{count}× doses',
+    'summary.diapers.one':          '{count} diaper',
+    'summary.diapers.many':         '{count} diapers',
+
+    // Hardcoded strings audit
+    'diet.confirm_delete':          'Are you sure you want to delete this product? You will also lose its status (tried/reaction).',
+    'growth.percentile_who':        'WHO percentile ({sex})',
+    'growth.sex_boys':              'boys',
+    'growth.sex_girls':             'girls',
+    'growth.premium_cta':           'See which WHO percentile your child is in →',
+    'growth.need_sex':              'ℹ️ Set child sex in profile to compare weight/height with WHO norms.',
+    'milestones.month_of_life':     'Month of life',
+    'milestones.edit_hint':         'You can change the date — e.g. if your child started earlier but you are marking it now.',
+    'milestones.date_achieved':     'Date achieved',
+    'milestones.month_hint':        '0 = newborn, 12 = one year, 24 = 2 years, etc.',
+    'onb.sex_label':                'Sex *',
+    'onb.sex_boy':                  '👦 Boy',
+    'onb.sex_girl':                 '👧 Girl',
+    'onb.sex_hint':                 'Needed for accurate growth comparison with WHO norms.',
+    'onb.weight_hint':              '💊 Weight is required to correctly calculate paracetamol and ibuprofen doses.',
+    'settings.sex_label':           'Sex',
+    'settings.sex_boy':             '👦 Boy',
+    'settings.sex_girl':            '👧 Girl',
+    'settings.sex_hint':            'Needed for WHO weight and height percentiles.',
+    'settings.export.error':        'CSV export failed',
+    'settings.export.success':      'Data exported to CSV',
+    'settings.export.title':        '📊 Export everything to CSV',
+    'settings.export.desc':         'CSV contains all your data — feedings, sleep, diapers, temperature, meds, growth. Opens in Excel and Google Sheets.',
+    'vacc.month_of_life':           'Month {month}',
+    'vacc.month_hint':              'Month of child\'s life (0 = newborn, 12 = one year, etc.)',
+    'common.delete_aria':           'Delete',
+
+    // Paywall
+    'paywall.testimonial1.name':    'Anna K.',
+    'paywall.testimonial1.child':   'mom of 4-month-old Sophie',
+    'paywall.testimonial1.quote':   'Sharing with my husband is a game changer — we both see feedings in real time.',
+    'paywall.testimonial2.name':    'Martha P.',
+    'paywall.testimonial2.child':   'mom of twins',
+    'paywall.testimonial2.quote':   'WHO percentile charts save us a pediatrician visit every month.',
+    'paywall.testimonial3.name':    'Jacob D.',
+    'paywall.testimonial3.child':   'dad of 7-month-old Adam',
+    'paywall.testimonial3.quote':   'Pediatrician questions — no forgotten topics during visits.',
+    'paywall.feature1.title':       'Share with partner',
+    'paywall.feature1.desc':        'Both parents track together in real time. One child, two accounts.',
+    'paywall.feature2.title':       'Growth charts with WHO percentiles',
+    'paywall.feature2.desc':        'See which WHO percentile your child is in.',
+    'paywall.feature3.title':       'Analytics & norms',
+    'paywall.feature3.desc':        'Trend charts and WHO comparison for teeth, cough, milestones.',
+    'paywall.feature4.title':       'Unlimited children',
+    'paywall.feature4.desc':        'Twins, siblings — one subscription, no limits.',
+    'paywall.feature5.title':       'PDF report for pediatrician',
+    'paywall.feature5.desc':        'Formatted summary: temperatures, doses, feedings for any date range.',
+    'paywall.feature6.title':       'Notes & questions for pediatrician',
+    'paywall.feature6.desc':        'Visit history, prescriptions, questions to ask next time.',
+    'paywall.feature7.title':       'Priority support',
+    'paywall.feature7.desc':        'Direct contact with me (solo founder). Ask anything, I reply within 24h.',
+    'paywall.coming_soon':          'Coming soon',
+    'paywall.price.monthly':        '$3.99',
+    'paywall.price.yearly':         '$24.99',
+    'paywall.price.lifetime':       '$49.99',
+    'paywall.free.desc':            'Dose calculator, temperature alerts, CSV export and cloud sync — always FREE.',
+
 
 
 
@@ -1781,6 +1919,20 @@ export function t(key, params) {
     })
   }
   return str
+}
+
+/**
+ * tPlural — wybiera klucz .one lub .many zależnie od liczby.
+ * Użycie: tPlural('summary.entries', 1) → t('summary.entries.one', {count:1})
+ *         tPlural('summary.entries', 5) → t('summary.entries.many', {count:5})
+ *
+ * Uwaga: polski ma 3 formy (1 wpis / 2-4 wpisy / 5+ wpisów), ale upraszczamy
+ * do 2 bo HistorySection pokazuje sumę dzienną gdzie rozróżnienie 1 vs reszta
+ * jest najważniejsze (1 karmienie vs wiele). EN i tak ma tylko 2 formy.
+ */
+export function tPlural(baseKey, count, extraParams = {}) {
+  const suffix = count === 1 ? '.one' : '.many'
+  return t(baseKey + suffix, { count, ...extraParams })
 }
 
 /**

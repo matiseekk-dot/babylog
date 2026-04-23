@@ -362,7 +362,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                                 background:'none',border:'none',color:'var(--text-3)',
                                 fontSize:16,cursor:'pointer',minHeight:32,minWidth:32,
                               }}
-                              title="Usuń"
+                              title={t('common.delete_aria')}
                             >
                               ✕
                             </button>
@@ -517,7 +517,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             background:'none',border:'none',color:'var(--text-3)',
                             fontSize:14,cursor:'pointer',minHeight:32,minWidth:32,
                           }}
-                          title="Usuń"
+                          title={t('common.delete_aria')}
                         >
                           ✕
                         </button>

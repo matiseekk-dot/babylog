@@ -3,7 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, nowTime, genId, formatDate } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
-import { t, useLocale } from '../i18n'
+import { t, tPlural, useLocale } from '../i18n'
 import HistorySection from './HistorySection'
 
 /**
@@ -396,7 +396,7 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
             </div>
           )
         }}
-        summarize={entries => `${entries.length} ${entries.length === 1 ? 'wpis' : 'wpisów'}`}
+        summarize={entries => tPlural('summary.entries', entries.length)}
         onDelete={(log) => {
           const removed = logs.find(l => l.id === log.id)
           if (!removed) return

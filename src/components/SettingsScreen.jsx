@@ -86,10 +86,10 @@ export default function SettingsScreen({
         meds: medLogs,
         growth: growthLogs,
       })
-      toast('Dane wyeksportowane do CSV')
+      toast(t('settings.export.success'))
     } catch (e) {
       console.error(e)
-      toast('Błąd eksportu CSV', 'error')
+      toast(t('settings.export.error'), 'error')
     }
   }
 
@@ -199,7 +199,7 @@ export default function SettingsScreen({
           </div>
 
           <div className="form-group">
-            <label className="form-label">Płeć</label>
+            <label className="form-label">{t('settings.sex_label')}</label>
             <div style={{display:'flex',gap:8,marginTop:4}}>
               <button
                 onClick={()=>setSex('M')}
@@ -212,7 +212,7 @@ export default function SettingsScreen({
                   cursor:'pointer',
                 }}
               >
-                👦 Chłopiec
+                {t('settings.sex_boy')}
               </button>
               <button
                 onClick={()=>setSex('F')}
@@ -225,11 +225,11 @@ export default function SettingsScreen({
                   cursor:'pointer',
                 }}
               >
-                👧 Dziewczynka
+                {t('settings.sex_girl')}
               </button>
             </div>
             <div style={{fontSize:10,color:'var(--text-3)',marginTop:4}}>
-              Potrzebne do percentyli WHO wzrostu i wagi.
+              {t('settings.sex_hint')}
             </div>
           </div>
 
@@ -362,10 +362,10 @@ export default function SettingsScreen({
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            📊 Eksportuj wszystko do CSV
+            {t('settings.export.title')}
           </button>
           <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 6, lineHeight: 1.4 }}>
-            CSV zawiera wszystkie Twoje dane — karmienia, sen, pieluchy, temperaturę, leki, wzrost. Otwiera się w Excelu i Google Sheets.
+            {t('settings.export.desc')}
           </div>
         </div>
       </div>

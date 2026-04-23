@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import { t, useLocale } from '../i18n'
+import { t, useLocale, isEN } from '../i18n'
 
 function getTestimonials() {
-  const isEN = t('app.title') === 'Calm Parent'
-  if (isEN) {
+  if (isEN()) {
     return [
       { name: 'Sarah M.', child: 'mom of 4-month-old', quote: 'Share with my husband changed everything — we both see feedings in real time.', rating: 5 },
       { name: 'Emily R.', child: 'mom of twins',       quote: 'Growth charts with percentiles save us a visit to the pediatrician every month.', rating: 5 },
@@ -40,8 +39,7 @@ function getTestimonials() {
  *   - (w przyszłości) AI chat z Claude API
  */
 function getFeatures() {
-  const isEN = t('app.title') === 'Calm Parent'
-  if (isEN) {
+  if (isEN()) {
     return [
       { icon:'👨‍👩‍👧', title:'Share with partner',        desc:'Both parents track together in real time. One child, two accounts.', comingSoon:true },
       { icon:'📊', title:'Growth charts with WHO percentiles', desc:'See where your child ranks compared to WHO norms.' },
@@ -64,8 +62,7 @@ function getFeatures() {
 }
 
 function getPlans() {
-  const isEN = t('app.title') === 'Calm Parent'
-  const prices = isEN
+  const prices = isEN()
     ? { monthly:'$6.99', yearly:'$49.99', lifetime:'$99.99' }
     : { monthly:'14,99 zł', yearly:'99,99 zł', lifetime:'199,99 zł' }
   return [
@@ -80,9 +77,9 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
   const FEATURES = getFeatures()
   const PLANS = getPlans()
   const [selected, setSelected] = useState('yearly')
-  const isEN = t('app.title') === 'Calm Parent'
+  const isEnglish = isEN()
 
-  const freeBanner = isEN
+  const freeBanner = isEnglish
     ? 'Medicine calculator, temperature alerts, CSV export and cloud sync — always FREE.'
     : 'Kalkulator leków, alerty temperatury, CSV export i sync chmurowy — zawsze ZA DARMO.'
 
@@ -166,7 +163,7 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
                     textTransform:'uppercase',letterSpacing:0.3,
                     whiteSpace:'nowrap',
                   }}>
-                    {isEN ? 'Coming soon' : 'Już wkrótce'}
+                    {isEnglish ? 'Coming soon' : 'Już wkrótce'}
                   </span>
                 )}
               </div>

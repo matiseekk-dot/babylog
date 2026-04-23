@@ -133,7 +133,7 @@ export default function DietTab({uid, babyId, ageMonths }) {
 
       <Modal open={!!deleteId} onClose={()=>setDeleteId(null)} title={t('diet.delete.title')}>
         <p style={{fontSize:14,color:'var(--text-2)',lineHeight:1.6}}>
-          Czy na pewno chcesz usunąć ten produkt? Stracisz też jego status (próbowało/reakcja).
+          {t('diet.confirm_delete')}
         </p>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={()=>setDeleteId(null)}>{t('common.cancel')}</button>

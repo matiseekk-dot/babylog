@@ -244,7 +244,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
           </div>
         )}
-        summarize={entries => `${entries.length}× podań`}
+        summarize={entries => t('summary.meds_doses', { count: entries.length })}
         onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
       />
       <button className="btn-add" onClick={openAdd}>+ Zapisz podanie leku</button>

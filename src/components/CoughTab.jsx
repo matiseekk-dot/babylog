@@ -3,7 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, genId, formatDate } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
-import { t, useLocale } from '../i18n'
+import { t, tPlural, useLocale } from '../i18n'
 import HistorySection from './HistorySection'
 
 /**
@@ -340,7 +340,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
                     <button
                       onClick={(e) => { e.stopPropagation(); remove(log.id) }}
                       style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,cursor:'pointer',minHeight:44,minWidth:44,display:'flex',alignItems:'center',justifyContent:'center'}}
-                      aria-label="Usuń"
+                      aria-label={t('common.delete_aria')}
                     >✕</button>
                   </div>
                 )
@@ -393,12 +393,12 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete?.() }}
                 style={{background:'none',border:'none',color:'var(--text-3)',fontSize:14,cursor:'pointer',minHeight:40,minWidth:40,display:'flex',alignItems:'center',justifyContent:'center'}}
-                aria-label="Usuń"
+                aria-label={t('common.delete_aria')}
               >✕</button>
             </div>
           )
         }}
-        summarize={entries => `${entries.length} ${entries.length === 1 ? 'epizod' : 'epizodów'}`}
+        summarize={entries => tPlural('summary.cough_episodes', entries.length)}
         onDelete={(log) => {
           const removed = logs.find(l => l.id === log.id)
           if (!removed) return

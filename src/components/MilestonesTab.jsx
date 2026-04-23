@@ -172,7 +172,7 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
           />
         </div>
         <div className="form-group">
-          <label className="form-label">Miesiąc życia dziecka</label>
+          <label className="form-label">{t('milestones.month_of_life')}</label>
           <input
             className="form-input"
             type="number"
@@ -182,7 +182,7 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
             onChange={e=>setForm(f=>({...f,months:e.target.value}))}
           />
           <div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>
-            0 = noworodek, 12 = rok, 24 = 2 lata itd.
+            {t('milestones.month_hint')}
           </div>
         </div>
         <div className="modal-btns">
@@ -208,10 +208,10 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
               marginBottom:14,
               lineHeight:1.5,
             }}>
-              Możesz zmienić datę osiągnięcia — np. jeśli dziecko zaczęło to robić wcześniej, a teraz dopiero zaznaczasz.
+              {t('milestones.edit_hint')}
             </div>
             <div className="form-group">
-              <label className="form-label">Data osiągnięcia</label>
+              <label className="form-label">{t('milestones.date_achieved')}</label>
               <input
                 className="form-input"
                 type="date"

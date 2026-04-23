@@ -4,7 +4,7 @@ import { nowTime, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
-import { t, useLocale } from '../i18n'
+import { t, tPlural, useLocale } from '../i18n'
 import HistorySection from './HistorySection'
 
 /**
@@ -236,7 +236,7 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
             <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
           </div>
         )}
-        summarize={entries => `${entries.length} ${entries.length === 1 ? 'pielucha' : 'pieluch'}`}
+        summarize={entries => tPlural('summary.diapers', entries.length)}
         onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
       />
 

@@ -122,7 +122,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
               </div>
               <div style={{flex:1,fontSize:12,lineHeight:1.45}}>
                 <div style={{fontWeight:700,color:'#1a1a18',marginBottom:2}}>
-                  Percentyl WHO ({sex === 'M' ? 'chłopcy' : 'dziewczynki'})
+                  {t('growth.percentile_who', { sex: sex === 'M' ? t('growth.sex_boys') : t('growth.sex_girls') })}
                 </div>
                 <div style={{color:'#5a5a56'}}>{percentileInterpretation?.text}</div>
               </div>
@@ -145,8 +145,8 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
             >
               <span style={{fontSize:20}}>📊</span>
               <div style={{flex:1,fontSize:12,lineHeight:1.45}}>
-                <div style={{fontWeight:700,color:'#633806',marginBottom:2}}>Percentyle WHO — Premium</div>
-                <div style={{color:'#8A5A12'}}>Zobacz w którym percentylu jest dziecko wg norm WHO →</div>
+                <div style={{fontWeight:700,color:'#633806',marginBottom:2}}>{t('growth.percentile_who', { sex: 'WHO' })} — Premium</div>
+                <div style={{color:'#8A5A12'}}>{t('growth.premium_cta')}</div>
               </div>
             </div>
           )}
@@ -158,7 +158,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
               background:'#E6F1FB',border:'1px solid #9FCBEA',
               borderRadius:10,fontSize:12,color:'#0C447C',lineHeight:1.45,
             }}>
-              ℹ️ Ustaw płeć dziecka w profilu, aby porównać wagę/wzrost z normami WHO.
+              {t('growth.need_sex')}
             </div>
           )}
 

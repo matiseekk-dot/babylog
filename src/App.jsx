@@ -449,9 +449,10 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* EN ukryty tymczasowo — tłumaczenie niekompletne w nowych funkcjach.
-              Włączymy w v2.x po Production launch + decyzji o ekspansji. */}
-          {/* <LanguageSwitcher /> */}
+          {/* PL/EN language toggle. W EN niektóre polskie built-in content
+              (szczepienia PSO, nazwy leków, dieta BLW) są ukryte —
+              user dodaje własne po angielsku. */}
+          <LanguageSwitcher />
           {/* Premium badge / upgrade button */}
           {isPremium ? (
             <span style={{

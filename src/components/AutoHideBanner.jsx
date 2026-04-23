@@ -35,7 +35,13 @@ export default function AutoHideBanner({ profile, onUpdate }) {
   const markSuggested = (hide) => {
     const patch = { autoHideSuggestedAt: new Date().toISOString().slice(0, 10) }
     if (hide) {
+      // "Ukryj" — user chce ukryć obie sekcje
       patch.visibleTabs = { feed: false, diaper: false }
+    } else {
+      // "Zostaw" — user wyraźnie mówi "nie ukrywaj". Ustawiamy OBIE na true
+      // żeby nadpisać wszelkie defaulty wieku i było jasno zapisane w storage.
+      // User zawsze może później w Settings wyłączyć jedną lub obie manualnie.
+      patch.visibleTabs = { feed: true, diaper: true }
     }
     onUpdate(profile.id, patch)
   }

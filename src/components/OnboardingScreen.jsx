@@ -184,7 +184,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             {/* Sex — WYMAGANE do percentyli WHO */}
             <div className="form-group">
-              <label className="form-label">Płeć *</label>
+              <label className="form-label">{t('onb.sex_label')}</label>
               <div style={{display:'flex',gap:8,marginTop:4}}>
                 <button
                   onClick={()=>setSex('M')}
@@ -198,7 +198,7 @@ export default function OnboardingScreen({ onComplete }) {
                     display:'flex',alignItems:'center',justifyContent:'center',gap:6,
                   }}
                 >
-                  👦 Chłopiec
+                  {t('onb.sex_boy')}
                 </button>
                 <button
                   onClick={()=>setSex('F')}
@@ -212,11 +212,11 @@ export default function OnboardingScreen({ onComplete }) {
                     display:'flex',alignItems:'center',justifyContent:'center',gap:6,
                   }}
                 >
-                  👧 Dziewczynka
+                  {t('onb.sex_girl')}
                 </button>
               </div>
               <div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>
-                Potrzebne do poprawnego porównania wzrostu z normami WHO.
+                {t('onb.sex_hint')}
               </div>
             </div>
 
@@ -285,7 +285,7 @@ export default function OnboardingScreen({ onComplete }) {
                 </div>
               )}
               <div style={{fontSize:11, color:'var(--text-3)', marginTop:6, lineHeight:1.5}}>
-                💊 Waga jest niezbędna do poprawnego liczenia dawek paracetamolu i ibuprofenu.
+                {t('onb.weight_hint')}
               </div>
             </div>
 

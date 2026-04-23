@@ -191,10 +191,10 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
             min="0"
             max="60"
             value={form.months}
-            onChange={e=>setForm(f=>({...f,months:e.target.value,when:`${e.target.value}. miesiąc`}))}
+            onChange={e=>setForm(f=>({...f,months:e.target.value,when:t('vacc.month_of_life', { month: e.target.value })}))}
           />
           <div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>
-            Miesiąc życia dziecka (0 = noworodek, 12 = rok, itd.)
+            {t('vacc.month_hint')}
           </div>
         </div>
         <div className="modal-btns">

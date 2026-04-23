@@ -4,7 +4,7 @@ import { nowTime, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
-import { t, useLocale } from '../i18n'
+import { t, tPlural, useLocale } from '../i18n'
 import HistorySection from './HistorySection'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
@@ -198,9 +198,9 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
           const ml = entries.filter(e => e.type === 'Butelka' || e.type === 'Odciągnięte mleko')
                             .reduce((s, e) => s + Number(e.amount || 0), 0)
           const parts = []
-          if (breast > 0) parts.push(`${breast}× pierś`)
-          if (ml > 0) parts.push(`${ml} ml`)
-          return parts.join(' · ') || `${entries.length} wpisów`
+          if (breast > 0) parts.push(t('summary.feed_breast', { count: breast }))
+          if (ml > 0) parts.push(t('summary.feed_bottle_ml', { ml }))
+          return parts.join(' · ') || tPlural('summary.entries', entries.length)
         }}
         onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
       />
