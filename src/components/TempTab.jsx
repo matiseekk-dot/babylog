@@ -8,6 +8,7 @@ import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 const TempChart = React.lazy(() => import('./TempChart'))
 import { interpretTemp } from '../engine/interpretations'
+import HistorySection from './HistorySection'
 import { t, useLocale } from '../i18n'
 
 export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
@@ -89,21 +90,41 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
         : <PremiumTeaser label={t('temp.premium.analysis')} onUpgrade={onUpgrade} />}
 
       <div className="card">
-        <div className="card-header">{t('temp.history')}</div>
-        {logs.length === 0
+        <div className="card-header">{t('feed.today')}</div>
+        {todayLogs.length === 0
           ? <div className="empty-state"><div className="empty-icon">🌡️</div><p>{t('temp.empty')}</p></div>
-          : [...logs].sort((a,b)=>b.date.localeCompare(a.date)||b.time.localeCompare(a.time)).slice(0,20).map(l => (
+          : todayLogs.map(l => (
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">🌡️</div>
               <div className="log-body">
                 <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C — {getTempLabel(l.temp)}</div>
-                <div className="log-detail">{l.date} {l.time} · {displayMethod(l.method)}{l.note?` · ${l.note}`:''}</div>
+                <div className="log-detail">{l.time} · {displayMethod(l.method)}{l.note?` · ${l.note}`:''}</div>
               </div>
               <button onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)); onDataChange?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }
       </div>
+
+      {/* HISTORIA pomiarów temperatury — wpisy z wczoraj i wcześniej */}
+      <HistorySection
+        logs={logs}
+        renderItem={(l, { onDelete }) => (
+          <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
+            <div className="log-icon">🌡️</div>
+            <div className="log-body">
+              <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C — {getTempLabel(l.temp)}</div>
+              <div className="log-detail">{l.time} · {displayMethod(l.method)}{l.note?` · ${l.note}`:''}</div>
+            </div>
+            <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+          </div>
+        )}
+        summarize={entries => {
+          const max = Math.max(...entries.map(e => Number(e.temp) || 0))
+          return `${entries.length}× · max ${max.toFixed(1)}°C`
+        }}
+        onDelete={(log) => { setLogs(logs.filter(x => x.id !== log.id)); onDataChange?.() }}
+      />
 
       <button className="btn-add" onClick={openAdd}>
         {t('temp.add')}

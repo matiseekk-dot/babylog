@@ -9,6 +9,7 @@ import { interpretMeds } from '../engine/interpretations'
 import { toast } from './Toast'
 import { t, useLocale, isEN } from '../i18n'
 import { useMedReminder } from '../hooks/useMedReminder'
+import HistorySection from './HistorySection'
 
 // W PL: cały built-in list. W EN: tylko Paracetamol + Ibuprofen (uniwersalne).
 // Sól fizjologiczna i Probiotyk mają polskie instrukcje dawkowania w i18n —
@@ -216,18 +217,36 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         : <PremiumTeaser label="Informacje o lekach" onUpgrade={onUpgrade} />}
 
       <div className="card" style={{marginTop:8}}>
-        <div className="card-header">{t('meds.history')}</div>
-        {logs.length === 0
-          ? <div className="empty-state"><div className="empty-icon">💊</div><p>{t('meds.history.empty')}</p></div>
-          : logs.slice(0,20).map(l => (
+        <div className="card-header">{t('feed.today')}</div>
+        {(() => {
+          const today = todayDate()
+          const todayMeds = logs.filter(l => l.date === today)
+          if (todayMeds.length === 0) {
+            return <div className="empty-state"><div className="empty-icon">💊</div><p>{t('meds.history.empty')}</p></div>
+          }
+          return todayMeds.map(l => (
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">💊</div>
-              <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.date} {l.time}{l.note?` · ${l.note}`:''}</div></div>
+              <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.note?` · ${l.note}`:''}</div></div>
               <button onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
-        }
+        })()}
       </div>
+
+      {/* HISTORIA leków — wpisy z wczoraj i wcześniej */}
+      <HistorySection
+        logs={logs}
+        renderItem={(l, { onDelete }) => (
+          <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
+            <div className="log-icon">💊</div>
+            <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.note?` · ${l.note}`:''}</div></div>
+            <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+          </div>
+        )}
+        summarize={entries => `${entries.length}× podań`}
+        onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
+      />
       <button className="btn-add" onClick={openAdd}>+ Zapisz podanie leku</button>
 
       <Modal open={addMedModal} onClose={()=>setAddMedModal(false)} title={t('meds.add_custom.modal')}>

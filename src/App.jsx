@@ -18,10 +18,12 @@ import TempTab from './components/TempTab'
 import VaccinationsTab from './components/VaccinationsTab'
 import DietTab from './components/DietTab'
 import CoughTab from './components/CoughTab'
+import SymptomsTab from './components/SymptomsTab'
 import QuickDoseCard from './components/QuickDoseCard'
 import ProfilesScreen from './components/ProfilesScreen'
 import ChildStatusBar from './components/ChildStatusBar'
 import ChildStatusCard from './components/ChildStatusCard'
+import AutoHideBanner from './components/AutoHideBanner'
 import PaywallScreen from './components/PaywallScreen'
 import DoctorNotesTab from './components/DoctorNotesTab'
 import OnboardingScreen from './components/OnboardingScreen'
@@ -52,6 +54,26 @@ const DEFAULT_PROFILE = {
   avatarColor: '#E1F5EE',
   toiletMode: 'diapers',
   sex: 'M',  // 'M' | 'F' — required for WHO percentiles
+  // Widoczność sekcji w bottom nav. Ukryte sekcje nie są usunięte —
+  // dane zostają w Firestore, można włączyć z powrotem w Settings.
+  // Defaulty ustawiane w onboardingu na podstawie wieku i toiletMode.
+  visibleTabs: { feed: true, diaper: true },
+  // Flaga żeby one-time banner ">3 lata" pokazać TYLKO raz.
+  // null = nigdy nie pokazany, ISO date = pokazany tego dnia (user zobaczył).
+  autoHideSuggestedAt: null,
+}
+
+/**
+ * Liczy defaulty widoczności Karmień/Pieluch na podstawie wieku dziecka
+ * i trybu toalety. Wołane w onboardingu przy tworzeniu profilu.
+ */
+function defaultVisibleTabs({ months, toiletMode }) {
+  return {
+    // Karmienia: ON dla <3 lat, OFF dla 3+ lat
+    feed: months < 36,
+    // Pieluchy: ON jeśli wciąż używa pieluch/nocnika, OFF jeśli tylko toaleta
+    diaper: toiletMode !== 'toilet',
+  }
 }
 
 const NAV_TABS = [
@@ -82,6 +104,7 @@ const MORE_TABS = [
   { id:'teething',   emoji:'🦷', labelKey:'nav.teething' },
   { id:'growth',     emoji:'📏', labelKey:'nav.growth' },
   { id:'temp',       emoji:'🌡️', labelKey:'nav.temp' },
+  { id:'symptoms',   emoji:'🤒', labelKey:'nav.symptoms' },
   { id:'cough',      emoji:'💨', labelKey:'nav.cough' },
   { id:'meds',       emoji:'💊', labelKey:'nav.meds' },
   { id:'vacc',       emoji:'💉', labelKey:'nav.vacc' },
@@ -152,7 +175,19 @@ export default function App() {
   const [showPrep, setShowPrep] = useState(false)
   const [onboardingDone, setOnboardingDone] = useFirestore(uid, 'onboarding_done', false)
 
-  const active = profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
+  const rawActive = profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
+
+  // Defensywna normalizacja: istniejący profil może nie mieć visibleTabs (sprzed v2.4)
+  // Ustawiamy defaulty na podstawie wieku — ale tylko do użycia w RUNTIME,
+  // nie zapisujemy w storage (żeby nie nadpisać jeśli user wybierze OFF celowo).
+  // Dopiero pierwszy zapis w Settings albo click w banerze utrwali flagę.
+  const active = {
+    ...rawActive,
+    visibleTabs: rawActive.visibleTabs || defaultVisibleTabs({
+      months: rawActive.months ?? 4,
+      toiletMode: rawActive.toiletMode ?? 'diapers',
+    }),
+  }
   const [sleepTimerTs] = useFirestore(uid, `sleep_timer_${active.id}`, null)
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
@@ -223,6 +258,14 @@ export default function App() {
   const visibleMessages  = isPremium ? messages        : []
   const visibleSection   = (section) => isPremium ? sectionMessages(section) : []
 
+  // Jeśli user jest na ukrytym tabie (np. Karmienia), przeskocz na pierwszy widoczny.
+  // Scenariusz: user jest na Feed, idzie do Settings, wyłącza Karmienia → tab
+  // znika z bottom nav, ale content dalej Feed. Trzeba go przenieść.
+  useEffect(() => {
+    if (tab === 'feed'   && active.visibleTabs?.feed   === false) setTab('sleep')
+    if (tab === 'diaper' && active.visibleTabs?.diaper === false) setTab('sleep')
+  }, [active.visibleTabs, tab])
+
   const navigate = (targetTab) => {
     if (!targetTab) return
     if (targetTab === 'settings') { setShowSettings(true); return }
@@ -279,6 +322,7 @@ export default function App() {
       case 'growth':     return <GrowthTab     {...sharedProps} />
       case 'temp':       return <TempTab       {...sharedProps} sectionAlerts={visibleSection('temp')}   onNavigate={navigate} />
       case 'cough':      return <CoughTab      {...sharedProps} />
+      case 'symptoms':   return <SymptomsTab   {...sharedProps} />
       case 'meds':       return <MedsTab       {...sharedProps} sectionAlerts={visibleSection('meds')}   onNavigate={navigate} />
       case 'vacc':       return <VaccinationsTab {...sharedProps} />
       case 'diet':       return <DietTab       {...sharedProps} />
@@ -328,9 +372,13 @@ export default function App() {
       <div className="app">
         <OnboardingScreen onComplete={(profileData) => {
           if (profileData && profileData.name !== 'Moje dziecko') {
-            // Update the default profile with child's info
+            // Defaultne widoczności sekcji zależne od wieku + potty mode
+            const defaults = defaultVisibleTabs({
+              months: profileData.months ?? 4,
+              toiletMode: profileData.toiletMode ?? 'diapers',
+            })
             const updated = profiles.map(p =>
-              p.id === active.id ? { ...p, ...profileData } : p
+              p.id === active.id ? { ...p, ...profileData, visibleTabs: defaults } : p
             )
             setProfiles(updated)
           }
@@ -485,6 +533,11 @@ export default function App() {
           />
         )}
 
+        {/* AUTO-HIDE BANNER — one-time prompt po 3 latach dziecka */}
+        {!showProfiles && !showMore && (
+          <AutoHideBanner profile={active} onUpdate={updateProfile} />
+        )}
+
         {showProfiles ? (
           <ProfilesScreen
             profiles={profiles}
@@ -526,7 +579,14 @@ export default function App() {
 
       {/* BOTTOM NAV */}
       <nav className="bottom-nav">
-        {NAV_TABS.map(n => {
+        {NAV_TABS
+          .filter(n => {
+            // Ukryj Karmienia/Pieluchy jeśli user je wyłączył w Settings
+            if (n.id === 'feed'   && active.visibleTabs?.feed   === false) return false
+            if (n.id === 'diaper' && active.visibleTabs?.diaper === false) return false
+            return true
+          })
+          .map(n => {
           const count = n.id !== 'more'
             ? visibleSection(n.id).length
             : MORE_TABS.reduce((s,tab) => s + visibleSection(tab.id).length, 0)

@@ -39,6 +39,10 @@ export default function SettingsScreen({
   const [weight, setWeight] = useState(String(profile.weight))
   const [avatar, setAvatar] = useState(profile.avatar)
   const [sex, setSex] = useState(profile.sex || 'M')
+  // Widoczne sekcje — defensywny default (istniejące profile mogą nie mieć)
+  const initVisible = profile.visibleTabs || { feed: true, diaper: true }
+  const [feedVisible, setFeedVisible] = useState(initVisible.feed !== false)
+  const [diaperVisible, setDiaperVisible] = useState(initVisible.diaper !== false)
   const [exporting, setExporting] = useState(false)
 
   const save = () => {
@@ -48,6 +52,7 @@ export default function SettingsScreen({
       weight: Number(weight) || 0,
       avatar,
       sex,
+      visibleTabs: { feed: feedVisible, diaper: diaperVisible },
     })
     toast(t('settings.saved'))
     onClose()
@@ -225,6 +230,86 @@ export default function SettingsScreen({
             </div>
             <div style={{fontSize:10,color:'var(--text-3)',marginTop:4}}>
               Potrzebne do percentyli WHO wzrostu i wagi.
+            </div>
+          </div>
+
+          {/* WIDOCZNE SEKCJE — user może ukryć Karmienia i Pieluchy */}
+          <div className="form-group" style={{marginTop:4}}>
+            <label className="form-label">{t('visibility.section_title')}</label>
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:2,marginBottom:10,lineHeight:1.5}}>
+              {t('visibility.section_desc')}
+            </div>
+
+            {/* Toggle Karmienia */}
+            <div
+              onClick={() => setFeedVisible(v => !v)}
+              style={{
+                display:'flex',alignItems:'center',gap:10,
+                padding:'12px 12px',marginBottom:8,
+                background: feedVisible ? '#E1F5EE' : '#f7f7f5',
+                border: feedVisible ? '1px solid #9FE1CB' : '0.5px solid var(--border)',
+                borderRadius:10,cursor:'pointer',
+                minHeight:56,
+              }}
+            >
+              <span style={{fontSize:22,flexShrink:0}}>🍼</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:700,color: feedVisible ? '#085041' : 'var(--text-2)'}}>
+                  {t('visibility.feed.label')}
+                </div>
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
+                  {t('visibility.feed.hint')}
+                </div>
+              </div>
+              <div style={{
+                width:44,height:24,borderRadius:12,
+                background: feedVisible ? '#1D9E75' : '#c0c0b8',
+                position:'relative',transition:'background 0.2s',
+                flexShrink:0,
+              }}>
+                <div style={{
+                  position:'absolute',top:2,left: feedVisible ? 22 : 2,
+                  width:20,height:20,borderRadius:'50%',background:'#fff',
+                  transition:'left 0.2s',
+                  boxShadow:'0 1px 3px rgba(0,0,0,0.2)',
+                }}/>
+              </div>
+            </div>
+
+            {/* Toggle Pieluchy */}
+            <div
+              onClick={() => setDiaperVisible(v => !v)}
+              style={{
+                display:'flex',alignItems:'center',gap:10,
+                padding:'12px 12px',
+                background: diaperVisible ? '#E1F5EE' : '#f7f7f5',
+                border: diaperVisible ? '1px solid #9FE1CB' : '0.5px solid var(--border)',
+                borderRadius:10,cursor:'pointer',
+                minHeight:56,
+              }}
+            >
+              <span style={{fontSize:22,flexShrink:0}}>👶</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:700,color: diaperVisible ? '#085041' : 'var(--text-2)'}}>
+                  {t('visibility.diaper.label')}
+                </div>
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
+                  {t('visibility.diaper.hint')}
+                </div>
+              </div>
+              <div style={{
+                width:44,height:24,borderRadius:12,
+                background: diaperVisible ? '#1D9E75' : '#c0c0b8',
+                position:'relative',transition:'background 0.2s',
+                flexShrink:0,
+              }}>
+                <div style={{
+                  position:'absolute',top:2,left: diaperVisible ? 22 : 2,
+                  width:20,height:20,borderRadius:'50%',background:'#fff',
+                  transition:'left 0.2s',
+                  boxShadow:'0 1px 3px rgba(0,0,0,0.2)',
+                }}/>
+              </div>
             </div>
           </div>
 

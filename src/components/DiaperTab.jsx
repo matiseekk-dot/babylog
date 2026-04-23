@@ -5,6 +5,7 @@ import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
+import HistorySection from './HistorySection'
 
 /**
  * Type buttons per toilet mode.
@@ -220,6 +221,24 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
             ))
         }
       </div>
+
+      {/* HISTORIA — wpisy z wczoraj i wcześniej */}
+      <HistorySection
+        logs={logs}
+        renderItem={(l, { onDelete }) => (
+          <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
+            <div className="log-icon">{displayEmoji(l.type)}</div>
+            <div className="log-body">
+              <div className="log-name">{displayType(l.type)}</div>
+              {l.note && <div className="log-detail">{l.note}</div>}
+            </div>
+            <div className="log-time">{l.time}</div>
+            <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+          </div>
+        )}
+        summarize={entries => `${entries.length} ${entries.length === 1 ? 'pielucha' : 'pieluch'}`}
+        onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
+      />
 
       <button className="btn-add" onClick={openAdd}>
         {t('diaper.add_note')}

@@ -4,6 +4,7 @@ import { nowTime, todayDate, genId, formatDate } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
+import HistorySection from './HistorySection'
 
 /**
  * CoughTab — tracker kaszlu u dziecka
@@ -288,79 +289,123 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
         </div>
       )}
 
-      {/* HISTORIA */}
-      <div className="section-header" style={{marginTop:16}}>
-        <div className="section-title" style={{fontSize:15}}>{t('cough.history')}</div>
-      </div>
+      {/* DZISIAJ */}
+      {(() => {
+        const today = new Date().toISOString().slice(0, 10)
+        const todayLogs = logs.filter(l => l.date === today)
+        if (todayLogs.length === 0) return null
+        return (
+          <>
+            <div className="section-header" style={{marginTop:16}}>
+              <div className="section-title" style={{fontSize:15}}>{t('feed.today')}</div>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:6,margin:'8px 16px 0'}}>
+              {todayLogs.map(log => {
+                const meta = typeMeta(log.type)
+                const timeLabel = TIME_OF_DAY.find(tp => tp.key === log.timeOfDay)?.label
+                return (
+                  <div
+                    key={log.id}
+                    className="log-item"
+                    onClick={() => openEdit(log)}
+                    style={{
+                      background:'var(--surface)',
+                      border:'0.5px solid var(--border)',
+                      borderRadius:12,
+                      padding:'10px 12px',
+                      display:'flex',
+                      alignItems:'center',
+                      gap:10,
+                      cursor:'pointer',
+                    }}
+                  >
+                    <div style={{
+                      width:36,height:36,borderRadius:8,
+                      background:meta.color,
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      fontSize:18,flexShrink:0,
+                    }}>{meta.emoji}</div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>
+                        {meta.label}
+                        {log.severity >= 4 && <span style={{marginLeft:6,fontSize:11,color:'#C95A48'}}>• {t('cough.log.strong')}</span>}
+                      </div>
+                      <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
+                        {log.time}{timeLabel && ` · ${timeLabel}`}
+                      </div>
+                      {log.note && (
+                        <div style={{fontSize:12,color:'var(--text-2)',marginTop:4,lineHeight:1.4}}>{log.note}</div>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); remove(log.id) }}
+                      style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,cursor:'pointer',minHeight:44,minWidth:44,display:'flex',alignItems:'center',justifyContent:'center'}}
+                      aria-label="Usuń"
+                    >✕</button>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )
+      })()}
 
-      {logs.length === 0 ? (
+      {/* Empty state gdy 0 wpisów */}
+      {logs.length === 0 && (
         <div className="card" style={{margin:'8px 16px 0'}}>
           <div className="empty-state">
             <div className="empty-icon">💨</div>
             <p>{t('cough.empty')}</p>
           </div>
         </div>
-      ) : (
-        <div style={{display:'flex',flexDirection:'column',gap:6,margin:'8px 16px 0'}}>
-          {logs.slice(0, 50).map(log => {
-            const meta = typeMeta(log.type)
-            const timeLabel = TIME_OF_DAY.find(tp => tp.key === log.timeOfDay)?.label
-            return (
-              <div
-                key={log.id}
-                className="log-item"
-                onClick={() => openEdit(log)}
-                style={{
-                  background:'var(--surface)',
-                  border:'0.5px solid var(--border)',
-                  borderRadius:12,
-                  padding:'10px 12px',
-                  display:'flex',
-                  alignItems:'center',
-                  gap:10,
-                  cursor:'pointer',
-                }}
-              >
-                <div style={{
-                  width:36,height:36,borderRadius:8,
-                  background:meta.color,
-                  display:'flex',alignItems:'center',justifyContent:'center',
-                  fontSize:18,flexShrink:0,
-                }}>
-                  {meta.emoji}
-                </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>
-                    {meta.label}
-                    {log.severity >= 4 && <span style={{marginLeft:6,fontSize:11,color:'#C95A48'}}>• {t('cough.log.strong')}</span>}
-                  </div>
-                  <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
-                    {formatDate(log.date)} · {log.time}
-                    {timeLabel && ` · ${timeLabel}`}
-                  </div>
-                  {log.note && (
-                    <div style={{fontSize:12,color:'var(--text-2)',marginTop:4,lineHeight:1.4}}>
-                      {log.note}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); remove(log.id) }}
-                  style={{
-                    background:'none',border:'none',color:'var(--text-3)',
-                    fontSize:16,cursor:'pointer',
-                    minHeight:44,minWidth:44,
-                    display:'flex',alignItems:'center',justifyContent:'center',
-                  }}
-                  aria-label="Usuń"
-                >
-                  ✕
-                </button>
-              </div>
-            )
-          })}
-        </div>
       )}
+
+      {/* HISTORIA — wpisy z wczoraj i wcześniej, collapsible */}
+      <HistorySection
+        logs={logs}
+        renderItem={(log, { onDelete }) => {
+          const meta = typeMeta(log.type)
+          const timeLabel = TIME_OF_DAY.find(tp => tp.key === log.timeOfDay)?.label
+          return (
+            <div
+              key={log.id}
+              onClick={() => openEdit(log)}
+              style={{padding:'10px 14px',display:'flex',alignItems:'center',gap:10,cursor:'pointer'}}
+            >
+              <div style={{
+                width:34,height:34,borderRadius:8,
+                background:meta.color,
+                display:'flex',alignItems:'center',justifyContent:'center',
+                fontSize:18,flexShrink:0,
+              }}>{meta.emoji}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:'var(--text)'}}>
+                  {meta.label}
+                  {log.severity >= 4 && <span style={{marginLeft:6,fontSize:11,color:'#C95A48'}}>• {t('cough.log.strong')}</span>}
+                </div>
+                <div style={{fontSize:11,color:'var(--text-3)',marginTop:2}}>
+                  {log.time}{timeLabel && ` · ${timeLabel}`}
+                </div>
+                {log.note && (
+                  <div style={{fontSize:12,color:'var(--text-2)',marginTop:4,lineHeight:1.4}}>{log.note}</div>
+                )}
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete?.() }}
+                style={{background:'none',border:'none',color:'var(--text-3)',fontSize:14,cursor:'pointer',minHeight:40,minWidth:40,display:'flex',alignItems:'center',justifyContent:'center'}}
+                aria-label="Usuń"
+              >✕</button>
+            </div>
+          )
+        }}
+        summarize={entries => `${entries.length} ${entries.length === 1 ? 'epizod' : 'epizodów'}`}
+        onDelete={(log) => {
+          const removed = logs.find(l => l.id === log.id)
+          if (!removed) return
+          setLogs(logs.filter(l => l.id !== log.id))
+          toastWithUndo(t('cough.toast.deleted'), () => setLogs(prev => [removed, ...prev]))
+        }}
+      />
 
       <button className="btn-add" onClick={() => openAdd()}>
         {t('cough.add')}

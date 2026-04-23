@@ -5,6 +5,7 @@ import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
+import HistorySection from './HistorySection'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
 
@@ -171,6 +172,38 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
           ))
         }
       </div>
+
+      {/* HISTORIA — wpisy z wczoraj i wcześniej, collapsible */}
+      <HistorySection
+        logs={logs}
+        renderItem={(l, { onDelete }) => (
+          <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
+            <div className="log-icon">{l.type.startsWith('Pierś') ? '🤱' : '🍼'}</div>
+            <div className="log-body">
+              <div className="log-name">{
+                l.type === 'Pierś lewa'       ? t('feed.type.left')
+              : l.type === 'Pierś prawa'      ? t('feed.type.right')
+              : l.type === 'Butelka'          ? t('feed.type.bottle')
+              : l.type === 'Odciągnięte mleko'? t('feed.type.pumped')
+              : l.type
+            }</div>
+              <div className="log-detail">{l.type==='Butelka'||l.type==='Odciągnięte mleko' ? `${l.amount} ml` : `${l.amount} min`}</div>
+            </div>
+            <div className="log-time">{l.time}</div>
+            <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+          </div>
+        )}
+        summarize={entries => {
+          const breast = entries.filter(e => e.type.startsWith('Pierś')).length
+          const ml = entries.filter(e => e.type === 'Butelka' || e.type === 'Odciągnięte mleko')
+                            .reduce((s, e) => s + Number(e.amount || 0), 0)
+          const parts = []
+          if (breast > 0) parts.push(`${breast}× pierś`)
+          if (ml > 0) parts.push(`${ml} ml`)
+          return parts.join(' · ') || `${entries.length} wpisów`
+        }}
+        onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
+      />
 
       <button className="btn-add" onClick={openAdd}>
         {t('feed.add_detail')}

@@ -8,6 +8,7 @@ import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretSleep } from '../engine/interpretations'
+import HistorySection from './HistorySection'
 
 export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   useLocale()
@@ -179,10 +180,10 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
         : <PremiumTeaser label={t('sleep.premium.quality')} onUpgrade={onUpgrade} />}
 
       <div className="card">
-        <div className="card-header">Historia snu</div>
-        {logs.slice(0,20).length === 0
+        <div className="card-header">{t('feed.today')}</div>
+        {todayLogs.length === 0
           ? <div className="empty-state"><div className="empty-icon">🌙</div><p>{t('sleep.empty')}</p></div>
-          : logs.slice(0,20).map(l => {
+          : todayLogs.map(l => {
               const h = Math.floor(l.durationMin/60)
               const m = l.durationMin % 60
               return (
@@ -190,7 +191,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
                   <div className="log-icon">🌙</div>
                   <div className="log-body">
                     <div className="log-name">{l.label}</div>
-                    <div className="log-detail">{h > 0 ? `${h}h ` : ''}{m > 0 ? `${m} min` : ''} · {l.date}</div>
+                    <div className="log-detail">{h > 0 ? `${h}h ` : ''}{m > 0 ? `${m} min` : ''}</div>
                   </div>
                   <button onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
                 </div>
@@ -198,6 +199,32 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
             })
         }
       </div>
+
+      {/* HISTORIA snu — wpisy z wczoraj i wcześniej */}
+      <HistorySection
+        logs={logs}
+        renderItem={(l, { onDelete }) => {
+          const h = Math.floor(l.durationMin/60)
+          const m = l.durationMin % 60
+          return (
+            <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
+              <div className="log-icon">🌙</div>
+              <div className="log-body">
+                <div className="log-name">{l.label}</div>
+                <div className="log-detail">{h > 0 ? `${h}h ` : ''}{m > 0 ? `${m} min` : ''}</div>
+              </div>
+              <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+            </div>
+          )
+        }}
+        summarize={entries => {
+          const totalMin = entries.reduce((s, e) => s + (e.durationMin || 0), 0)
+          const h = Math.floor(totalMin / 60)
+          const m = totalMin % 60
+          return `${entries.length}× · ${h}h ${m}m`
+        }}
+        onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
+      />
 
       <button className="btn-add" onClick={openAdd}>
         {t('sleep.add_manual')}
