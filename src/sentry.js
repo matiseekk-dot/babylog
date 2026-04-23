@@ -4,20 +4,21 @@
  * ZEROCONFIGURACYJNE: nie wymaga instalacji @sentry/react żeby apka
  * się zbudowała. Jeśli pakiet nie jest zainstalowany — no-op.
  *
- * SETUP:
+ * SETUP (15 minut):
  * 1. Załóż konto na sentry.io (free tier: 5000 events/mies)
  * 2. Stwórz projekt typu "React"
  * 3. Skopiuj DSN (format: https://xxx@o000.ingest.sentry.io/000)
- * 4. Wklej do stałej SENTRY_DSN poniżej
+ * 4. Wklej do pliku `.env` jako:  VITE_SENTRY_DSN=https://xxx@...
  * 5. Zainstaluj pakiet: npm install @sentry/react
  * 6. `npm run build` — Sentry zacznie łapać errory w produkcji
  *
  * GDZIE ZOBACZYĆ BŁĘDY:
- * sentry.io → Projects → babylog → Issues
+ * sentry.io → Projects → spokojny-rodzic → Issues
  */
 
-// ⚠️ WKLEJ SWÓJ DSN TUTAJ (z sentry.io → Settings → Projects → babylog → Client Keys)
-const SENTRY_DSN = ''  // np. 'https://abc123@o123.ingest.sentry.io/456'
+// DSN z pliku .env (Vite wstrzykuje import.meta.env.VITE_*)
+// Jeśli brak DSN → Sentry jest no-op (apka działa, tylko bez monitoringu)
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN || ''
 
 // Flaga — czy Sentry udało się zainicjalizować
 let sentryReady = false

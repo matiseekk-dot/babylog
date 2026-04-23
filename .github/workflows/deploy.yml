@@ -32,6 +32,12 @@ jobs:
         run: npm install
 
       - name: Build
+        env:
+          # Secrety ustawione w GitHub → Settings → Secrets and variables → Actions
+          # Dopóki ich nie ustawisz, apka zbuduje się ale bez Sentry/RC (no-op)
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_RC_PUBLIC_KEY: ${{ secrets.VITE_RC_PUBLIC_KEY }}
+          VITE_RC_ENTITLEMENT: ${{ secrets.VITE_RC_ENTITLEMENT }}
         run: npm run build
 
       - name: Setup Pages

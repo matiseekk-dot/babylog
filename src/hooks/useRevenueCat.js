@@ -21,12 +21,21 @@ import { useState, useEffect, useCallback } from 'react'
 import { t, getLocale } from '../i18n'
 
 const RC_API = 'https://api.revenuecat.com/v1'
-const RC_KEY = 'test_dlpwNXCBXNyWZnEUuRbMbIjAqbn'
-const ENTITLEMENT = 'Spokojny Rodzic Pro'
+// API key z .env — Vite wstrzykuje import.meta.env.VITE_*
+// W dev używa test key, w produkcji PRODUCTION key z Play Store billing
+// Format w .env: VITE_RC_PUBLIC_KEY=goog_xxxxxxx
+const RC_KEY = import.meta.env.VITE_RC_PUBLIC_KEY || ''
+const ENTITLEMENT = import.meta.env.VITE_RC_ENTITLEMENT || 'Spokojny Rodzic Pro'
 
 // ─── REST API helpers ─────────────────────────────────────────────────────────
 
 async function rcFetch(path, options = {}) {
+  // Brak klucza → RC nie skonfigurowany (dev bez .env) → zwracamy null
+  // Apka działa normalnie, tylko bez weryfikacji zakupów (wszystko free/trial)
+  if (!RC_KEY) {
+    console.warn('[RC] API key not configured — add VITE_RC_PUBLIC_KEY to .env')
+    return null
+  }
   const res = await fetch(`${RC_API}${path}`, {
     ...options,
     headers: {
@@ -53,6 +62,7 @@ async function getOrCreateCustomer(uid) {
 async function checkEntitlement(uid) {
   try {
     const data = await getOrCreateCustomer(uid)
+    if (!data) return false  // RC nie skonfigurowany
     const entitlements = data?.subscriber?.entitlements || {}
     const premium = entitlements[ENTITLEMENT]
     if (!premium) return false

@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { t, useLocale } from '../i18n'
-import { exportChildReport } from '../utils/pdfExport'
 import { exportAllToCsv } from '../utils/csvExport'
+import PdfReportModal from './PdfReportModal'
 import { toast } from './Toast'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
@@ -29,7 +29,11 @@ export default function SettingsScreen({
   const [diaperLogs] = useFirestore(uid, `diaper_${profile.id}`, [])
   const [growthLogs] = useFirestore(uid, `growth_${profile.id}`, [])
   const [doctorNotes] = useFirestore(uid, `doctor_notes_${profile.id}`, [])
+  const [symptomsLogs] = useFirestore(uid, `symptoms_${profile.id}`, [])
+  const [coughLogs]    = useFirestore(uid, `cough_${profile.id}`, [])
+  const [questions]    = useFirestore(uid, `doctor_questions_${profile.id}`, [])
   const { locale } = useLocale()
+  const [pdfModal, setPdfModal] = useState(false)
   const [name, setName] = useState(profile.name)
   const totalMonths = profile.months || 0
   const initYears = Math.floor(totalMonths / 12)
@@ -58,21 +62,24 @@ export default function SettingsScreen({
     onClose()
   }
 
-  const handleExport = async () => {
+  const handleExport = () => {
     if (!isPremium) { onUpgrade(); return }
-    setExporting(true)
-    try {
-      const updatedProfile = { ...profile, name, months: (Number(years) || 0) * 12 + (Number(months) || 0), weight: Number(weight), avatar }
-      const data = { tempLogs, medLogs, feedLogs, sleepLogs, doctorNotes }
-      await exportChildReport(updatedProfile, data, locale)
-      toast(t('settings.export.success'))
-    } catch (e) {
-      console.error(e)
-      toast(t('settings.export.error'), 'error')
-    } finally {
-      setExporting(false)
-    }
+    setPdfModal(true)
   }
+
+  // Loader dla PDF modal - ładuje WSZYSTKIE dane dziecka na potrzeby raportu
+  const loadPdfData = async () => ({
+    feed: feedLogs,
+    sleep: sleepLogs,
+    temp: tempLogs,
+    meds: medLogs,
+    diaper: diaperLogs,
+    growth: growthLogs,
+    symptoms: symptomsLogs,
+    cough: coughLogs,
+    questions,
+    doctorNotes,
+  })
 
   const handleCsvExport = () => {
     // CSV export działa nawet dla free userów — to podstawowe prawo użytkownika
@@ -407,6 +414,14 @@ export default function SettingsScreen({
       <div style={{ padding: '16px', fontSize: 10, color: '#9a9a94', textAlign: 'center' }}>
         Spokojny Rodzic v1.0 · SkuDev
       </div>
+
+      {/* PDF Report modal — Premium only */}
+      <PdfReportModal
+        open={pdfModal}
+        onClose={() => setPdfModal(false)}
+        profile={{ ...profile, name, months: (Number(years) || 0) * 12 + (Number(months) || 0), weight: Number(weight), avatar, sex }}
+        loadData={loadPdfData}
+      />
     </div>
   )
 }
