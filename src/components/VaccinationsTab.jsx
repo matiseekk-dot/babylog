@@ -78,7 +78,7 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
         {isDone && <span style={{fontSize:18}}>✅</span>}
         {isUpcoming && !isDone && <span className="badge badge-amber">{t('vacc.upcoming')}</span>}
         {isCustom && (
-          <button onClick={e=>{e.stopPropagation();setDeleteId(v.id)}} style={{
+          <button aria-label="Usuń wpis" onClick={e=>{e.stopPropagation();setDeleteId(v.id)}} style={{
             background:'none',border:'none',color:'var(--text-3)',fontSize:16,
             padding:'0 0 0 6px',minHeight:44,minWidth:36,cursor:'pointer'
           }}>✕</button>

@@ -1029,6 +1029,20 @@ const TRANSLATIONS = {
     'settings.toilet_mode.toilet':  '🚻 Toaleta',
     'settings.toilet_mode.hint':    'Zmienia sposób rejestrowania toalety. Nocnik ukrywa pieluchy, toaleta całkowicie usuwa tab.',
 
+    // Premium onboarding modal (post-purchase celebration)
+    'premium_onboarding.title':               'Witaj w Premium! 🌟',
+    'premium_onboarding.subtitle':            'Masz teraz pełen dostęp do wszystkich funkcji. Oto co się odblokowało:',
+    'premium_onboarding.features.pdf.title':          'Raport PDF dla pediatry',
+    'premium_onboarding.features.pdf.desc':           'Kompletne podsumowanie gotowe do wysłania do lekarza lub wydrukowania.',
+    'premium_onboarding.features.multi_child.title':  'Wiele dzieci w jednej aplikacji',
+    'premium_onboarding.features.multi_child.desc':   'Dodaj bliźnięta, rodzeństwo — bez limitów. Każde dziecko ma własne dane.',
+    'premium_onboarding.features.stats.title':        'Pełne statystyki i wykresy',
+    'premium_onboarding.features.stats.desc':         'Trendy wagi, temperatur, karmień. Porównanie z normami WHO.',
+    'premium_onboarding.features.customization.title':'Personalizacja aplikacji',
+    'premium_onboarding.features.customization.desc': 'Ukrywaj sekcje, zmieniaj tryb (pieluchy/nocnik/toaleta), dostosuj do wieku dziecka.',
+    'premium_onboarding.cta_primary':         '📄 Zobacz mój raport PDF',
+    'premium_onboarding.cta_secondary':       'Rozejrzę się sam',
+
     // Full backup (wszystkie dzieci, wszystkie kategorie)
     'settings.backup.title':        'Pełna kopia zapasowa',
     'settings.backup.desc':         'Pobierz wszystkie swoje dane — wszystkie dzieci, wszystkie kategorie. Użyj JSON do backupu lub CSV do otwarcia w Excelu.',
@@ -2047,6 +2061,20 @@ const TRANSLATIONS = {
     'settings.toilet_mode.potty':   '🚽 Potty',
     'settings.toilet_mode.toilet':  '🚻 Toilet',
     'settings.toilet_mode.hint':    'Changes how toilet events are recorded. Potty hides diapers, toilet removes the tab completely.',
+
+    // Premium onboarding modal
+    'premium_onboarding.title':               'Welcome to Premium! 🌟',
+    'premium_onboarding.subtitle':            'You now have full access to all features. Here\'s what just unlocked:',
+    'premium_onboarding.features.pdf.title':          'PDF report for pediatrician',
+    'premium_onboarding.features.pdf.desc':           'Complete summary ready to send to your doctor or print.',
+    'premium_onboarding.features.multi_child.title':  'Multiple children in one app',
+    'premium_onboarding.features.multi_child.desc':   'Add twins, siblings — no limits. Each child has its own data.',
+    'premium_onboarding.features.stats.title':        'Full statistics and charts',
+    'premium_onboarding.features.stats.desc':         'Weight trends, temperatures, feedings. Comparison with WHO norms.',
+    'premium_onboarding.features.customization.title':'App personalization',
+    'premium_onboarding.features.customization.desc': 'Hide sections, switch modes (diapers/potty/toilet), adapt to your child\'s age.',
+    'premium_onboarding.cta_primary':         '📄 See my PDF report',
+    'premium_onboarding.cta_secondary':       'I\'ll explore on my own',
 
     // Full backup
     'settings.backup.title':        'Full data backup',

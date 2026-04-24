@@ -121,7 +121,7 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
             onClick={() => handleClick(m)}
           >
             {m.custom && (
-              <button onClick={e=>{e.stopPropagation();setDeleteId(m.id)}} style={{
+              <button aria-label="Usuń wpis" onClick={e=>{e.stopPropagation();setDeleteId(m.id)}} style={{
                 position:'absolute',top:6,right:6,background:'rgba(0,0,0,0.08)',border:'none',
                 borderRadius:'50%',width:20,height:20,fontSize:10,cursor:'pointer',
                 display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-2)'

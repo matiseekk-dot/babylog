@@ -19,6 +19,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { t, getLocale } from '../i18n'
+import { captureError, addBreadcrumb } from '../sentry'
 
 const RC_API = 'https://api.revenuecat.com/v1'
 // API key z .env — Vite wstrzykuje import.meta.env.VITE_*
@@ -168,10 +169,13 @@ export function useRevenueCat(uid, onActivate) {
   const activateWithToken = useCallback(async (productId, purchaseToken) => {
     if (!uid) return
     try {
+      addBreadcrumb('purchase', 'activate-with-token-start', { productId })
       await activateGooglePlayPurchase(uid, productId, purchaseToken)
       await checkPremium()
+      addBreadcrumb('purchase', 'activate-with-token-success', { productId })
     } catch (e) {
       console.warn('RC activation failed:', e)
+      captureError(e, { context: 'rc-activation', productId, uid })
     }
   }, [uid, checkPremium])
 

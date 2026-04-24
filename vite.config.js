@@ -5,6 +5,10 @@ export default defineConfig({
   plugins: [react()],
   base: '/babylog/',
   publicDir: 'public',
+  test: {
+    environment: 'happy-dom',
+    setupFiles: ['./src/test-setup.js'],
+  },
   build: {
     assetsDir: 'assets',
     chunkSizeWarningLimit: 600,

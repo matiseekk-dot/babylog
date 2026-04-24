@@ -3,6 +3,7 @@ import {
   doc, getDoc, setDoc, onSnapshot
 } from 'firebase/firestore'
 import { db } from '../firebase'
+import { captureError, addBreadcrumb } from '../sentry'
 
 // Offline persistence jest teraz skonfigurowana w firebase.js
 export function enableOffline() { /* no-op, handled at init */ }
@@ -88,16 +89,16 @@ export function useFirestore(uid, key, fallback) {
       } else {
         // Dokument nie istnieje w Firestore
         if (firstSnap.current) {
-          // PIERWSZA próba odczytu — trzymaj initial state (z localStorage cache)
-          // Jeśli cache też pusty, initial state = fallback (już ustawione)
           firstSnap.current = false
         } else {
-          // Dokument skasowany po pierwszym snapshot — resetuj
           setState(fallback)
           lsSave(uid, key, fallback)
         }
       }
-    }, () => { /* błąd sieci — zostaw initial state */ })
+    }, (error) => {
+      // Błąd sieci lub permission denied — zostaw initial state
+      captureError(error, { context: 'firestore-snapshot', key, uid })
+    })
 
     return unsub
   }, [uid, key])
@@ -107,7 +108,9 @@ export function useFirestore(uid, key, fallback) {
     lsSave(uid, key, next)
     setState(next)
     if (uid) {
-      setDoc(docRef(uid, key), { value: next }).catch(() => {})
+      setDoc(docRef(uid, key), { value: next }).catch(e => {
+        captureError(e, { context: 'firestore-write', key, uid })
+      })
     }
   }
 
@@ -129,6 +132,7 @@ export async function migrateGuestDataToAccount(uid, { strategy = 'preserve-exis
 
   // Sortujemy dla deterministyczności (ważne dla testów + logów)
   const guestKeys = lsKeys().filter(k => k.startsWith(GUEST_PREFIX)).sort()
+  addBreadcrumb('migration', 'guest-to-account-started', { keyCount: guestKeys.length, strategy })
 
   for (const fullKey of guestKeys) {
     const key = fullKey.slice(GUEST_PREFIX.length)
@@ -147,8 +151,15 @@ export async function migrateGuestDataToAccount(uid, { strategy = 'preserve-exis
       result.migrated.push(key)
     } catch (e) {
       result.errors.push({ key, error: e.message })
+      captureError(e, { context: 'guest-migration', key, strategy })
     }
   }
+
+  addBreadcrumb('migration', 'guest-to-account-finished', {
+    migrated: result.migrated.length,
+    skipped: result.skipped.length,
+    errors: result.errors.length,
+  })
   return result
 }
 

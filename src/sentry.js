@@ -71,3 +71,25 @@ export function captureError(error, context = {}) {
     Sentry.captureException(error, { extra: context })
   }).catch(() => {})
 }
+
+/**
+ * addBreadcrumb — ślad akcji użytkownika dla kontekstu gdy coś crashnie.
+ * Widoczne w Sentry przy każdym błędzie.
+ */
+export function addBreadcrumb(category, message, data = {}) {
+  if (!sentryReady) return
+  import(/* @vite-ignore */ '@sentry/react').then(Sentry => {
+    Sentry.addBreadcrumb({ category, message, data, level: 'info' })
+  }).catch(() => {})
+}
+
+/**
+ * setUserContext — ustaw UID usera w Sentry (dla filtrowania błędów per user)
+ * NIE wysyłaj PII — tylko anonimowy UID Firebase.
+ */
+export function setUserContext(uid) {
+  if (!sentryReady) return
+  import(/* @vite-ignore */ '@sentry/react').then(Sentry => {
+    Sentry.setUser(uid ? { id: uid } : null)
+  }).catch(() => {})
+}

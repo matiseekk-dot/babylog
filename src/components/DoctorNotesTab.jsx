@@ -346,7 +346,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                         </div>
                         {!isAnsweringThis && (
                           <>
-                            <button
+                            <button aria-label="Edytuj"
                               onClick={() => startEditQuestion(q)}
                               style={{
                                 background:'none',border:'none',color:'var(--text-3)',
@@ -356,7 +356,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             >
                               ✎
                             </button>
-                            <button
+                            <button aria-label="Usuń wpis"
                               onClick={() => removeQuestion(q.id)}
                               style={{
                                 background:'none',border:'none',color:'var(--text-3)',
@@ -501,7 +501,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                     </div>
                     {!isEditingThisAnswer && (
                       <>
-                        <button
+                        <button aria-label="Edytuj"
                           onClick={() => startEditAnswer(q)}
                           style={{
                             background:'none',border:'none',color:'var(--text-3)',
@@ -511,7 +511,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                         >
                           ✎
                         </button>
-                        <button
+                        <button aria-label="Usuń wpis"
                           onClick={() => removeQuestion(q.id)}
                           style={{
                             background:'none',border:'none',color:'var(--text-3)',

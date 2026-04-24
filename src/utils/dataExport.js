@@ -24,6 +24,7 @@
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '../firebase'
 import { doc } from 'firebase/firestore'
+import { captureError, addBreadcrumb } from '../sentry'
 
 const LS_PREFIX = 'babylog_'
 const GUEST_PREFIX = 'babylog_guest_'
@@ -48,6 +49,7 @@ export async function collectAllData(uid) {
       })
     } catch (e) {
       console.warn('[dataExport] Firestore read failed, falling back to localStorage:', e)
+      captureError(e, { context: 'data-export-firestore-read', uid })
     }
   }
 
@@ -83,6 +85,7 @@ export async function collectAllData(uid) {
  * }
  */
 export async function exportAllDataAsJson(uid, appVersion = '2.5.5') {
+  addBreadcrumb('export', 'json-start', { uid })
   const data = await collectAllData(uid)
   const payload = {
     exportVersion: '1.0',
@@ -95,6 +98,7 @@ export async function exportAllDataAsJson(uid, appVersion = '2.5.5') {
   const blob = new Blob([json], { type: 'application/json' })
   const fname = `spokojny-rodzic-backup-${new Date().toISOString().slice(0, 10)}.json`
   triggerDownload(blob, fname)
+  addBreadcrumb('export', 'json-success', { recordCount: Object.keys(data).length })
   return { success: true, recordCount: Object.keys(data).length }
 }
 

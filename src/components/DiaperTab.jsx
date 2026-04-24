@@ -216,7 +216,7 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
                   {l.note && <div className="log-detail">{l.note}</div>}
                 </div>
                 <div className="log-time">{l.time}</div>
-                <button onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+                <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
               </div>
             ))
         }
@@ -233,7 +233,7 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
               {l.note && <div className="log-detail">{l.note}</div>}
             </div>
             <div className="log-time">{l.time}</div>
-            <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+            <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
           </div>
         )}
         summarize={entries => tPlural('summary.diapers', entries.length)}

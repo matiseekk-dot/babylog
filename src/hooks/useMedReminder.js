@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { t } from '../i18n'
 import { loadFromStorage } from './useStorage'
+import { captureError } from '../sentry'
 
 // Czas działania leków w minutach
 const MED_DURATION = {
@@ -38,6 +39,7 @@ async function registerSW() {
     return reg
   } catch (e) {
     console.warn('SW registration failed:', e)
+    captureError(e, { context: 'sw-registration' })
     return null
   }
 }

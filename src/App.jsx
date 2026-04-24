@@ -35,6 +35,7 @@ import CallDoctorCard from './components/CallDoctorCard'
 import CallDoctorPrep from './components/CallDoctorPrep'
 import GuestMigrationDialog from './components/GuestMigrationDialog'
 import PlayStoreModal from './components/PlayStoreModal'
+import PremiumOnboardingModal from './components/PremiumOnboardingModal'
 import { useCrisisDetection } from './hooks/useCrisisDetection'
 
 // BUG-003 FIX: Per-locale emergency phones
@@ -229,6 +230,29 @@ export default function App() {
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
   const { isPremium, isOnTrial, trialDaysLeft, activate, deactivate } = usePremium(uid)
+
+  // Premium onboarding — pokazuje modal raz po pierwszym odblokowaniu Premium
+  const [showPremiumOnboarding, setShowPremiumOnboarding] = useState(false)
+  const [prevIsPremium, setPrevIsPremium] = useState(isPremium)
+  useEffect(() => {
+    // Detekcja: false → true przejście (zakup właśnie przeszedł)
+    if (isPremium && !prevIsPremium && uid) {
+      const flagKey = 'babylog_premium_onboarding_shown_' + uid
+      try {
+        if (localStorage.getItem(flagKey) !== '1') {
+          setShowPremiumOnboarding(true)
+          localStorage.setItem(flagKey, '1')
+        }
+      } catch {}
+    }
+    setPrevIsPremium(isPremium)
+  }, [isPremium, prevIsPremium, uid])
+
+  const closePremiumOnboarding = () => setShowPremiumOnboarding(false)
+  const navigateToPdfReport = () => {
+    setShowPremiumOnboarding(false)
+    setShowSettings(true)  // Settings ma sekcję PDF Report
+  }
 
   const openPaywall = () => setShowPaywall(true)
   const closePaywall = () => setShowPaywall(false)
@@ -626,7 +650,7 @@ export default function App() {
       </div>
 
       {/* BOTTOM NAV */}
-      <nav className="bottom-nav">
+      <nav className="bottom-nav" role="tablist" aria-label="Główna nawigacja">
         {NAV_TABS
           .filter(n => {
             // Ukryj Karmienia/Pieluchy jeśli user je wyłączył w Settings
@@ -638,12 +662,22 @@ export default function App() {
           const count = n.id !== 'more'
             ? visibleSection(n.id).length
             : MORE_TABS.reduce((s,tab) => s + visibleSection(tab.id).length, 0)
+          const isActive = navActive(n.id)
+          const tabLabel = t(n.labelKey)
           return (
-            <button key={n.id} className={`nav-item ${navActive(n.id)?'active':''}`} onClick={()=>selectTab(n.id)} style={{position:'relative'}}>
-              {n.icon}
-              {t(n.labelKey)}
-              {count > 0 && !navActive(n.id) && (
-                <span style={{
+            <button
+              key={n.id}
+              className={`nav-item ${isActive?'active':''}`}
+              onClick={()=>selectTab(n.id)}
+              style={{position:'relative'}}
+              role="tab"
+              aria-selected={isActive}
+              aria-label={count > 0 ? `${tabLabel}, ${count} powiadomień` : tabLabel}
+            >
+              <span aria-hidden="true">{n.icon}</span>
+              {tabLabel}
+              {count > 0 && !isActive && (
+                <span aria-hidden="true" style={{
                   position:'absolute',top:6,right:'calc(50% - 18px)',
                   background:'#D85A30',color:'#fff',fontSize:9,fontWeight:700,
                   borderRadius:20,padding:'1px 4px',lineHeight:1.4,
@@ -664,6 +698,11 @@ export default function App() {
         open={showPlayStoreModal}
         onClose={() => setShowPlayStoreModal(false)}
         onOpenPlayStore={openPlayStore}
+      />
+      <PremiumOnboardingModal
+        open={showPremiumOnboarding}
+        onClose={closePremiumOnboarding}
+        onNavigateToReport={navigateToPdfReport}
       />
     </div>
   )

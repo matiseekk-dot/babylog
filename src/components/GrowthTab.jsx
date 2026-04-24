@@ -188,7 +188,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
                   {l.weight && `${l.weight} kg`}{l.weight && l.height ? ' · ' : ''}{l.height && `${l.height} cm`}{l.headCirc ? ` · ${t('growth.head_short')} ${l.headCirc} cm` : ''}
                 </div>
               </div>
-              <button onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }
