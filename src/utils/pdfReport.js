@@ -38,9 +38,16 @@ function safeText(text) {
 // Wrapper dla autoTable - zapewnia spójne style + hook dla safeText
 function _renderTable(autoTable, doc, opts) {
   const existingStyles = opts.styles || {}
-  const styles = { ...existingStyles, font: existingStyles.font || activeFont }
   const existingHead = opts.headStyles || {}
-  const headStyles = { ...existingHead, font: existingHead.font || activeFont }
+  // Dodaj font tylko gdy mamy custom (NotoSans) — dla helvetica autoTable wie sam.
+  // Inaczej niektóre wersje autoTable narzekają na nieznany string jako font name.
+  const addFont = activeFont !== 'helvetica'
+  const styles = addFont
+    ? { ...existingStyles, font: existingStyles.font || activeFont }
+    : existingStyles
+  const headStyles = addFont
+    ? { ...existingHead, font: existingHead.font || activeFont }
+    : existingHead
   const existingHook = opts.didParseCell
   const didParseCell = function (data) {
     if (existingHook) existingHook(data)
@@ -48,7 +55,7 @@ function _renderTable(autoTable, doc, opts) {
       data.cell.text = data.cell.text.map(line => stripPolish(line))
     }
   }
-  return _renderTable(autoTable, doc, { ...opts, styles, headStyles, didParseCell })
+  return autoTable(doc, { ...opts, styles, headStyles, didParseCell })
 }
 
 const A4_WIDTH = 210    // mm
@@ -373,15 +380,22 @@ function addSectionTitle(doc, title, y) {
 }
 
 function tableStyle() {
+  // Dodaj font tylko gdy mamy custom (Roboto). Gdy helvetica — zostaw default jsPDF.
+  const addFont = activeFont !== 'helvetica'
+  const styles = { fontSize: 9, cellPadding: 1.5, textColor: [40, 40, 40] }
+  const headStyles = {
+    fillColor: [30, 38, 24],  // ciemna zieleń brand
+    textColor: [245, 240, 224],
+    fontSize: 9, fontStyle: 'bold',
+  }
+  if (addFont) {
+    styles.font = activeFont
+    headStyles.font = activeFont
+  }
   return {
     theme: 'grid',
-    styles: { fontSize: 9, cellPadding: 1.5, textColor: [40, 40, 40], font: activeFont },
-    headStyles: {
-      fillColor: [30, 38, 24],  // ciemna zieleń brand
-      textColor: [245, 240, 224],
-      fontSize: 9, fontStyle: 'bold',
-      font: activeFont,
-    },
+    styles,
+    headStyles,
     alternateRowStyles: { fillColor: [250, 250, 247] },
     margin: { left: MARGIN, right: MARGIN },
     // Gdy font nie obsługuje polskich znaków (fallback na helvetica),
