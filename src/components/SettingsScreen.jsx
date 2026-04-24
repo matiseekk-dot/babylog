@@ -4,6 +4,7 @@ import { t, useLocale } from '../i18n'
 import { exportAllToCsv } from '../utils/csvExport'
 import { exportAllDataAsJson, exportAllDataAsCsv } from '../utils/dataExport'
 import PdfReportModal from './PdfReportModal'
+import FeaturesScreen from './FeaturesScreen'
 import { toast } from './Toast'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
@@ -35,6 +36,7 @@ export default function SettingsScreen({
   const [questions]    = useFirestore(uid, `doctor_questions_${profile.id}`, [])
   const { locale } = useLocale()
   const [pdfModal, setPdfModal] = useState(false)
+  const [showFeatures, setShowFeatures] = useState(false)
   const [name, setName] = useState(profile.name)
   const totalMonths = profile.months || 0
   const initYears = Math.floor(totalMonths / 12)
@@ -510,6 +512,44 @@ export default function SettingsScreen({
         </div>
       </div>
 
+      {/* Features overview */}
+      <div style={card}>
+        <button
+          onClick={() => setShowFeatures(true)}
+          style={{
+            width: '100%',
+            padding: '16px',
+            background: 'transparent',
+            border: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            cursor: 'pointer',
+            textAlign: 'left',
+            minHeight: 56,
+          }}
+        >
+          <div style={{
+            width: 40, height: 40,
+            borderRadius: 10,
+            background: 'linear-gradient(135deg, #FEF3EE, #FEE7DF)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20, flexShrink: 0,
+          }}>
+            ✨
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a18' }}>
+              {t('features.open')}
+            </div>
+            <div style={{ fontSize: 12, color: '#7a7a74', marginTop: 2 }}>
+              {t('features.subtitle')}
+            </div>
+          </div>
+          <div style={{ color: '#9a9a94', fontSize: 20 }}>›</div>
+        </button>
+      </div>
+
       <div style={{ padding: '16px', fontSize: 10, color: '#9a9a94', textAlign: 'center' }}>
         Spokojny Rodzic v1.0 · SkuDev
       </div>
@@ -521,6 +561,9 @@ export default function SettingsScreen({
         profile={{ ...profile, name, months: (Number(years) || 0) * 12 + (Number(months) || 0), weight: Number(weight), avatar, sex }}
         loadData={loadPdfData}
       />
+
+      {/* Features Screen */}
+      {showFeatures && <FeaturesScreen onClose={() => setShowFeatures(false)} />}
     </div>
   )
 }
