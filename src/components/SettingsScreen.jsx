@@ -47,6 +47,9 @@ export default function SettingsScreen({
   const initVisible = profile.visibleTabs || { feed: true, diaper: true }
   const [feedVisible, setFeedVisible] = useState(initVisible.feed !== false)
   const [diaperVisible, setDiaperVisible] = useState(initVisible.diaper !== false)
+  // Bug 5 fix: toilet mode — previously editable only in onboarding.
+  // Now also in Settings tak userzy mogą łatwo przełączać dziecko z pieluch → nocnik → toaleta
+  const [toiletMode, setToiletMode] = useState(profile.toiletMode || 'diapers')
   const [exporting, setExporting] = useState(false)
 
   const save = () => {
@@ -56,6 +59,7 @@ export default function SettingsScreen({
       weight: Number(weight) || 0,
       avatar,
       sex,
+      toiletMode,
       visibleTabs: { feed: feedVisible, diaper: diaperVisible },
     })
     toast(t('settings.saved'))
@@ -237,6 +241,36 @@ export default function SettingsScreen({
             </div>
             <div style={{fontSize:10,color:'var(--text-3)',marginTop:4}}>
               {t('settings.sex_hint')}
+            </div>
+          </div>
+
+          {/* TRYB PIELĘGNACJI — Pieluchy / Nocnik / Toaleta (Bug 5 fix) */}
+          <div className="form-group" style={{marginTop:4}}>
+            <label className="form-label">{t('settings.toilet_mode.label')}</label>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,marginTop:6}}>
+              {[
+                { id: 'diapers', label: t('settings.toilet_mode.diapers') },
+                { id: 'potty',   label: t('settings.toilet_mode.potty') },
+                { id: 'toilet',  label: t('settings.toilet_mode.toilet') },
+              ].map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => setToiletMode(opt.id)}
+                  style={{
+                    padding:'10px 8px',minHeight:44,
+                    borderRadius:10,
+                    border: toiletMode === opt.id ? '2px solid #1D9E75' : '0.5px solid var(--border)',
+                    background: toiletMode === opt.id ? '#E1F5EE' : '#fff',
+                    color: toiletMode === opt.id ? '#085041' : 'var(--text-2)',
+                    fontSize:12,fontWeight:700,cursor:'pointer',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:6,lineHeight:1.45}}>
+              {t('settings.toilet_mode.hint')}
             </div>
           </div>
 

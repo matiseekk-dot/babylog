@@ -28,6 +28,21 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
     if (name === 'Probiotyk') return t('med.name.probiotic')
     return name  // custom meds keep their name
   }
+  // Wyświetla postać leku (tabletka/syrop/czopek...) z ikoną emoji
+  const displayMedForm = (formKey) => {
+    if (!formKey) return ''
+    const labels = {
+      tablet: t('meds.form.tablet'),
+      syrup: t('meds.form.syrup'),
+      suppository: t('meds.form.suppository'),
+      drops: t('meds.form.drops'),
+      spray: t('meds.form.spray'),
+      suspension: t('meds.form.suspension'),
+      injection: t('meds.form.injection'),
+      other: t('meds.form.other'),
+    }
+    return labels[formKey] || ''
+  }
   const [logs, setLogs] = useFirestore(uid, `meds_${babyId}`, [])
   const [customMeds, setCustomMeds] = useFirestore(uid, `meds_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
@@ -35,7 +50,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   const [doseModal, setDoseModal] = useState(null)
   const [addMedModal, setAddMedModal] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
-  const [form, setForm] = useState({ med:'Paracetamol', dose:'', time:nowTime(), date:todayDate(), note:'' })
+  const [form, setForm] = useState({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
   const [medForm, setMedForm] = useState({ name:'', emoji:'💊', dosage:'', notes:'' })
 
   const { permission, askPermission, scheduleReminder, cancelReminder, pendingReminders } = useMedReminder(babyId)
@@ -47,7 +62,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
 
   const openAdd = () => {
     setEditingId(null)
-    setForm({ med:'Paracetamol', dose:'', time:nowTime(), date:todayDate(), note:'' })
+    setForm({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
     setModal(true)
   }
 
@@ -55,6 +70,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
     setEditingId(entry.id)
     setForm({
       med: entry.med,
+      form: entry.form || 'tablet',  // fallback dla starych wpisów bez pola `form`
       dose: entry.dose || '',
       time: entry.time,
       date: entry.date,
@@ -74,7 +90,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
     }
     setModal(false)
     setEditingId(null)
-    setForm({ med:'Paracetamol', dose:'', time:nowTime(), date:todayDate(), note:'' })
+    setForm({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
   }
 
   const remove = (id) => setLogs(logs.filter(l=>l.id!==id))
@@ -227,7 +243,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           return todayMeds.map(l => (
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">💊</div>
-              <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.note?` · ${l.note}`:''}</div></div>
+              <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.form?` · ${displayMedForm(l.form)}`:''}{l.note?` · ${l.note}`:''}</div></div>
               <button onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
@@ -240,7 +256,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         renderItem={(l, { onDelete }) => (
           <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
             <div className="log-icon">💊</div>
-            <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.note?` · ${l.note}`:''}</div></div>
+            <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.form?` · ${displayMedForm(l.form)}`:''}{l.note?` · ${l.note}`:''}</div></div>
             <button onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
           </div>
         )}
@@ -274,12 +290,29 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
                : mn}
             </option>
           ))}</select></div>
+        <div className="form-group">
+          <label className="form-label">{t('meds.form.label')}</label>
+          <select
+            className="form-select"
+            value={form.form || 'tablet'}
+            onChange={e => setForm(f => ({ ...f, form: e.target.value }))}
+          >
+            <option value="tablet">{t('meds.form.tablet')}</option>
+            <option value="syrup">{t('meds.form.syrup')}</option>
+            <option value="suppository">{t('meds.form.suppository')}</option>
+            <option value="drops">{t('meds.form.drops')}</option>
+            <option value="spray">{t('meds.form.spray')}</option>
+            <option value="suspension">{t('meds.form.suspension')}</option>
+            <option value="injection">{t('meds.form.injection')}</option>
+            <option value="other">{t('meds.form.other')}</option>
+          </select>
+        </div>
         <div className="form-row">
           <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" maxLength={100} placeholder={t("meds.custom.dose_ph")} value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} /></div>
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
         </div>
         <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
-        <div className="form-group"><label className="form-label">Notatka</label><input className="form-input" type="text" maxLength={200} placeholder={t("common.optional_ph")} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('common.note')}</label><input className="form-input" type="text" maxLength={200} placeholder={t("common.optional_ph")} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
         <div className="modal-btns"><button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button><button className="btn-primary" onClick={save}>{t('common.save')}</button></div>
       </Modal>
 

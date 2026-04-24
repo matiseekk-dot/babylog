@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useFirestore, migrateAllLocalData, enableOffline } from './hooks/useFirestore'
+import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
 import MedicalConsentScreen from './components/MedicalConsentScreen'
@@ -33,6 +33,8 @@ import LanguageSwitcher from './components/LanguageSwitcher'
 import SettingsScreen from './components/SettingsScreen'
 import CallDoctorCard from './components/CallDoctorCard'
 import CallDoctorPrep from './components/CallDoctorPrep'
+import GuestMigrationDialog from './components/GuestMigrationDialog'
+import PlayStoreModal from './components/PlayStoreModal'
 import { useCrisisDetection } from './hooks/useCrisisDetection'
 
 // BUG-003 FIX: Per-locale emergency phones
@@ -154,14 +156,49 @@ export default function App() {
   // Włącz offline persistence
   useEffect(() => { enableOffline() }, [])
 
-  // Migruj localStorage → Firestore przy pierwszym logowaniu (BUG-002 + BUG-010)
-  const [migrating, setMigrating] = useState(false)
+  // Bug 3 fix: Zamiast AUTOMATYCZNEJ migracji (która nadpisywała dane zalogowanego konta
+  // danymi gościa!), teraz pokazujemy DIALOG gdy user zaloguje się i ma dane gościa.
+  // User decyduje: "Dodaj do mojego konta" vs "Zostaw tam, nie chcę migracji".
+  const [guestMigrationDialog, setGuestMigrationDialog] = useState(null) // null | 'show' | 'migrating'
+  useEffect(() => {
+    if (uid && hasGuestData()) {
+      setGuestMigrationDialog('show')
+    }
+  }, [uid])
+
+  const doGuestMigration = async () => {
+    setGuestMigrationDialog('migrating')
+    try {
+      // Strategia 'preserve-existing': jeśli Firestore już ma dane dla klucza,
+      // NIE nadpisuj. Chroni przed utratą danych z poprzednich sesji.
+      const result = await migrateGuestDataToAccount(uid, { strategy: 'preserve-existing' })
+      console.log('[Guest migration] Result:', result)
+      // Wyczyść guest dane tylko jeśli coś się udało zmigrować
+      if (result.migrated.length > 0) {
+        clearGuestData()
+      }
+    } catch (e) {
+      console.error('[Guest migration] Error:', e)
+    } finally {
+      setGuestMigrationDialog(null)
+    }
+  }
+
+  const skipGuestMigration = () => {
+    // User wybrał: nie migruj. Dane guesta zostają w localStorage (backup),
+    // ale dialog już nie wyskoczy (flaga w localStorage).
+    try { localStorage.setItem('babylog_migration_skipped_' + uid, '1') } catch {}
+    setGuestMigrationDialog(null)
+  }
+
+  // Sprawdź przy starcie czy user już skipował migrację wcześniej
   useEffect(() => {
     if (uid) {
-      setMigrating(true)
-      migrateAllLocalData(uid)
-        .catch(() => {})
-        .finally(() => setMigrating(false))
+      try {
+        if (localStorage.getItem('babylog_migration_skipped_' + uid) === '1') {
+          setGuestMigrationDialog(null)
+        }
+      } catch {}
     }
   }, [uid])
 
@@ -199,21 +236,31 @@ export default function App() {
   // RevenueCat — weryfikacja subskrypcji
   const { checking: rcChecking, checkPremium, activateWithToken } = useRevenueCat(uid, activate)
 
+  // Bug 1 fix: Modal zachęcający do instalacji apki (zamiast brzydkiego alert())
+  const [showPlayStoreModal, setShowPlayStoreModal] = useState(false)
+
   const handleActivate = async (planId) => {
-    // Jeśli jesteśmy w TWA (Android) — Google Play Billing
-    // window.RevenueCat dostępny po instalacji natywnego SDK
+    // Jeśli jesteśmy w TWA (Android natywne) → Google Play Billing
     if (window.Android?.launchBilling) {
       window.Android.launchBilling(planId)
       return
     }
-    // Web fallback — sprawdź czy zakup już istnieje w RC
+    // Web fallback — sprawdź czy zakup już istnieje w RC (np. user kupił w apce)
     const active = await checkPremium()
     if (active) {
       setShowPaywall(false)
     } else {
-      // Pokaż instrukcję — zakup możliwy tylko przez Google Play
-      alert(t('paywall.web_only'))
+      // Pokaż modal "pobierz apkę z Play Store"
+      setShowPlayStoreModal(true)
     }
+  }
+
+  const openPlayStore = () => {
+    // Link do sklepu Google Play — wypełnia się po publikacji na Production
+    // Tymczasowo link otwiera stronę apki w Play Console (dla Closed Testing)
+    const playStoreUrl = 'https://play.google.com/store/apps/details?id=pl.skudev.spokojnyrodzic'
+    window.open(playStoreUrl, '_blank')
+    setShowPlayStoreModal(false)
   }
 
   // ── Decision layer (zawsze liczymy, ale pokazujemy tylko premium) ──────────
@@ -338,8 +385,8 @@ export default function App() {
     return <MedicalConsentScreen onAccept={acceptConsent} />
   }
 
-  // ── Auth loading / migration ─────────────────────────────────────────────
-  if (authLoading || migrating) {
+  // ── Auth loading ────────────────────────────────────────────────────────
+  if (authLoading) {
     return (
       <div className="app" style={{ display:'flex', alignItems:'center', justifyContent:'center' }}>
         <div style={{ textAlign:'center', color:'var(--text-3)' }}>
@@ -607,6 +654,17 @@ export default function App() {
         })}
       </nav>
       <ToastContainer />
+      <GuestMigrationDialog
+        open={guestMigrationDialog !== null}
+        status={guestMigrationDialog}
+        onConfirm={doGuestMigration}
+        onSkip={skipGuestMigration}
+      />
+      <PlayStoreModal
+        open={showPlayStoreModal}
+        onClose={() => setShowPlayStoreModal(false)}
+        onOpenPlayStore={openPlayStore}
+      />
     </div>
   )
 }

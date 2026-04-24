@@ -67,14 +67,16 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
 
   // ─── HEADER: Tytuł + dziecko ────────────────────────────────────────────
-  let y = MARGIN
+  // Zwiększony top margin i font baseline dla lepszej czytelności
+  let y = MARGIN + 4  // Extra 4mm top padding
 
   // Tytuł raportu
   doc.setFontSize(18)
   doc.setFont(undefined, 'bold')
-  doc.text(t('pdf.title'), MARGIN, y + 4)
-  y += 8
+  doc.text(t('pdf.title'), MARGIN, y + 6)  // font baseline = y + 6 (bo 18pt ≈ 6mm height)
+  y += 12  // zwiększone z 8 — był zbyt ciasno
 
+  // Subtitle
   doc.setFontSize(9)
   doc.setFont(undefined, 'normal')
   doc.setTextColor(100)
@@ -83,7 +85,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
       startDate: formatDateLocale(startDate),
       endDate: formatDateLocale(endDate),
     }),
-    MARGIN, y + 2
+    MARGIN, y + 3
   )
   y += 10
 
@@ -197,9 +199,9 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
     y = addSectionTitle(doc, t('pdf.section.meds'), y)
     autoTable(doc, {
       startY: y,
-      head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.medication'), t('pdf.header.dose'), t('pdf.header.note')]],
+      head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.medication'), t('pdf.header.dose'), t('pdf.header.form'), t('pdf.header.note')]],
       body: medsLogs.map(l => [
-        formatDateLocale(l.date), l.time || '', l.med || '—', l.dose || '', l.note || '',
+        formatDateLocale(l.date), l.time || '', l.med || '—', l.dose || '', displayMedFormPdf(l.form) || '', l.note || '',
       ]),
       ...tableStyle(),
     })
@@ -266,15 +268,26 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   }
 
   // ─── PYTANIA DO PEDIATRY ────────────────────────────────────────────────
-  const questions = (data.questions || []).filter(q =>
-    q.status === 'to_ask' || (q.date_added >= startDate && q.date_added <= endDate)
-  )
+  // Struktura pytania (z DoctorNotesTab.jsx):
+  //   { id, question: 'tekst', date_added: '2026-04-24', status: 'pending' | 'answered',
+  //     answer: '', date_asked: null }
+  //
+  // W raporcie pokazujemy WSZYSTKIE pytania 'pending' (jeszcze nie zadane),
+  // plus pytania 'answered' z zakresu raportu (historycznie dla lekarza).
+  const questions = (data.questions || []).filter(q => {
+    if (q.status === 'pending') return true
+    // Odpowiedziane pytania w zakresie raportu
+    return q.date_added >= startDate && q.date_added <= endDate
+  })
   if (questions.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.questions'), y)
     autoTable(doc, {
       startY: y,
-      body: questions.map((q, i) => [`${i + 1}.`, q.text || '—']),
+      body: questions.map((q, i) => [
+        `${i + 1}.`,
+        q.question || q.text || '—',  // fallback do q.text dla zgodności
+      ]),
       theme: 'plain',
       styles: { fontSize: 9, cellPadding: 2 },
       columnStyles: {
@@ -468,6 +481,22 @@ function displayCoughType(type) {
   if (type === 'wheezing') return t('cough.type.wheezing')
   if (type === 'barking') return t('cough.type.barking')
   return type || '—'
+}
+
+/** Display medication form (tablet, syrup, suppository, etc.) */
+function displayMedFormPdf(formKey) {
+  if (!formKey) return ''
+  const labels = {
+    tablet: t('meds.form.tablet'),
+    syrup: t('meds.form.syrup'),
+    suppository: t('meds.form.suppository'),
+    drops: t('meds.form.drops'),
+    spray: t('meds.form.spray'),
+    suspension: t('meds.form.suspension'),
+    injection: t('meds.form.injection'),
+    other: t('meds.form.other'),
+  }
+  return labels[formKey] || ''
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────

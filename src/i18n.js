@@ -978,6 +978,7 @@ const TRANSLATIONS = {
     'pdf.header.medication':        'Lek',
     'pdf.header.dose':              'Dawka',
     'pdf.header.method':            'Metoda',
+    'pdf.header.form':              'Postać',
     'pdf.header.duration':          'Czas',
     'pdf.header.severity':          'Nasilenie',
     'pdf.footer.generated':         'Raport wygenerowany: {datetime}',
@@ -994,6 +995,39 @@ const TRANSLATIONS = {
     'pdf.range.to':                 'Do',
     'pdf.saved':                    'Raport zapisany',
     'pdf.error':                    'Nie udało się wygenerować raportu',
+
+    // Guest migration dialog (Bug 3 fix)
+    'guest_migration.title':        'Wykryto dane z trybu gościa',
+    'guest_migration.desc1':        'Masz zapisane dane z wcześniejszej sesji bez logowania. Czy chcesz je dodać do swojego konta?',
+    'guest_migration.warning':      'Dane na Twoim koncie Google mają pierwszeństwo. Dodamy tylko to, czego jeszcze nie masz — NIC nie zostanie nadpisane.',
+    'guest_migration.confirm':      '✅ Dodaj dane gościa do mojego konta',
+    'guest_migration.skip':         'Pomiń — zostaw dane gościa osobno',
+    'guest_migration.loading':      'Przenoszę dane...',
+
+    // Medication form (Bug 4 fix)
+    'meds.form.label':              'Postać leku',
+    'meds.form.tablet':             '💊 Tabletka',
+    'meds.form.syrup':              '🧴 Syrop',
+    'meds.form.suppository':        '🌡️ Czopek',
+    'meds.form.drops':              '💧 Krople',
+    'meds.form.spray':              '🔍 Spray',
+    'meds.form.suspension':         '🥛 Zawiesina',
+    'meds.form.injection':          '💉 Iniekcja',
+    'meds.form.other':              'Inna',
+
+    // Google Play install modal (Bug 1 fix)
+    'play_modal.title':             'Pobierz aplikację z Google Play',
+    'play_modal.desc':              'Zakup Premium jest dostępny tylko w oficjalnej aplikacji na Androida. Pobierz Spokojny Rodzic z Google Play, by kontynuować zakup i odzyskać pełen dostęp do funkcji Premium.',
+    'play_modal.cta':               '🎯 Otwórz Google Play',
+    'play_modal.cancel':            'Anuluj',
+    'play_modal.note':              '💡 Ta strona internetowa służy jako podgląd. Pełna funkcjonalność — szczególnie płatności — działa tylko w aplikacji mobilnej.',
+
+    // Toilet mode picker w Settings (Bug 5 fix)
+    'settings.toilet_mode.label':   'Tryb pielęgnacji',
+    'settings.toilet_mode.diapers': '👶 Pieluchy',
+    'settings.toilet_mode.potty':   '🚽 Nocnik',
+    'settings.toilet_mode.toilet':  '🚻 Toaleta',
+    'settings.toilet_mode.hint':    'Zmienia sposób rejestrowania toalety. Nocnik ukrywa pieluchy, toaleta całkowicie usuwa tab.',
 
 
 
@@ -1955,6 +1989,7 @@ const TRANSLATIONS = {
     'pdf.header.medication':        'Medication',
     'pdf.header.dose':              'Dose',
     'pdf.header.method':            'Method',
+    'pdf.header.form':              'Form',
     'pdf.header.duration':          'Duration',
     'pdf.header.severity':          'Severity',
     'pdf.footer.generated':         'Report generated: {datetime}',
@@ -1971,6 +2006,39 @@ const TRANSLATIONS = {
     'pdf.range.to':                 'To',
     'pdf.saved':                    'Report saved',
     'pdf.error':                    'Failed to generate report',
+
+    // Guest migration dialog
+    'guest_migration.title':        'Guest mode data detected',
+    'guest_migration.desc1':        'You have data saved from a previous guest session. Would you like to add it to your account?',
+    'guest_migration.warning':      'Data on your Google account takes priority. We will only add what is missing — NOTHING will be overwritten.',
+    'guest_migration.confirm':      '✅ Add guest data to my account',
+    'guest_migration.skip':         'Skip — keep guest data separate',
+    'guest_migration.loading':      'Migrating data...',
+
+    // Medication form
+    'meds.form.label':              'Medication form',
+    'meds.form.tablet':             '💊 Tablet',
+    'meds.form.syrup':              '🧴 Syrup',
+    'meds.form.suppository':        '🌡️ Suppository',
+    'meds.form.drops':              '💧 Drops',
+    'meds.form.spray':              '🔍 Spray',
+    'meds.form.suspension':         '🥛 Suspension',
+    'meds.form.injection':          '💉 Injection',
+    'meds.form.other':              'Other',
+
+    // Google Play install modal
+    'play_modal.title':             'Install the mobile app from Google Play',
+    'play_modal.desc':              'Premium purchases are only available in the official Android app. Download Calm Parent from Google Play to continue the purchase and unlock full Premium features.',
+    'play_modal.cta':               '🎯 Open Google Play',
+    'play_modal.cancel':            'Cancel',
+    'play_modal.note':              '💡 This website is a preview. Full functionality — especially payments — only works in the mobile app.',
+
+    // Toilet mode picker
+    'settings.toilet_mode.label':   'Care mode',
+    'settings.toilet_mode.diapers': '👶 Diapers',
+    'settings.toilet_mode.potty':   '🚽 Potty',
+    'settings.toilet_mode.toilet':  '🚻 Toilet',
+    'settings.toilet_mode.hint':    'Changes how toilet events are recorded. Potty hides diapers, toilet removes the tab completely.',
 
 
 
