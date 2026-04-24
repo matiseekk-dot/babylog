@@ -60,7 +60,7 @@ const TRANSLATIONS = {
     'onb.slide1.title':   'Zapisuj zdrowie\ndziecka',
     'onb.slide1.body':    'Temperatura, karmienie, sen, leki — wszystko w jednym miejscu. Szybko, bez zbędnych kroków.',
     'onb.slide2.title':   'Zrozum\nco się dzieje',
-    'onb.slide2.body':    'Aplikacja analizuje dane i pokazuje czy temperatura rośnie, czy sen jest poniżej normy i kiedy można podać kolejną dawkę leku.',
+    'onb.slide2.body':    'Aplikacja analizuje dane i pokazuje czy temperatura rośnie, czy sen jest poniżej normy i kiedy ostatnio podałeś lek.',
     'onb.slide2.note':    'Bez szukania w Google o 3 w nocy.',
     'onb.slide3.title':   'Wiedz\nco zrobić',
     'onb.slide3.body':    'Konkretne wskazówki dopasowane do stanu dziecka. Aplikacja podpowiada — Ty decydujesz.',
@@ -251,10 +251,10 @@ const TRANSLATIONS = {
 
     // Medical
     'med.important':      '⚠️ Ważne — przeczytaj:',
-    'med.disclaimer':     'Podane dawki to wartości orientacyjne na podstawie ogólnych wytycznych. Przed każdym podaniem leku skonsultuj się z pediatrą lub farmaceutą. Aplikacja nie zastępuje porady medycznej i nie ponosi odpowiedzialności za decyzje dotyczące leczenia Twojego dziecka.',
+    'med.disclaimer':     'Informacje o lekach w aplikacji pochodzą z ulotek (ChPL) i mają charakter orientacyjny. Aplikacja nie wylicza dawek dla konkretnego dziecka. Dawkę zawsze sprawdź w ulotce leku, aptece lub u pediatry. Ta aplikacja nie zastępuje porady medycznej.',
     // Dose modal disclaimers
     'dose.modal.warning':          '⚠️ Skonsultuj się z lekarzem przed pierwszym podaniem.',
-    'dose.modal.footer':           'Te wartości są orientacyjne. Zawsze weryfikuj dawkę z pediatrą lub farmaceutą, szczególnie gdy dziecko waży mniej niż 5 kg, ma przewlekłe choroby, lub przyjmuje inne leki.',
+    'dose.modal.footer':           'Informacje z ulotki leku. Dawkę sprawdź w ulotce, aptece lub u pediatry. Szczególnie ostrożnie u dzieci < 5 kg, z przewlekłymi chorobami lub przyjmujących inne leki.',
 
     // Medical consent (first-run)
     'consent.title':               'Zanim zaczniesz',
@@ -283,6 +283,8 @@ const TRANSLATIONS = {
     'disclaimer.scroll_hint':      'Przewiń, żeby przeczytać całość',
     'disclaimer.checkbox':         'Przeczytałem(-am) powyższe informacje. Rozumiem, że Spokojny Rodzic nie zastępuje opieki medycznej i akceptuję warunki użytkowania.',
     'disclaimer.accept_btn':       'Rozumiem, kontynuuj',
+    'disclaimer.reject_btn':       'Nie akceptuję — zamknij aplikację',
+    'disclaimer.reject_info':      'Aplikacja wymaga akceptacji warunków użytkowania. Zamknij ją ręcznie lub zaakceptuj, aby kontynuować.',
 
     'diaper.note_ph':  'np. kolor, konsystencja...',
     'diet.name_ph':  'np. Mango, Quinoa...',
@@ -299,10 +301,6 @@ const TRANSLATIONS = {
     'meds.dosage_ph':  'np. Paracetamol 120mg',
     'meds.dose_ph':  'np. 2 ml',
     'onb.months_ph':  'np. 4',
-    // Medicine — weight validation
-    'meds.no_weight.title':        'Brakuje wagi dziecka',
-    'meds.no_weight.desc':         'Aby wyliczyć bezpieczne dawki leków, podaj aktualną wagę dziecka w Ustawieniach.',
-    'meds.no_weight.cta':          'Przejdź do Ustawień',
 
     // Placeholders
     'temp.note_after_med_ph':      'np. po Paracetamolu',
@@ -317,7 +315,7 @@ const TRANSLATIONS = {
     'empty_hero.meds.desc':        'Zapisuj podane leki i śledź historię',
     'empty_hero.feed.title':       'Zapisz karmienie',
     'empty_hero.feed.desc':        'Jedno tapnięcie — pełna historia dnia',
-    'dose.modal.log_btn':          'Zapisałam podanie {dose}',
+    'dose.modal.log_btn':          '+ Zapisz podanie leku',
     'meds.toast.logged':           '{med} — zapisane',
     'temp.invalid':                'Nieprawidłowa temperatura — wpisz wartość między 30 a 45°C',
 
@@ -460,9 +458,9 @@ const TRANSLATIONS = {
     'meds.info_btn':            'Info',
     'meds.saline_dose':         '3–5 kropli / dziurkę',
     'meds.probiotic_dose':      '5–10 kropli / dobę',
-    'meds.reminder.now':         'możesz podać teraz',
+    'meds.reminder.now':         'minął minimalny odstęp',
     'meds.reminder.in':          'za',
-    'meds.reminder.dose_label':  'Dawka:',
+    'meds.reminder.dose_label':  'Ilość:',
     'meds.reminder.cancel':      'Anuluj przypomnienie',
     'meds.custom.title':         'Własne leki',
     'meds.add_custom':           '+ Dodaj własny lek',
@@ -658,11 +656,11 @@ const TRANSLATIONS = {
     'interp.temp.stable':          'Temperatura stabilna →',
     'interp.temp.last':            'Ostatni: {temp}°C',
     'interp.meds.last_dose':       'Ostatnia dawka: {med}',
-    'interp.meds.due_now':         'Możliwy czas na kolejną dawkę',
+    'interp.meds.due_now':         'Minął minimalny odstęp między dawkami',
     'interp.meds.due_now_detail':  '{name} — podano {ago}',
-    'interp.meds.due_soon':        'Kolejna dawka możliwa wkrótce',
-    'interp.meds.due_soon_detail': '{name} podano {ago} · za ~{min} min',
-    'interp.meds.too_early_detail':'{ago} · kolejna za ~{min} min',
+    'interp.meds.due_soon':        'Minimalny odstęp wkrótce minie',
+    'interp.meds.due_soon_detail': '{name} podano {ago} · za ~{min} min minie odstęp',
+    'interp.meds.too_early_detail':'{ago} · odstęp minie za ~{min} min',
     'interp.sleep.none':           'Brak snu dziś',
     'interp.sleep.none_detail':    'Norma: {min}–{max}h',
     'interp.sleep.below':          'Poniżej normy',
@@ -684,8 +682,8 @@ const TRANSLATIONS = {
     'temp.label.high_fever':       'Wysoka gorączka',
 
     // Med reminder notification
-    'reminder.med.title':          'Czas na kolejną dawkę 💊',
-    'reminder.med.body':           'Możesz podać {med}{dose} — minęło {hours}h od ostatniej dawki.',
+    'reminder.med.title':          'Minął odstęp między dawkami 💊',
+    'reminder.med.body':           '{med}{dose} — minęło {hours}h od ostatniej dawki. Kolejną podaj tylko jeśli potrzebna, zgodnie z ulotką leku.',
 
     // Delete confirmations
     'meds.custom.delete_title':    'Usuń lek własny',
@@ -928,7 +926,7 @@ const TRANSLATIONS = {
     'onb.sex_boy':                  '👦 Chłopiec',
     'onb.sex_girl':                 '👧 Dziewczynka',
     'onb.sex_hint':                 'Potrzebne do poprawnego porównania wzrostu z normami WHO.',
-    'onb.weight_hint':              '💊 Waga jest niezbędna do poprawnego liczenia dawek paracetamolu i ibuprofenu.',
+    'onb.weight_hint':              '⚖️ Waga pomaga porównać wzrost dziecka z normami WHO i śledzić rozwój.',
     'settings.sex_label':           'Płeć',
     'settings.sex_boy':             '👦 Chłopiec',
     'settings.sex_girl':            '👧 Dziewczynka',
@@ -1135,13 +1133,13 @@ const TRANSLATIONS = {
     'onb.slide1.title':   'Track your\nbaby\'s health',
     'onb.slide1.body':    'Temperature, feeding, sleep, meds. All in one place. Fast, without extra taps.',
     'onb.slide2.title':   'Understand\nwhat\'s happening',
-    'onb.slide2.body':    'The app analyzes your data and tells you if temperature is rising, sleep is below average, and when you can give the next dose of medicine.',
+    'onb.slide2.body':    'The app analyzes your data and tells you if temperature is rising, sleep is below average, and when you last gave a medication.',
     'onb.slide2.note':    'No more Googling at 3 AM.',
     'onb.slide3.title':   'Know\nwhat to do',
     'onb.slide3.body':    'Clear suggestions tailored to your baby\'s state. The app guides — you decide.',
     'onb.slide3.note':    'Less stress. More calm.',
     'onb.setup.title':    'Let\'s get to know your baby',
-    'onb.setup.subtitle': 'So we can personalize all messages',
+    'onb.setup.subtitle': 'So we can personalize your alerts',
     'onb.setup.avatar':   'Choose avatar',
     'onb.setup.name':     'Baby\'s name',
     'onb.setup.name_ph':  'e.g. Emma, Liam...',
@@ -1233,7 +1231,7 @@ const TRANSLATIONS = {
     'paywall.feat1.title':'Temperature analysis',
     'paywall.feat1.desc': 'Rising / stable / falling trend in real time',
     'paywall.feat2.title':'Health alerts',
-    'paywall.feat2.desc': 'Notifications for fever, sleep deficit, and medicine',
+    'paywall.feat2.desc': 'Notifications for fever, sleep deficit, and medication reminders',
     'paywall.feat3.title':'What to do now',
     'paywall.feat3.desc': 'Contextual guidance based on your baby\'s state',
     'paywall.feat4.title':'Medication tracking',
@@ -1326,16 +1324,16 @@ const TRANSLATIONS = {
 
     // Medical
     'med.important':      '⚠️ Important, please read:',
-    'med.disclaimer':     'These doses are reference values based on general guidelines. Always consult your pediatrician or pharmacist before giving any medication. This app does not replace medical advice and bears no responsibility for treatment decisions regarding your child.',
+    'med.disclaimer':     'Medication information in this app comes from medicine leaflets (SmPC) and is for reference only. The app does not calculate doses for a specific child. Always check the dose in the medicine leaflet, at the pharmacy, or with your pediatrician. This app does not replace medical advice.',
     // Dose modal disclaimers
     'dose.modal.warning':          '⚠️ Consult your doctor before the first dose.',
-    'dose.modal.footer':           "These values are guidelines only. Always verify doses with your pediatrician or pharmacist, especially if your child weighs less than 5 kg, has chronic conditions, or takes other medications.",
+    'dose.modal.footer':           "Information from the medicine leaflet. Check the dose in the leaflet, at the pharmacy, or with your pediatrician. Take extra care with children under 5 kg, with chronic conditions, or on other medications.",
 
     // Medical consent (first-run)
     'consent.title':               'Before you start',
     'consent.intro':               'Calm Parent is a support tool for parents. It does not replace your doctor.',
     'consent.p1':                  "The app helps you track your baby's health and suggests when to contact a doctor. It does not diagnose, does not treat, and does not replace medical advice.",
-    'consent.p2':                  "In case of concerning symptoms, high fever, or sudden changes in your baby's condition, contact your pediatrician. In life-threatening emergency call 112 (EU) / 911 (US).",
+    'consent.p2':                  "In case of concerning symptoms, high fever, or sudden changes in your baby's condition, contact your pediatrician. In a life-threatening emergency, call 112 (EU) / 911 (US).",
     'consent.p3':                  'The app does not calculate medication doses. Always check the dose in the medicine leaflet, with a pharmacist, or with your pediatrician before giving.',
     'consent.p4':                  'SkuDev bears no responsibility for medical decisions made based on this app.',
     'consent.accept':              'I understand that this does not replace a doctor',
@@ -1358,6 +1356,8 @@ const TRANSLATIONS = {
     'disclaimer.scroll_hint':      'Scroll to read the full text',
     'disclaimer.checkbox':         'I have read the information above. I understand that Calm Parent does not replace medical care and I accept the terms of use.',
     'disclaimer.accept_btn':       'I understand, continue',
+    'disclaimer.reject_btn':       "I don't accept — close the app",
+    'disclaimer.reject_info':      'The app requires acceptance of the terms of use. Close it manually or accept to continue.',
 
     'diaper.note_ph':  'e.g. color, consistency...',
     'diet.name_ph':  'e.g. Mango, Quinoa...',
@@ -1374,10 +1374,6 @@ const TRANSLATIONS = {
     'meds.dosage_ph':  'e.g. Paracetamol 120mg',
     'meds.dose_ph':  'e.g. 2 ml',
     'onb.months_ph':  'e.g. 4',
-    // Medicine — weight validation
-    'meds.no_weight.title':        "Baby's weight is missing",
-    'meds.no_weight.desc':         "To calculate safe medicine doses, please enter your baby's current weight in Settings.",
-    'meds.no_weight.cta':          'Go to Settings',
 
     // Placeholders
     'temp.note_after_med_ph':      'e.g. after paracetamol',
@@ -1392,7 +1388,7 @@ const TRANSLATIONS = {
     'empty_hero.meds.desc':        'Log given medications and track history',
     'empty_hero.feed.title':       'Log a feeding',
     'empty_hero.feed.desc':        "One tap, full day's history",
-    'dose.modal.log_btn':          'I gave this dose ({dose})',
+    'dose.modal.log_btn':          '+ Log medication',
     'meds.toast.logged':           '{med} logged',
     'temp.invalid':                'Invalid temperature. Enter a value between 30 and 45°C',
 
@@ -1434,7 +1430,7 @@ const TRANSLATIONS = {
     'crisis.call.action':     'Contact your pediatrician',
     'crisis.call.advice':     "Call your doctor's office, use telehealth, or book an online visit. In the evening or at night use urgent after-hours pediatric care.",
     'crisis.emergency.title': 'Call emergency services',
-    'crisis.emergency.disclaimer': 'In case of life-threatening emergency, call 112 (EU) / 911 (US) IMMEDIATELY or go to ER.',
+    'crisis.emergency.disclaimer': 'In a life-threatening emergency, call 112 (EU) / 911 (US) IMMEDIATELY or go to ER.',
     'crisis.action.call_112':   'Call 112',
     'crisis.action.what_to_prepare':'What to tell the doctor',
 
@@ -1494,7 +1490,7 @@ const TRANSLATIONS = {
     'sleep.btn.sleep':          'Fell asleep 🌙',
     'sleep.empty':              'No sleep sessions yet',
     'sleep.add_manual':         '+ Add manually',
-    'sleep.modal.title':        'Add sleep',
+    'sleep.modal.title':        'Log sleep session',
     'sleep.modal.type':         'Sleep type',
     'sleep.type.nap':           'Nap',
     'sleep.type.night':         'Night sleep',
@@ -1533,9 +1529,9 @@ const TRANSLATIONS = {
     'meds.info_btn':            'Info',
     'meds.saline_dose':         '3–5 drops / nostril',
     'meds.probiotic_dose':      '5–10 drops / day',
-    'meds.reminder.now':         'can be given now',
+    'meds.reminder.now':         'minimum interval passed',
     'meds.reminder.in':          'in',
-    'meds.reminder.dose_label':  'Dose:',
+    'meds.reminder.dose_label':  'Amount:',
     'meds.reminder.cancel':      'Cancel reminder',
     'meds.custom.title':         'Custom meds',
     'meds.add_custom':           '+ Add custom medicine',
@@ -1545,7 +1541,7 @@ const TRANSLATIONS = {
     'meds.add_custom.notes':     'Notes',
     'meds.history':              'Dosing history',
     'meds.history.empty':        'No doses recorded yet',
-    'meds.add':                  '+ Add dose',
+    'meds.add':                  '+ Log dose',
     'meds.modal.title':          'New medicine dose',
     'meds.modal.drug':           'Medicine',
     'meds.modal.dose':           'Dose',
@@ -1731,11 +1727,11 @@ const TRANSLATIONS = {
     'interp.temp.stable':          'Temperature stable →',
     'interp.temp.last':            'Last: {temp}°C',
     'interp.meds.last_dose':       'Last dose: {med}',
-    'interp.meds.due_now':         'Next dose available now',
+    'interp.meds.due_now':         'Minimum interval between doses has passed',
     'interp.meds.due_now_detail':  '{name} — given {ago}',
-    'interp.meds.due_soon':        'Next dose soon',
-    'interp.meds.due_soon_detail': '{name} given {ago} · in ~{min} min',
-    'interp.meds.too_early_detail':'{ago} · next in ~{min} min',
+    'interp.meds.due_soon':        'Minimum interval will soon pass',
+    'interp.meds.due_soon_detail': '{name} given {ago} · interval passes in ~{min} min',
+    'interp.meds.too_early_detail':'{ago} · interval passes in ~{min} min',
     'interp.sleep.none':           'No sleep logged today',
     'interp.sleep.none_detail':    'Norm: {min}–{max}h',
     'interp.sleep.below':          'Below norm',
@@ -1757,8 +1753,8 @@ const TRANSLATIONS = {
     'temp.label.high_fever':       'High fever',
 
     // Med reminder notification
-    'reminder.med.title':          'Next dose available 💊',
-    'reminder.med.body':           'You can give {med}{dose} — {hours}h since last dose.',
+    'reminder.med.title':          'Interval between doses has passed 💊',
+    'reminder.med.body':           '{med}{dose} — {hours}h since last dose. Only give the next dose if needed, following the medicine leaflet.',
 
     // Delete confirmations
     'meds.custom.delete_title':    'Delete custom medicine',
@@ -1999,7 +1995,7 @@ const TRANSLATIONS = {
     'onb.sex_boy':                  '👦 Boy',
     'onb.sex_girl':                 '👧 Girl',
     'onb.sex_hint':                 'Needed for accurate growth comparison with WHO norms.',
-    'onb.weight_hint':              '💊 Weight is required to correctly calculate paracetamol and ibuprofen doses.',
+    'onb.weight_hint':              "⚖️ Weight helps compare your baby's growth to WHO norms and track development.",
     'settings.sex_label':           'Sex',
     'settings.sex_boy':             '👦 Boy',
     'settings.sex_girl':            '👧 Girl',

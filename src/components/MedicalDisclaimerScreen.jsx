@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { t, useLocale } from '../i18n'
 
 /**
@@ -47,6 +47,23 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
   useLocale()
   const [scrolledToBottom, setScrolledToBottom] = useState(false)
   const [checkboxConfirmed, setCheckboxConfirmed] = useState(false)
+  const scrollRef = useRef(null)
+
+  // Check if content already fits without scrolling (tall devices / short content)
+  // If so, consider user as having "seen all" — allow checkbox immediately.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const checkFit = () => {
+      if (el.scrollHeight - el.clientHeight < 40) {
+        setScrolledToBottom(true)
+      }
+    }
+    checkFit()
+    // Recheck on resize (orientation change)
+    window.addEventListener('resize', checkFit)
+    return () => window.removeEventListener('resize', checkFit)
+  }, [])
 
   const handleScroll = (e) => {
     const el = e.target
@@ -59,6 +76,17 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
   const accept = () => {
     if (!canAccept) return
     saveAcceptance()
+    // Log legal acceptance - for regulatory proof
+    try {
+      if (window.Sentry?.addBreadcrumb) {
+        window.Sentry.addBreadcrumb({
+          category: 'legal',
+          message: 'Medical disclaimer accepted',
+          data: { version: DISCLAIMER_VERSION, timestamp: new Date().toISOString() },
+          level: 'info',
+        })
+      }
+    } catch {}
     onAccept?.()
   }
 
@@ -102,6 +130,7 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
 
       {/* Scrollable content */}
       <div
+        ref={scrollRef}
         onScroll={handleScroll}
         style={{
           flex: 1,
@@ -205,6 +234,30 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
           }}
         >
           {t('disclaimer.accept_btn')}
+        </button>
+
+        <button
+          onClick={() => {
+            // User rejects — close app if in TWA, else show info
+            if (window.close) window.close()
+            // Fallback: reload page (user zostanie przy disclaimer screen)
+            setTimeout(() => {
+              alert(t('disclaimer.reject_info'))
+            }, 200)
+          }}
+          style={{
+            width: '100%',
+            padding: 10,
+            marginTop: 8,
+            background: 'transparent',
+            color: '#5a5a56',
+            border: 'none',
+            fontSize: 12,
+            cursor: 'pointer',
+            textDecoration: 'underline',
+          }}
+        >
+          {t('disclaimer.reject_btn')}
         </button>
       </div>
     </div>

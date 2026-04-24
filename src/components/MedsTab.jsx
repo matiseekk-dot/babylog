@@ -99,18 +99,19 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
 
   const logDoseFromModal = () => {
     if (!doseModal?.med) return
-    const entry = {
-      id: genId(),
+    // v2.7.1: Apka nie sugeruje dawki — user musi wpisać ile podał.
+    // Zamiast szybkiego logowania, otwieramy normalny modal z pustym polem dose.
+    setForm({
       med: doseModal.med,
-      dose: doseModal.suggestedDose || '',
+      form: 'suspension',
+      dose: '',
       time: nowTime(),
       date: todayDate(),
       note: '',
-    }
-    setLogs([entry, ...logs])
-    if (permission === 'granted') scheduleReminder(entry)
+    })
+    setEditingId(null)
     setDoseModal(null)
-    toast(t('meds.toast.logged', { med: displayMedName(doseModal.med) }))
+    setModal(true)
   }
 
   const addCustomMed = () => {
@@ -346,7 +347,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
                 display:'flex', alignItems:'center', justifyContent:'center', gap:6,
               }}
             >
-              ✓ {t('dose.modal.log_btn', { dose: doseModal.suggestedDose || '' })}
+              ✓ {t('dose.modal.log_btn')}
             </button>
           )}
           <button

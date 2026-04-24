@@ -41,14 +41,6 @@ import PlayStoreModal from './components/PlayStoreModal'
 import PremiumOnboardingModal from './components/PremiumOnboardingModal'
 import { useCrisisDetection } from './hooks/useCrisisDetection'
 
-// BUG-003 FIX: Per-locale emergency phones
-function getEmergencyPhone() {
-  try {
-    const lang = (localStorage.getItem('babylog_locale') || navigator.language || 'pl').toLowerCase()
-    if (lang.startsWith('pl')) return '800190590'     // NFZ Poland 24/7
-    return '112'  // EU-wide emergency
-  } catch { return '112' }
-}
 import { useLocale, t } from './i18n'
 
 const DEFAULT_PROFILE = {
