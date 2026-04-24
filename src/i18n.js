@@ -1029,6 +1029,14 @@ const TRANSLATIONS = {
     'settings.toilet_mode.toilet':  '🚻 Toaleta',
     'settings.toilet_mode.hint':    'Zmienia sposób rejestrowania toalety. Nocnik ukrywa pieluchy, toaleta całkowicie usuwa tab.',
 
+    // Full backup (wszystkie dzieci, wszystkie kategorie)
+    'settings.backup.title':        'Pełna kopia zapasowa',
+    'settings.backup.desc':         'Pobierz wszystkie swoje dane — wszystkie dzieci, wszystkie kategorie. Użyj JSON do backupu lub CSV do otwarcia w Excelu.',
+    'settings.backup.json_cta':     '📦 Pobierz pełny backup (JSON)',
+    'settings.backup.csv_cta':      '📊 Pobierz dane do Excel (CSV)',
+    'settings.backup.success':      '✓ Backup zapisany',
+    'settings.backup.error':        'Nie udało się zapisać backupu',
+
 
 
 
@@ -2039,6 +2047,14 @@ const TRANSLATIONS = {
     'settings.toilet_mode.potty':   '🚽 Potty',
     'settings.toilet_mode.toilet':  '🚻 Toilet',
     'settings.toilet_mode.hint':    'Changes how toilet events are recorded. Potty hides diapers, toilet removes the tab completely.',
+
+    // Full backup
+    'settings.backup.title':        'Full data backup',
+    'settings.backup.desc':         'Download all your data — all children, all categories. Use JSON for backup or CSV to open in Excel.',
+    'settings.backup.json_cta':     '📦 Download full backup (JSON)',
+    'settings.backup.csv_cta':      '📊 Download data for Excel (CSV)',
+    'settings.backup.success':      '✓ Backup saved',
+    'settings.backup.error':        'Backup failed',
 
 
 

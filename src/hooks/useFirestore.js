@@ -34,6 +34,22 @@ function docRef(uid, key) {
 }
 
 /**
+ * Zwraca listę kluczy z localStorage.
+ * Używamy iteracji .key(i) zamiast Object.keys() bo:
+ *  - w przeglądarce lsKeys() działa (localStorage jest proxy)
+ *  - w vitest/happy-dom/JSDOM — nie działa, bo localStorage to class instance
+ *  - iteracja przez length + .key(i) działa wszędzie i jest standardem
+ */
+function lsKeys() {
+  const keys = []
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i)
+    if (k) keys.push(k)
+  }
+  return keys
+}
+
+/**
  * useFirestore(uid, key, fallback) — BEZPIECZNA WERSJA (fix Bug 3)
  */
 export function useFirestore(uid, key, fallback) {
@@ -111,7 +127,8 @@ export async function migrateGuestDataToAccount(uid, { strategy = 'preserve-exis
   const result = { migrated: [], skipped: [], errors: [] }
   if (!uid) return result
 
-  const guestKeys = Object.keys(localStorage).filter(k => k.startsWith(GUEST_PREFIX))
+  // Sortujemy dla deterministyczności (ważne dla testów + logów)
+  const guestKeys = lsKeys().filter(k => k.startsWith(GUEST_PREFIX)).sort()
 
   for (const fullKey of guestKeys) {
     const key = fullKey.slice(GUEST_PREFIX.length)
@@ -139,7 +156,7 @@ export async function migrateGuestDataToAccount(uid, { strategy = 'preserve-exis
  * clearGuestData() — usuwa wszystkie dane guesta z localStorage.
  */
 export function clearGuestData() {
-  const keys = Object.keys(localStorage).filter(k => k.startsWith(GUEST_PREFIX))
+  const keys = lsKeys().filter(k => k.startsWith(GUEST_PREFIX))
   keys.forEach(k => { try { localStorage.removeItem(k) } catch {} })
   return keys.length
 }
@@ -148,7 +165,7 @@ export function clearGuestData() {
  * hasGuestData() — sprawdza czy są dane guesta.
  */
 export function hasGuestData() {
-  return Object.keys(localStorage).some(k => k.startsWith(GUEST_PREFIX))
+  return lsKeys().some(k => k.startsWith(GUEST_PREFIX))
 }
 
 /**

@@ -8,30 +8,31 @@ rules_version = '2';
 //   2. userId MUSI odpowiadać request.auth.uid — nie można czytać cudzych danych
 //   3. Niezalogowani (brak auth) — zero dostępu
 //   4. Wszystko poza /users/ — zablokowane
+//   5. Size limit na dokument — 1MB (ochrona przed abusem limitu Firestore)
+//   6. Struktura: tylko pole `value` dozwolone (ochrona przed złośliwymi polami)
 //
-// Audyt 2026-04-21:
-//   - Sprawdzone: user A nie widzi /users/UID_B (permission denied)
-//   - Sprawdzone: guest (brak uid) — zero dostępu
-//   - Sprawdzone: brak ścieżek collateral typu /public/* które byłyby otwarte
+// Audyt 2026-04-24:
+//   - User A nie widzi /users/UID_B (permission denied) ✓
+//   - Guest (brak uid) — zero dostępu ✓
+//   - Brak ścieżek typu /public/* ✓
+//   - Size limit 1MB aktywny ✓
 // ══════════════════════════════════════════════════════════════════════════
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // === Dane użytkownika ===================================================
-    // Dostęp TYLKO dla zalogowanego właściciela.
-    // Walidacja:
-    //   - request.auth != null — musi być zalogowany (nie guest)
-    //   - request.auth.uid == userId — tylko swoje dane, nie cudze
     match /users/{userId}/data/{document=**} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
+      allow read: if request.auth != null
+                  && request.auth.uid == userId;
+
+      allow write: if request.auth != null
+                   && request.auth.uid == userId
+                   && request.resource.size < 1024 * 1024
+                   && request.resource.data.keys().hasOnly(['value', '_metadata']);
     }
 
-    // === Ścieżki do jawnego zablokowania ====================================
-    // Każda inna ścieżka — zero dostępu, nawet dla zalogowanych.
-    // To zabezpiecza przed "accidental leaks" gdyby ktoś w kodzie frontend
-    // zrobił getDoc('public/secret') — reguły mówią NIE.
+    // === Wszystko inne — zablokowane ========================================
     match /{document=**} {
       allow read, write: if false;
     }

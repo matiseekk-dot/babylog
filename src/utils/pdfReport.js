@@ -21,6 +21,35 @@
  */
 
 import { t, getLocale } from '../i18n'
+import { loadPolishFont, stripPolish } from './pdfFonts'
+
+// ─── Module state (font loading) ───────────────────────────────────────────
+// Po loadPolishFont() te wartości są ustawione na aktywny font i czy
+// polskie znaki są renderowane natywnie.
+let activeFont = 'helvetica'
+let nativePolish = false
+
+/** Zwraca tekst bezpieczny do PDF — strip polskich jeśli font nie obsługuje */
+function safeText(text) {
+  if (text === null || text === undefined) return ''
+  return nativePolish ? String(text) : stripPolish(text)
+}
+
+// Wrapper dla autoTable - zapewnia spójne style + hook dla safeText
+function _renderTable(autoTable, doc, opts) {
+  const existingStyles = opts.styles || {}
+  const styles = { ...existingStyles, font: existingStyles.font || activeFont }
+  const existingHead = opts.headStyles || {}
+  const headStyles = { ...existingHead, font: existingHead.font || activeFont }
+  const existingHook = opts.didParseCell
+  const didParseCell = function (data) {
+    if (existingHook) existingHook(data)
+    if (!nativePolish && data.cell.text && Array.isArray(data.cell.text)) {
+      data.cell.text = data.cell.text.map(line => stripPolish(line))
+    }
+  }
+  return _renderTable(autoTable, doc, { ...opts, styles, headStyles, didParseCell })
+}
 
 const A4_WIDTH = 210    // mm
 const A4_HEIGHT = 297   // mm
@@ -66,25 +95,33 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
 
+  // ─── Załaduj polski font (Noto Sans z CDN) ──────────────────────────────
+  // Pierwsze wywołanie pobiera ~140KB, kolejne są instant (memory cache).
+  // Jeśli CDN nie działa, fallback na Helvetica + stripPolish().
+  const fontInfo = await loadPolishFont(doc)
+  activeFont = fontInfo.fontName
+  nativePolish = fontInfo.usesPolish
+  doc.setFont(activeFont, 'normal')
+
   // ─── HEADER: Tytuł + dziecko ────────────────────────────────────────────
   // Zwiększony top margin i font baseline dla lepszej czytelności
   let y = MARGIN + 4  // Extra 4mm top padding
 
   // Tytuł raportu
   doc.setFontSize(18)
-  doc.setFont(undefined, 'bold')
-  doc.text(t('pdf.title'), MARGIN, y + 6)  // font baseline = y + 6 (bo 18pt ≈ 6mm height)
+  doc.setFont(activeFont, 'bold')
+  doc.text(safeText(t('pdf.title')), MARGIN, y + 6)  // font baseline = y + 6 (bo 18pt ≈ 6mm height)
   y += 12  // zwiększone z 8 — był zbyt ciasno
 
   // Subtitle
   doc.setFontSize(9)
-  doc.setFont(undefined, 'normal')
+  doc.setFont(activeFont, 'normal')
   doc.setTextColor(100)
   doc.text(
-    t('pdf.subtitle', {
+    safeText(t('pdf.subtitle', {
       startDate: formatDateLocale(startDate),
       endDate: formatDateLocale(endDate),
-    }),
+    })),
     MARGIN, y + 3
   )
   y += 10
@@ -98,7 +135,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
     [t('pdf.child.weight'), profile.weight ? `${profile.weight} kg` : '—'],
     [t('pdf.child.sex'), profile.sex === 'M' ? t('pdf.child.sex.M') : profile.sex === 'F' ? t('pdf.child.sex.F') : '—'],
   ]
-  autoTable(doc, {
+  _renderTable(autoTable, doc, {
     startY: y,
     body: childRows,
     theme: 'plain',
@@ -127,7 +164,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (tempLogs.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.temperature'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.value'), t('pdf.header.method'), t('pdf.header.note')]],
       body: tempLogs.map(l => [
@@ -147,7 +184,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (feedLogs.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.feeding'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.type'), t('pdf.header.value')]],
       body: feedLogs.map(l => {
@@ -165,7 +202,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (sleepLogs.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.sleep'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.header.type'), t('pdf.header.duration')]],
       body: sleepLogs.map(l => {
@@ -183,7 +220,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (diaperLogs.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.diapers'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.type'), t('pdf.header.note')]],
       body: diaperLogs.map(l => [formatDateLocale(l.date), l.time || '', l.type || '—', l.note || '']),
@@ -197,7 +234,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (medsLogs.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.meds'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.medication'), t('pdf.header.dose'), t('pdf.header.form'), t('pdf.header.note')]],
       body: medsLogs.map(l => [
@@ -213,7 +250,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (symLogs.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.symptoms'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.type'), t('pdf.header.severity'), t('pdf.header.note')]],
       body: symLogs.map(l => [
@@ -233,7 +270,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (coughLogs.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.cough'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.type'), t('pdf.header.severity'), t('pdf.header.note')]],
       body: coughLogs.map(l => [
@@ -253,7 +290,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (growthLogs.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.growth'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.child.weight'), 'Wzrost', 'Obwód głowy']],
       body: growthLogs.map(l => [
@@ -282,7 +319,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (questions.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.questions'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       body: questions.map((q, i) => [
         `${i + 1}.`,
@@ -306,7 +343,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   if (notes.length > 0) {
     y = ensurePageSpace(doc, y, 30)
     y = addSectionTitle(doc, t('pdf.section.visits'), y)
-    autoTable(doc, {
+    _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), 'Diagnoza / zalecenia']],
       body: notes.map(n => [
@@ -328,24 +365,32 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
 
 function addSectionTitle(doc, title, y) {
   doc.setFontSize(12)
-  doc.setFont(undefined, 'bold')
+  doc.setFont(activeFont, 'bold')
   doc.setTextColor(20, 20, 20)
-  doc.text(title, MARGIN, y + 4)
-  doc.setFont(undefined, 'normal')
+  doc.text(safeText(title), MARGIN, y + 4)
+  doc.setFont(activeFont, 'normal')
   return y + 6
 }
 
 function tableStyle() {
   return {
     theme: 'grid',
-    styles: { fontSize: 9, cellPadding: 1.5, textColor: [40, 40, 40] },
+    styles: { fontSize: 9, cellPadding: 1.5, textColor: [40, 40, 40], font: activeFont },
     headStyles: {
       fillColor: [30, 38, 24],  // ciemna zieleń brand
       textColor: [245, 240, 224],
       fontSize: 9, fontStyle: 'bold',
+      font: activeFont,
     },
     alternateRowStyles: { fillColor: [250, 250, 247] },
     margin: { left: MARGIN, right: MARGIN },
+    // Gdy font nie obsługuje polskich znaków (fallback na helvetica),
+    // zamieniamy polskie znaki na ASCII w każdej komórce.
+    didParseCell: function (data) {
+      if (!nativePolish && data.cell.text && Array.isArray(data.cell.text)) {
+        data.cell.text = data.cell.text.map(line => stripPolish(line))
+      }
+    },
   }
 }
 
@@ -372,9 +417,9 @@ function addFooters(doc) {
     doc.setFontSize(8)
     doc.setTextColor(130, 130, 130)
     // Lewa: generated
-    doc.text(t('pdf.footer.generated', { datetime: dtStr }), MARGIN, A4_HEIGHT - 8)
+    doc.text(safeText(t('pdf.footer.generated', { datetime: dtStr })), MARGIN, A4_HEIGHT - 8)
     // Środek: disclaimer
-    doc.text(t('pdf.footer.disclaimer'), A4_WIDTH / 2, A4_HEIGHT - 8, { align: 'center' })
+    doc.text(safeText(t('pdf.footer.disclaimer')), A4_WIDTH / 2, A4_HEIGHT - 8, { align: 'center' })
     // Prawa: page X/Y
     doc.text(`${i}/${pageCount}`, A4_WIDTH - MARGIN, A4_HEIGHT - 8, { align: 'right' })
   }
@@ -438,12 +483,12 @@ function renderSummary(doc, y, data, startDate, endDate, autoTable) {
   if (rows.length === 0) {
     doc.setFontSize(9)
     doc.setTextColor(130)
-    doc.text(t('pdf.empty'), MARGIN, y + 4)
+    doc.text(safeText(t('pdf.empty')), MARGIN, y + 4)
     doc.setTextColor(0)
     return y + 6
   }
 
-  autoTable(doc, {
+  _renderTable(autoTable, doc, {
     startY: y,
     body: rows,
     theme: 'plain',

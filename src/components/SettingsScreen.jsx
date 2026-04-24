@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { t, useLocale } from '../i18n'
 import { exportAllToCsv } from '../utils/csvExport'
+import { exportAllDataAsJson, exportAllDataAsCsv } from '../utils/dataExport'
 import PdfReportModal from './PdfReportModal'
 import { toast } from './Toast'
 
@@ -101,6 +102,29 @@ export default function SettingsScreen({
     } catch (e) {
       console.error(e)
       toast(t('settings.export.error'), 'error')
+    }
+  }
+
+  // Pełny backup wszystkich dzieci + wszystkich kategorii — JSON format
+  // (można w przyszłości użyć do przywrócenia danych na innym urządzeniu)
+  const handleFullBackupJson = async () => {
+    try {
+      const result = await exportAllDataAsJson(uid)
+      toast(t('settings.backup.success', { count: result.recordCount }))
+    } catch (e) {
+      console.error('[Backup JSON]', e)
+      toast(t('settings.backup.error'), 'error')
+    }
+  }
+
+  // Pełny backup jako CSV — wszystkie dzieci + kategorie, dla Excel
+  const handleFullBackupCsv = async () => {
+    try {
+      const result = await exportAllDataAsCsv(uid)
+      toast(t('settings.backup.success', { count: result.categoriesCount }))
+    } catch (e) {
+      console.error('[Backup CSV]', e)
+      toast(t('settings.backup.error'), 'error')
     }
   }
 
@@ -408,6 +432,47 @@ export default function SettingsScreen({
           <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 6, lineHeight: 1.4 }}>
             {t('settings.export.desc')}
           </div>
+        </div>
+      </div>
+
+      {/* Full Backup — JSON dla backupu, CSV dla Excel (wszystkie dzieci + wszystko) */}
+      <div style={card}>
+        <div style={cardHeader}>{t('settings.backup.title')}</div>
+        <div style={{ padding: '12px 14px' }}>
+          <div style={{ fontSize: 12, color: '#5a5a56', marginBottom: 10, lineHeight: 1.45 }}>
+            {t('settings.backup.desc')}
+          </div>
+          <button
+            onClick={handleFullBackupJson}
+            style={{
+              width: '100%', padding: '12px', minHeight: 44,
+              background: '#0F6E56',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              fontSize: 14, fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              marginBottom: 8,
+            }}
+          >
+            {t('settings.backup.json_cta')}
+          </button>
+          <button
+            onClick={handleFullBackupCsv}
+            style={{
+              width: '100%', padding: '12px', minHeight: 44,
+              background: '#F7F7F5',
+              color: '#3a3a36',
+              border: '0.5px solid rgba(0,0,0,0.12)',
+              borderRadius: 10,
+              fontSize: 14, fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            {t('settings.backup.csv_cta')}
+          </button>
         </div>
       </div>
 
