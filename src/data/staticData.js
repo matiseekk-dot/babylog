@@ -77,13 +77,18 @@ export const DIET_ITEMS = [
   { id:'d9', emoji:'🐔', name:'Kurczak', months:6 },
   { id:'d10', emoji:'🐟', name:'Ryba (chuda)', months:7 },
   { id:'d11', emoji:'🥚', name:'Żółtko', months:7 },
-  { id:'d12', emoji:'🌾', name:'Kasza manna', months:6 },
+  { id:'d12', emoji:'🌾', name:'Kasza manna (gluten)', months:6 },
   { id:'d13', emoji:'🍚', name:'Ryż', months:6 },
   { id:'d14', emoji:'🫘', name:'Soczewica', months:8 },
   { id:'d15', emoji:'🧀', name:'Ser biały', months:8 },
   { id:'d16', emoji:'🥛', name:'Jogurt naturalny', months:8 },
-  { id:'d17', emoji:'🍳', name:'Całe jajko', months:12 },
-  { id:'d18', emoji:'🐄', name:'Mleko krowie', months:12 },
+  { id:'d17', emoji:'🥜', name:'Masło orzechowe (gładkie)', months:6 },
+  { id:'d18', emoji:'🌰', name:'Sezam / tahini', months:7 },
+  { id:'d19', emoji:'🍳', name:'Całe jajko', months:12 },
+  { id:'d20', emoji:'🐄', name:'Mleko krowie (jako napój)', months:12 },
+  { id:'d21', emoji:'🍯', name:'Miód', months:12 },
+  { id:'d22', emoji:'🥓', name:'Sól (dodawana)', months:12 },
+  { id:'d23', emoji:'🍬', name:'Cukier (dodawany)', months:24 },
 ]
 
 export const MOOD_OPTIONS = [

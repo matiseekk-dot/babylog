@@ -1,72 +1,40 @@
 import React, { useState } from 'react'
-import { calcParacetamol, calcIbuprofen } from '../utils/helpers'
 import { t, useLocale } from '../i18n'
 
 /**
- * QuickDoseCard — kalkulator leków NA HOME, nie w "More"
+ * QuickDoseCard — informacje o lekach przeciwgorączkowych
  *
- * Rozwiązanie problemu z audytu: killer feature (kalkulator dawek dla wagi
- * dziecka) był ukryty pod Menu > Meds > tap na med > modal. 4 tapnięcia.
+ * UWAGA: W v2.7.1 usunięto kalkulator dawek (wyliczanie mg/kg).
+ * Powód: apka nie jest wyrobem medycznym i nie powinna liczyć dawek
+ * leków. Zamiast tego pokazuje INFORMACJE REFERENCYJNE z ulotki leku
+ * (ChPL): kiedy można podać kolejną dawkę, maksymalna liczba dawek,
+ * minimalny wiek, kontraindykacje.
  *
- * Teraz: Home screen → widać dawkę dla dziecka → 1 tap rozwija szczegóły.
+ * Rodzic powinien wyliczyć dawkę:
+ *   - z ulotki leku (która jest w pudełku)
+ *   - w aptece (farmaceuta)
+ *   - u pediatry
+ *
+ * Apka pozwala tylko ZAPISAĆ że lek został podany (o której godzinie,
+ * ile ml) — bez jakiejkolwiek rekomendacji ile powinno być.
  *
  * Props:
- *   - weightKg: waga dziecka (z profilu)
- *   - ageMonths: wiek (ibuprofen wymaga ≥3 mies)
- *   - onNavigateToMeds: callback → idź do pełnej zakładki Meds (historia podań)
+ *   - ageMonths: wiek (tylko do ostrzeżeń wiekowych, brak wyliczeń)
+ *   - onNavigateToMeds: callback → pełna zakładka leków
  */
-export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds }) {
+export default function QuickDoseCard({ ageMonths, onNavigateToMeds }) {
   useLocale()
   const [expanded, setExpanded] = useState(null) // 'paracetamol' | 'ibuprofen' | null
 
-  // Brak wagi — pokaż CTA żeby ją ustawić
-  if (!weightKg || weightKg <= 0) {
-    return (
-      <div style={{
-        margin:'12px 16px 0',
-        padding:'14px 16px',
-        background:'#FEF3EE',
-        border:'1px solid #F0997B',
-        borderRadius:14,
-        display:'flex',
-        alignItems:'center',
-        gap:12,
-      }}>
-        <span style={{fontSize:24}}>⚠️</span>
-        <div style={{flex:1}}>
-          <div style={{fontSize:13, fontWeight:700, color:'#712B13', marginBottom:2}}>
-            {t('dose.quick.setup')}
-          </div>
-          <div style={{fontSize:12, color:'#8A3E1F', lineHeight:1.4}}>
-            {t('dose.quick.setup_desc')}
-          </div>
-        </div>
-        <button
-          onClick={onNavigateToMeds}
-          style={{
-            background:'#C95A48', color:'#fff', border:'none',
-            borderRadius:8, padding:'8px 12px', fontSize:12,
-            fontWeight:700, cursor:'pointer', minHeight:36, whiteSpace:'nowrap',
-          }}
-        >
-          {t('dose.quick.setup_btn')}
-        </button>
-      </div>
-    )
-  }
+  // Ostrzeżenia wiekowe (nie są rekomendacją, tylko przepisaniem z ChPL)
+  const isNewborn = ageMonths != null && ageMonths < 1
+  const isInfant = ageMonths != null && ageMonths < 3
+  const ibuAllowedByAge = ageMonths != null && ageMonths >= 6 // z ChPL Ibufen, Nurofen
+  const ibuAgeText = ageMonths == null ? t('dose.ref.ibu_age_unknown')
+    : ageMonths >= 6 ? t('dose.ref.ibu_age_ok')
+    : t('dose.ref.ibu_age_block', { months: ageMonths })
 
-  const parac = calcParacetamol(weightKg)
-  const ibu = calcIbuprofen(weightKg, ageMonths)
-
-  // OSTRZEŻENIE dla bardzo małych dzieci — paracetamol OK od urodzenia,
-  // ale waga < 3 kg (wcześniak / noworodek w pierwszych dniach) wymaga
-  // konsultacji z pediatrą przed podaniem.
-  const isPreemie = weightKg < 3
-
-  // OSTRZEŻENIE dla niemowlaków < 1 miesiąca
-  const isNewborn = ageMonths < 1
-
-  const DoseRow = ({ med, emoji, title, dose, ml, maxDaily, disabled, disabledReason }) => {
+  const MedRow = ({ med, emoji, title, disabled, disabledReason, info }) => {
     const isExpanded = expanded === med
 
     return (
@@ -110,9 +78,7 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
               </div>
             ) : (
               <div style={{fontSize:12, color:'#5a5a56'}}>
-                <strong style={{color:'#1a1a18', fontSize:14}}>{ml} ml</strong>
-                <span style={{margin:'0 6px', color:'#c0c0b8'}}>·</span>
-                {t('dose.quick.for_weight', {dose, weight: weightKg})}
+                {t('dose.ref.tap_for_info')}
               </div>
             )}
           </div>
@@ -134,34 +100,19 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
             color:'#3a3a36',
             lineHeight:1.6,
           }}>
-            {med === 'paracetamol' && (
-              <>
-                <div>🟢 {t('dose.quick.single')}: <strong>{parac.dose} mg</strong> (15 mg/kg)</div>
-                <div>🟢 {t('dose.quick.suspension', {strength: '120mg/5ml'})}: <strong>{parac.mlStd} ml</strong></div>
-                <div>🟢 {t('dose.quick.suspension', {strength: '240mg/5ml'})}: <strong>{parac.mlFort} ml</strong></div>
-                <div>🔴 {t('dose.quick.max_daily')}: <strong>{parac.maxDaily} mg</strong> ({t('dose.quick.max_daily_para')})</div>
-              </>
-            )}
-            {med === 'ibuprofen' && ibu && (
-              <>
-                <div>🟢 {t('dose.quick.single')}: <strong>{ibu.dose} mg</strong> (10 mg/kg)</div>
-                <div>🟢 {t('dose.quick.suspension', {strength: '100mg/5ml'})}: <strong>{ibu.ml} ml</strong></div>
-                <div>🔴 {t('dose.quick.max_daily')}: <strong>{ibu.maxDaily} mg</strong> ({t('dose.quick.max_daily_ibu')})</div>
-                <div style={{marginTop:4, fontSize:11, color:'#8A3E1F'}}>⚠️ {t('dose.quick.ibu_age_limit')}</div>
-              </>
-            )}
+            {info}
             <button
               onClick={(e) => { e.stopPropagation(); onNavigateToMeds?.() }}
               style={{
                 marginTop:10,
-                background:'var(--blue-light, #E6F1FB)',
-                color:'var(--blue, #185FA5)',
+                background:'#E6F1FB',
+                color:'#185FA5',
                 border:'none', borderRadius:8,
-                padding:'6px 12px', fontSize:11, fontWeight:600,
-                cursor:'pointer', minHeight:32,
+                padding:'8px 14px', fontSize:12, fontWeight:600,
+                cursor:'pointer', minHeight:36,
               }}
             >
-              {t('dose.quick.save_action')}
+              {t('dose.ref.save_action')}
             </button>
           </div>
         )}
@@ -191,11 +142,23 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
         gap:6,
       }}>
         <span>💊</span>
-        <span>{t('dose.quick.title', {weight: weightKg})}</span>
+        <span>{t('dose.ref.title')}</span>
       </div>
 
-      {/* Ostrzeżenie dla wcześniaków / noworodków */}
-      {(isPreemie || isNewborn) && (
+      {/* Główny disclaimer - zawsze widoczny */}
+      <div style={{
+        padding:'12px 14px',
+        background:'#F7F7F5',
+        borderBottom:'0.5px solid rgba(0,0,0,0.06)',
+        fontSize:12,
+        color:'#3a3a36',
+        lineHeight:1.5,
+      }}>
+        📋 {t('dose.ref.main_disclaimer')}
+      </div>
+
+      {/* Ostrzeżenie dla noworodków / niemowląt < 3 mies */}
+      {(isNewborn || isInfant) && (
         <div style={{
           padding:'10px 14px',
           background:'#FEE7DF',
@@ -209,41 +172,68 @@ export default function QuickDoseCard({ weightKg, ageMonths, onNavigateToMeds })
         }}>
           <span style={{fontSize:16,flexShrink:0,marginTop:-1}}>⚠️</span>
           <span>
-            {isPreemie ? t('dose.quick.warn_preemie') : t('dose.quick.warn_newborn')}
+            {isNewborn ? t('dose.ref.warn_newborn') : t('dose.ref.warn_infant')}
           </span>
         </div>
       )}
 
-      <DoseRow
+      <MedRow
         med="paracetamol"
         emoji="🌡️"
         title="Paracetamol"
-        dose={parac.dose}
-        ml={parac.mlStd}
-        maxDaily={parac.maxDaily}
-        disabled={false}
+        info={(
+          <>
+            <div style={{marginBottom:6, fontWeight:600, color:'#1a1a18'}}>
+              {t('dose.ref.package_info')}
+            </div>
+            <div>🟡 {t('dose.ref.para.interval')}</div>
+            <div>🟡 {t('dose.ref.para.max_doses')}</div>
+            <div>🟡 {t('dose.ref.para.age')}</div>
+            {isInfant && (
+              <div style={{marginTop:6, fontSize:11, color:'#7A1F0C', fontWeight:600}}>
+                ⚠️ {t('dose.ref.para.infant_warn')}
+              </div>
+            )}
+            <div style={{marginTop:8, fontSize:11, color:'#5a5a56', fontStyle:'italic'}}>
+              {t('dose.ref.read_package')}
+            </div>
+          </>
+        )}
       />
 
-      <DoseRow
+      <MedRow
         med="ibuprofen"
         emoji="💊"
         title="Ibuprofen"
-        dose={ibu?.dose}
-        ml={ibu?.ml}
-        maxDaily={ibu?.maxDaily}
-        disabled={!ibu}
-        disabledReason={t('dose.quick.ibu_disabled', {months: ageMonths})}
+        disabled={!ibuAllowedByAge}
+        disabledReason={ibuAgeText}
+        info={(
+          <>
+            <div style={{marginBottom:6, fontWeight:600, color:'#1a1a18'}}>
+              {t('dose.ref.package_info')}
+            </div>
+            <div>🟡 {t('dose.ref.ibu.interval')}</div>
+            <div>🟡 {t('dose.ref.ibu.max_doses')}</div>
+            <div>🟡 {t('dose.ref.ibu.age')}</div>
+            <div style={{marginTop:6, fontSize:11, color:'#8A3E1F'}}>
+              ⚠️ {t('dose.ref.ibu.contraindications')}
+            </div>
+            <div style={{marginTop:8, fontSize:11, color:'#5a5a56', fontStyle:'italic'}}>
+              {t('dose.ref.read_package')}
+            </div>
+          </>
+        )}
       />
 
       <div style={{
-        padding:'8px 14px',
+        padding:'10px 14px',
         background:'#F7F7F5',
-        fontSize:10,
-        color:'#9a9a94',
-        lineHeight:1.4,
+        fontSize:11,
+        color:'#5a5a56',
+        lineHeight:1.5,
         borderTop:'0.5px solid rgba(0,0,0,0.05)',
       }}>
-        ℹ️ {t('dose.quick.disclaimer')}
+        ℹ️ {t('dose.ref.footer_disclaimer')}
       </div>
     </div>
   )

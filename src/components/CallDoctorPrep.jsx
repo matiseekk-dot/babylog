@@ -167,20 +167,24 @@ export default function CallDoctorPrep({ profile, uid, onClose, onCall }) {
         </div>
       </Section>
 
-      {/* Call button */}
+      {/* Contact info — bez automatycznego dzwonienia */}
       <div style={{ padding: '20px 16px', paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
-        <button onClick={onCall} style={{
-          width: '100%', padding: '15px', minHeight: 52,
-          background: '#D85A30', color: '#fff',
-          border: 'none', borderRadius: 12,
-          fontSize: 15, fontWeight: 800, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          boxShadow: '0 4px 16px rgba(216,90,48,0.3)',
+        <div style={{
+          padding: '16px',
+          background: '#FEF3EE',
+          border: '1px solid #F0997B',
+          borderRadius: 12,
+          textAlign: 'center',
         }}>
-          📞 {t('crisis.action.call_doctor')} — 800 190 590
-        </button>
-        <div style={{ fontSize: 11, color: '#9a9a94', textAlign: 'center', marginTop: 10 }}>
-          {t('prep.free')}
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#D85A30', marginBottom: 6 }}>
+            🩺 {t('prep.contact.title')}
+          </div>
+          <div style={{ fontSize: 13, color: '#712B13', lineHeight: 1.55 }}>
+            {t('prep.contact.desc')}
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: '#9a9a94', textAlign: 'center', marginTop: 10, lineHeight: 1.4 }}>
+          {t('prep.emergency_note')}
         </div>
       </div>
     </div>

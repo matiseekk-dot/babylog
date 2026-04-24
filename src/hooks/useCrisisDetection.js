@@ -13,11 +13,12 @@ import { t } from '../i18n'
  * UWAGA: tempLogs są przekazywane z useFirestore (w App.jsx), nie czytane z localStorage.
  * Dzięki temu działa zarówno dla guest jak i zalogowanego usera.
  *
- * Reguły kliniczne:
- *   - < 3 mies. + temp ≥ 38.0°C        → call
- *   - < 3 mies. + temp ≥ 39.0°C        → emergency
- *   - dowolny wiek + temp ≥ 40.0°C     → emergency
+ * Reguły kliniczne (AAP 2021 Clinical Practice Guideline for Febrile Infants):
+ *   - < 3 mies. + temp ≥ 38.0°C        → emergency (AAP: każdy niemowlak <90 dni
+ *                                         z gorączką to pilna ocena lekarska)
+ *   - dowolny wiek + temp ≥ 40.5°C     → emergency (AAP: 105°F = medical emergency)
  *   - temp ≥ 39.5°C                    → call
+ *   - 3-6 mies. + temp ≥ 38.0°C        → call (Mayo Clinic, niższy próg)
  *   - temp ≥ 38.5°C trwa > 72h         → call
  *   - temp ≥ 38.5°C                    → watch
  */
@@ -47,19 +48,26 @@ export function useCrisisDetection(tempLogs, ageMonths) {
 
       let result = null
 
-      if (temp >= 40.0) {
-        result = { id: `em-${latest.id}`, severity: 'emergency',
-          reason: t('crisis.reason.very_high', {temp: temp.toFixed(1)}) }
-      } else if (ageMonths < 3 && temp >= 39.0) {
+      // CRITICAL: Niemowlę <3 miesięcy z gorączką ≥38.0°C = emergency (AAP 2021)
+      if (ageMonths < 3 && temp >= 38.0) {
         result = { id: `em-${latest.id}`, severity: 'emergency',
           reason: t('crisis.reason.newborn_emergency', {temp: temp.toFixed(1)}) }
-      } else if (ageMonths < 3 && temp >= 38.0) {
-        result = { id: `call-${latest.id}`, severity: 'call',
-          reason: t('crisis.reason.newborn_call', {temp: temp.toFixed(1)}) }
-      } else if (temp >= 39.5) {
+      }
+      // CRITICAL: Temperatura ≥40.5°C (105°F) = emergency dla każdego wieku (AAP)
+      else if (temp >= 40.5) {
+        result = { id: `em-${latest.id}`, severity: 'emergency',
+          reason: t('crisis.reason.very_high', {temp: temp.toFixed(1)}) }
+      }
+      else if (temp >= 39.5) {
         result = { id: `call-${latest.id}`, severity: 'call',
           reason: t('crisis.reason.high_fever', {temp: temp.toFixed(1)}) }
-      } else if (temp >= 38.5) {
+      }
+      // 3-6 miesięcy z gorączką ≥38.0°C = call (niższy próg niż dla starszych)
+      else if (ageMonths >= 3 && ageMonths < 6 && temp >= 38.0) {
+        result = { id: `call-young-${latest.id}`, severity: 'call',
+          reason: t('crisis.reason.young_infant', {temp: temp.toFixed(1)}) }
+      }
+      else if (temp >= 38.5) {
         result = { id: `watch-${latest.id}`, severity: 'watch',
           reason: t('crisis.reason.watch', {temp: temp.toFixed(1)}) }
       }

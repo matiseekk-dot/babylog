@@ -46,21 +46,19 @@ export function displayMethod(method) {
   }
 }
 
-export function calcParacetamol(weightKg) {
-  const dose = Math.round(weightKg * 15)
-  const mlStd = (dose / 24).toFixed(1) // 120mg/5ml = 24mg/ml
-  const mlFort = (dose / 48).toFixed(1) // 240mg/5ml = 48mg/ml
-  const maxDaily = Math.round(weightKg * 60)
-  return { dose, mlStd, mlFort, maxDaily }
-}
-
-export function calcIbuprofen(weightKg, months) {
-  if (months < 3) return null
-  const dose = Math.round(weightKg * 10)
-  const ml = (dose / 20).toFixed(1) // 100mg/5ml = 20mg/ml
-  const maxDaily = Math.round(weightKg * 30)
-  return { dose, ml, maxDaily }
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// USUNIĘTE W v2.7.1: calcParacetamol, calcIbuprofen
+//
+// Powód: Spokojny Rodzic nie jest wyrobem medycznym i nie wylicza dawek leków.
+// Rodzic czyta dawkę z ulotki leku (ChPL) lub konsultuje z pediatrą/farmaceutą.
+// Apka pokazuje wyłącznie informacje referencyjne z ulotek leków
+// (minimalny wiek, odstępy, max dawek/24h, kontraindykacje) oraz pozwala
+// zapisać FAKT podania leku (lek, ilość w ml, godzina) — bez rekomendacji
+// co do ilości.
+//
+// Ta decyzja obniża ryzyko regulacyjne (MDR, URPL) i klasyfikację apki
+// jako medical device software.
+// ═══════════════════════════════════════════════════════════════════════════
 
 export function getTempClass(temp) {
   if (temp < 36.0) return 'temp-sub'

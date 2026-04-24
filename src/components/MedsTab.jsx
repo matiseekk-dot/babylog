@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, genId, calcParacetamol, calcIbuprofen } from '../utils/helpers'
+import { nowTime, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
@@ -55,8 +55,10 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
 
   const { permission, askPermission, scheduleReminder, cancelReminder, pendingReminders } = useMedReminder(babyId)
 
-  const parac = calcParacetamol(weightKg)
-  const ibu = calcIbuprofen(weightKg, ageMonths)
+  // v2.7.1: Usunięto kalkulator dawek. Apka nie wylicza dawek leków —
+  // rodzic czyta je z ulotki lub konsultuje z pediatrą/farmaceutą.
+  // Wiek jest używany tylko do ostrzeżenia o minimalnym wieku ibuprofenu (≥6 mies.).
+  const ibuAllowedByAge = ageMonths != null && ageMonths >= 6
   const BUILT_IN_MEDS = isEN() ? BUILT_IN_MEDS_EN : BUILT_IN_MEDS_PL
   const allMedNames = [...BUILT_IN_MEDS, ...customMeds.map(m=>m.name), t('meds.other')]
 
@@ -119,21 +121,23 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   }
   const removeCustomMed = (id) => { setCustomMeds(customMeds.filter(m=>m.id!==id)); setDeleteId(null) }
 
+  // DOSE_INFO w v2.7.1: usunięto pole "suggestedDose" (wyliczona ilość ml dla wagi).
+  // Content teraz zawiera tylko FAKTY z ulotki leku (ChPL): odstępy, max dawki/24h,
+  // minimalny wiek, kontraindykacje. Żadnych wyliczeń dla konkretnego dziecka.
   const DOSE_INFO = {
-    Paracetamol: { med:'Paracetamol', suggestedDose: parac.mlStd ? `${parac.mlStd} ml` : '', title:t('med.name.paracetamol'), content:[
-      t('dose.paracetamol.single', {dose: parac.dose}),
-      t('dose.paracetamol.susp120', {ml: parac.mlStd}),
-      t('dose.paracetamol.susp240', {ml: parac.mlFort}),
-      t('dose.paracetamol.max', {max: parac.maxDaily}),
-      t('dose.for_weight', {kg: weightKg}),
+    Paracetamol: { med:'Paracetamol', suggestedDose: '', title:t('med.name.paracetamol'), content:[
+      t('dose.ref.para.interval'),
+      t('dose.ref.para.max_doses'),
+      t('dose.ref.para.age'),
+      t('dose.ref.read_package'),
     ] },
-    Ibuprofen: { med:'Ibuprofen', suggestedDose: ibu?.ml ? `${ibu.ml} ml` : '', title:t('med.name.ibuprofen'), content: ibu ? [
-      t('dose.ibuprofen.single', {dose: ibu.dose}),
-      t('dose.ibuprofen.susp', {ml: ibu.ml}),
-      t('dose.ibuprofen.max', {max: ibu.maxDaily}),
-      t('dose.ibuprofen.min_age'),
-      t('dose.for_weight', {kg: weightKg}),
-    ] : [t('dose.ibuprofen.not_for_infants')] },
+    Ibuprofen: { med:'Ibuprofen', suggestedDose: '', title:t('med.name.ibuprofen'), content: ibuAllowedByAge ? [
+      t('dose.ref.ibu.interval'),
+      t('dose.ref.ibu.max_doses'),
+      t('dose.ref.ibu.age'),
+      t('dose.ref.ibu.contraindications'),
+      t('dose.ref.read_package'),
+    ] : [t('dose.ref.ibu_age_block', { months: ageMonths ?? 0 }), t('dose.ref.read_package')] },
     'Sól fizjologiczna': { med:'Sól fizjologiczna', suggestedDose:'', title:t('med.name.saline'), content:[t('dose.saline.1'),t('dose.saline.2'),t('dose.saline.3'),t('dose.saline.4')] },
     Probiotyk: { med:'Probiotyk', suggestedDose:'', title:t('med.name.probiotic'), content:[t('dose.probiotic.1'),t('dose.probiotic.2'),t('dose.probiotic.3')] }
   }
@@ -142,36 +146,26 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
     <>
       <div className="section-header">
         <div className="section-title">{t('meds.title')}</div>
-        <div className="section-desc">{weightKg > 0 ? t('meds.desc_with_weight', {weight: weightKg, months: ageMonths}) : t('meds.desc_no_weight')}</div>
+        <div className="section-desc">{t('meds.desc')}</div>
       </div>
       <div className="card">
-        <div className="card-header">{t('meds.calc.title')}</div>
-        {(!weightKg || weightKg <= 0) ? (
-          <div style={{ padding:'16px', textAlign:'center' }}>
-            <div style={{ fontSize:28, marginBottom:8 }}>⚠️</div>
-            <div style={{ fontSize:13, color:'var(--text-2)', marginBottom:10, lineHeight:1.5 }}>
-              {t('meds.calc.weight_needed')}
-            </div>
-            <button onClick={onNavigate ? () => onNavigate('settings') : undefined} style={{
-              background:'var(--blue)', color:'#fff', border:'none', borderRadius:10,
-              padding:'10px 18px', fontSize:13, fontWeight:700, cursor:'pointer',
-            }}>
-              {t('meds.calc.open_settings')}
-            </button>
-          </div>
-        ) : BUILT_IN_MEDS.map(med => (
+        <div className="card-header">{t('meds.info.title')}</div>
+        <div style={{ padding:'12px 14px', fontSize:12, color:'var(--text-2)', lineHeight:1.5, borderBottom:'0.5px solid rgba(0,0,0,0.06)' }}>
+          📋 {t('meds.info.disclaimer')}
+        </div>
+        {BUILT_IN_MEDS.map(med => (
           <div className="log-item" key={med}>
             <div className="log-icon">{med==='Paracetamol'?'🌡️':med==='Ibuprofen'?'💊':med==='Sól fizjologiczna'?'💧':'🦠'}</div>
             <div className="log-body">
               <div className="log-name">{displayMedName(med)}</div>
               <div className="log-detail">
-                {med==='Paracetamol' && `${parac.dose} mg → ${parac.mlStd} ml`}
-                {med==='Ibuprofen' && (ibu ? `${ibu.dose} mg → ${ibu.ml} ml` : t('meds.below_3mo'))}
+                {med==='Paracetamol' && t('meds.info.para_short')}
+                {med==='Ibuprofen' && (ibuAllowedByAge ? t('meds.info.ibu_short') : t('meds.info.ibu_blocked'))}
                 {med==='Sól fizjologiczna' && t('meds.saline_dose')}
                 {med==='Probiotyk' && t('meds.probiotic_dose')}
               </div>
             </div>
-            <button onClick={()=>setDoseModal(DOSE_INFO[med])} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,minHeight:36}}>{t('meds.dose_btn')}</button>
+            <button onClick={()=>setDoseModal(DOSE_INFO[med])} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 12px',fontSize:12,fontWeight:600,minHeight:36}}>{t('meds.info_btn')}</button>
           </div>
         ))}
       </div>

@@ -6,18 +6,8 @@ import { t, useLocale } from '../i18n'
  *
  * KILLER FEATURE — wsparcie decyzyjne w kryzysie.
  *
- * Pokazuje się gdy:
- *   - temperatura ≥ 39.0°C
- *   - gorączka trwa > 48h
- *   - dziecko < 3 miesiące i gorączka ≥ 38.0°C
- *
- * NIE jest poradą medyczną — kieruje do lekarza z jasną decyzją.
- *
- * Props:
- *   severity: 'watch' | 'call' | 'emergency'
- *   reason: string describing why it fired
- *   onDismiss: fn
- *   onNavigate: fn(section)
+ * v2.6.2: Usunąłem tel: do pediatry (każdy ma swojego lekarza).
+ * Zostaje tylko 112 w emergency. Pediatra = statyczny komunikat.
  */
 
 const SEVERITY_CONFIG = {
@@ -27,7 +17,7 @@ const SEVERITY_CONFIG = {
   },
   call: {
     color: '#D85A30', bg: '#FEF3EE', border: '#F0997B',
-    emoji: '📞', titleKey: 'crisis.call.title',
+    emoji: '🩺', titleKey: 'crisis.call.title',
   },
   emergency: {
     color: '#A32D2D', bg: '#FFF0F0', border: '#F09595',
@@ -39,17 +29,10 @@ export default function CallDoctorCard({ severity = 'watch', reason, onDismiss, 
   useLocale()
   const cfg = SEVERITY_CONFIG[severity]
 
-  // Per-locale emergency numbers (BUG-003 fix)
-  const locale = (() => {
-    try { return (localStorage.getItem('babylog_locale') || navigator.language || 'pl').toLowerCase().startsWith('pl') ? 'pl' : 'en' }
-    catch { return 'pl' }
-  })()
-  const DOCTOR_PHONE = locale === 'pl' ? '800 190 590' : '112'  // EN fallback: generic EU emergency
   const EMERGENCY_PHONE = '112'
 
-  const callDoctor = () => {
-    const phone = severity === 'emergency' ? EMERGENCY_PHONE : DOCTOR_PHONE
-    window.location.href = `tel:${phone.replace(/\s/g, '')}`
+  const call112 = () => {
+    window.location.href = `tel:${EMERGENCY_PHONE}`
   }
 
   return (
@@ -62,7 +45,6 @@ export default function CallDoctorCard({ severity = 'watch', reason, onDismiss, 
       position: 'relative',
       animation: severity === 'emergency' ? 'crisisPulse 2s ease-in-out infinite' : 'none',
     }}>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <div style={{ fontSize: 28 }}>{cfg.emoji}</div>
         <div style={{ flex: 1 }}>
@@ -73,39 +55,58 @@ export default function CallDoctorCard({ severity = 'watch', reason, onDismiss, 
             {reason}
           </div>
         </div>
-        <button onClick={onDismiss} style={{
+        <button onClick={onDismiss} aria-label="Zamknij" style={{
           background: 'none', border: 'none', cursor: 'pointer',
           fontSize: 18, color: '#9a9a94', padding: 4,
         }}>✕</button>
       </div>
 
-      {/* Actions */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {severity === 'watch' && (
           <>
             <button onClick={() => onNavigate('temp')} style={actionBtn(cfg, 'primary')}>
               {t('crisis.watch.action1')}
             </button>
-            <button onClick={callDoctor} style={actionBtn(cfg, 'secondary')}>
-              📞 {t('crisis.action.call_doctor')}
-            </button>
+            <div style={{
+              padding: '10px 12px',
+              background: 'rgba(186, 117, 23, 0.06)',
+              borderRadius: 8,
+              fontSize: 12,
+              color: cfg.color,
+              textAlign: 'center',
+              lineHeight: 1.45,
+              fontWeight: 500,
+            }}>
+              💡 {t('crisis.watch.advice')}
+            </div>
           </>
         )}
 
         {severity === 'call' && (
           <>
-            <button onClick={callDoctor} style={actionBtn(cfg, 'primary')}>
-              📞 {t('crisis.action.call_doctor')} — {DOCTOR_PHONE}
-            </button>
+            <div style={{
+              padding: '14px',
+              background: 'rgba(216, 90, 48, 0.08)',
+              border: `1px solid ${cfg.border}`,
+              borderRadius: 10,
+              textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: cfg.color, marginBottom: 4 }}>
+                🩺 {t('crisis.call.action')}
+              </div>
+              <div style={{ fontSize: 12, color: '#712B13', lineHeight: 1.5 }}>
+                {t('crisis.call.advice')}
+              </div>
+            </div>
             <button onClick={() => onPrep?.()} style={actionBtn(cfg, 'secondary')}>
-              {t('crisis.action.what_to_prepare')}
+              📋 {t('crisis.action.what_to_prepare')}
             </button>
           </>
         )}
 
         {severity === 'emergency' && (
           <>
-            <button onClick={callDoctor} style={{
+            <button onClick={call112} style={{
               ...actionBtn(cfg, 'primary'),
               background: '#A32D2D', fontSize: 17,
             }}>

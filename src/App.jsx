@@ -27,6 +27,7 @@ import AutoHideBanner from './components/AutoHideBanner'
 import PaywallScreen from './components/PaywallScreen'
 import DoctorNotesTab from './components/DoctorNotesTab'
 import OnboardingScreen from './components/OnboardingScreen'
+import MedicalDisclaimerScreen, { needsDisclaimer } from './components/MedicalDisclaimerScreen'
 import ToastContainer from './components/Toast'
 import { toast } from './components/Toast'
 import { captureError, addBreadcrumb } from './sentry'
@@ -214,6 +215,8 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showPrep, setShowPrep] = useState(false)
   const [onboardingDone, setOnboardingDone] = useFirestore(uid, 'onboarding_done', false)
+  // Disclaimer medyczny — localStorage (NIE Firestore, ma być per-urządzenie)
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(() => !needsDisclaimer())
 
   const rawActive = profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
 
@@ -231,7 +234,7 @@ export default function App() {
   const [sleepTimerTs] = useFirestore(uid, `sleep_timer_${active.id}`, null)
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
-  const { isPremium, isOnTrial, trialDaysLeft, activate, deactivate } = usePremium(uid)
+  const { isPremium, isOnTrial, trialDaysLeft, purchased, activate, deactivate } = usePremium(uid)
 
   // Premium onboarding — pokazuje modal raz po pierwszym odblokowaniu Premium
   const [showPremiumOnboarding, setShowPremiumOnboarding] = useState(false)
@@ -425,7 +428,6 @@ export default function App() {
             <EmptyStateHero onNavigate={navigate} onDismiss={dismissEmptyHero} />
           )}
           <QuickDoseCard
-            weightKg={active.weight}
             ageMonths={active.months}
             onNavigateToMeds={() => navigate('meds')}
           />
@@ -483,6 +485,11 @@ export default function App() {
     )
   }
 
+  // ── Medical Disclaimer (MUSI być zaakceptowany przed czymkolwiek innym) ──
+  if (!disclaimerAccepted) {
+    return <MedicalDisclaimerScreen onAccept={() => setDisclaimerAccepted(true)} />
+  }
+
   // ── Onboarding ────────────────────────────────────────────────────────────
   if (!onboardingDone) {
     return (
@@ -513,7 +520,6 @@ export default function App() {
           profile={active}
           uid={uid}
           onClose={() => setShowPrep(false)}
-          onCall={() => { window.location.href = 'tel:' + getEmergencyPhone() }}
         />
         <ToastContainer />
       </div>
@@ -570,16 +576,35 @@ export default function App() {
               (szczepienia PSO, nazwy leków, dieta BLW) są ukryte —
               user dodaje własne po angielsku. */}
           <LanguageSwitcher />
-          {/* Premium badge / upgrade button */}
-          {isPremium ? (
-            <span style={{
-              background: 'linear-gradient(135deg,#0F6E56,#1D9E75)',
-              color: '#fff', borderRadius: 20,
-              padding: '4px 10px', fontSize: 11, fontWeight: 700,
-            }}>
+          {/* Premium / Trial / Free — zawsze klikalne, prowadzi do paywalla */}
+          {purchased ? (
+            // Kupione Premium — badge informacyjny, klik prowadzi do Settings żeby zobaczyć status
+            <button
+              onClick={() => setShowSettings(true)}
+              style={{
+                background: 'linear-gradient(135deg,#0F6E56,#1D9E75)',
+                color: '#fff', borderRadius: 20, border: 'none',
+                padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              }}
+              aria-label={t('topbar.premium')}
+            >
               ★ {t('topbar.premium')}
-            </span>
+            </button>
+          ) : isOnTrial ? (
+            // Trial aktywny — pokaż ile dni i klik → paywall żeby user mógł kupić
+            <button
+              onClick={openPaywall}
+              style={{
+                background: 'linear-gradient(135deg,#F59E0B,#FB923C)',
+                color: '#fff', borderRadius: 20, border: 'none',
+                padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              }}
+              aria-label={t('topbar.trial_cta')}
+            >
+              ⏳ {t('topbar.trial_days', { days: trialDaysLeft })}
+            </button>
           ) : (
+            // Free — klik → paywall
             <button
               onClick={openPaywall}
               style={{
@@ -587,6 +612,7 @@ export default function App() {
                 border: '0.5px solid #9FE1CB', borderRadius: 20,
                 padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
               }}
+              aria-label={t('paywall.cta')}
             >
               🔒 {t('topbar.free')}
             </button>

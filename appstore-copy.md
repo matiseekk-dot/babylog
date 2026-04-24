@@ -24,7 +24,7 @@ Spokojny Rodzic podpowiada Ci co zrobić — na podstawie danych Twojego dziecka
 To asystent, który pomaga Ci podejmować decyzje, gdy dziecko jest chore lub nie śpi.
 
 Wpisujesz temperaturę, karmienie, sen — aplikacja analizuje dane i mówi Ci wprost:
-czy temperatura rośnie, czy można już podać kolejną dawkę leku, czy dziecko śpi za mało.
+czy temperatura rośnie, czy dziecko śpi za mało, czy warto zadzwonić do pediatry.
 
 ### Mniej stresu. Więcej spokoju.
 
@@ -39,22 +39,28 @@ Aplikacja to robi za Ciebie — i podpowiada co dalej.
 - Temperaturę ciała (z wykresem i trendem)
 - Karmienie piersią i butelką
 - Sen i drzemki
-- Leki i dawkowanie
+- Podane leki (historia z godziną i ilością)
 - Pieluchy i samopoczucie
 - Szczepienia i kamienie milowe
 - Rozszerzanie diety
 
 **Podpowiada i wspiera decyzje (Premium):**
 - Informuje czy temperatura rośnie, spada czy jest stabilna
-- Podpowiada kiedy można podać kolejną dawkę leku
+- Pokazuje ostatnie podanie leku i czas od ostatniej dawki
 - Ocenia czy dziecko śpi zgodnie z normą wiekową
 - Wysyła alerty gdy stan dziecka wymaga uwagi
 - Daje konkretne wskazówki — bez ogólników
 
 **Działa dla całej rodziny:**
 - Profile dla kilkorga dzieci
-- Kalkulator dawek leków wg wagi dziecka
+- Informacje o lekach z ulotek (odstępy, max dawek/24h, minimalny wiek)
 - Działa offline — dane są Twoje
+
+### Ważne
+
+Spokojny Rodzic **nie wylicza dawek leków** i **nie zastępuje lekarza**.
+Dawkę leku zawsze sprawdź w ulotce, z farmaceutą lub pediatrą.
+W zagrożeniu życia dzwoń 112.
 
 ### Premium — Spokojny Rodzic+
 
@@ -65,7 +71,7 @@ Anuluj kiedy chcesz. Bez zobowiązań.
 
 ## Słowa kluczowe
 zdrowie dziecka, niemowlę, gorączka, karmienie, sen dziecka, leki dla dzieci,
-dawkowanie, szczepienia, rozwój dziecka, pediatria, rodzic, niemowlę, noworodek
+szczepienia, rozwój dziecka, pediatria, rodzic, niemowlę, noworodek
 
 ---
 
@@ -78,14 +84,16 @@ dawkowanie, szczepienia, rozwój dziecka, pediatria, rodzic, niemowlę, noworode
 | śledź | negatywne konotacje | "miej pod ręką" |
 | loguj | żargon techniczny | "zapisz", "dodaj" |
 | zarządzaj | korporacyjne | "zadbaj o" |
+| kalkulator dawek | ryzyko regulacyjne (MDR) | "informacje z ulotki" |
+| wylicza dawkę | porada medyczna | "zapisuj podane leki" |
 
 ---
 
 ## Wersja skrócona — powiadomienie push / widget
 
 > Temperatura Zosi wzrosła o 0,8° w ciągu 4 godzin.
-> Ostatnia dawka leku: 5h temu.
-> → Możesz podać kolejną.
+> Ostatnia dawka paracetamolu: 5h temu.
+> → Sprawdź samopoczucie dziecka.
 
 ---
 
@@ -109,7 +117,7 @@ Szybko, bez zbędnych kroków.
 ### Ekran 2
 **Zrozum co się dzieje**
 Aplikacja analizuje dane i pokazuje czy temperatura rośnie, czy sen jest poniżej normy
-i kiedy można podać kolejną dawkę leku.
+i kiedy ostatnio podano lek.
 *Bez szukania w Google o 3 w nocy.*
 
 ### Ekran 3

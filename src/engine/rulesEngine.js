@@ -85,13 +85,67 @@ function lastMedMatching(medLogs, fragment) {
 
 const RULES = [
 
-  // ── Reguła 1: temp >= 38.5 → alert ────────────────────────────────────────
+  // ── Reguła 0a: dziecko < 3 mies + gorączka ≥ 38.0°C → CRITICAL EMERGENCY ───
+  // AAP 2021: fever in infants <90 days is medical emergency
+  // https://publications.aap.org/pediatrics/article/148/2/e2021052228/
   {
-    id: 'temp_alert',
+    id: 'temp_infant_emergency',
+    section: 'temp',
+    check({ tempLogs, ageMonths }) {
+      if (ageMonths == null || ageMonths >= 3) return null
+      const last = lastOf(tempLogs)
+      if (!last || last.temp < 38.0) return null
+      return {
+        status: 'critical',
+        title: t('rule.temp_infant.title'),
+        message: t('rule.temp_infant.msg', {temp: last.temp.toFixed(1), months: ageMonths}),
+      }
+    },
+  },
+
+  // ── Reguła 0b: temp ≥ 40.5°C → CRITICAL EMERGENCY (każdy wiek) ─────────────
+  // AAP: temperature ≥ 40.5°C is medical emergency
+  {
+    id: 'temp_extreme',
     section: 'temp',
     check({ tempLogs }) {
       const last = lastOf(tempLogs)
-      if (!last || last.temp < 38.5 || last.temp >= 39) return null
+      if (!last || last.temp < 40.5) return null
+      return {
+        status: 'critical',
+        title: t('rule.temp_extreme.title'),
+        message: t('rule.temp_extreme.msg', {temp: last.temp.toFixed(1)}),
+      }
+    },
+  },
+
+  // ── Reguła 0c: 3-6 mies + gorączka ≥ 38.0°C → alert ────────────────────────
+  // AAP/Mayo Clinic: dziecko 3-6 mies z gorączką wymaga kontaktu z lekarzem,
+  // niższy próg niż dla starszych dzieci
+  {
+    id: 'temp_young_infant',
+    section: 'temp',
+    check({ tempLogs, ageMonths }) {
+      if (ageMonths == null || ageMonths < 3 || ageMonths >= 6) return null
+      const last = lastOf(tempLogs)
+      if (!last || last.temp < 38.0 || last.temp >= 39.0) return null
+      return {
+        status: 'alert',
+        title: t('rule.temp_young_infant.title'),
+        message: t('rule.temp_young_infant.msg', {temp: last.temp.toFixed(1), months: ageMonths}),
+      }
+    },
+  },
+
+  // ── Reguła 1: temp >= 38.5 → alert (tylko dla dzieci ≥ 6 mies) ─────────────
+  {
+    id: 'temp_alert',
+    section: 'temp',
+    check({ tempLogs, ageMonths }) {
+      // Nie nakładaj się z regułą 0a (infant <3mo), 0b (extreme), 0c (3-6mo)
+      if (ageMonths != null && ageMonths < 6) return null
+      const last = lastOf(tempLogs)
+      if (!last || last.temp < 38.5 || last.temp >= 39 || last.temp >= 40.5) return null
       return {
         status: 'alert',
         title: t('rule.temp_alert.title'),
@@ -100,13 +154,14 @@ const RULES = [
     },
   },
 
-  // ── Reguła 2: temp >= 39 → critical ───────────────────────────────────────
+  // ── Reguła 2: temp >= 39 (ale < 40.5) → critical (≥ 3 mies) ───────────────
   {
     id: 'temp_critical',
     section: 'temp',
-    check({ tempLogs }) {
+    check({ tempLogs, ageMonths }) {
+      if (ageMonths != null && ageMonths < 3) return null  // <3 → reguła 0a
       const last = lastOf(tempLogs)
-      if (!last || last.temp < 39) return null
+      if (!last || last.temp < 39 || last.temp >= 40.5) return null
       return {
         status: 'critical',
         title: t('rule.temp_critical.title'),
@@ -190,9 +245,10 @@ const RULES = [
       const paracMin = lastParac ? minutesSince(lastParac.time, lastParac.date) : Infinity
       const ibuMin   = lastIbu   ? minutesSince(lastIbu.time,   lastIbu.date)   : Infinity
 
-      // Paracetamol działa ~6h, ibuprofen ~8h
-      const paracExpired = lastParac && paracMin >= 360
-      const ibuExpired   = lastIbu   && ibuMin   >= 480
+      // Paracetamol: można ponownie po 4h (min), działa ~4-6h
+      // Ibuprofen: można ponownie po 6h (min), działa ~6-8h
+      const paracExpired = lastParac && paracMin >= 360  // 6h
+      const ibuExpired   = lastIbu   && ibuMin   >= 480  // 8h
       const anyExpired   = paracExpired || ibuExpired
 
       if (!anyExpired) return null
@@ -204,6 +260,80 @@ const RULES = [
         title: t('rule.med_expired.title'),
         message: t('rule.med_expired.msg', {name, hours: Math.floor(ago/60), mins: ago % 60}),
       }
+    },
+  },
+
+  // ── Reguła 5b: kolejna dawka TEORETYCZNIE dozwolona, ale za wcześnie ───────
+  // Przypomina o minimalnych odstępach (paracetamol 4h, ibuprofen 6h)
+  // Pokazuje się gdy user ma gorączkę, dał lek, i od tego czasu minęło <min odstępu
+  {
+    id: 'med_too_soon',
+    section: 'meds',
+    check({ medLogs, tempLogs }) {
+      const lastTemp = lastOf(tempLogs)
+      if (!lastTemp || lastTemp.temp < 38.0) return null
+
+      const lastParac = lastMedMatching(medLogs, 'paracetamol')
+      const lastIbu   = lastMedMatching(medLogs, 'ibuprofen')
+
+      // Sprawdź czy user potencjalnie chce dać ponownie ten sam lek
+      // (pokazujemy gdy minęło 2-4h od para lub 2-6h od ibu)
+      if (lastParac) {
+        const mins = minutesSince(lastParac.time, lastParac.date)
+        if (mins >= 120 && mins < 240) {
+          const remainingH = Math.floor((240 - mins) / 60)
+          const remainingM = (240 - mins) % 60
+          return {
+            status: 'info',
+            title: t('rule.med_too_soon.title'),
+            message: t('rule.med_too_soon.para', {hours: remainingH, mins: remainingM}),
+          }
+        }
+      }
+      if (lastIbu) {
+        const mins = minutesSince(lastIbu.time, lastIbu.date)
+        if (mins >= 120 && mins < 360) {
+          const remainingH = Math.floor((360 - mins) / 60)
+          const remainingM = (360 - mins) % 60
+          return {
+            status: 'info',
+            title: t('rule.med_too_soon.title'),
+            message: t('rule.med_too_soon.ibu', {hours: remainingH, mins: remainingM}),
+          }
+        }
+      }
+      return null
+    },
+  },
+
+  // ── Reguła 5c: przekroczony limit dobowy dawek → alert ─────────────────────
+  // Paracetamol: max 4 dawki w 24h, ibuprofen: max 4 dawki w 24h
+  {
+    id: 'med_daily_limit',
+    section: 'meds',
+    check({ medLogs }) {
+      const last24h = (medLogs || []).filter(l => {
+        const ts = new Date(l.date + 'T' + (l.time || '00:00'))
+        return (Date.now() - ts.getTime()) < 24 * 60 * 60 * 1000
+      })
+      const paracCount = last24h.filter(l => l.med?.toLowerCase().includes('paracetamol')).length
+      const ibuCount   = last24h.filter(l => l.med?.toLowerCase().includes('ibuprofen')).length
+
+      if (paracCount >= 4) {
+        return {
+          status: 'alert',
+          title: t('rule.med_limit.title'),
+          message: t('rule.med_limit.para', {count: paracCount}),
+        }
+      }
+      if (ibuCount >= 4) {
+        return {
+          status: 'alert',
+          title: t('rule.med_limit.title'),
+          message: t('rule.med_limit.ibu', {count: ibuCount}),
+        }
+      }
+      return null
     },
   },
 
@@ -259,20 +389,6 @@ const RULES = [
         status: 'critical',
         title: t('rule.combined.title'),
         message: t('rule.combined.msg', {temp: lastTemp.temp.toFixed(1)}),
-      }
-    },
-  },
-
-  // ── Reguła 8: brak problemów → ok ─────────────────────────────────────────
-  {
-    id: 'all_ok',
-    section: 'global',
-    check() {
-      // Zawsze aktywna — filtrowana gdy są inne alerty
-      return {
-        status: 'ok',
-        title: t('rule.default.title'),
-        message: t('rule.default.msg'),
       }
     },
   },
