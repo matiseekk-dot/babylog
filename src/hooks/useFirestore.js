@@ -39,9 +39,26 @@ function docRef(uid, key) {
 export function useFirestore(uid, key, fallback) {
   const [state, setState] = useState(() => lsLoad(uid, key, fallback))
   const firstSnap = useRef(true)
+  const prevUid = useRef(uid)
+  const prevKey = useRef(key)
 
   useEffect(() => {
-    setState(lsLoad(uid, key, fallback))
+    // Tylko gdy uid/key się RZECZYWIŚCIE zmieniły, zresetuj stan z ls
+    // (np. przełączenie konta lub dziecka).
+    // Dla zwykłego re-mountu zostaw state jak był — inaczej flickering
+    // gdy localStorage jest puste a Firestore ma dane.
+    const uidChanged = prevUid.current !== uid
+    const keyChanged = prevKey.current !== key
+    if (uidChanged || keyChanged) {
+      const lsData = lsLoad(uid, key, null)
+      if (lsData !== null) {
+        setState(lsData)
+      } else {
+        setState(fallback)
+      }
+      prevUid.current = uid
+      prevKey.current = key
+    }
     firstSnap.current = true
 
     if (!uid) return  // Guest — czytaj tylko localStorage
