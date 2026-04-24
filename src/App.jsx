@@ -28,6 +28,8 @@ import PaywallScreen from './components/PaywallScreen'
 import DoctorNotesTab from './components/DoctorNotesTab'
 import OnboardingScreen from './components/OnboardingScreen'
 import ToastContainer from './components/Toast'
+import { toast } from './components/Toast'
+import { captureError, addBreadcrumb } from './sentry'
 import SleepIndicator from './components/SleepIndicator'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import SettingsScreen from './components/SettingsScreen'
@@ -264,18 +266,62 @@ export default function App() {
   const [showPlayStoreModal, setShowPlayStoreModal] = useState(false)
 
   const handleActivate = async (planId) => {
-    // Jeśli jesteśmy w TWA (Android natywne) → Google Play Billing
-    if (window.Android?.launchBilling) {
-      window.Android.launchBilling(planId)
-      return
-    }
-    // Web fallback — sprawdź czy zakup już istnieje w RC (np. user kupił w apce)
-    const active = await checkPremium()
-    if (active) {
-      setShowPaywall(false)
-    } else {
-      // Pokaż modal "pobierz apkę z Play Store"
+    addBreadcrumb('purchase', 'handle-activate-clicked', { planId })
+    try {
+      // 1. TWA z Play Billing przez Digital Goods API (standardowe podejście PWABuilder)
+      if ('getDigitalGoodsService' in window && window.PaymentRequest) {
+        try {
+          const service = await window.getDigitalGoodsService('https://play.google.com/billing')
+          if (service) {
+            const paymentMethod = [{
+              supportedMethods: 'https://play.google.com/billing',
+              data: { sku: planId },
+            }]
+            const paymentDetails = {
+              total: {
+                label: 'Spokojny Rodzic Premium',
+                amount: { currency: 'PLN', value: '0' },
+              },
+            }
+            const request = new PaymentRequest(paymentMethod, paymentDetails)
+            const response = await request.show()
+            const purchaseToken = response.details?.purchaseToken
+            if (purchaseToken) {
+              await activateWithToken(planId, purchaseToken)
+              await response.complete('success')
+              setShowPaywall(false)
+              return
+            }
+            await response.complete('fail')
+          }
+        } catch (dgaErr) {
+          console.warn('[paywall] DGA flow failed, falling through:', dgaErr)
+          captureError(dgaErr, { context: 'paywall-dga', planId })
+          // Nie zwracaj - pójdź do fallback
+        }
+      }
+
+      // 2. Custom Android bridge (stary mechanizm, jeśli kiedyś będzie)
+      if (window.Android?.launchBilling) {
+        window.Android.launchBilling(planId)
+        return
+      }
+
+      // 3. Web / niewspierana platforma - sprawdź czy user ma zakup z innego urządzenia
+      const active = await checkPremium()
+      if (active) {
+        setShowPaywall(false)
+        toast(t('paywall.activated'))
+        return
+      }
+
+      // 4. Ostateczny fallback - pokaż modal z linkiem do Play Store
       setShowPlayStoreModal(true)
+    } catch (e) {
+      console.error('[handleActivate]', e)
+      captureError(e, { context: 'paywall-activate', planId })
+      // User widzi feedback ze coś poszło nie tak (zamiast cichej śmierci)
+      toast(t('paywall.error'), 'error')
     }
   }
 
