@@ -87,9 +87,9 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
 
       {last && (
         <div className="stat-row">
-          <div className="stat-card"><div className="stat-val">{last.weight||'—'}</div><div className="stat-lbl">kg (ostatni)</div></div>
-          <div className="stat-card"><div className="stat-val">{last.height||'—'}</div><div className="stat-lbl">cm (ostatni)</div></div>
-          <div className="stat-card"><div className="stat-val">{last.headCirc||'—'}</div><div className="stat-lbl">{t('growth.stat.head')}</div></div>
+          <div className="stat-card"><div className="stat-val">{last.weight||'—'}</div><div className="stat-lbl">{t('growth.stat.weight_last')}</div></div>
+          <div className="stat-card"><div className="stat-val">{last.height||'—'}</div><div className="stat-lbl">{t('growth.stat.height_last')}</div></div>
+          <div className="stat-card"><div className="stat-val">{last.headCirc||'—'}</div><div className="stat-lbl">{t('growth.stat.head_last')}</div></div>
         </div>
       )}
 

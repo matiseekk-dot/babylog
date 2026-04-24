@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { evaluateRules, getGlobalStatus, getSectionMessages } from '../engine/rulesEngine'
 import { loadFromStorage } from './useStorage'
+import { useLocale } from '../i18n'
 
 /**
  * useChildStatus(babyId, ageMonths, weightKg)
@@ -15,6 +16,9 @@ import { loadFromStorage } from './useStorage'
 export function useChildStatus(babyId, ageMonths, weightKg) {
   const [result, setResult] = useState({ messages: [], topStatus: 'ok' })
   const [tick, setTick] = useState(0)
+  // Re-render hook na zmianę języka + wymuś re-ewaluację reguł
+  // (messages mają title/message stringi, które liczą się przez t() w momencie ewaluacji)
+  const { locale } = useLocale()
 
   useEffect(() => {
     if (!babyId) return
@@ -30,7 +34,7 @@ export function useChildStatus(babyId, ageMonths, weightKg) {
     }
 
     setResult(evaluateRules(ctx))
-  }, [babyId, ageMonths, weightKg, tick])
+  }, [babyId, ageMonths, weightKg, tick, locale])
 
   // Auto-odświeżanie co 5 minut (reguły czasowe)
   useEffect(() => {

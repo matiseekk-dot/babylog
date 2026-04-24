@@ -21,6 +21,15 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
   const [form, setForm] = useState({ date: todayDate(), startTime: '20:00', endTime: '07:00', label: 'Drzemka' })
   const intervalRef = useRef(null)
 
+  // Display helper: istniejące wpisy mają label zapisany jako literał PL ('Drzemka' / 'Sen nocny').
+  // Mapujemy na klucz i18n, żeby w EN pokazywało się 'Nap' / 'Night sleep'.
+  // Nieznane labele (gdyby ktoś kiedyś dodał custom) renderujemy 1:1.
+  const displayLabel = (label) => {
+    if (label === 'Drzemka' || label === 'nap') return t('sleep.type.nap')
+    if (label === 'Sen nocny' || label === 'night') return t('sleep.type.night')
+    return label
+  }
+
   // FIX: Dependency [startTs] zamiast [] — żeby effect reagował gdy Firestore
   // załaduje zapisany timestamp async (po otwarciu apki). Bez tego stoper
   // po re-otwarciu apki nie widział że sesja trwa i pokazywał 0.
@@ -190,7 +199,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
                 <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
                   <div className="log-icon">🌙</div>
                   <div className="log-body">
-                    <div className="log-name">{l.label}</div>
+                    <div className="log-name">{displayLabel(l.label)}</div>
                     <div className="log-detail">{h > 0 ? `${h}h ` : ''}{m > 0 ? `${m} min` : ''}</div>
                   </div>
                   <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
@@ -210,7 +219,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">🌙</div>
               <div className="log-body">
-                <div className="log-name">{l.label}</div>
+                <div className="log-name">{displayLabel(l.label)}</div>
                 <div className="log-detail">{h > 0 ? `${h}h ` : ''}{m > 0 ? `${m} min` : ''}</div>
               </div>
               <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
