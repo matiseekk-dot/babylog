@@ -1,4 +1,5 @@
 import { t } from '../i18n'
+import { todayDate } from '../utils/helpers'
 /**
  * interpretations.js
  *
@@ -14,7 +15,7 @@ import { minutesSince } from './rulesEngine'
 // ─── helpers lokalne ─────────────────────────────────────────────────────────
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10)
+  return todayDate()
 }
 
 function sortedByTime(logs) {

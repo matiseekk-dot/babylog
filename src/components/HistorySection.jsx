@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { t, useLocale } from '../i18n'
-import { formatDate } from '../utils/helpers'
+import { formatDate, todayDate, dateYMD } from '../utils/helpers'
 
 /**
  * HistorySection — reusable collapsible section pokazująca HISTORIĘ wpisów.
@@ -33,15 +33,18 @@ export default function HistorySection({
   useLocale()
   const [expanded, setExpanded] = useState(false)
   const [windowDays, setWindowDays] = useState(initialDays)
+  // Inline potwierdzenie dla wpisów >1 dzień temu — zastępuje window.confirm()
+  // (iOS PWA/TWA blokuje/brzydko renderuje natywne confirm)
+  const [pendingDelete, setPendingDelete] = useState(null) // { log, days }
 
   // Tylko wpisy z WCZORAJ i wcześniej (dzisiejsze są nad tym komponentem)
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayDate()
 
   // Podział wpisów na: w widocznym oknie (ostatnie N dni od dziś) vs starsze
   const { inWindow, olderCount, groupedByDate } = useMemo(() => {
     const cutoffWindow = new Date()
     cutoffWindow.setDate(cutoffWindow.getDate() - windowDays)
-    const cutoffWindowStr = cutoffWindow.toISOString().slice(0, 10)
+    const cutoffWindowStr = dateYMD(cutoffWindow)
 
     const beforeToday = (logs || []).filter(l => {
       const d = l[dateKey]
@@ -70,10 +73,16 @@ export default function HistorySection({
   if (totalInWindow === 0 && olderCount === 0) return null
 
   // Etykieta dnia względna (Wczoraj / 3 dni temu / 20 kwi)
+  // Liczymy dni przez porównanie YMD stringów a nie timestampów —
+  // inaczej o 01:00 lokalnie wpis z wczoraj jest ~10h starszy (Math.floor(0.96)=0)
+  // i nie dostaje labela "Wczoraj", tylko pełną datę.
   const dayLabel = (dateStr) => {
-    const entry = new Date(dateStr)
-    const now = new Date()
-    const diffDays = Math.floor((now - entry) / (1000 * 60 * 60 * 24))
+    const todayStr = todayDate()
+    const [ty, tm, td] = todayStr.split('-').map(Number)
+    const [ey, em, ed] = dateStr.split('-').map(Number)
+    const todayMid = new Date(ty, tm - 1, td)
+    const entryMid = new Date(ey, em - 1, ed)
+    const diffDays = Math.round((todayMid - entryMid) / (1000 * 60 * 60 * 24))
     if (diffDays === 1) return t('history.yesterday')
     if (diffDays >= 2 && diffDays <= 6) return t('history.days_ago', { days: diffDays })
     return formatDate(dateStr)
@@ -81,18 +90,72 @@ export default function HistorySection({
 
   const handleDelete = (log) => {
     if (!onDelete) return
-    const d = new Date(log[dateKey])
-    const diffDays = Math.floor((new Date() - d) / (1000 * 60 * 60 * 24))
-    // Potwierdzenie dla wpisów > 1 dzień temu (chroni przed przypadkiem)
+    // Dni liczone przez YMD strings (patrz dayLabel wyżej)
+    const dateStr = log[dateKey]
+    if (!dateStr) return onDelete(log)
+    const todayStr = todayDate()
+    const [ty, tm, td] = todayStr.split('-').map(Number)
+    const [ey, em, ed] = dateStr.split('-').map(Number)
+    const todayMid = new Date(ty, tm - 1, td)
+    const entryMid = new Date(ey, em - 1, ed)
+    const diffDays = Math.round((todayMid - entryMid) / (1000 * 60 * 60 * 24))
+    // Dla wpisów > 1 dzień: pokaż inline banner potwierdzenia zamiast confirm()
     if (diffDays > 1) {
-      const confirmed = window.confirm(t('history.confirm_old_delete', { days: diffDays }))
-      if (!confirmed) return
+      setPendingDelete({ log, days: diffDays })
+      return
     }
     onDelete(log)
   }
 
+  const confirmPendingDelete = () => {
+    if (pendingDelete?.log) onDelete(pendingDelete.log)
+    setPendingDelete(null)
+  }
+
+  const cancelPendingDelete = () => setPendingDelete(null)
+
   return (
     <div className="card" style={{ margin: '12px 16px 0' }}>
+      {pendingDelete && (
+        <div
+          role="alertdialog"
+          style={{
+            padding: '12px 14px',
+            background: '#FAECE7',
+            borderBottom: '0.5px solid #F0997B',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <div style={{ fontSize: 13, color: '#712B13', lineHeight: 1.4 }}>
+            {t('history.confirm_old_delete', { days: pendingDelete.days })}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={confirmPendingDelete}
+              style={{
+                flex: 1, minHeight: 40, padding: '8px 12px',
+                background: '#993C1D', color: '#fff', border: 'none',
+                borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              }}
+            >
+              {t('common.delete_aria')}
+            </button>
+            <button
+              onClick={cancelPendingDelete}
+              style={{
+                flex: 1, minHeight: 40, padding: '8px 12px',
+                background: 'transparent', color: '#5a5a56',
+                border: '0.5px solid rgba(0,0,0,0.15)',
+                borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {t('common.cancel')}
+            </button>
+          </div>
+        </div>
+      )}
       {/* Header — klik rozwija/zwija */}
       <button
         onClick={() => setExpanded(e => !e)}

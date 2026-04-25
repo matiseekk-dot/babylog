@@ -1,11 +1,26 @@
-import { t } from '../i18n'
+import { t, getLocale } from '../i18n'
 export function nowTime() {
   const d = new Date()
   return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0')
 }
 
 export function todayDate() {
-  return new Date().toISOString().slice(0,10)
+  return dateYMD(new Date())
+}
+
+/**
+ * dateYMD(d) — zwraca YYYY-MM-DD dla podanej daty w **lokalnej strefie czasowej**.
+ *
+ * UWAGA: Nie używaj `d.toISOString().slice(0,10)` — toISOString zawsze zwraca UTC,
+ * co powoduje bug: wpis dodany 25 kwietnia o 01:17 PL (CEST, UTC+2) jest zapisywany
+ * jako 2026-04-24 (23:17 UTC) i pojawia się w sekcji "wczoraj". Od v2.7.5 cała
+ * apka liczy daty lokalnie.
+ */
+export function dateYMD(d) {
+  const y = d.getFullYear()
+  const m = (d.getMonth() + 1).toString().padStart(2, '0')
+  const day = d.getDate().toString().padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 export function formatDuration(seconds) {
@@ -25,10 +40,40 @@ export function formatAge(months) {
   return t('profiles.age.years_months', { years: y, months: m })
 }
 
+/**
+ * formatDate(dateStr) — "25 kwi 2026" / "Apr 25, 2026" wg aktualnego locale.
+ *
+ * UWAGA: NIE używamy Intl.DateTimeFormat ani toLocaleDateString() z parametrem
+ * locale/options, bo iOS Safari bywa niespójny (ignoruje 'short' month, zwraca
+ * pełną nazwę; czasem ignoruje locale). Ręczne stringi są deterministyczne.
+ */
+const MONTHS_SHORT_PL = ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru']
+const MONTHS_SHORT_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
 export function formatDate(dateStr) {
   if (!dateStr) return ''
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', year: 'numeric' })
+  // T12:00:00 (midday lokalnie) — bezpieczne w każdej strefie czasowej i przy DST
+  const d = new Date(dateStr + 'T12:00:00')
+  if (isNaN(d.getTime())) return ''
+  const day = d.getDate()
+  const mIdx = d.getMonth()
+  const year = d.getFullYear()
+  const lang = getLocale()
+  if (lang === 'en') {
+    return `${MONTHS_SHORT_EN[mIdx]} ${day}, ${year}`
+  }
+  return `${day} ${MONTHS_SHORT_PL[mIdx]} ${year}`
+}
+
+/**
+ * parseNum(str) — parsuje liczbę z inputa użytkownika akceptując
+ * przecinek LUB kropkę jako decimal separator. Polska klawiatura numeryczna
+ * domyślnie wpisuje przecinek; HTML `type="number"` nie zawsze to zjada.
+ * Zwraca Number lub NaN.
+ */
+export function parseNum(str) {
+  if (str === null || str === undefined || str === '') return NaN
+  return Number(String(str).replace(',', '.'))
 }
 
 /**

@@ -79,7 +79,7 @@ export default function DietTab({uid, babyId, ageMonths }) {
               style={{ opacity: locked ? 0.45 : 1, cursor: locked ? 'default' : 'pointer', position:'relative' }}
             >
               {d.custom && (
-                <button aria-label="Usuń wpis" onClick={e=>{e.stopPropagation();setDeleteId(d.id)}} style={{
+                <button aria-label={t('common.delete_aria')} onClick={e=>{e.stopPropagation();setDeleteId(d.id)}} style={{
                   position:'absolute',top:4,right:4,background:'rgba(0,0,0,0.08)',border:'none',
                   borderRadius:'50%',width:18,height:18,fontSize:9,cursor:'pointer',
                   display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text-2)',lineHeight:1

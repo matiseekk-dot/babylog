@@ -32,6 +32,8 @@ const TRANSLATIONS = {
     'nav.feed':           'Karmienie',
     'nav.sleep':          'Sen',
     'nav.diaper':         'Pieluchy',
+    'nav.main_aria':      'Główna nawigacja',
+    'meds.custom.no_dose': 'Wg ulotki / zalecenia lekarza',
     'nav.more':           'Więcej',
     'nav.milestones':     'Kamienie milowe',
     'nav.growth':         'Wzrost i waga',
@@ -74,6 +76,7 @@ const TRANSLATIONS = {
     'onb.setup.weight':   'Waga (kg)',
     'onb.setup.hint':     'Waga i wiek pomagają śledzić rozwój i wzrost. Możesz zmienić w ustawieniach.',
     'onb.setup.cta':      'Zaczynamy',
+    'onb.setup.weight_error': 'Waga jest wymagana (1–50 kg)',
 
     // Login
     'login.title':        'Spokojny Rodzic',
@@ -512,7 +515,6 @@ const TRANSLATIONS = {
 
 
     // Common forms
-    'common.time':             'Godzina',
     'common.duration':          'Czas trwania',
     'common.fell_asleep':       'Zasnął/-a',
     'common.woke_up':           'Obudził/-a się',
@@ -807,6 +809,14 @@ const TRANSLATIONS = {
     // Med reminder notification
     'reminder.med.title':          'Minął odstęp między dawkami 💊',
     'reminder.med.body':           '{med}{dose} — minęło {hours}h od ostatniej dawki. Kolejną podaj tylko jeśli potrzebna, zgodnie z ulotką leku.',
+    'reminder.test.title':         'Test powiadomienia',
+    'reminder.test.body':          'Powiadomienia działają. Zobaczysz tu przypomnienia o lekach.',
+    'settings.notifications.title':         'Powiadomienia',
+    'settings.notifications.test_btn':      'Wyślij testowe powiadomienie',
+    'settings.notifications.permission_needed': 'Najpierw włącz powiadomienia w karcie Leki.',
+    'settings.notifications.test_sent':     'Powiadomienie wysłane. Sprawdź pasek systemowy.',
+    'settings.notifications.test_blocked':  'Brak zgody na powiadomienia.',
+    'settings.notifications.disclaimer':    'Przypomnienia o lekach są dostarczane przez przeglądarkę. Działają najlepiej, gdy apka jest otwarta lub niedawno otwierana. W tle mogą się spóźnić — nie polegaj wyłącznie na nich w sprawach krytycznych.',
 
     // Delete confirmations
     'meds.custom.delete_title':    'Usuń lek własny',
@@ -1054,10 +1064,12 @@ const TRANSLATIONS = {
     'settings.sex_boy':             '👦 Chłopiec',
     'settings.sex_girl':            '👧 Dziewczynka',
     'settings.sex_hint':            'Potrzebne do percentyli WHO wzrostu i wagi.',
-    'settings.export.error':        'Błąd eksportu CSV',
-    'settings.export.success':      'Dane wyeksportowane do CSV',
-    'settings.export.title':        '📊 Eksportuj wszystko do CSV',
-    'settings.export.desc':         'CSV zawiera wszystkie Twoje dane — karmienia, sen, pieluchy, temperaturę, leki, wzrost. Otwiera się w Excelu i Google Sheets.',
+    'settings.csvExport.error':        'Błąd eksportu CSV',
+    'settings.csvExport.success':      'Dane wyeksportowane do CSV',
+    'settings.csvExport.title':        '📊 Eksportuj wszystko do CSV',
+    'settings.csvExport.desc':         'CSV zawiera wszystkie Twoje dane — karmienia, sen, pieluchy, temperaturę, leki, wzrost. Otwiera się w Excelu i Google Sheets.',
+    'settings.legal.privacy':          'Polityka prywatności',
+    'settings.legal.delete_account':   'Usuń konto i dane',
     'vacc.month_of_life':           '{month}. miesiąc',
     'vacc.month_hint':              'Miesiąc życia dziecka (0 = noworodek, 12 = rok, itd.)',
     'common.delete_aria':           'Usuń',
@@ -1087,6 +1099,9 @@ const TRANSLATIONS = {
     'paywall.feature7.title':       'Priorytetowe wsparcie',
     'paywall.feature7.desc':        'Bezpośredni kontakt ze mną (solo founder). Pytasz, odpowiadam w 24h.',
     'paywall.coming_soon':          'Już wkrótce',
+    'paywall.free_banner':          'Kalkulator leków, alerty temperatury, CSV export i sync chmurowy — zawsze ZA DARMO.',
+    'paywall.premium_header':       'Co dostajesz w Premium',
+    'paywall.choose_plan':          'Wybierz plan',
     'paywall.price.monthly':        '14,99 zł',
     'paywall.price.yearly':         '99,99 zł',
     'paywall.price.lifetime':       '199,99 zł',
@@ -1228,6 +1243,8 @@ const TRANSLATIONS = {
     'nav.feed':           'Feeding',
     'nav.sleep':          'Sleep',
     'nav.diaper':         'Diapers',
+    'nav.main_aria':      'Main navigation',
+    'meds.custom.no_dose': 'Per package / doctor\'s recommendation',
     'nav.more':           'More',
     'nav.milestones':     'Milestones',
     'nav.growth':         'Growth',
@@ -1270,6 +1287,7 @@ const TRANSLATIONS = {
     'onb.setup.weight':   'Weight (kg)',
     'onb.setup.hint':     'Weight and age help track growth and development. You can change them later.',
     'onb.setup.cta':      'Let\'s go',
+    'onb.setup.weight_error': 'Weight is required (1–50 kg)',
 
     // Login
     'login.title':        'Calm Parent',
@@ -1708,7 +1726,6 @@ const TRANSLATIONS = {
 
 
     // Common forms
-    'common.time':             'Time',
     'common.duration':          'Duration',
     'common.fell_asleep':       'Fell asleep',
     'common.woke_up':           'Woke up',
@@ -2001,6 +2018,14 @@ const TRANSLATIONS = {
     // Med reminder notification
     'reminder.med.title':          'Interval between doses has passed 💊',
     'reminder.med.body':           '{med}{dose} — {hours}h since last dose. Only give the next dose if needed, following the medicine leaflet.',
+    'reminder.test.title':         'Test notification',
+    'reminder.test.body':          'Notifications work. You\'ll see medicine reminders here.',
+    'settings.notifications.title':         'Notifications',
+    'settings.notifications.test_btn':      'Send test notification',
+    'settings.notifications.permission_needed': 'First enable notifications in the Meds tab.',
+    'settings.notifications.test_sent':     'Notification sent. Check your system tray.',
+    'settings.notifications.test_blocked':  'Notifications not allowed.',
+    'settings.notifications.disclaimer':    'Medicine reminders are delivered by the browser. They work best when the app is open or was recently open. In the background they may be delayed — do not rely on them alone for critical matters.',
 
     // Delete confirmations
     'meds.custom.delete_title':    'Delete custom medicine',
@@ -2246,10 +2271,12 @@ const TRANSLATIONS = {
     'settings.sex_boy':             '👦 Boy',
     'settings.sex_girl':            '👧 Girl',
     'settings.sex_hint':            'Needed for WHO weight and height percentiles.',
-    'settings.export.error':        'CSV export failed',
-    'settings.export.success':      'Data exported to CSV',
-    'settings.export.title':        '📊 Export everything to CSV',
-    'settings.export.desc':         'CSV contains all your data — feedings, sleep, diapers, temperature, meds, growth. Opens in Excel and Google Sheets.',
+    'settings.csvExport.error':        'CSV export failed',
+    'settings.csvExport.success':      'Data exported to CSV',
+    'settings.csvExport.title':        '📊 Export everything to CSV',
+    'settings.csvExport.desc':         'CSV contains all your data — feedings, sleep, diapers, temperature, meds, growth. Opens in Excel and Google Sheets.',
+    'settings.legal.privacy':          'Privacy Policy',
+    'settings.legal.delete_account':   'Delete account & data',
     'vacc.month_of_life':           'Month {month}',
     'vacc.month_hint':              'Month of child\'s life (0 = newborn, 12 = one year, etc.)',
     'common.delete_aria':           'Delete',
@@ -2279,6 +2306,9 @@ const TRANSLATIONS = {
     'paywall.feature7.title':       'Priority support',
     'paywall.feature7.desc':        'Direct contact with me (solo founder). Ask anything, I reply within 24h.',
     'paywall.coming_soon':          'Coming soon',
+    'paywall.free_banner':          'Medicine calculator, temperature alerts, CSV export and cloud sync — always FREE.',
+    'paywall.premium_header':       'What you get with Premium',
+    'paywall.choose_plan':          'Choose a plan',
     'paywall.price.monthly':        '$3.99',
     'paywall.price.yearly':         '$24.99',
     'paywall.price.lifetime':       '$49.99',

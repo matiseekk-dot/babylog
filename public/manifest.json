@@ -1,6 +1,6 @@
 {
   "name": "Spokojny Rodzic",
-  "short_name": "BabyLog",
+  "short_name": "Spokojny",
   "description": "Aplikacja, która pomaga Ci wiedzieć co robić, gdy dziecko jest chore.",
   "start_url": "/babylog/",
   "scope": "/babylog/",

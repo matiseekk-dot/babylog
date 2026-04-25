@@ -77,11 +77,8 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
   const FEATURES = getFeatures()
   const PLANS = getPlans()
   const [selected, setSelected] = useState('yearly')
-  const isEnglish = isEN()
 
-  const freeBanner = isEnglish
-    ? 'Medicine calculator, temperature alerts, CSV export and cloud sync — always FREE.'
-    : 'Kalkulator leków, alerty temperatury, CSV export i sync chmurowy — zawsze ZA DARMO.'
+  const freeBanner = t('paywall.free_banner')
 
   return (
     // JEDNA kolumna flex, JEDEN scroll na całość (z wyjątkiem sticky header + footer)
@@ -138,7 +135,7 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
         fontSize:11, fontWeight:700, color:'#5a5a56',
         textTransform:'uppercase', letterSpacing:0.5,
       }}>
-        {isEN ? "What you get with Premium" : "Co dostajesz w Premium"}
+        {t('paywall.premium_header')}
       </div>
 
       {/* FEATURES */}
@@ -163,7 +160,7 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
                     textTransform:'uppercase',letterSpacing:0.3,
                     whiteSpace:'nowrap',
                   }}>
-                    {isEnglish ? 'Coming soon' : 'Już wkrótce'}
+                    {t('paywall.coming_soon')}
                   </span>
                 )}
               </div>
@@ -182,7 +179,7 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
           fontSize:11, fontWeight:700, color:'#5a5a56',
           textTransform:'uppercase', letterSpacing:0.5, marginBottom:2,
         }}>
-          {isEN ? "Choose a plan" : "Wybierz plan"}
+          {t('paywall.choose_plan')}
         </div>
         {PLANS.map(plan => (
           <div key={plan.id} onClick={() => setSelected(plan.id)} style={{

@@ -17,8 +17,8 @@
  *   - po wdrożeniu TWA → pełny flow przez Play Billing
  */
 
-import { useState, useEffect, useCallback } from 'react'
-import { t, getLocale } from '../i18n'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { t, getLocale, useLocale } from '../i18n'
 import { captureError, addBreadcrumb } from '../sentry'
 
 const RC_API = 'https://api.revenuecat.com/v1'
@@ -108,8 +108,10 @@ async function activateGooglePlayPurchase(uid, productId, purchaseToken) {
 export function useRevenueCat(uid, onActivate) {
   const [isActive, setIsActive]   = useState(false)
   const [checking, setChecking]   = useState(false)
-  const [offerings] = useState(() => {
-    const locale = getLocale()
+  // Offerings muszą się przeliczyć przy zmianie języka — ceny i label'e idą przez t()
+  // oraz walutę (PLN vs USD) dobieramy na podstawie locale.
+  const { locale } = useLocale()
+  const offerings = useMemo(() => {
     const prices = locale === 'en'
       ? { monthly: '$6.99', yearly: '$49.99', lifetime: '$99.99' }
       : { monthly: '14,99 zł', yearly: '99,99 zł', lifetime: '199,99 zł' }
@@ -138,7 +140,7 @@ export function useRevenueCat(uid, onActivate) {
         productId: 'spokojny_rodzic_premium_lifetime',
       },
     ]
-  })
+  }, [locale])
 
   // Sprawdź przy montowaniu i po zmianie uid
   useEffect(() => {

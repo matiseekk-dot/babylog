@@ -3,6 +3,8 @@
  * Eksport danych dziecka do PDF dla lekarza.
  */
 
+import { todayDate, dateYMD } from './helpers'
+
 async function loadJsPDF() {
   const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm')
   return jsPDF
@@ -19,7 +21,7 @@ function last7days() {
   for (let i = 6; i >= 0; i--) {
     const d = new Date()
     d.setDate(d.getDate() - i)
-    out.push(d.toISOString().slice(0, 10))
+    out.push(dateYMD(d))
   }
   return out
 }
@@ -148,7 +150,7 @@ export async function exportChildReport(profile, data, locale = 'pl') {
     doc.text(`${i}/${totalPages}`, 190, 287)
   }
 
-  const filename = `${L.filename}_${sanitizeFilename(profile.name)}_${new Date().toISOString().slice(0,10)}.pdf`
+  const filename = `${L.filename}_${sanitizeFilename(profile.name)}_${todayDate()}.pdf`
   doc.save(filename)
 }
 

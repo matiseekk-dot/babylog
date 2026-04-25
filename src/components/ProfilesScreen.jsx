@@ -1,7 +1,7 @@
 import { t, useLocale } from '../i18n'
 import React, { useState } from 'react'
 import Modal from './Modal'
-import { genId } from '../utils/helpers'
+import { genId, parseNum } from '../utils/helpers'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 const AVATAR_COLORS = ['#E1F5EE','#FAEEDA','#EEEDFE','#FAECE7','#E6F1FB','#FBEAF0','#EAF3DE','#FCEBEB']
@@ -32,13 +32,13 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
 
   const save = () => {
     if (!form.name.trim()) return
-    onAdd({ id: genId(), name: form.name.trim(), months: Number(form.months), weight: Number(form.weight), avatar: form.avatar, avatarColor: form.avatarColor, toiletMode: form.toiletMode })
+    onAdd({ id: genId(), name: form.name.trim(), months: Number(form.months), weight: parseNum(form.weight) || 0, avatar: form.avatar, avatarColor: form.avatarColor, toiletMode: form.toiletMode })
     setModal(false)
   }
 
   const saveEdit = () => {
     if (!form.name.trim()) return
-    onUpdate(editModal, { name: form.name.trim(), months: Number(form.months), weight: Number(form.weight), avatar: form.avatarColor ? form.avatar : '👶', avatarColor: form.avatarColor, toiletMode: form.toiletMode })
+    onUpdate(editModal, { name: form.name.trim(), months: Number(form.months), weight: parseNum(form.weight) || 0, avatar: form.avatarColor ? form.avatar : '👶', avatarColor: form.avatarColor, toiletMode: form.toiletMode })
     setEditModal(null)
   }
 

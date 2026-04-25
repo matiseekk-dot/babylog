@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, genId, formatDate } from '../utils/helpers'
+import { nowTime, todayDate, dateYMD, genId, formatDate } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, tPlural, useLocale } from '../i18n'
@@ -128,7 +128,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
     // 7 dni
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
-    const weekAgoISO = weekAgo.toISOString().slice(0, 10)
+    const weekAgoISO = dateYMD(weekAgo)
     const last7 = logs.filter(l => l.date >= weekAgoISO)
 
     // Liczba dni z kaszlem w ciągu ostatnich 7
@@ -291,7 +291,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
 
       {/* DZISIAJ */}
       {(() => {
-        const today = new Date().toISOString().slice(0, 10)
+        const today = todayDate()
         const todayLogs = logs.filter(l => l.date === today)
         if (todayLogs.length === 0) return null
         return (

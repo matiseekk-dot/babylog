@@ -167,7 +167,7 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
                 <div className="log-detail">{l.type==='Butelka'||l.type==='Odciągnięte mleko' ? `${l.amount} ml` : `${l.amount} min`}</div>
               </div>
               <div className="log-time">{l.time}</div>
-              <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }
@@ -190,7 +190,7 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
               <div className="log-detail">{l.type==='Butelka'||l.type==='Odciągnięte mleko' ? `${l.amount} ml` : `${l.amount} min`}</div>
             </div>
             <div className="log-time">{l.time}</div>
-            <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+            <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
           </div>
         )}
         summarize={entries => {

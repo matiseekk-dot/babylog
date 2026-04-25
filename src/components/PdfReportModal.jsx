@@ -3,7 +3,7 @@ import Modal from './Modal'
 import { toast } from './Toast'
 import { t, useLocale } from '../i18n'
 import { buildAndDownloadPdf } from '../utils/pdfReport'
-import { todayDate } from '../utils/helpers'
+import { todayDate, dateYMD } from '../utils/helpers'
 
 /**
  * PdfReportModal — Premium feature
@@ -19,7 +19,7 @@ export default function PdfReportModal({ open, onClose, profile, loadData }) {
   const [customStart, setCustomStart] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() - 14)
-    return d.toISOString().slice(0, 10)
+    return dateYMD(d)
   })
   const [customEnd, setCustomEnd] = useState(todayDate())
   const [generating, setGenerating] = useState(false)
@@ -33,8 +33,8 @@ export default function PdfReportModal({ open, onClose, profile, loadData }) {
     const days = parseInt(range, 10)
     start.setDate(end.getDate() - days + 1)  // +1 bo inclusive
     return {
-      startDate: start.toISOString().slice(0, 10),
-      endDate: end.toISOString().slice(0, 10),
+      startDate: dateYMD(start),
+      endDate: dateYMD(end),
     }
   }
 

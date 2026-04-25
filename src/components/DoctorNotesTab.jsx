@@ -54,6 +54,17 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
   const [editingAnswerId, setEditingAnswerId] = useState(null)
   const [editedAnswerText, setEditedAnswerText] = useState('')
 
+  // Display helper — type wpisu zapisywany jest jako literał PL ('Pediatra' itd.).
+  // Mapujemy na klucz i18n, żeby w EN pokazywał się przetłumaczony label.
+  const displayVisitType = (type) => {
+    if (type === 'Pediatra')    return t('doctor.visit.pediatrician')
+    if (type === 'Pogotowie')   return t('doctor.visit.emergency')
+    if (type === 'Teleporada')  return t('doctor.visit.telehealth')
+    if (type === 'Specjalista') return t('doctor.visit.specialist')
+    if (type === 'Kontrolna')   return t('doctor.visit.routine')
+    return type || ''
+  }
+
   const pendingQuestions = questions.filter(q => q.status !== 'asked')
   const askedQuestions = questions.filter(q => q.status === 'asked')
 
@@ -356,7 +367,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             >
                               ✎
                             </button>
-                            <button aria-label="Usuń wpis"
+                            <button aria-label={t('common.delete_aria')}
                               onClick={() => removeQuestion(q.id)}
                               style={{
                                 background:'none',border:'none',color:'var(--text-3)',
@@ -511,7 +522,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                         >
                           ✎
                         </button>
-                        <button aria-label="Usuń wpis"
+                        <button aria-label={t('common.delete_aria')}
                           onClick={() => removeQuestion(q.id)}
                           style={{
                             background:'none',border:'none',color:'var(--text-3)',
@@ -564,9 +575,9 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                   background: '#E6F1FB', borderRadius: 8,
                   padding: '4px 10px', fontSize: 11, fontWeight: 700, color: '#185FA5',
                 }}>
-                  {n.type}
+                  {displayVisitType(n.type)}
                 </div>
-                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{n.date}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{formatDate(n.date)}</span>
                 {n.doctor && (
                   <span style={{ fontSize: 12, color: 'var(--text-3)', marginLeft: 'auto' }}>
                     dr {n.doctor}
@@ -676,7 +687,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
       </Modal>
 
       {/* MODAL: podgląd wizyty z opcją edycji */}
-      <Modal open={!!viewNote} onClose={() => setViewNote(null)} title={viewNote ? `${viewNote.type} · ${viewNote.date}` : ''}>
+      <Modal open={!!viewNote} onClose={() => setViewNote(null)} title={viewNote ? `${displayVisitType(viewNote.type)} · ${formatDate(viewNote.date)}` : ''}>
         {viewNote && (
           <>
             {viewNote.doctor && (

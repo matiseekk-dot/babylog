@@ -212,10 +212,10 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
               <div className="log-icon">{m.emoji}</div>
               <div className="log-body">
                 <div className="log-name">{m.name}</div>
-                <div className="log-detail">{m.dosage || 'Wg ulotki / zalecenia lekarza'}</div>
+                <div className="log-detail">{m.dosage || t('meds.custom.no_dose')}</div>
               </div>
               <button onClick={()=>setDoseModal({ med:m.name, suggestedDose:'', title:m.name, content:[m.dosage,m.notes].filter(Boolean) })} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:600,minHeight:36,marginRight:4}}>Info</button>
-              <button aria-label="Usuń wpis" onClick={()=>setDeleteId(m.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,minHeight:44,minWidth:36,cursor:'pointer'}}>✕</button>
+              <button aria-label={t('common.delete_aria')} onClick={()=>setDeleteId(m.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,minHeight:44,minWidth:36,cursor:'pointer'}}>✕</button>
             </div>
           ))}
         </div>
@@ -239,7 +239,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">💊</div>
               <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.form?` · ${displayMedForm(l.form)}`:''}{l.note?` · ${l.note}`:''}</div></div>
-              <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         })()}
@@ -252,7 +252,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
             <div className="log-icon">💊</div>
             <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.form?` · ${displayMedForm(l.form)}`:''}{l.note?` · ${l.note}`:''}</div></div>
-            <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+            <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
           </div>
         )}
         summarize={entries => t('summary.meds_doses', { count: entries.length })}

@@ -1,5 +1,6 @@
 import React from 'react'
 import { t, useLocale } from '../i18n'
+import { todayDate } from '../utils/helpers'
 
 /**
  * AutoHideBanner — one-time prompt po przekroczeniu 3 lat.
@@ -33,7 +34,7 @@ export default function AutoHideBanner({ profile, onUpdate }) {
   if (!shouldShow) return null
 
   const markSuggested = (hide) => {
-    const patch = { autoHideSuggestedAt: new Date().toISOString().slice(0, 10) }
+    const patch = { autoHideSuggestedAt: todayDate() }
     if (hide) {
       // "Ukryj" — user chce ukryć obie sekcje
       patch.visibleTabs = { feed: false, diaper: false }

@@ -17,15 +17,14 @@ function tempColor(temp) {
 
 function formatHour(dateStr, timeStr) {
   if (!dateStr || !timeStr) return ''
-  const d = new Date(dateStr)
   const [h] = timeStr.split(':').map(Number)
-  d.setHours(h, 0, 0, 0)
-  return d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+  // Zwracamy HH:00 — format uniwersalny dla PL i EN, omija iOS Safari toLocaleTimeString
+  return `${String(h).padStart(2, '0')}:00`
 }
 
 function hoursAgo(dateStr, timeStr) {
   if (!dateStr || !timeStr) return Infinity
-  const ref = new Date(dateStr)
+  const ref = new Date(dateStr + 'T00:00:00')
   const [h, m] = timeStr.split(':').map(Number)
   ref.setHours(h, m, 0, 0)
   return (Date.now() - ref.getTime()) / 3600000

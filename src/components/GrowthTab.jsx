@@ -1,6 +1,6 @@
 import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { todayDate, genId} from '../utils/helpers'
+import { todayDate, genId, parseNum } from '../utils/helpers'
 import Modal from './Modal'
 import { toast } from './Toast'
 import { t, useLocale } from '../i18n'
@@ -34,11 +34,23 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
 
   const save = () => {
     if (!form.weight && !form.height && !form.headCirc) return
+    // Normalizujemy decimale (PL user wpisuje "7,5") — zapisujemy jako liczby,
+    // inaczej Number("7,5") → NaN i wykres/percentyle dostają undefined.
+    const normalized = {
+      date: form.date,
+      weight: form.weight ? parseNum(form.weight) : '',
+      height: form.height ? parseNum(form.height) : '',
+      headCirc: form.headCirc ? parseNum(form.headCirc) : '',
+    }
+    // Sanity: jeśli parsowanie zwróciło NaN — traktuj jako brak wartości
+    if (Number.isNaN(normalized.weight)) normalized.weight = ''
+    if (Number.isNaN(normalized.height)) normalized.height = ''
+    if (Number.isNaN(normalized.headCirc)) normalized.headCirc = ''
     if (editingId) {
-      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...normalized } : l))
       toast(t('common.saved'))
     } else {
-      setLogs([{ id: genId(), ...form }, ...logs])
+      setLogs([{ id: genId(), ...normalized }, ...logs])
     }
     setModal(false)
     setEditingId(null)
@@ -188,7 +200,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
                   {l.weight && `${l.weight} kg`}{l.weight && l.height ? ' · ' : ''}{l.height && `${l.height} cm`}{l.headCirc ? ` · ${t('growth.head_short')} ${l.headCirc} cm` : ''}
                 </div>
               </div>
-              <button aria-label="Usuń wpis" onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }

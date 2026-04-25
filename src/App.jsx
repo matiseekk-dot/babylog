@@ -40,8 +40,10 @@ import GuestMigrationDialog from './components/GuestMigrationDialog'
 import PlayStoreModal from './components/PlayStoreModal'
 import PremiumOnboardingModal from './components/PremiumOnboardingModal'
 import { useCrisisDetection } from './hooks/useCrisisDetection'
+import { useServiceWorker } from './hooks/useServiceWorker'
 
 import { useLocale, t } from './i18n'
+import { todayDate } from './utils/helpers'
 
 const DEFAULT_PROFILE = {
   id: 'default',
@@ -125,6 +127,10 @@ const EMPTY_STATUS = () => ({
 
 export default function App() {
   const { user, loading: authLoading, login, logout } = useAuth()
+  // Rejestracja SW od razu przy starcie — niezbędne dla notyfikacji o lekach.
+  // Wcześniej SW rejestrował się dopiero w useMedReminder (czyli po wejściu do
+  // Meds tab), przez co świeżo zainstalowana apka nigdy nie miała SW gotowego.
+  useServiceWorker()
 
   // Medical consent — must be accepted ONCE before first use
   const [consentAccepted, setConsentAccepted] = useState(() => {
@@ -140,7 +146,11 @@ export default function App() {
     setEmptyHeroDismissed(true)
   }
   const acceptConsent = () => {
-    try { localStorage.setItem('babylog_medical_consent_v1', '1') } catch {}
+    try {
+      localStorage.setItem('babylog_medical_consent_v1', '1')
+    } catch (e) {
+      addBreadcrumb('storage', 'consent-save-failed', { msg: e?.message || 'unknown' })
+    }
     setConsentAccepted(true)
   }
   const [guestMode, setGuestMode] = useState(() => {
@@ -168,13 +178,16 @@ export default function App() {
       // Strategia 'preserve-existing': jeśli Firestore już ma dane dla klucza,
       // NIE nadpisuj. Chroni przed utratą danych z poprzednich sesji.
       const result = await migrateGuestDataToAccount(uid, { strategy: 'preserve-existing' })
-      console.log('[Guest migration] Result:', result)
+      addBreadcrumb('auth', 'guest-migration-complete', {
+        migrated: result.migrated?.length || 0,
+        skipped: result.skipped?.length || 0,
+      })
       // Wyczyść guest dane tylko jeśli coś się udało zmigrować
       if (result.migrated.length > 0) {
         clearGuestData()
       }
     } catch (e) {
-      console.error('[Guest migration] Error:', e)
+      captureError(e, { context: 'guest-migration' })
     } finally {
       setGuestMigrationDialog(null)
     }
@@ -183,7 +196,12 @@ export default function App() {
   const skipGuestMigration = () => {
     // User wybrał: nie migruj. Dane guesta zostają w localStorage (backup),
     // ale dialog już nie wyskoczy (flaga w localStorage).
-    try { localStorage.setItem('babylog_migration_skipped_' + uid, '1') } catch {}
+    try {
+      localStorage.setItem('babylog_migration_skipped_' + uid, '1')
+    } catch (e) {
+      // Jeśli tego nie zapiszemy, dialog wyskoczy znów po reload — warto widzieć w Sentry.
+      addBreadcrumb('storage', 'migration-skip-save-failed', { msg: e?.message || 'unknown' })
+    }
     setGuestMigrationDialog(null)
   }
 
@@ -340,7 +358,7 @@ export default function App() {
   // Dla free — pusty zestaw alertów i uproszczony status
   // Check if user has any data today
   const hasDataToday = (() => {
-    const today = new Date().toISOString().slice(0,10)
+    const today = todayDate()
     const keys = ['feed_','sleep_','diaper_','temp_']
     try {
       return keys.some(k => {
@@ -714,7 +732,7 @@ export default function App() {
       </div>
 
       {/* BOTTOM NAV */}
-      <nav className="bottom-nav" role="tablist" aria-label="Główna nawigacja">
+      <nav className="bottom-nav" role="tablist" aria-label={t('nav.main_aria')}>
         {NAV_TABS
           .filter(n => {
             // Ukryj Karmienia/Pieluchy jeśli user je wyłączył w Settings

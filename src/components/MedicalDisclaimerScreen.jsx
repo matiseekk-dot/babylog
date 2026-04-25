@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { t, useLocale } from '../i18n'
+import { addBreadcrumb } from '../sentry'
 
 /**
  * MedicalDisclaimerScreen
@@ -36,7 +37,11 @@ function saveAcceptance() {
   try {
     localStorage.setItem('med_disclaimer_version', DISCLAIMER_VERSION)
     localStorage.setItem('med_disclaimer_accepted', new Date().toISOString())
-  } catch {}
+  } catch (e) {
+    // Safari Private Mode / quota exceeded — user zobaczy disclaimer znowu po reload.
+    // Breadcrumb pozwoli zobaczyć skalę problemu w produkcji.
+    addBreadcrumb('storage', 'disclaimer-save-failed', { msg: e?.message || 'unknown' })
+  }
 }
 
 export function needsDisclaimer() {
@@ -47,6 +52,9 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
   useLocale()
   const [scrolledToBottom, setScrolledToBottom] = useState(false)
   const [checkboxConfirmed, setCheckboxConfirmed] = useState(false)
+  // Inline toast pokazany gdy user kliknie "Odrzuć" — zastępuje natywne alert()
+  // (które na iOS w PWA/TWA jest blokowane albo brzydkie)
+  const [rejectedMessage, setRejectedMessage] = useState(false)
   const scrollRef = useRef(null)
 
   // Check if content already fits without scrolling (tall devices / short content)
@@ -238,12 +246,10 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
 
         <button
           onClick={() => {
-            // User rejects — close app if in TWA, else show info
-            if (window.close) window.close()
-            // Fallback: reload page (user zostanie przy disclaimer screen)
-            setTimeout(() => {
-              alert(t('disclaimer.reject_info'))
-            }, 200)
+            // User odrzuca — apka w TWA powinna się zamknąć, na web pokazujemy komunikat inline.
+            // Kiedyś było `alert(...)` ale iOS Safari w standalone PWA/TWA go blokuje.
+            try { if (window.close) window.close() } catch {}
+            setRejectedMessage(true)
           }}
           style={{
             width: '100%',
@@ -259,6 +265,24 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
         >
           {t('disclaimer.reject_btn')}
         </button>
+
+        {rejectedMessage && (
+          <div
+            role="alert"
+            style={{
+              marginTop: 12,
+              padding: '10px 12px',
+              background: '#FAEEDA',
+              border: '0.5px solid #FAC775',
+              borderRadius: 8,
+              fontSize: 12,
+              color: '#633806',
+              lineHeight: 1.45,
+            }}
+          >
+            {t('disclaimer.reject_info')}
+          </div>
+        )}
       </div>
     </div>
   )

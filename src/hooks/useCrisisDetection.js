@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { t } from '../i18n'
+import { t, useLocale } from '../i18n'
 
 /**
  * useCrisisDetection(tempLogs, ageMonths)
@@ -25,6 +25,9 @@ import { t } from '../i18n'
 export function useCrisisDetection(tempLogs, ageMonths) {
   const [crisis, setCrisis] = useState(null)
   const [dismissedId, setDismissedId] = useState(null)
+  // Re-ewaluacja crisis banneru przy zmianie PL↔EN
+  // (reason stringi są liczone przez t() i inaczej nie zmieniłyby się natychmiast)
+  const { locale } = useLocale()
 
   useEffect(() => {
     // Skip if no logs — oszczędza baterię (BUG-PERF-002)
@@ -93,7 +96,7 @@ export function useCrisisDetection(tempLogs, ageMonths) {
     check()
     const id = setInterval(check, 60000) // co 60s (dla oszczędności baterii)
     return () => clearInterval(id)
-  }, [tempLogs, ageMonths, dismissedId])
+  }, [tempLogs, ageMonths, dismissedId, locale])
 
   const dismiss = () => {
     if (crisis?.id) setDismissedId(crisis.id)
@@ -103,7 +106,7 @@ export function useCrisisDetection(tempLogs, ageMonths) {
 }
 
 function dateTimeToTs(dateStr, timeStr) {
-  const d = new Date(dateStr)
+  const d = new Date(dateStr + 'T00:00:00')
   const [h, m] = (timeStr || '00:00').split(':').map(Number)
   d.setHours(h, m, 0, 0)
   return d.getTime()

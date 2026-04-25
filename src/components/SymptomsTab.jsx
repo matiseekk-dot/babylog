@@ -298,7 +298,7 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
 
       {/* DZISIAJ */}
       {(() => {
-        const today = new Date().toISOString().slice(0, 10)
+        const today = todayDate()
         const todayLogs = logs.filter(l => l.date === today)
         if (todayLogs.length === 0) return null
         return (
@@ -337,7 +337,7 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
                         </div>
                       )}
                     </div>
-                    <button aria-label="Usuń wpis"
+                    <button aria-label={t('common.delete_aria')}
                       onClick={(e) => { e.stopPropagation(); removeLog(log.id) }}
                       style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: 14, cursor: 'pointer', padding: '4px 8px', minHeight: 32 }}
                     >✕</button>
@@ -389,7 +389,7 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
                   </div>
                 )}
               </div>
-              <button aria-label="Usuń wpis"
+              <button aria-label={t('common.delete_aria')}
                 onClick={(e) => { e.stopPropagation(); onDelete?.() }}
                 style={{ background: 'none', border: 'none', color: 'var(--text-3)', fontSize: 14, cursor: 'pointer', padding: '4px 8px', minHeight: 32 }}
               >✕</button>

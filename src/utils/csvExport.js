@@ -15,6 +15,8 @@
  *   exportAllToCsv(babyName, { feed, sleep, diaper, temp, meds, growth })
  */
 
+import { todayDate } from './helpers'
+
 /**
  * Ucieczka CSV — jeśli wartość zawiera przecinek, cudzysłów, nową linię:
  *   - opakuj w cudzysłowy
@@ -135,7 +137,7 @@ function growthSection(logs = []) {
 export function exportAllToCsv(babyName, data) {
   const { feed = [], sleep = [], diaper = [], temp = [], meds = [], growth = [] } = data
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayDate()
   const header = [
     `# CALM PARENT — EKSPORT DANYCH`,
     `# Dziecko: ${babyName}`,

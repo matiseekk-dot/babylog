@@ -1,9 +1,28 @@
-// BabyLog Service Worker
-// Obsługuje: push notifications, scheduled reminders, offline cache
+// Spokojny Rodzic — Service Worker v2
+//
+// Push notifications + lokalne przypomnienia o lekach.
+//
+// ARCHITEKTURA PRZYPOMNIEŃ (v2.7.5):
+//
+// Problem: setTimeout w SW nie przetrwa zamknięcia apki — przeglądarka
+// usypia/zabija SW po ~30s bezczynności. Wcześniej apka korzystała z setTimeout
+// w pamięci procesu SW i to było główne źródło tego, że notyfikacje nigdy
+// nie przychodziły.
+//
+// Rozwiązanie: persystentna kolejka w Cache API — przy każdym wakeup SW
+// (przez push, periodicsync, lub message z apki) sprawdzamy które reminders
+// są overdue i pokazujemy notyfikację.
+//
+// Kolejka ma format: { tag, title, body, fireAt: <timestamp ms> }
+// Tag jest deterministyczny (med-reminder-<logId>) więc edycja wpisu
+// nadpisuje poprzednią pozycję.
+//
+// LIMITACJA: jeśli przeglądarka jest całkowicie zamknięta i SW śpi,
+// notyfikacja może się spóźnić do momentu, aż coś obudzi SW. Pełną
+// niezawodność daje tylko FCM z serwera — TODO na v1.1.
 
-const CACHE = 'babylog-v1'
-
-// ── Install & Cache ───────────────────────────────────────────────────────────
+const QUEUE_CACHE = 'spokojny-rodzic-reminders-v1'
+const QUEUE_KEY = '/__reminder_queue__'
 
 self.addEventListener('install', e => {
   self.skipWaiting()
@@ -21,14 +40,14 @@ self.addEventListener('push', e => {
     body: data.body || '',
     icon: data.icon || '/babylog/icon-192.png',
     badge: '/babylog/icon-72.png',
-    tag: data.tag || 'babylog',
+    tag: data.tag || 'spokojny-rodzic',
     renotify: true,
     data: { url: data.url || '/babylog/' },
     actions: data.actions || [],
     vibrate: [200, 100, 200],
   }
   e.waitUntil(
-    self.registration.showNotification(data.title || 'BabyLog', options)
+    self.registration.showNotification(data.title || 'Spokojny Rodzic', options)
   )
 })
 
@@ -44,59 +63,97 @@ self.addEventListener('notificationclick', e => {
   )
 })
 
-// ── Scheduled Reminders via periodicsync (fallback: message from app) ─────────
+// ── Reminder queue: messages z apki ──────────────────────────────────────────
+
+self.addEventListener('message', e => {
+  const { type, payload, tag } = e.data || {}
+  if (type === 'SCHEDULE_MED_REMINDER') {
+    e.waitUntil(upsertReminder(payload))
+  } else if (type === 'CANCEL_MED_REMINDER') {
+    e.waitUntil(cancelReminder(tag || payload?.tag))
+  } else if (type === 'CHECK_REMINDERS_NOW') {
+    e.waitUntil(flushDue())
+  } else if (type === 'TEST_NOTIFICATION') {
+    // Test button w Settings
+    e.waitUntil(self.registration.showNotification(payload?.title || 'Spokojny Rodzic', {
+      body: payload?.body || 'Test',
+      icon: '/babylog/icon-192.png',
+      badge: '/babylog/icon-72.png',
+      tag: 'test-notification',
+      renotify: true,
+      vibrate: [200, 100, 200],
+      data: { url: '/babylog/' },
+    }))
+  }
+})
 
 self.addEventListener('periodicsync', e => {
   if (e.tag === 'med-reminder-check') {
-    e.waitUntil(checkMedReminders())
+    e.waitUntil(flushDue())
   }
 })
 
-// Wiadomość z aplikacji — zaplanuj lokalne przypomnienie
-self.addEventListener('message', e => {
-  if (e.data?.type === 'SCHEDULE_MED_REMINDER') {
-    scheduleMedReminder(e.data.payload)
-  }
-  if (e.data?.type === 'CANCEL_MED_REMINDER') {
-    cancelMedReminder(e.data.tag)
-  }
-})
+// ─── implementacja kolejki przez Cache API ───────────────────────────────────
 
-// ── Lokalne przypomnienia (setTimeout-based) ──────────────────────────────────
-// Przechowujemy pending timers w pamięci SW
-
-const pendingTimers = new Map()
-
-function scheduleMedReminder({ tag, title, body, delayMs }) {
-  if (pendingTimers.has(tag)) {
-    clearTimeout(pendingTimers.get(tag))
+async function readQueue() {
+  try {
+    const cache = await caches.open(QUEUE_CACHE)
+    const res = await cache.match(QUEUE_KEY)
+    if (!res) return []
+    const txt = await res.text()
+    const parsed = JSON.parse(txt)
+    return Array.isArray(parsed) ? parsed : []
+  } catch (e) {
+    return []
   }
-  const timerId = setTimeout(() => {
-    self.registration.showNotification(title, {
-      body,
+}
+
+async function writeQueue(queue) {
+  try {
+    const cache = await caches.open(QUEUE_CACHE)
+    await cache.put(QUEUE_KEY, new Response(JSON.stringify(queue), {
+      headers: { 'Content-Type': 'application/json' }
+    }))
+  } catch (e) {
+    // brak miejsca / quota — fallback to nothing
+  }
+}
+
+async function upsertReminder({ tag, title, body, fireAt }) {
+  if (!tag || !fireAt) return
+  const queue = await readQueue()
+  const filtered = queue.filter(r => r.tag !== tag)
+  filtered.push({ tag, title, body, fireAt })
+  await writeQueue(filtered)
+  // Sprawdź od razu — jeśli fireAt już minął, dostarcz natychmiast.
+  await flushDue()
+}
+
+async function cancelReminder(tag) {
+  if (!tag) return
+  const queue = await readQueue()
+  await writeQueue(queue.filter(r => r.tag !== tag))
+}
+
+async function flushDue() {
+  const queue = await readQueue()
+  const now = Date.now()
+  const due = queue.filter(r => r.fireAt <= now)
+  const remaining = queue.filter(r => r.fireAt > now)
+
+  for (const r of due) {
+    await self.registration.showNotification(r.title || 'Spokojny Rodzic', {
+      body: r.body || '',
       icon: '/babylog/icon-192.png',
       badge: '/babylog/icon-72.png',
-      tag,
+      tag: r.tag,
       renotify: true,
       vibrate: [200, 100, 200],
       data: { url: '/babylog/' },
     })
-    pendingTimers.delete(tag)
-  }, delayMs)
-  pendingTimers.set(tag, timerId)
-}
-
-function cancelMedReminder(tag) {
-  if (pendingTimers.has(tag)) {
-    clearTimeout(pendingTimers.get(tag))
-    pendingTimers.delete(tag)
   }
-}
 
-async function checkMedReminders() {
-  // Periodic sync fallback — SW sprawdza localStorage przez clients
-  const allClients = await clients.matchAll()
-  allClients.forEach(client => {
-    client.postMessage({ type: 'CHECK_MED_REMINDERS' })
-  })
+  if (due.length > 0) {
+    await writeQueue(remaining)
+  }
 }

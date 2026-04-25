@@ -1,4 +1,5 @@
 import { t } from '../i18n'
+import { todayDate } from '../utils/helpers'
 /**
  * rulesEngine.js
  *
@@ -26,14 +27,15 @@ export function higherStatus(a, b) {
 export function minutesSince(timeStr, dateStr) {
   if (!timeStr) return Infinity
   const now = new Date()
-  const ref = new Date(dateStr || todayStr())
+  const d = dateStr || todayStr()
+  const ref = new Date(d + 'T00:00:00')
   const [h, m] = timeStr.split(':').map(Number)
   ref.setHours(h, m, 0, 0)
   return Math.max(0, Math.floor((now - ref) / 60000))
 }
 
 function todayStr() {
-  return new Date().toISOString().slice(0, 10)
+  return todayDate()
 }
 
 /** Wpisy z dziś, posortowane od najnowszego. */

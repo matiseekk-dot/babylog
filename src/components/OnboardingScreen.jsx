@@ -65,7 +65,7 @@ export default function OnboardingScreen({ onComplete }) {
       return
     }
     if (!weight.trim() || !weightValid) {
-      setWeightError(t('onb.setup.weight_error') || 'Waga jest wymagana (1-50 kg)')
+      setWeightError(t('onb.setup.weight_error'))
       return
     }
     const totalMonths = (Number(years) || 0) * 12 + (Number(months) || 0)

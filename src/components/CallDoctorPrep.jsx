@@ -1,6 +1,7 @@
 import React from 'react'
 import { t, useLocale } from '../i18n'
 import { useFirestore } from '../hooks/useFirestore'
+import { todayDate, dateYMD } from '../utils/helpers'
 
 /**
  * CallDoctorPrep
@@ -26,16 +27,14 @@ export default function CallDoctorPrep({ profile, uid, onClose, onCall }) {
     return name
   }
 
-  useLocale()
-
   const babyId = profile.id
   const [temps]   = useFirestore(uid, `temp_${babyId}`,   [])
   const [meds]    = useFirestore(uid, `meds_${babyId}`,   [])
   const [feeds]   = useFirestore(uid, `feed_${babyId}`,   [])
   const [diapers] = useFirestore(uid, `diaper_${babyId}`, [])
 
-  const today = new Date().toISOString().slice(0, 10)
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const today = todayDate()
+  const yesterday = dateYMD(new Date(Date.now() - 86400000))
 
   const recent = (arr) => arr
     .filter(l => l.date === today || l.date === yesterday)

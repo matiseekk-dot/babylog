@@ -1,11 +1,25 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
+import { useMedReminder } from '../hooks/useMedReminder'
 import { t, useLocale } from '../i18n'
 import { exportAllToCsv } from '../utils/csvExport'
 import { exportAllDataAsJson, exportAllDataAsCsv } from '../utils/dataExport'
 import PdfReportModal from './PdfReportModal'
 import FeaturesScreen from './FeaturesScreen'
 import { toast } from './Toast'
+
+// Wersja aplikacji — podbijana przy release. Pokazana w stopce Settings.
+// Do automatyzacji: Vite podstawia `__APP_VERSION__` jeśli zdefiniowane
+// w `vite.config.js` przez `define`. Fallback to '0.0.0-dev' gdy brak.
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0-dev'
+
+// Linki do dokumentów prawnych — hostowane na GitHub Pages razem z apką.
+// Wymagane przez Google Play Console: in-app link do Privacy Policy i Delete Account.
+// Sam URL w Console nie wystarczy — niektórzy reviewerzy odrzucają apkę bez linka in-app.
+const LEGAL_URLS = {
+  privacy: 'https://matiseekk-dot.github.io/babylog/privacy.html',
+  deleteAccount: 'https://matiseekk-dot.github.io/babylog/delete-account.html',
+}
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 
@@ -35,6 +49,7 @@ export default function SettingsScreen({
   const [coughLogs]    = useFirestore(uid, `cough_${profile.id}`, [])
   const [questions]    = useFirestore(uid, `doctor_questions_${profile.id}`, [])
   const { locale } = useLocale()
+  const { permission: notifPermission, testNotification } = useMedReminder(profile.id)
   const [pdfModal, setPdfModal] = useState(false)
   const [showFeatures, setShowFeatures] = useState(false)
   const [name, setName] = useState(profile.name)
@@ -100,10 +115,10 @@ export default function SettingsScreen({
         meds: medLogs,
         growth: growthLogs,
       })
-      toast(t('settings.export.success'))
+      toast(t('settings.csvExport.success'))
     } catch (e) {
       console.error(e)
-      toast(t('settings.export.error'), 'error')
+      toast(t('settings.csvExport.error'), 'error')
     }
   }
 
@@ -429,10 +444,10 @@ export default function SettingsScreen({
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            {t('settings.export.title')}
+            {t('settings.csvExport.title')}
           </button>
           <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 6, lineHeight: 1.4 }}>
-            {t('settings.export.desc')}
+            {t('settings.csvExport.desc')}
           </div>
         </div>
       </div>
@@ -550,8 +565,81 @@ export default function SettingsScreen({
         </button>
       </div>
 
+      {/* Notifications — test button + disclaimer.
+          Pozwala userowi zweryfikować że notyfikacje działają zanim zaczyna
+          polegać na nich w przypomnieniach o lekach. */}
+      <div className="card" style={{ margin: '12px 16px 0', padding: 14 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a18', marginBottom: 8 }}>
+          {t('settings.notifications.title')}
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (notifPermission !== 'granted') {
+              toast(t('settings.notifications.permission_needed'), 'error')
+              return
+            }
+            const ok = testNotification()
+            toast(
+              ok ? t('settings.notifications.test_sent') : t('settings.notifications.test_blocked'),
+              ok ? 'success' : 'error'
+            )
+          }}
+          style={{
+            width: '100%',
+            padding: '10px 14px',
+            background: notifPermission === 'granted' ? '#185FA5' : '#9a9a94',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: 'pointer',
+            minHeight: 40,
+          }}
+        >
+          {t('settings.notifications.test_btn')}
+        </button>
+        <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 8, lineHeight: 1.4 }}>
+          {t('settings.notifications.disclaimer')}
+        </div>
+      </div>
+
+      {/* Legal — wymagane przez Play Console review.
+          Linki otwierają się w przeglądarce systemowej; w TWA ten link wychodzi
+          poza scope manifestu, więc otworzy domyślną przeglądarkę. */}
+      <div className="card" style={{ margin: '12px 16px 0', padding: 0, overflow: 'hidden' }}>
+        <a
+          href={LEGAL_URLS.privacy}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 16px', minHeight: 48,
+            color: '#1a1a18', textDecoration: 'none',
+            borderBottom: '0.5px solid var(--border-light, rgba(0,0,0,0.08))',
+          }}
+        >
+          <span style={{ fontSize: 14, fontWeight: 500 }}>{t('settings.legal.privacy')}</span>
+          <span style={{ color: '#9a9a94', fontSize: 18 }}>↗</span>
+        </a>
+        <a
+          href={LEGAL_URLS.deleteAccount}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 16px', minHeight: 48,
+            color: '#1a1a18', textDecoration: 'none',
+          }}
+        >
+          <span style={{ fontSize: 14, fontWeight: 500 }}>{t('settings.legal.delete_account')}</span>
+          <span style={{ color: '#9a9a94', fontSize: 18 }}>↗</span>
+        </a>
+      </div>
+
       <div style={{ padding: '16px', fontSize: 10, color: '#9a9a94', textAlign: 'center' }}>
-        Spokojny Rodzic v1.0 · SkuDev
+        Spokojny Rodzic v{APP_VERSION} · SkuDev
       </div>
 
       {/* PDF Report modal — Premium only */}
