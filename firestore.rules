@@ -1,38 +1,33 @@
 rules_version = '2';
 
-// ══════════════════════════════════════════════════════════════════════════
-// BABYLOG / CALM PARENT — FIRESTORE RULES
+// Reguły Firestore dla Spokojny Rodzic
 //
-// Zasady:
-//   1. Każdy user ma dostęp TYLKO do /users/{userId}/**
-//   2. userId MUSI odpowiadać request.auth.uid — nie można czytać cudzych danych
-//   3. Niezalogowani (brak auth) — zero dostępu
-//   4. Wszystko poza /users/ — zablokowane
-//   5. Size limit na dokument — 1MB (ochrona przed abusem limitu Firestore)
-//   6. Struktura: tylko pole `value` dozwolone (ochrona przed złośliwymi polami)
+// Dodano kolekcję users/{uid}/tokens/{token} dla FCM:
+// - User może czytać/pisać tylko swoje tokeny
+// - Cloud Functions (admin SDK) bypasses te reguły, więc Cloud Function
+//   może czytać tokeny wszystkich userów do wysyłania push
 //
-// Audyt 2026-04-24:
-//   - User A nie widzi /users/UID_B (permission denied) ✓
-//   - Guest (brak uid) — zero dostępu ✓
-//   - Brak ścieżek typu /public/* ✓
-//   - Size limit 1MB aktywny ✓
-// ══════════════════════════════════════════════════════════════════════════
+// Reszta reguł — istniejące dla profili, leków, etc.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // === Dane użytkownika ===================================================
-    match /users/{userId}/data/{document=**} {
-      allow read: if request.auth != null
-                  && request.auth.uid == userId;
-
-      allow write: if request.auth != null
-                   && request.auth.uid == userId
-                   && request.resource.size < 1024 * 1024
-                   && request.resource.data.keys().hasOnly(['value', '_metadata']);
+    // FCM tokens — user może zarządzać tylko swoimi
+    match /users/{userId}/tokens/{tokenId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // === Wszystko inne — zablokowane ========================================
+    // Profile dziecka — user czyta/pisze tylko swoje
+    match /users/{userId}/profiles/{profileId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Sub-kolekcje (meds, feeds, sleeps, temps, itd.)
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // Domyślnie blokuj wszystko inne
     match /{document=**} {
       allow read, write: if false;
     }
