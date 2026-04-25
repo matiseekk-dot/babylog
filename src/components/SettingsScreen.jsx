@@ -49,7 +49,7 @@ export default function SettingsScreen({
   const [coughLogs]    = useFirestore(uid, `cough_${profile.id}`, [])
   const [questions]    = useFirestore(uid, `doctor_questions_${profile.id}`, [])
   const { locale } = useLocale()
-  const { permission: notifPermission, testNotification } = useMedReminder(profile.id)
+  const { permission: notifPermission, testNotification, askPermission: askNotifPermission } = useMedReminder(profile.id)
   const [pdfModal, setPdfModal] = useState(false)
   const [showFeatures, setShowFeatures] = useState(false)
   const [name, setName] = useState(profile.name)
@@ -565,41 +565,70 @@ export default function SettingsScreen({
         </button>
       </div>
 
-      {/* Notifications — test button + disclaimer.
-          Pozwala userowi zweryfikować że notyfikacje działają zanim zaczyna
-          polegać na nich w przypomnieniach o lekach. */}
+      {/* Notifications — adaptive button:
+          - jeśli brak permission, pokazuje "Włącz powiadomienia" → triggers permission prompt
+          - jeśli permission granted, pokazuje "Wyślij testowe powiadomienie" → triggers test
+          User dostaje akcję, nie tylko komunikat błędu. */}
       <div className="card" style={{ margin: '12px 16px 0', padding: 14 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a18', marginBottom: 8 }}>
           {t('settings.notifications.title')}
         </div>
-        <button
-          type="button"
-          onClick={async () => {
-            if (notifPermission !== 'granted') {
-              toast(t('settings.notifications.permission_needed'), 'error')
-              return
-            }
-            const ok = await testNotification()
-            toast(
-              ok ? t('settings.notifications.test_sent') : t('settings.notifications.test_blocked'),
-              ok ? 'success' : 'error'
-            )
-          }}
-          style={{
-            width: '100%',
-            padding: '10px 14px',
-            background: notifPermission === 'granted' ? '#185FA5' : '#9a9a94',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 10,
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: 'pointer',
-            minHeight: 40,
-          }}
-        >
-          {t('settings.notifications.test_btn')}
-        </button>
+
+        {notifPermission !== 'granted' ? (
+          /* Brak zgody — pokaż przycisk "Włącz powiadomienia" */
+          <button
+            type="button"
+            onClick={async () => {
+              const result = await askNotifPermission()
+              if (result === 'granted') {
+                toast(t('settings.notifications.enabled'), 'success')
+              } else if (result === 'denied') {
+                toast(t('settings.notifications.denied'), 'error')
+              }
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              background: '#185FA5',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              minHeight: 40,
+            }}
+          >
+            {t('settings.notifications.enable_btn')}
+          </button>
+        ) : (
+          /* Zgoda nadana — pokaż przycisk testu */
+          <button
+            type="button"
+            onClick={async () => {
+              const ok = await testNotification()
+              toast(
+                ok ? t('settings.notifications.test_sent') : t('settings.notifications.test_blocked'),
+                ok ? 'success' : 'error'
+              )
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              background: '#185FA5',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              minHeight: 40,
+            }}
+          >
+            {t('settings.notifications.test_btn')}
+          </button>
+        )}
+
         <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 8, lineHeight: 1.4 }}>
           {t('settings.notifications.disclaimer')}
         </div>
