@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
@@ -228,7 +228,50 @@ export default function App() {
   // Disclaimer medyczny — localStorage (NIE Firestore, ma być per-urządzenie)
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(() => !needsDisclaimer())
 
-  const rawActive = profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
+  // KRYTYCZNE — stabilna logika resolwowania aktywnego profilu.
+  //
+  // PROBLEM (data loss bug):
+  // Stara logika: profiles.find(p => p.id === activeId) || profiles[0] || DEFAULT_PROFILE
+  // Powodowała data loss gdy:
+  // 1. activeId='default' (z onboarding) ale user usunął/przeszedł na inny profil
+  // 2. profiles jest chwilowo puste podczas snapshot reload (race condition)
+  // 3. Spadało na DEFAULT_PROFILE z id='default' → wszystkie tabowe useFirestore
+  //    zmieniają klucze (z 'feed_realprofileid' na 'feed_default') → puste UI
+  //
+  // NOWA LOGIKA — używamy useRef żeby zapamiętać ostatni "dobry" active id.
+  // Jeśli profiles ma dane → szukamy normalnie i zapisujemy id jako "stable".
+  // Jeśli profiles pusta → używamy ostatniego stable id (nie zmieniamy klucza nagle).
+  const stableActiveIdRef = useRef(null)
+  const rawActive = (() => {
+    // 1. Jeśli profiles puste — zwróć ostatni stabilny profil (lub default jeśli pierwsza sesja)
+    if (!profiles || profiles.length === 0) {
+      if (stableActiveIdRef.current) {
+        return { ...DEFAULT_PROFILE, id: stableActiveIdRef.current }
+      }
+      return DEFAULT_PROFILE
+    }
+    // 2. profiles ma dane — szukaj aktywnego
+    const found = profiles.find(p => p.id === activeId)
+    if (found) {
+      stableActiveIdRef.current = found.id
+      return found
+    }
+    // 3. activeId nie pasuje do żadnego — użyj pierwszego z listy
+    // (np. user usunął profil który był aktywny, albo activeId='default'
+    // ale realny profil ma inne id z onboardingu)
+    stableActiveIdRef.current = profiles[0].id
+    return profiles[0]
+  })()
+
+  // Auto-naprawa: jeśli activeId w storage nie pasuje do żadnego realnego profilu,
+  // zapisz prawidłowy ID żeby przy następnym reloadzie nie było race condition.
+  useEffect(() => {
+    if (!profiles || profiles.length === 0) return
+    const exists = profiles.some(p => p.id === activeId)
+    if (!exists && profiles[0]?.id) {
+      setActiveId(profiles[0].id)
+    }
+  }, [profiles, activeId])
 
   // Defensywna normalizacja: istniejący profil może nie mieć visibleTabs (sprzed v2.4)
   // Ustawiamy defaulty na podstawie wieku — ale tylko do użycia w RUNTIME,
