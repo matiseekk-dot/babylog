@@ -95,6 +95,34 @@ export function useMedReminder(babyId) {
   )
   const [pending, setPending] = useState([])
 
+  // TWA fix: Notification.permission może się zmieniać poza naszym kontrolą
+  // (system Android sam zarządza zgodą). Synchronizujemy state na każde
+  // wznowienie apki + co 5s przez pierwsze 30s po mount (gdy user właśnie
+  // klikał "Zezwalaj" w popupie).
+  useEffect(() => {
+    if (typeof Notification === 'undefined') return
+
+    const sync = () => {
+      const current = Notification.permission
+      setPermission(prev => prev !== current ? current : prev)
+    }
+
+    // Sync na visibilitychange / focus (gdy user wraca z systemowego popupu)
+    document.addEventListener('visibilitychange', sync)
+    window.addEventListener('focus', sync)
+
+    // Pierwszy okres po mount — agresywne sprawdzanie co 1s przez 10s
+    const fastSync = setInterval(sync, 1000)
+    const stopFastSync = setTimeout(() => clearInterval(fastSync), 10000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', sync)
+      window.removeEventListener('focus', sync)
+      clearInterval(fastSync)
+      clearTimeout(stopFastSync)
+    }
+  }, [])
+
   // ── Wywołuj checkAllReminders przy każdym wznowieniu apki ──
   // To jest serce wzorca PS5 Vault. Apka otwarta → SW dostaje listę → pokazuje co trzeba.
   useEffect(() => {
@@ -158,10 +186,22 @@ export function useMedReminder(babyId) {
   }, [babyId])
 
   const askPermission = useCallback(async () => {
-    const result = await requestPermission()
+    let result = await requestPermission()
+
+    // TWA fix: Android czasem ma opóźnienie przy aktualizacji Notification.permission
+    // po systemowym popupie. Jeśli wynik to 'default' (user nie odpowiedział lub
+    // event się zgubił), poczekaj 500ms i sprawdź ponownie — często system już
+    // wie że zgoda jest, tylko TWA o tym nie wiedział.
+    if (result === 'default' && 'Notification' in window) {
+      await new Promise(r => setTimeout(r, 500))
+      const recheck = Notification.permission
+      if (recheck !== 'default') {
+        result = recheck
+      }
+    }
+
     setPermission(result)
     addBreadcrumb('reminder', 'permission-result', { result })
-    // Po przyznaniu zgody — od razu sprawdź czy są overdue wpisy do pokazania
     if (result === 'granted' && babyId) {
       setTimeout(() => checkAllReminders(babyId), 100)
     }
@@ -182,21 +222,26 @@ export function useMedReminder(babyId) {
 
   const testNotification = useCallback(async () => {
     if (typeof Notification === 'undefined') return false
-    if (Notification.permission !== 'granted') return false
 
     const title = t('reminder.test.title')
     const body = t('reminder.test.body')
 
-    // Strategia 1: SW przez controller (najlepsze — działa też gdy apka w tle)
+    // TWA fix: NIE sprawdzamy Notification.permission przed wysłaniem,
+    // bo TWA może mieć stary cached state mimo że system Android już
+    // udzielił zgody. Próbujemy wysłać; jeśli system odmówi, łapiemy błąd.
+
+    // Strategia 1: SW przez controller
     if (navigator.serviceWorker?.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'TEST_NOTIFICATION',
-        payload: { title, body },
-      })
-      return true
+      try {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'TEST_NOTIFICATION',
+          payload: { title, body },
+        })
+        return true
+      } catch { /* fallthrough */ }
     }
 
-    // Strategia 2: Czekamy aż SW się aktywuje (max 3s) i wysyłamy przez registration
+    // Strategia 2: SW przez registration.ready
     try {
       const reg = await Promise.race([
         navigator.serviceWorker?.ready,
@@ -209,16 +254,25 @@ export function useMedReminder(babyId) {
         })
         return true
       }
-    } catch {
-      /* fallthrough */
-    }
+    } catch { /* fallthrough */ }
 
-    // Strategia 3: Pokazujemy bezpośrednio bez SW (fallback)
+    // Strategia 3: registration.showNotification (TWA preferred)
     try {
-      new Notification(title, {
-        body,
-        icon: '/babylog/icon-192.png',
-      })
+      const reg = await navigator.serviceWorker?.getRegistration()
+      if (reg) {
+        await reg.showNotification(title, {
+          body,
+          icon: '/babylog/icon-192.png',
+          badge: '/babylog/icon-72.png',
+          tag: 'test-notification',
+        })
+        return true
+      }
+    } catch { /* fallthrough */ }
+
+    // Strategia 4: bezpośrednie new Notification (legacy fallback)
+    try {
+      new Notification(title, { body, icon: '/babylog/icon-192.png' })
       return true
     } catch {
       return false

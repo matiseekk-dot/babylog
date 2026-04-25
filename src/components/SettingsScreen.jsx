@@ -565,17 +565,19 @@ export default function SettingsScreen({
         </button>
       </div>
 
-      {/* Notifications — adaptive button:
-          - jeśli brak permission, pokazuje "Włącz powiadomienia" → triggers permission prompt
-          - jeśli permission granted, pokazuje "Wyślij testowe powiadomienie" → triggers test
-          User dostaje akcję, nie tylko komunikat błędu. */}
+      {/* Notifications — pokazuje OBA przyciski:
+          - "Włącz powiadomienia" — gdy permission !== granted (próbuje ask)
+          - "Wyślij testowe" — zawsze (TWA fix: nie polegamy na cached permission)
+
+          User dostaje akcję, nie tylko komunikat błędu. Test najpierw próbuje
+          wysłać; jeśli system odmówi mimo wszystko, dopiero wtedy mówi co poszło nie tak. */}
       <div className="card" style={{ margin: '12px 16px 0', padding: 14 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a18', marginBottom: 8 }}>
           {t('settings.notifications.title')}
         </div>
 
-        {notifPermission !== 'granted' ? (
-          /* Brak zgody — pokaż przycisk "Włącz powiadomienia" */
+        {notifPermission !== 'granted' && (
+          /* "Włącz powiadomienia" — pokazujemy gdy nie ma jeszcze zgody */
           <button
             type="button"
             onClick={async () => {
@@ -585,6 +587,7 @@ export default function SettingsScreen({
               } else if (result === 'denied') {
                 toast(t('settings.notifications.denied'), 'error')
               }
+              // Default ('default') = user nie odpowiedział — nie pokazujemy toasta
             }}
             style={{
               width: '100%',
@@ -597,37 +600,39 @@ export default function SettingsScreen({
               fontWeight: 700,
               cursor: 'pointer',
               minHeight: 40,
+              marginBottom: 8,
             }}
           >
             {t('settings.notifications.enable_btn')}
           </button>
-        ) : (
-          /* Zgoda nadana — pokaż przycisk testu */
-          <button
-            type="button"
-            onClick={async () => {
-              const ok = await testNotification()
-              toast(
-                ok ? t('settings.notifications.test_sent') : t('settings.notifications.test_blocked'),
-                ok ? 'success' : 'error'
-              )
-            }}
-            style={{
-              width: '100%',
-              padding: '10px 14px',
-              background: '#185FA5',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              minHeight: 40,
-            }}
-          >
-            {t('settings.notifications.test_btn')}
-          </button>
         )}
+
+        {/* Test button — ZAWSZE widoczny. TWA może mieć stary cached permission,
+            więc próbujemy wysłać niezależnie od tego co mówi Notification.permission. */}
+        <button
+          type="button"
+          onClick={async () => {
+            const ok = await testNotification()
+            toast(
+              ok ? t('settings.notifications.test_sent') : t('settings.notifications.test_blocked'),
+              ok ? 'success' : 'error'
+            )
+          }}
+          style={{
+            width: '100%',
+            padding: '10px 14px',
+            background: notifPermission === 'granted' ? '#185FA5' : '#6a6a64',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: 'pointer',
+            minHeight: 40,
+          }}
+        >
+          {t('settings.notifications.test_btn')}
+        </button>
 
         <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 8, lineHeight: 1.4 }}>
           {t('settings.notifications.disclaimer')}
