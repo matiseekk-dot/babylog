@@ -29,14 +29,27 @@ function SubMessage({ msg, onNavigate }) {
       onClick={() => msg.section && onNavigate?.(msg.section)}
       style={{
         display:'flex',alignItems:'center',gap:8,
-        padding:'7px 10px',
+        padding:'6px 10px',
         background:mc.subBg,border:`0.5px solid ${mc.subBorder}`,
         borderRadius:8,cursor:msg.section?'pointer':'default',
+        minHeight: 0,
       }}
     >
       <div style={{width:6,height:6,borderRadius:'50%',background:mc.barColor,flexShrink:0}} />
-      <span style={{fontSize:12,fontWeight:600,color:mc.titleColor,flex:1}}>{msg.title}</span>
-      {msg.message && <span style={{fontSize:12,color:mc.barColor,marginLeft:4,opacity:0.85,minWidth:0}}>— {msg.message}</span>}
+      <span style={{
+        fontSize:11,fontWeight:600,color:mc.titleColor,
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        flexShrink: 0,
+      }}>{msg.title}</span>
+      {msg.message && (
+        <span style={{
+          fontSize:11,color:mc.barColor,marginLeft:4,opacity:0.75,
+          flex: 1, minWidth: 0,
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          — {msg.message}
+        </span>
+      )}
       {msg.section && <span style={{fontSize:14,color:mc.barColor,flexShrink:0}}>›</span>}
     </div>
   )
