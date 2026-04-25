@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { MILESTONES } from '../data/staticData'
+import { MILESTONES, MILESTONES_EN } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { t, useLocale, isEN } from '../i18n'
@@ -39,7 +39,7 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
 
   const [deleteId, setDeleteId] = useState(null)
 
-  const builtInMilestones = isEN() ? [] : MILESTONES
+  const builtInMilestones = isEN() ? MILESTONES_EN : MILESTONES
   const allMilestones = [...builtInMilestones, ...customMilestones]
 
   const handleClick = (m) => {

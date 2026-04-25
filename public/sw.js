@@ -1,38 +1,25 @@
-// Spokojny Rodzic — Service Worker v2
+// Spokojny Rodzic — Service Worker v3
 //
-// Push notifications + lokalne przypomnienia o lekach.
+// WZORZEC PS5 VAULT — uproszczony i niezawodny:
 //
-// ARCHITEKTURA PRZYPOMNIEŃ (v2.7.5):
+// Zamiast próbować schedulować notyfikacje w tle (co nie działa — przeglądarka
+// usypia SW i timery znikają), apka przy każdym otwarciu wysyła do SW listę
+// wpisów leków + obecny czas, a SW iteruje po nich, sprawdza które przekroczyły
+// próg (minął odstęp między dawkami), i pokazuje notyfikację dla każdego.
 //
-// Problem: setTimeout w SW nie przetrwa zamknięcia apki — przeglądarka
-// usypia/zabija SW po ~30s bezczynności. Wcześniej apka korzystała z setTimeout
-// w pamięci procesu SW i to było główne źródło tego, że notyfikacje nigdy
-// nie przychodziły.
+// Cache "shown" zapobiega pokazywaniu tej samej notyfikacji dwa razy w ciągu
+// godziny.
 //
-// Rozwiązanie: persystentna kolejka w Cache API — przy każdym wakeup SW
-// (przez push, periodicsync, lub message z apki) sprawdzamy które reminders
-// są overdue i pokazujemy notyfikację.
+// LIMITACJA: notyfikacje pokazują się TYLKO gdy user otworzy apkę.
+// Jeśli apka jest zamknięta, użytkownik nic nie dostanie — ale to jest
+// uczciwe i przewidywalne, nie jak wcześniejszy "może działa, może nie".
 //
-// Kolejka ma format: { tag, title, body, fireAt: <timestamp ms> }
-// Tag jest deterministyczny (med-reminder-<logId>) więc edycja wpisu
-// nadpisuje poprzednią pozycję.
-//
-// LIMITACJA: jeśli przeglądarka jest całkowicie zamknięta i SW śpi,
-// notyfikacja może się spóźnić do momentu, aż coś obudzi SW. Pełną
-// niezawodność daje tylko FCM z serwera — TODO na v1.1.
+// Dla 100% niezawodności w tle wymagany byłby FCM (push z serwera) — TODO.
 
-const QUEUE_CACHE = 'spokojny-rodzic-reminders-v1'
-const QUEUE_KEY = '/__reminder_queue__'
+self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()))
 
-self.addEventListener('install', e => {
-  self.skipWaiting()
-})
-
-self.addEventListener('activate', e => {
-  e.waitUntil(clients.claim())
-})
-
-// ── Push Notifications ────────────────────────────────────────────────────────
+// ── Push (gdyby kiedyś FCM) ──────────────────────────────────────────────────
 
 self.addEventListener('push', e => {
   const data = e.data?.json() || {}
@@ -43,7 +30,6 @@ self.addEventListener('push', e => {
     tag: data.tag || 'spokojny-rodzic',
     renotify: true,
     data: { url: data.url || '/babylog/' },
-    actions: data.actions || [],
     vibrate: [200, 100, 200],
   }
   e.waitUntil(
@@ -63,19 +49,15 @@ self.addEventListener('notificationclick', e => {
   )
 })
 
-// ── Reminder queue: messages z apki ──────────────────────────────────────────
+// ── Główna logika: sprawdzaj wpisy leków on-demand ──────────────────────────
 
-self.addEventListener('message', e => {
-  const { type, payload, tag } = e.data || {}
-  if (type === 'SCHEDULE_MED_REMINDER') {
-    e.waitUntil(upsertReminder(payload))
-  } else if (type === 'CANCEL_MED_REMINDER') {
-    e.waitUntil(cancelReminder(tag || payload?.tag))
-  } else if (type === 'CHECK_REMINDERS_NOW') {
-    e.waitUntil(flushDue())
+self.addEventListener('message', async (event) => {
+  const { type, payload } = event.data || {}
+
+  if (type === 'CHECK_MED_REMINDERS') {
+    await checkMedReminders(payload || {})
   } else if (type === 'TEST_NOTIFICATION') {
-    // Test button w Settings
-    e.waitUntil(self.registration.showNotification(payload?.title || 'Spokojny Rodzic', {
+    await self.registration.showNotification(payload?.title || 'Spokojny Rodzic', {
       body: payload?.body || 'Test',
       icon: '/babylog/icon-192.png',
       badge: '/babylog/icon-72.png',
@@ -83,77 +65,113 @@ self.addEventListener('message', e => {
       renotify: true,
       vibrate: [200, 100, 200],
       data: { url: '/babylog/' },
-    }))
+    })
   }
 })
 
-self.addEventListener('periodicsync', e => {
-  if (e.tag === 'med-reminder-check') {
-    e.waitUntil(flushDue())
-  }
-})
-
-// ─── implementacja kolejki przez Cache API ───────────────────────────────────
-
-async function readQueue() {
-  try {
-    const cache = await caches.open(QUEUE_CACHE)
-    const res = await cache.match(QUEUE_KEY)
-    if (!res) return []
-    const txt = await res.text()
-    const parsed = JSON.parse(txt)
-    return Array.isArray(parsed) ? parsed : []
-  } catch (e) {
-    return []
-  }
-}
-
-async function writeQueue(queue) {
-  try {
-    const cache = await caches.open(QUEUE_CACHE)
-    await cache.put(QUEUE_KEY, new Response(JSON.stringify(queue), {
-      headers: { 'Content-Type': 'application/json' }
-    }))
-  } catch (e) {
-    // brak miejsca / quota — fallback to nothing
-  }
-}
-
-async function upsertReminder({ tag, title, body, fireAt }) {
-  if (!tag || !fireAt) return
-  const queue = await readQueue()
-  const filtered = queue.filter(r => r.tag !== tag)
-  filtered.push({ tag, title, body, fireAt })
-  await writeQueue(filtered)
-  // Sprawdź od razu — jeśli fireAt już minął, dostarcz natychmiast.
-  await flushDue()
-}
-
-async function cancelReminder(tag) {
-  if (!tag) return
-  const queue = await readQueue()
-  await writeQueue(queue.filter(r => r.tag !== tag))
-}
-
-async function flushDue() {
-  const queue = await readQueue()
+// payload = { logs: [{id, med, dose, date, time}], locale, strings: {title, body} }
+async function checkMedReminders({ logs = [], locale = 'pl', strings = {} }) {
   const now = Date.now()
-  const due = queue.filter(r => r.fireAt <= now)
-  const remaining = queue.filter(r => r.fireAt > now)
 
-  for (const r of due) {
-    await self.registration.showNotification(r.title || 'Spokojny Rodzic', {
-      body: r.body || '',
+  for (const log of logs) {
+    const dur = getDurationMin(log.med)
+    if (!dur) continue
+
+    const fireAt = fireAtTimestamp(log.date, log.time, dur)
+    if (fireAt === null) continue
+
+    // Pokazujemy gdy fireAt już minął, ale nie dawniej niż 6h temu
+    const minsAgo = Math.floor((now - fireAt) / 60000)
+    if (minsAgo < 0) continue          // jeszcze nie czas
+    if (minsAgo > 360) continue        // zbyt dawno — nie spamuj
+
+    // Hour bucket: jeśli user otworzy apkę 5× w ciągu godziny, dostanie 1 notyfikację
+    const hourBucket = Math.floor(now / (60 * 60 * 1000))
+    const tag = `med-${log.id}-${hourBucket}`
+    if (await wasShown(tag)) continue
+
+    const hours = Math.floor(dur / 60)
+    const dose = log.dose ? ` (${log.dose})` : ''
+    const title = strings.title || (locale === 'en'
+      ? 'Interval between doses has passed 💊'
+      : 'Minął odstęp między dawkami 💊')
+    const body = (strings.body || (locale === 'en'
+      ? '{med}{dose} — {hours}h since last dose. Only give the next dose if needed, following the medicine leaflet.'
+      : '{med}{dose} — minęło {hours}h od ostatniej dawki. Kolejną podaj tylko jeśli potrzebna, zgodnie z ulotką leku.'))
+      .replace('{med}', log.med || '')
+      .replace('{dose}', dose)
+      .replace('{hours}', hours)
+
+    await self.registration.showNotification(title, {
+      body,
       icon: '/babylog/icon-192.png',
       badge: '/babylog/icon-72.png',
-      tag: r.tag,
-      renotify: true,
+      tag,
+      renotify: false,
       vibrate: [200, 100, 200],
       data: { url: '/babylog/' },
     })
-  }
 
-  if (due.length > 0) {
-    await writeQueue(remaining)
+    await markShown(tag)
   }
+}
+
+// ── helpers ─────────────────────────────────────────────────────────────────
+
+const MED_DURATION = {
+  paracetamol: 360,  // 6h
+  ibuprofen:   480,  // 8h
+}
+
+function getDurationMin(medName) {
+  const lc = (medName || '').toLowerCase()
+  if (lc.includes('paracetamol')) return MED_DURATION.paracetamol
+  if (lc.includes('ibuprofen'))   return MED_DURATION.ibuprofen
+  return null
+}
+
+function fireAtTimestamp(dateStr, timeStr, durationMin) {
+  if (!dateStr || !timeStr) return null
+  const ref = new Date(dateStr + 'T00:00:00')
+  const [h, m] = timeStr.split(':').map(Number)
+  ref.setHours(h, m, 0, 0)
+  return ref.getTime() + durationMin * 60000
+}
+
+// "Shown notifications" cache — żeby jedna nie wyskakiwała 5×.
+const SHOWN_CACHE = 'spokojny-rodzic-shown-v1'
+
+async function wasShown(tag) {
+  try {
+    const cache = await caches.open(SHOWN_CACHE)
+    const r = await cache.match('/__shown__/' + tag)
+    return !!r
+  } catch {
+    return false
+  }
+}
+
+async function markShown(tag) {
+  try {
+    const cache = await caches.open(SHOWN_CACHE)
+    await cache.put('/__shown__/' + tag, new Response('1'))
+    cleanupShownCache()
+  } catch {}
+}
+
+async function cleanupShownCache() {
+  try {
+    const cache = await caches.open(SHOWN_CACHE)
+    const keys = await cache.keys()
+    const currentBucket = Math.floor(Date.now() / (60 * 60 * 1000))
+    for (const req of keys) {
+      const match = req.url.match(/-(\d+)$/)
+      if (match) {
+        const bucket = parseInt(match[1], 10)
+        if (currentBucket - bucket > 24) {
+          await cache.delete(req)
+        }
+      }
+    }
+  } catch {}
 }

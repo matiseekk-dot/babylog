@@ -22,6 +22,26 @@ class AppErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
+      // ErrorBoundary musi być odporny na crash i18n.js — czytamy locale
+      // bezpośrednio z localStorage/navigator (bez importu i18n).
+      let lang = 'pl'
+      try {
+        const saved = localStorage.getItem('babylog_locale')
+        if (saved === 'en' || saved === 'pl') {
+          lang = saved
+        } else if (typeof navigator !== 'undefined' && navigator.language?.startsWith('en')) {
+          lang = 'en'
+        }
+      } catch {}
+      const strings = lang === 'en' ? {
+        title: 'Something went wrong',
+        body: 'The app encountered an error. Your data is safe. Click below to try again.',
+        btn: 'Reload app',
+      } : {
+        title: 'Coś poszło nie tak',
+        body: 'Apka napotkała błąd. Twoje dane są bezpieczne. Kliknij poniżej, żeby spróbować ponownie.',
+        btn: 'Przeładuj aplikację',
+      }
       return (
         <div style={{
           padding: '40px 24px',
@@ -33,11 +53,10 @@ class AppErrorBoundary extends React.Component {
         }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>😕</div>
           <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12, color: '#1a1a18' }}>
-            Coś poszło nie tak
+            {strings.title}
           </h1>
           <p style={{ fontSize: 14, color: '#5a5a56', lineHeight: 1.5, marginBottom: 24 }}>
-            Apka napotkała błąd. Twoje dane są bezpieczne.
-            Kliknij poniżej, żeby spróbować ponownie.
+            {strings.body}
           </p>
           <button
             onClick={() => window.location.reload()}
@@ -53,7 +72,7 @@ class AppErrorBoundary extends React.Component {
               minHeight: 48,
             }}
           >
-            Przeładuj aplikację
+            {strings.btn}
           </button>
           {import.meta.env.DEV && (
             <pre style={{

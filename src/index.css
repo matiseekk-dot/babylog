@@ -43,6 +43,26 @@ body {
 button { font-family: inherit; cursor: pointer; }
 input, select, textarea { font-family: inherit; }
 
+/* Focus styles — wymagane przez WCAG 2.1 AA dla keyboard / screen reader users.
+   :focus-visible (nie :focus) — pokazuje indicator tylko przy nawigacji
+   klawiaturą, nie po kliknięciu myszką (tam by był brzydki ring). */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible {
+  outline: 2px solid #1D9E75;
+  outline-offset: 2px;
+}
+
+/* Czyste :focus bez visible — usuń domyślny ring (np. po kliknięciu),
+   :focus-visible wyżej i tak daje go dla klawiatury. */
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
 input[type=text], input[type=number], input[type=time], input[type=date], select, textarea {
   font-size: 16px;
   appearance: none;

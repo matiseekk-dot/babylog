@@ -1,25 +1,26 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { t } from '../i18n'
+import { useState, useEffect, useCallback } from 'react'
+import { t, getLocale } from '../i18n'
 import { loadFromStorage } from './useStorage'
-import { captureError, addBreadcrumb } from '../sentry'
+import { addBreadcrumb } from '../sentry'
 
 /**
  * useMedReminder(babyId)
  *
- * Architektura przypomnień (v2.7.5):
+ * WZORZEC PS5 VAULT — apka przy każdym otwarciu wysyła do SW listę wpisów
+ * leków i SW iteruje, sprawdza, pokazuje notyfikacje dla overdue dawek.
  *
- *   1) APKA OTWARTA — foreground timer w window (setTimeout). Niezawodny ale
- *      wymaga, żeby apka była uruchomiona. Każde planowanie wysyła też event
- *      do SW z absolute timestamp `fireAt`, który leci do persystentnej
- *      kolejki w Cache API.
+ * Notyfikacje pokazują się TYLKO gdy user otworzy apkę. To uczciwy compromise:
+ * nie obiecujemy działania w tle (które i tak nie działa niezawodnie w PWA),
+ * ale za to działa deterministycznie kiedy user wraca do apki.
  *
- *   2) APKA W TLE — SW dostaje wakeup przez periodicsync (jeśli przeglądarka
- *      go obsługuje) i sprawdza kolejkę przez `flushDue()`.
+ * Zwraca:
+ *   permission        – 'default' | 'granted' | 'denied' | 'unsupported'
+ *   askPermission()   – prośba o zgodę
+ *   testNotification() – pokaż testową notyfikację
+ *   pendingReminders  – lista aktywnych przypomnień dla UI badge'a
  *
- *   3) APKA ZAMKNIĘTA — best-effort: gdy user otworzy apkę później, ona
- *      wyśle CHECK_REMINDERS_NOW i SW dostarczy zaległe notyfikacje.
- *
- * Pełna niezawodność wymaga FCM (push z serwera) — TODO v1.1.
+ * scheduleReminder/cancelReminder są w API zachowane, ale są no-opami —
+ * cała logika dzieje się w checkAllReminders() wywoływanym automatycznie.
  */
 
 const MED_DURATION = {
@@ -27,13 +28,10 @@ const MED_DURATION = {
   ibuprofen:   480,  // 8h
 }
 
-function matchesMed(medName, key) {
-  return (medName || '').toLowerCase().includes(key)
-}
-
 function getDurationMin(medName) {
-  if (matchesMed(medName, 'paracetamol')) return MED_DURATION.paracetamol
-  if (matchesMed(medName, 'ibuprofen'))   return MED_DURATION.ibuprofen
+  const lc = (medName || '').toLowerCase()
+  if (lc.includes('paracetamol')) return MED_DURATION.paracetamol
+  if (lc.includes('ibuprofen'))   return MED_DURATION.ibuprofen
   return null
 }
 
@@ -49,8 +47,7 @@ async function requestPermission() {
   if (!('Notification' in window)) return 'unsupported'
   if (Notification.permission === 'granted') return 'granted'
   if (Notification.permission === 'denied') return 'denied'
-  const result = await Notification.requestPermission()
-  return result
+  return await Notification.requestPermission()
 }
 
 function sendToSW(message) {
@@ -59,32 +56,76 @@ function sendToSW(message) {
   return true
 }
 
+/**
+ * Wyślij do SW listę wpisów leków + obecne strings i18n.
+ * SW sam zdecyduje którym wpisom pokazać notyfikację.
+ */
+function checkAllReminders(babyId) {
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+  const logs = loadFromStorage(`meds_${babyId}`, [])
+  if (!logs.length) return
+
+  // Bierzemy tylko 10 najnowszych wpisów — starsze już dawno wygasły
+  const recent = logs.slice(0, 10)
+
+  sendToSW({
+    type: 'CHECK_MED_REMINDERS',
+    payload: {
+      logs: recent.map(l => ({
+        id: l.id,
+        med: l.med,
+        dose: l.dose,
+        date: l.date,
+        time: l.time,
+      })),
+      locale: getLocale(),
+      strings: {
+        title: t('reminder.med.title'),
+        body: t('reminder.med.body', { med: '{med}', dose: '{dose}', hours: '{hours}' }),
+      },
+    },
+  })
+
+  addBreadcrumb('reminder', 'check-sent', { babyId, count: recent.length })
+}
+
 export function useMedReminder(babyId) {
   const [permission, setPermission] = useState(
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
   )
   const [pending, setPending] = useState([])
-  // Foreground timery — działają tylko gdy apka otwarta. Klucz: tag, value: timeoutId.
-  const fgTimers = useRef(new Map())
 
-  // Po wznowieniu apki (visibility change / focus) — poproś SW o sprawdzenie kolejki.
-  // To dostarczy zaległe notyfikacje, które SW przegapił bo był uśpiony.
+  // ── Wywołuj checkAllReminders przy każdym wznowieniu apki ──
+  // To jest serce wzorca PS5 Vault. Apka otwarta → SW dostaje listę → pokazuje co trzeba.
   useEffect(() => {
-    const checkOnResume = () => {
+    if (!babyId || permission !== 'granted') return
+
+    const trigger = () => {
       if (document.visibilityState === 'visible') {
-        sendToSW({ type: 'CHECK_REMINDERS_NOW' })
+        checkAllReminders(babyId)
       }
     }
-    document.addEventListener('visibilitychange', checkOnResume)
-    window.addEventListener('focus', checkOnResume)
-    checkOnResume()
-    return () => {
-      document.removeEventListener('visibilitychange', checkOnResume)
-      window.removeEventListener('focus', checkOnResume)
-    }
-  }, [])
 
-  // Lista pending dla UI — odświeżana co minutę
+    // 1) Na mount
+    trigger()
+
+    // 2) Gdy apka wraca z tła
+    document.addEventListener('visibilitychange', trigger)
+    window.addEventListener('focus', trigger)
+
+    // 3) Co 5 minut gdy apka jest otwarta — łapie wpisy które przekroczyły próg
+    //    podczas otwartej sesji (user dał lek 5h temu, siedzi w apce, po godzinie
+    //    minie 6h — chcemy żeby dostał notyfikację bez zamykania/otwierania)
+    const interval = setInterval(trigger, 5 * 60 * 1000)
+
+    return () => {
+      document.removeEventListener('visibilitychange', trigger)
+      window.removeEventListener('focus', trigger)
+      clearInterval(interval)
+    }
+  }, [babyId, permission])
+
+  // ── Lista pending dla UI badge'a (osobne od logiki notyfikacji) ──
   useEffect(() => {
     const refresh = () => {
       const logs = loadFromStorage(`meds_${babyId}`, [])
@@ -116,101 +157,38 @@ export function useMedReminder(babyId) {
     return () => clearInterval(id)
   }, [babyId])
 
-  // Cleanup foreground timerów przy unmount
-  useEffect(() => {
-    const map = fgTimers.current
-    return () => {
-      map.forEach(id => clearTimeout(id))
-      map.clear()
-    }
-  }, [])
-
   const askPermission = useCallback(async () => {
     const result = await requestPermission()
     setPermission(result)
     addBreadcrumb('reminder', 'permission-result', { result })
+    // Po przyznaniu zgody — od razu sprawdź czy są overdue wpisy do pokazania
+    if (result === 'granted' && babyId) {
+      setTimeout(() => checkAllReminders(babyId), 100)
+    }
     return result
-  }, [])
+  }, [babyId])
 
-  const scheduleReminder = useCallback((log) => {
-    if (!log) return
-    const dur = getDurationMin(log.med)
-    if (!dur) return
-
-    const fireAt = fireAtTimestamp(log.date, log.time, dur)
-    if (fireAt === null) return
-    const delayMs = fireAt - Date.now()
-    if (delayMs <= 0) return
-
-    const tag = `med-reminder-${log.id}`
-    const title = t('reminder.med.title')
-    const body = t('reminder.med.body', {
-      med: log.med,
-      dose: log.dose ? ` (${log.dose})` : '',
-      hours: Math.floor(dur / 60),
-    })
-
-    // Czytamy aktualny stan permission — useCallback deps może być stary
-    // (race condition gdy user akceptuje permission i od razu zapisuje wpis).
-    const perm = typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
-    if (perm !== 'granted') {
-      addBreadcrumb('reminder', 'schedule-skipped-no-permission', { tag })
-      return
+  // scheduleReminder / cancelReminder — zachowane dla zgodności z MedsTab,
+  // ale są no-opami. Cała logika jest w checkAllReminders.
+  // (Po zapisie wpisu, useEffect powyżej i tak wystrzeli check, więc OK.)
+  const scheduleReminder = useCallback(() => {
+    if (babyId && permission === 'granted') {
+      // Trigger ad-hoc check po zapisie wpisu — gdyby właśnie minął odstęp.
+      setTimeout(() => checkAllReminders(babyId), 100)
     }
+  }, [babyId, permission])
 
-    // 1) Persystentna kolejka w SW
-    sendToSW({
-      type: 'SCHEDULE_MED_REMINDER',
-      payload: { tag, title, body, fireAt },
-    })
+  const cancelReminder = useCallback(() => { /* no-op */ }, [])
 
-    // 2) Foreground timer (backup gdy apka jest otwarta przez całe okno).
-    //    Maks. 24h żeby uniknąć overflow w setTimeout (limit ~24.8 dni).
-    if (delayMs < 24 * 60 * 60 * 1000) {
-      const existing = fgTimers.current.get(tag)
-      if (existing) clearTimeout(existing)
-      const id = setTimeout(() => {
-        fgTimers.current.delete(tag)
-        try {
-          new Notification(title, {
-            body,
-            icon: '/babylog/icon-192.png',
-            tag,
-          })
-        } catch (e) {
-          // PWA czasem blokuje `new Notification()` — zostawiamy SW
-          captureError(e, { context: 'fg-notification', tag })
-        }
-      }, delayMs)
-      fgTimers.current.set(tag, id)
-    }
-
-    addBreadcrumb('reminder', 'scheduled', { tag, fireAt, delayMin: Math.floor(delayMs / 60000) })
-  }, [])
-
-  const cancelReminder = useCallback((logId) => {
-    const tag = `med-reminder-${logId}`
-    sendToSW({ type: 'CANCEL_MED_REMINDER', tag })
-    const existing = fgTimers.current.get(tag)
-    if (existing) {
-      clearTimeout(existing)
-      fgTimers.current.delete(tag)
-    }
-  }, [])
-
-  // Test button — pokazuje notyfikację natychmiast, żeby user mógł zweryfikować
-  // że uprawnienia + SW + system notyfikacji działają poprawnie.
   const testNotification = useCallback(() => {
-    const perm = typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
-    if (perm !== 'granted') return false
-    sendToSW({
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return false
+    return sendToSW({
       type: 'TEST_NOTIFICATION',
       payload: {
         title: t('reminder.test.title'),
         body: t('reminder.test.body'),
       },
     })
-    return true
   }, [])
 
   return {

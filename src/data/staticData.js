@@ -1,3 +1,4 @@
+// PL — domyślny zestaw kamieni milowych (Polska)
 export const MILESTONES = [
   // 0-12 months (original)
   { id:'m1', emoji:'😊', name:'Uśmiech społeczny', age:'2 mies.', months:2 },
@@ -48,6 +49,55 @@ export const MILESTONES = [
   { id:'m43', emoji:'✏️', name:'Pisze swoje imię', age:'5 lat', months:60 },
 ]
 
+// EN — wersja angielska tej samej listy (same id-ki, te same months — żeby logika
+// "zaznaczone milestones" działała jeśli user przełączy język)
+export const MILESTONES_EN = [
+  { id:'m1', emoji:'😊', name:'Social smile', age:'2 mo', months:2 },
+  { id:'m2', emoji:'👀', name:'Tracks with eyes', age:'2–3 mo', months:2 },
+  { id:'m3', emoji:'🙃', name:'Holds head up', age:'3 mo', months:3 },
+  { id:'m4', emoji:'💬', name:'Babbles', age:'3–4 mo', months:3 },
+  { id:'m5', emoji:'🔄', name:'Rolls over', age:'4–5 mo', months:4 },
+  { id:'m6', emoji:'🫱', name:'Grasps objects', age:'5 mo', months:5 },
+  { id:'m7', emoji:'🪑', name:'Sits with support', age:'6 mo', months:6 },
+  { id:'m8', emoji:'🥣', name:'First solids / BLW', age:'6 mo', months:6 },
+  { id:'m9', emoji:'🦷', name:'First tooth', age:'6–8 mo', months:6 },
+  { id:'m10', emoji:'🧸', name:'Plays peek-a-boo', age:'8–9 mo', months:8 },
+  { id:'m11', emoji:'🚼', name:'Crawls', age:'9–10 mo', months:9 },
+  { id:'m12', emoji:'🗣️', name:'First word', age:'10–12 mo', months:10 },
+  { id:'m13', emoji:'🦶', name:'Pulls to stand', age:'10–11 mo', months:10 },
+  { id:'m14', emoji:'👟', name:'First steps', age:'12 mo', months:12 },
+  { id:'m15', emoji:'🤌', name:'Points at things', age:'12 mo', months:12 },
+  { id:'m16', emoji:'🏃', name:'Walks independently', age:'12–15 mo', months:12 },
+  { id:'m17', emoji:'🗣️', name:'Uses 2-3 words', age:'12–15 mo', months:13 },
+  { id:'m18', emoji:'🍴', name:'Eats with spoon', age:'15–18 mo', months:15 },
+  { id:'m19', emoji:'🤗', name:'Waves goodbye', age:'12–15 mo', months:12 },
+  { id:'m20', emoji:'🏗️', name:'Stacks 2 blocks', age:'15–18 mo', months:15 },
+  { id:'m21', emoji:'📖', name:'Recognizes pictures in books', age:'15–18 mo', months:15 },
+  { id:'m22', emoji:'🗣️', name:'First sentence (2 words)', age:'18–24 mo', months:18 },
+  { id:'m23', emoji:'🏃', name:'Runs', age:'18 mo', months:18 },
+  { id:'m24', emoji:'🎨', name:'Scribbles with crayon', age:'18 mo', months:18 },
+  { id:'m25', emoji:'👕', name:'Helps with dressing', age:'18–24 mo', months:18 },
+  { id:'m26', emoji:'🚽', name:'Signals toilet need', age:'18–24 mo', months:20 },
+  { id:'m27', emoji:'🗣️', name:'Speaks in 3-4 word sentences', age:'2–3 yr', months:24 },
+  { id:'m28', emoji:'👖', name:'Takes off pants alone', age:'2–3 yr', months:24 },
+  { id:'m29', emoji:'🏃', name:'Jumps with both feet', age:'2 yr', months:24 },
+  { id:'m30', emoji:'🚽', name:'Uses potty', age:'2–3 yr', months:24 },
+  { id:'m31', emoji:'🧼', name:'Washes hands independently', age:'2–3 yr', months:28 },
+  { id:'m32', emoji:'🎨', name:'Draws a circle', age:'3 yr', months:36 },
+  { id:'m33', emoji:'🤝', name:'Plays with other children', age:'3 yr', months:36 },
+  { id:'m34', emoji:'🧩', name:'Solves simple puzzles', age:'3 yr', months:36 },
+  { id:'m35', emoji:'🚽', name:'Dry nights', age:'3–4 yr', months:36 },
+  { id:'m36', emoji:'🚴', name:'Rides a balance bike', age:'3–4 yr', months:36 },
+  { id:'m37', emoji:'✂️', name:'Uses scissors', age:'3–4 yr', months:40 },
+  { id:'m38', emoji:'🔢', name:'Counts to 10', age:'4 yr', months:48 },
+  { id:'m39', emoji:'🎨', name:'Draws a person (head+legs)', age:'4 yr', months:48 },
+  { id:'m40', emoji:'📖', name:'Tells a simple story', age:'4 yr', months:48 },
+  { id:'m41', emoji:'👕', name:'Dresses independently', age:'4–5 yr', months:48 },
+  { id:'m42', emoji:'🚴', name:'Rides a bicycle', age:'4–5 yr', months:54 },
+  { id:'m43', emoji:'✏️', name:'Writes their name', age:'5 yr', months:60 },
+]
+
+// PL — Polski Program Szczepień Ochronnych (PSO) — domyślny dla apki
 export const VACCINATIONS = [
   { id:'v1', name:'BCG (gruźlica)', when:'Przy urodzeniu', months:0 },
   { id:'v2', name:'WZW B – dawka 1', when:'Przy urodzeniu', months:0 },
@@ -64,6 +114,11 @@ export const VACCINATIONS = [
   { id:'v13', name:'DTP + IPV dawka 4 (przypominająca)', when:'16–18. miesiąc', months:16 },
   { id:'v14', name:'Hib dawka 4', when:'16–18. miesiąc', months:16 },
 ]
+
+// EN: brak built-in listy szczepień. Polska baza (PSO) nie pasuje do EN userów,
+// a uniwersalny harmonogram międzynarodowy nie istnieje — różne kraje, różne
+// schematy (US CDC vs UK NHS vs DE STIKO). Roadmap v1.1: per-kraj harmonogramy.
+// EN userzy dodają własne wpisy ręcznie.
 
 export const DIET_ITEMS = [
   { id:'d1', emoji:'🥕', name:'Marchew', months:5 },
@@ -89,6 +144,32 @@ export const DIET_ITEMS = [
   { id:'d21', emoji:'🍯', name:'Miód', months:12 },
   { id:'d22', emoji:'🥓', name:'Sól (dodawana)', months:12 },
   { id:'d23', emoji:'🍬', name:'Cukier (dodawany)', months:24 },
+]
+
+export const DIET_ITEMS_EN = [
+  { id:'d1', emoji:'🥕', name:'Carrot', months:5 },
+  { id:'d2', emoji:'🥦', name:'Broccoli', months:5 },
+  { id:'d3', emoji:'🍠', name:'Sweet potato', months:5 },
+  { id:'d4', emoji:'🎃', name:'Pumpkin', months:5 },
+  { id:'d5', emoji:'🍎', name:'Apple', months:5 },
+  { id:'d6', emoji:'🍐', name:'Pear', months:5 },
+  { id:'d7', emoji:'🫐', name:'Blueberries', months:6 },
+  { id:'d8', emoji:'🍌', name:'Banana', months:6 },
+  { id:'d9', emoji:'🐔', name:'Chicken', months:6 },
+  { id:'d10', emoji:'🐟', name:'Fish (lean)', months:7 },
+  { id:'d11', emoji:'🥚', name:'Egg yolk', months:7 },
+  { id:'d12', emoji:'🌾', name:'Semolina (gluten)', months:6 },
+  { id:'d13', emoji:'🍚', name:'Rice', months:6 },
+  { id:'d14', emoji:'🫘', name:'Lentils', months:8 },
+  { id:'d15', emoji:'🧀', name:'Cottage cheese', months:8 },
+  { id:'d16', emoji:'🥛', name:'Plain yogurt', months:8 },
+  { id:'d17', emoji:'🥜', name:'Peanut butter (smooth)', months:6 },
+  { id:'d18', emoji:'🌰', name:'Sesame / tahini', months:7 },
+  { id:'d19', emoji:'🍳', name:'Whole egg', months:12 },
+  { id:'d20', emoji:'🐄', name:'Cow\'s milk (as drink)', months:12 },
+  { id:'d21', emoji:'🍯', name:'Honey', months:12 },
+  { id:'d22', emoji:'🥓', name:'Salt (added)', months:12 },
+  { id:'d23', emoji:'🍬', name:'Sugar (added)', months:24 },
 ]
 
 export const MOOD_OPTIONS = [

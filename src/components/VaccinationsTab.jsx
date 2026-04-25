@@ -17,8 +17,10 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
   // Lets them mark done with a CUSTOM date (not just today).
   const [dateModal, setDateModal] = useState(null)
 
-  // W wersji EN ukrywamy polskie PSO (nie mamy anglojęzycznej listy US CDC)
-  // User może dodać custom szczepienia — pokazujemy tylko te.
+  // W wersji EN: brak built-in listy szczepień — Polska baza (PSO) nie pasuje
+  // do EN userów, a uniwersalny międzynarodowy harmonogram nie istnieje
+  // (US CDC vs UK NHS vs DE STIKO różnią się). EN user dodaje własne wpisy.
+  // Roadmap v1.1: per-kraj harmonogramy.
   const builtInVaccines = isEN() ? [] : VACCINATIONS
   const allVacc = [...builtInVaccines, ...customVacc]
 

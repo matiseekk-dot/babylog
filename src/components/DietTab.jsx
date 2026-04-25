@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { DIET_ITEMS } from '../data/staticData'
+import { DIET_ITEMS, DIET_ITEMS_EN } from '../data/staticData'
 import { genId } from '../utils/helpers'
 import Modal from './Modal'
 import { t, useLocale, isEN } from '../i18n'
@@ -17,7 +17,7 @@ export default function DietTab({uid, babyId, ageMonths }) {
   const [form, setForm] = useState({ name: '', emoji: '🥕', months: String(ageMonths) })
 
   // W EN ukrywamy polskie built-in produkty — user dodaje custom po angielsku
-  const builtInDiet = isEN() ? [] : DIET_ITEMS
+  const builtInDiet = isEN() ? DIET_ITEMS_EN : DIET_ITEMS
   const allItems = [...builtInDiet, ...customItems]
 
   const toggle = (id) => {

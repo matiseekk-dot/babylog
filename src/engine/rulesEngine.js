@@ -101,6 +101,7 @@ const RULES = [
         status: 'critical',
         title: t('rule.temp_infant.title'),
         message: t('rule.temp_infant.msg', {temp: last.temp.toFixed(1), months: ageMonths}),
+      source: 'rule.source.aap',
       }
     },
   },
@@ -117,6 +118,7 @@ const RULES = [
         status: 'critical',
         title: t('rule.temp_extreme.title'),
         message: t('rule.temp_extreme.msg', {temp: last.temp.toFixed(1)}),
+      source: 'rule.source.aap',
       }
     },
   },
@@ -135,6 +137,7 @@ const RULES = [
         status: 'alert',
         title: t('rule.temp_young_infant.title'),
         message: t('rule.temp_young_infant.msg', {temp: last.temp.toFixed(1), months: ageMonths}),
+      source: 'rule.source.aap',
       }
     },
   },
@@ -152,6 +155,7 @@ const RULES = [
         status: 'alert',
         title: t('rule.temp_alert.title'),
         message: t('rule.temp_alert.msg', {temp: last.temp.toFixed(1)}),
+      source: 'rule.source.aap',
       }
     },
   },
@@ -168,6 +172,7 @@ const RULES = [
         status: 'critical',
         title: t('rule.temp_critical.title'),
         message: t('rule.temp_critical.msg', {temp: last.temp.toFixed(1)}),
+      source: 'rule.source.aap',
       }
     },
   },
@@ -191,6 +196,7 @@ const RULES = [
         status: 'warning',
         title: t('rule.temp_rising.title'),
         message: t('rule.temp_rising.msg', {t1, t2, t3}),
+        source: 'rule.source.observation',
       }
     },
   },
@@ -228,6 +234,7 @@ const RULES = [
         status: 'alert',
         title: t('rule.med_not_working.title'),
         message: t('rule.med_not_working.msg', {med: lastMed.med, hours: Math.floor(minAgo / 60)}),
+      source: 'rule.source.smpc',
       }
     },
   },
@@ -261,6 +268,7 @@ const RULES = [
         status: 'info',
         title: t('rule.med_expired.title'),
         message: t('rule.med_expired.msg', {name, hours: Math.floor(ago/60), mins: ago % 60}),
+      source: 'rule.source.smpc',
       }
     },
   },
@@ -289,6 +297,7 @@ const RULES = [
             status: 'info',
             title: t('rule.med_too_soon.title'),
             message: t('rule.med_too_soon.para', {hours: remainingH, mins: remainingM}),
+            source: 'rule.source.smpc',
           }
         }
       }
@@ -301,6 +310,7 @@ const RULES = [
             status: 'info',
             title: t('rule.med_too_soon.title'),
             message: t('rule.med_too_soon.ibu', {hours: remainingH, mins: remainingM}),
+            source: 'rule.source.smpc',
           }
         }
       }
@@ -326,6 +336,7 @@ const RULES = [
           status: 'alert',
           title: t('rule.med_limit.title'),
           message: t('rule.med_limit.para', {count: paracCount}),
+          source: 'rule.source.smpc',
         }
       }
       if (ibuCount >= 4) {
@@ -333,6 +344,7 @@ const RULES = [
           status: 'alert',
           title: t('rule.med_limit.title'),
           message: t('rule.med_limit.ibu', {count: ibuCount}),
+          source: 'rule.source.smpc',
         }
       }
       return null
@@ -362,6 +374,7 @@ const RULES = [
         status: 'warning',
         title: t('rule.sleep_deficit.title'),
         message: t('rule.sleep_deficit.msg', {h, m, min: norm.min, max: norm.max}),
+        source: 'rule.source.aap',
       }
     },
   },
@@ -391,6 +404,7 @@ const RULES = [
         status: 'critical',
         title: t('rule.combined.title'),
         message: t('rule.combined.msg', {temp: lastTemp.temp.toFixed(1)}),
+        source: 'rule.source.aap',
       }
     },
   },
@@ -426,6 +440,7 @@ const RULES = [
         status: 'info',
         title: t('rule.feed_time.title'),
         message: t('rule.feed_time.msg', {hours: h, mins: minAgo % 60}),
+        source: 'rule.source.observation',
       }
     },
   },

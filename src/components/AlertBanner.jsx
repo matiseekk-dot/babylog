@@ -1,6 +1,14 @@
 import React from 'react'
+import { t } from '../i18n'
 
-// Mapowanie status → styl (nowe statusy: ok/info/warning/alert/critical)
+// v2.7.5: Złagodzone kolory dla `alert` i `critical`. Wcześniej "krytyczne"
+// ostrzeżenia miały krzyczący czerwony tło + ikonę 🆘 — to wyglądało jak
+// rekomendacja medyczna. Teraz wszystkie statusy używają stonowanej palety
+// informacyjnej, zgodnie z framingiem "informacja referencyjna z literatury".
+//
+// Status `critical` zostaje w kodzie żeby logika reguł działała bez zmian,
+// ale wizualnie nie różni się od warning — komunikat "to jest poważne"
+// dostarcza TREŚĆ wiadomości (cytat AAP), nie kolor.
 const STYLES = {
   ok: {
     bg: '#E1F5EE', border: '#9FE1CB',
@@ -12,27 +20,29 @@ const STYLES = {
   },
   warning: {
     bg: '#FAEEDA', border: '#FAC775',
-    titleColor: '#633806', msgColor: '#854F0B', icon: '⚠️',
+    titleColor: '#633806', msgColor: '#854F0B', icon: 'ℹ️',
   },
   alert: {
-    bg: '#FAECE7', border: '#F0997B',
-    titleColor: '#712B13', msgColor: '#993C1D', icon: '🚨',
+    bg: '#FAEEDA', border: '#FAC775',
+    titleColor: '#633806', msgColor: '#854F0B', icon: 'ℹ️',
   },
   critical: {
-    bg: '#FCEBEB', border: '#F09595',
-    titleColor: '#501313', msgColor: '#791F1F', icon: '🆘',
+    bg: '#FAEEDA', border: '#F0997B',
+    titleColor: '#712B13', msgColor: '#993C1D', icon: 'ℹ️',
   },
 }
 
 /**
- * AlertBanner — jeden komunikat
- * @param {{ status, title, message, action?, actionTarget? }} msg
- * @param {Function} onAction — nawigacja do sekcji
- * @param {boolean} compact — mniejszy wariant
+ * AlertBanner — jeden komunikat referencyjny.
+ *
+ * msg ma pola: status, title, message, source (klucz i18n), action, actionTarget
+ * Pod każdym warning/alert/critical pokazujemy disclaimer — wymóg framingu
+ * "informacja referencyjna" (MDCG 2019-11).
  */
 export default function AlertBanner({ msg, onAction, compact = false }) {
   if (!msg) return null
   const s = STYLES[msg.status] || STYLES.info
+  const needsDisclaimer = ['warning', 'alert', 'critical'].includes(msg.status)
 
   return (
     <div style={{
@@ -55,6 +65,29 @@ export default function AlertBanner({ msg, onAction, compact = false }) {
             {msg.message}
           </div>
         )}
+        {msg.source && (
+          <div style={{
+            fontSize: 10,
+            color: s.msgColor,
+            opacity: 0.75,
+            marginTop: 6,
+            fontStyle: 'italic',
+            lineHeight: 1.35,
+          }}>
+            {t('rule.source_label')} {t(msg.source)}
+          </div>
+        )}
+        {needsDisclaimer && !compact && (
+          <div style={{
+            fontSize: 10,
+            color: s.msgColor,
+            opacity: 0.65,
+            marginTop: 6,
+            lineHeight: 1.35,
+          }}>
+            {t('rule.disclaimer')}
+          </div>
+        )}
       </div>
       {msg.action && onAction && (
         <button onClick={() => onAction(msg.actionTarget)} style={{
@@ -70,7 +103,8 @@ export default function AlertBanner({ msg, onAction, compact = false }) {
 }
 
 /**
- * SectionAlerts — renderuje listę komunikatów dla sekcji
+ * SectionAlerts — lista alertów dla sekcji. Compact (oszczędność miejsca)
+ * pokazuje source ale nie disclaimer.
  */
 export function SectionAlerts({ alerts, onAction }) {
   if (!alerts?.length) return null
