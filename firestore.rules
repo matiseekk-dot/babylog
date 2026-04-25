@@ -17,7 +17,15 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Profile dziecka — user czyta/pisze tylko swoje
+    // GŁÓWNA ŚCIEŻKA DANYCH APKI: users/{uid}/data/{klucz}
+    // Tutaj zapisuje useFirestore() wszystkie dane usera:
+    // feed_<profileId>, diaper_<profileId>, temp_<profileId>, meds_<profileId>,
+    // sleep_<profileId>, growth_<profileId>, profiles, settings, etc.
+    match /users/{userId}/data/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Profile dziecka (alternatywna ścieżka, jeśli kiedykolwiek użyta) — user czyta/pisze tylko swoje
     match /users/{userId}/profiles/{profileId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
 

@@ -114,22 +114,36 @@ exports.scheduleNotifications = onSchedule(
 async function processUser(uid, tokens) {
   let sent = 0
 
-  // Pobranie wszystkich profili dziecka usera
-  const profilesSnap = await db.collection('users').doc(uid).collection('profiles').get()
+  // Apka zapisuje wszystkie dane pod users/{uid}/data/{klucz}
+  // Profile są pod kluczem 'profiles' (lista profili dziecka)
+  // Leki są pod kluczem 'meds_<profileId>' (lista wpisów per profil)
+  // Każdy dokument ma format { value: [...array of items] }
 
-  for (const profileDoc of profilesSnap.docs) {
-    const profileId = profileDoc.id
+  const dataCollection = db.collection('users').doc(uid).collection('data')
 
-    // Pobranie ostatnich 10 wpisów leków dla tego profilu
-    const medsRef = db
-      .collection('users').doc(uid)
-      .collection('profiles').doc(profileId)
-      .collection('meds')
+  // Pobranie listy profili
+  const profilesDoc = await dataCollection.doc('profiles').get()
+  if (!profilesDoc.exists) return 0
+  const profiles = profilesDoc.data()?.value || []
+  if (!Array.isArray(profiles) || profiles.length === 0) return 0
 
-    const medsSnap = await medsRef.orderBy('date', 'desc').orderBy('time', 'desc').limit(10).get()
+  for (const profile of profiles) {
+    const profileId = profile.id
+    if (!profileId) continue
 
-    for (const medDoc of medsSnap.docs) {
-      const log = medDoc.data()
+    // Pobranie wpisów leków dla tego profilu
+    const medsDoc = await dataCollection.doc(`meds_${profileId}`).get()
+    if (!medsDoc.exists) continue
+    const meds = medsDoc.data()?.value || []
+    if (!Array.isArray(meds) || meds.length === 0) continue
+
+    // Przetworzenie ostatnich 10 wpisów (starsze i tak wygasły dawno)
+    const recent = meds.slice(0, 10)
+    const updatedMeds = [...meds]
+    let medsModified = false
+
+    for (let i = 0; i < recent.length; i++) {
+      const log = recent[i]
       // Skip jeśli już powiadomiony
       if (log.notified === true) continue
 
@@ -152,7 +166,7 @@ async function processUser(uid, tokens) {
       const message = {
         notification: { title, body },
         data: {
-          tag: `med-${medDoc.id}`,
+          tag: `med-${log.id}`,
           url: '/babylog/?tab=meds',
         },
         tokens: tokens,
@@ -168,24 +182,30 @@ async function processUser(uid, tokens) {
 
         // Cleanup nieprawidłowych tokenów (np. user odinstalował apkę)
         if (response.failureCount > 0) {
-          for (let i = 0; i < response.responses.length; i++) {
-            const r = response.responses[i]
+          for (let j = 0; j < response.responses.length; j++) {
+            const r = response.responses[j]
             if (!r.success && (
               r.error?.code === 'messaging/invalid-registration-token' ||
               r.error?.code === 'messaging/registration-token-not-registered'
             )) {
-              const badToken = tokens[i]
+              const badToken = tokens[j]
               await db.collection('users').doc(uid).collection('tokens').doc(badToken).delete()
               console.log(`[processUser] removed invalid token for uid=${uid}`)
             }
           }
         }
 
-        // Mark as notified
-        await medDoc.ref.update({ notified: true, notifiedAt: admin.firestore.FieldValue.serverTimestamp() })
+        // Mark as notified — modyfikujemy lokalnie i zapiszemy raz na końcu
+        updatedMeds[i] = { ...log, notified: true, notifiedAt: Date.now() }
+        medsModified = true
       } catch (err) {
         console.error(`[processUser] sendEachForMulticast failed:`, err)
       }
+    }
+
+    // Jeśli oznaczyliśmy coś jako notified, zapisz z powrotem cały array
+    if (medsModified) {
+      await dataCollection.doc(`meds_${profileId}`).set({ value: updatedMeds }, { merge: true })
     }
   }
 
