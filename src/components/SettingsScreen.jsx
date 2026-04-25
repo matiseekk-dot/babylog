@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { useMedReminder } from '../hooks/useMedReminder'
+import { useFCM } from '../hooks/useFCM'
 import { t, useLocale } from '../i18n'
 import { exportAllToCsv } from '../utils/csvExport'
 import { exportAllDataAsJson, exportAllDataAsCsv } from '../utils/dataExport'
@@ -50,6 +51,9 @@ export default function SettingsScreen({
   const [questions]    = useFirestore(uid, `doctor_questions_${profile.id}`, [])
   const { locale } = useLocale()
   const { permission: notifPermission, testNotification, askPermission: askNotifPermission } = useMedReminder(profile.id)
+  // FCM: pobiera token i zapisuje do Firestore żeby Cloud Function mogła wysyłać push.
+  // Token rejestruje się automatycznie po nadaniu zgody (useEffect w useFCM).
+  const { refreshToken: refreshFcmToken } = useFCM(uid)
   const [pdfModal, setPdfModal] = useState(false)
   const [showFeatures, setShowFeatures] = useState(false)
   const [name, setName] = useState(profile.name)
@@ -583,6 +587,9 @@ export default function SettingsScreen({
             onClick={async () => {
               const result = await askNotifPermission()
               if (result === 'granted') {
+                // Po nadaniu zgody — od razu zarejestruj FCM token w Firestore
+                // żeby Cloud Function mogła wysyłać push do tego urządzenia.
+                await refreshFcmToken()
                 toast(t('settings.notifications.enabled'), 'success')
               } else if (result === 'denied') {
                 toast(t('settings.notifications.denied'), 'error')
