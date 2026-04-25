@@ -1,5 +1,5 @@
 import { t, useLocale } from '../i18n'
-import React from 'react'
+import React, { useState } from 'react'
 
 const CFG = {
   ok:      { barColor:'#1D9E75', bg:'#ffffff', iconBg:'#E1F5EE', iconColor:'#1D9E75', icon:'✓', titleColor:'#085041', msgColor:'#2a2a28', subBg:'#F1FEF8', subBorder:'#9FE1CB' },
@@ -9,13 +9,14 @@ const CFG = {
   critical:{ barColor:'#A32D2D', bg:'#FFF8F8', iconBg:'#FCEBEB', iconColor:'#A32D2D', icon:'!!',titleColor:'#501313', msgColor:'#2a2a28', subBg:'#FEF0F0', subBorder:'#F09595' },
 }
 
-function StatusIcon({ cfg, pulse }) {
+function StatusIcon({ cfg, pulse, small }) {
   return (
     <div style={{
-      width:44,height:44,borderRadius:'50%',background:cfg.iconBg,
+      width: small ? 28 : 44, height: small ? 28 : 44,
+      borderRadius:'50%',background:cfg.iconBg,
       display:'flex',alignItems:'center',justifyContent:'center',
-      flexShrink:0,fontSize:18,fontWeight:900,color:cfg.iconColor,
-      animation:pulse?'scPulse 1.6s ease-in-out infinite':'none',
+      flexShrink:0, fontSize: small ? 13 : 18, fontWeight:900,color:cfg.iconColor,
+      animation: pulse && !small ? 'scPulse 1.6s ease-in-out infinite':'none',
     }}>
       {cfg.icon}
     </div>
@@ -58,6 +59,9 @@ function SubMessage({ msg, onNavigate }) {
 /**
  * ChildStatusCard
  *
+ * v2.7.5b: Collapsible. Domyślnie zwinięty oprócz status === 'critical'.
+ * Po zwiniętym widzi tylko ikonę + tytuł + ▼. Tap rozwija pełną treść.
+ *
  * Props:
  *   globalStatus  – { title, message, status, section? }
  *   topStatus     – 'ok' | 'info' | 'warning' | 'alert' | 'critical'
@@ -68,14 +72,22 @@ function SubMessage({ msg, onNavigate }) {
  */
 export default function ChildStatusCard({ globalStatus, topStatus, messages, onNavigate, isPremium, onUpgrade }) {
   useLocale()
+  const status = topStatus || globalStatus?.status || 'ok'
+
+  // Critical i ok rozwinięte, reszta zwinięta. Critical bo poważne, ok bo
+  // nie zajmuje dużo miejsca i pozytywny komunikat warto pokazać.
+  const [expanded, setExpanded] = useState(status === 'critical' || status === 'ok')
+
   if (!globalStatus) return null
 
-  const status = topStatus || globalStatus.status || 'ok'
   const cfg = CFG[status] || CFG.ok
   const pulse = status === 'alert' || status === 'critical'
   const secondary = (messages || [])
     .filter(m => m.id !== globalStatus.id && m.status !== 'ok')
     .slice(0, 2)
+
+  // Status 'ok' nie ma collapsible — zawsze pokazany pełny (jest mały).
+  const isOk = status === 'ok'
 
   return (
     <div style={{
@@ -90,31 +102,54 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
         background:cfg.barColor,borderRadius:'16px 0 0 16px',
       }} />
 
-      <div style={{padding:'14px 14px 14px 18px'}}>
-        {/* Główny status */}
-        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom: (!isPremium || secondary.length) ? 12 : 0}}>
-          <StatusIcon cfg={cfg} pulse={pulse} />
+      <div style={{padding: expanded ? '14px 14px 14px 18px' : '10px 14px 10px 18px'}}>
+        {/* Header — klikalny dla non-ok statusów */}
+        <button
+          type="button"
+          onClick={() => !isOk && setExpanded(e => !e)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', gap: expanded ? 12 : 10,
+            background: 'transparent', border: 'none', padding: 0,
+            cursor: isOk ? 'default' : 'pointer', textAlign: 'left',
+            marginBottom: expanded && (!isPremium || secondary.length) ? 12 : 0,
+          }}
+        >
+          <StatusIcon cfg={cfg} pulse={pulse} small={!expanded && !isOk} />
           <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:15,fontWeight:700,color:cfg.titleColor,lineHeight:1.3,marginBottom:globalStatus.message?3:0}}>
+            <div style={{
+              fontSize: expanded ? 15 : 13, fontWeight:700, color:cfg.titleColor,
+              lineHeight:1.3, marginBottom: expanded && globalStatus.message ? 3 : 0,
+              whiteSpace: expanded ? 'normal' : 'nowrap',
+              overflow: expanded ? 'visible' : 'hidden',
+              textOverflow: expanded ? 'clip' : 'ellipsis',
+            }}>
               {globalStatus.title}
             </div>
-            {globalStatus.message && (
+            {expanded && globalStatus.message && (
               <div style={{fontSize:13,color:cfg.msgColor,lineHeight:1.45}}>
                 {globalStatus.message}
               </div>
             )}
           </div>
-        </div>
+          {/* Toggle ▼/▲ — tylko dla non-ok */}
+          {!isOk && (
+            <span style={{
+              color: cfg.barColor, fontSize: 12, flexShrink: 0, opacity: 0.7,
+            }}>
+              {expanded ? '▲' : '▼'}
+            </span>
+          )}
+        </button>
 
-        {/* PREMIUM: dodatkowe komunikaty */}
-        {isPremium && secondary.length > 0 && (
+        {/* Sub-messages — tylko gdy expanded */}
+        {expanded && isPremium && secondary.length > 0 && (
           <div style={{display:'flex',flexDirection:'column',gap:6}}>
             {secondary.map(m => <SubMessage key={m.id} msg={m} onNavigate={onNavigate} />)}
           </div>
         )}
 
-        {/* FREE: CTA upgrade */}
-        {!isPremium && (
+        {/* FREE: CTA upgrade — tylko gdy expanded */}
+        {expanded && !isPremium && (
           <button
             onClick={onUpgrade}
             style={{

@@ -2,9 +2,7 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "pl.skudev.spokojnyrodzic",
-    "sha256_cert_fingerprints": [
-      "98:FB:DA:02:D4:38:6F:C3:10:EA:32:C2:28:F5:76:19:7E:73:95:D4:C3:33:4C:9B:AB:8D:07:93:D0:0B:2E:6D"
-    ]
+    "package_name": "PACKAGE_NAME_PLACEHOLDER",
+    "sha256_cert_fingerprints": ["SHA256_FINGERPRINT_PLACEHOLDER"]
   }
 }]
