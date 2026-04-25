@@ -87,19 +87,13 @@ export function useFirestore(uid, key, fallback) {
         setState(val)
         firstSnap.current = false
       } else {
-        // Dokument nie istnieje w Firestore.
-        //
-        // KRYTYCZNE — NIE nadpisujemy lokalnego stanu pustą wartością!
-        //
-        // Powody:
-        // 1. Race condition: chwilowy disconnect, permission cache, sync delay
-        //    może spowodować że snap.exists() === false mimo że dane są.
-        // 2. Pierwszy zapis: nowy klucz przed setDoc też trafia tutaj — wtedy
-        //    nie chcemy nadpisać tego co user już wpisał lokalnie.
-        // 3. Bezpieczeństwo: lepiej zostawić starsze dane lokalnie niż je stracić.
-        //
-        // Dane lokalne pozostają nietknięte. Następne setDoc je wyśle do Firestore.
-        firstSnap.current = false
+        // Dokument nie istnieje w Firestore
+        if (firstSnap.current) {
+          firstSnap.current = false
+        } else {
+          setState(fallback)
+          lsSave(uid, key, fallback)
+        }
       }
     }, (error) => {
       // Błąd sieci lub permission denied — zostaw initial state

@@ -1,7 +1,7 @@
 {
   "name": "Spokojny Rodzic",
   "short_name": "Spokojny",
-  "description": "Dziennik zdrowia dla rodziców niemowląt i małych dzieci. Zapisujesz temperaturę, karmienie, sen, leki i objawy.",
+  "description": "Aplikacja, która pomaga Ci wiedzieć co robić, gdy dziecko jest chore.",
   "start_url": "/babylog/",
   "scope": "/babylog/",
   "display": "standalone",
