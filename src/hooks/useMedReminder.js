@@ -180,15 +180,49 @@ export function useMedReminder(babyId) {
 
   const cancelReminder = useCallback(() => { /* no-op */ }, [])
 
-  const testNotification = useCallback(() => {
-    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return false
-    return sendToSW({
-      type: 'TEST_NOTIFICATION',
-      payload: {
-        title: t('reminder.test.title'),
-        body: t('reminder.test.body'),
-      },
-    })
+  const testNotification = useCallback(async () => {
+    if (typeof Notification === 'undefined') return false
+    if (Notification.permission !== 'granted') return false
+
+    const title = t('reminder.test.title')
+    const body = t('reminder.test.body')
+
+    // Strategia 1: SW przez controller (najlepsze — działa też gdy apka w tle)
+    if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'TEST_NOTIFICATION',
+        payload: { title, body },
+      })
+      return true
+    }
+
+    // Strategia 2: Czekamy aż SW się aktywuje (max 3s) i wysyłamy przez registration
+    try {
+      const reg = await Promise.race([
+        navigator.serviceWorker?.ready,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
+      ])
+      if (reg && reg.active) {
+        reg.active.postMessage({
+          type: 'TEST_NOTIFICATION',
+          payload: { title, body },
+        })
+        return true
+      }
+    } catch {
+      /* fallthrough */
+    }
+
+    // Strategia 3: Pokazujemy bezpośrednio bez SW (fallback)
+    try {
+      new Notification(title, {
+        body,
+        icon: '/babylog/icon-192.png',
+      })
+      return true
+    } catch {
+      return false
+    }
   }, [])
 
   return {

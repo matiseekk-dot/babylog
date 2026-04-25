@@ -74,9 +74,29 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
   useLocale()
   const status = topStatus || globalStatus?.status || 'ok'
 
-  // Critical i ok rozwinięte, reszta zwinięta. Critical bo poważne, ok bo
-  // nie zajmuje dużo miejsca i pozytywny komunikat warto pokazać.
-  const [expanded, setExpanded] = useState(status === 'critical' || status === 'ok')
+  // Status 'ok' jest zawsze rozwinięty (mały, pozytywny komunikat).
+  // Reszta domyślnie ZWINIĘTA. Stan zwijania zachowywany w localStorage,
+  // żeby nie resetować się przy każdym przejściu między tabami / "Więcej".
+  const isOk = status === 'ok'
+  const [expanded, setExpanded] = useState(() => {
+    if (isOk) return true
+    try {
+      const stored = localStorage.getItem('child_status_expanded')
+      // Default: zwinięty (false). Tylko jeśli user wcześniej rozwinął, zostaje rozwinięte.
+      return stored === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  // Persist expanded state
+  const toggleExpanded = () => {
+    setExpanded(prev => {
+      const next = !prev
+      try { localStorage.setItem('child_status_expanded', next ? 'true' : 'false') } catch { /* ignore */ }
+      return next
+    })
+  }
 
   if (!globalStatus) return null
 
@@ -85,9 +105,6 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
   const secondary = (messages || [])
     .filter(m => m.id !== globalStatus.id && m.status !== 'ok')
     .slice(0, 2)
-
-  // Status 'ok' nie ma collapsible — zawsze pokazany pełny (jest mały).
-  const isOk = status === 'ok'
 
   return (
     <div style={{
@@ -106,7 +123,7 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
         {/* Header — klikalny dla non-ok statusów */}
         <button
           type="button"
-          onClick={() => !isOk && setExpanded(e => !e)}
+          onClick={() => !isOk && toggleExpanded()}
           style={{
             width: '100%', display: 'flex', alignItems: 'center', gap: expanded ? 12 : 10,
             background: 'transparent', border: 'none', padding: 0,

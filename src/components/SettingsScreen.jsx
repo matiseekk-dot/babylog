@@ -574,12 +574,12 @@ export default function SettingsScreen({
         </div>
         <button
           type="button"
-          onClick={() => {
+          onClick={async () => {
             if (notifPermission !== 'granted') {
               toast(t('settings.notifications.permission_needed'), 'error')
               return
             }
-            const ok = testNotification()
+            const ok = await testNotification()
             toast(
               ok ? t('settings.notifications.test_sent') : t('settings.notifications.test_blocked'),
               ok ? 'success' : 'error'

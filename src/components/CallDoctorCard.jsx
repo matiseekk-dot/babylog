@@ -31,8 +31,26 @@ const SEVERITY_CONFIG = {
 export default function CallDoctorCard({ severity = 'watch', reason, onDismiss, onNavigate, onPrep }) {
   useLocale()
   const cfg = SEVERITY_CONFIG[severity]
-  // Emergency zostaje rozwinięty (faktycznie ważne); watch/call domyślnie zwinięte
-  const [expanded, setExpanded] = useState(severity === 'emergency')
+
+  // Emergency zostaje rozwinięty (faktycznie ważne); watch/call domyślnie zwinięte.
+  // Stan zachowywany w localStorage żeby przejście między tabami nie resetowało.
+  const [expanded, setExpanded] = useState(() => {
+    if (severity === 'emergency') return true
+    try {
+      const stored = localStorage.getItem(`call_doctor_expanded_${severity}`)
+      return stored === 'true'
+    } catch {
+      return false
+    }
+  })
+
+  const toggleExpanded = () => {
+    setExpanded(prev => {
+      const next = !prev
+      try { localStorage.setItem(`call_doctor_expanded_${severity}`, next ? 'true' : 'false') } catch { /* ignore */ }
+      return next
+    })
+  }
 
   const EMERGENCY_PHONE = '112'
 
@@ -53,7 +71,7 @@ export default function CallDoctorCard({ severity = 'watch', reason, onDismiss, 
       {/* Header — klikalny, toggluje expanded */}
       <button
         type="button"
-        onClick={() => setExpanded(e => !e)}
+        onClick={() => toggleExpanded()}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 10,
           background: 'transparent', border: 'none', cursor: 'pointer',
