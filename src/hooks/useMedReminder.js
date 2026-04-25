@@ -226,37 +226,11 @@ export function useMedReminder(babyId) {
     const title = t('reminder.test.title')
     const body = t('reminder.test.body')
 
-    // TWA fix: NIE sprawdzamy Notification.permission przed wysłaniem,
-    // bo TWA może mieć stary cached state mimo że system Android już
-    // udzielił zgody. Próbujemy wysłać; jeśli system odmówi, łapiemy błąd.
+    // TWA Android wymaga ServiceWorkerRegistration.showNotification — `new Notification()`
+    // NIE działa. Próbujemy 3 strategii w kolejności preferencji.
 
-    // Strategia 1: SW przez controller
-    if (navigator.serviceWorker?.controller) {
-      try {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'TEST_NOTIFICATION',
-          payload: { title, body },
-        })
-        return true
-      } catch { /* fallthrough */ }
-    }
-
-    // Strategia 2: SW przez registration.ready
-    try {
-      const reg = await Promise.race([
-        navigator.serviceWorker?.ready,
-        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
-      ])
-      if (reg && reg.active) {
-        reg.active.postMessage({
-          type: 'TEST_NOTIFICATION',
-          payload: { title, body },
-        })
-        return true
-      }
-    } catch { /* fallthrough */ }
-
-    // Strategia 3: registration.showNotification (TWA preferred)
+    // Strategia 1 (preferowana): registration.showNotification bezpośrednio z apki.
+    // Ten approach jest najbardziej niezawodny w TWA — nie wymaga komunikacji z SW.
     try {
       const reg = await navigator.serviceWorker?.getRegistration()
       if (reg) {
@@ -265,18 +239,67 @@ export function useMedReminder(babyId) {
           icon: '/babylog/icon-192.png',
           badge: '/babylog/icon-72.png',
           tag: 'test-notification',
+          renotify: true,
+          vibrate: [200, 100, 200],
+          requireInteraction: false,
+          data: { url: '/babylog/' },
         })
         return true
       }
-    } catch { /* fallthrough */ }
-
-    // Strategia 4: bezpośrednie new Notification (legacy fallback)
-    try {
-      new Notification(title, { body, icon: '/babylog/icon-192.png' })
-      return true
-    } catch {
-      return false
+    } catch (err) {
+      console.error('[testNotification] direct showNotification failed:', err)
     }
+
+    // Strategia 2: Wait for SW ready, then call directly via reg
+    try {
+      const reg = await Promise.race([
+        navigator.serviceWorker?.ready,
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 3000)),
+      ])
+      if (reg) {
+        await reg.showNotification(title, {
+          body,
+          icon: '/babylog/icon-192.png',
+          badge: '/babylog/icon-72.png',
+          tag: 'test-notification',
+          renotify: true,
+          vibrate: [200, 100, 200],
+          requireInteraction: false,
+          data: { url: '/babylog/' },
+        })
+        return true
+      }
+    } catch (err) {
+      console.error('[testNotification] reg.ready failed:', err)
+    }
+
+    // Strategia 3 (fallback): postMessage do SW + czekamy na potwierdzenie
+    if (navigator.serviceWorker?.controller) {
+      return new Promise((resolve) => {
+        const handler = (event) => {
+          if (event.data?.type === 'NOTIFICATION_SHOWN') {
+            navigator.serviceWorker.removeEventListener('message', handler)
+            resolve(true)
+          } else if (event.data?.type === 'NOTIFICATION_ERROR') {
+            console.error('[testNotification] SW error:', event.data.error)
+            navigator.serviceWorker.removeEventListener('message', handler)
+            resolve(false)
+          }
+        }
+        navigator.serviceWorker.addEventListener('message', handler)
+        navigator.serviceWorker.controller.postMessage({
+          type: 'TEST_NOTIFICATION',
+          payload: { title, body },
+        })
+        // Timeout — jeśli SW nie odpowiedział w 3s, zakładamy fail
+        setTimeout(() => {
+          navigator.serviceWorker.removeEventListener('message', handler)
+          resolve(false)
+        }, 3000)
+      })
+    }
+
+    return false
   }, [])
 
   return {

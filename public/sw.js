@@ -51,21 +51,40 @@ self.addEventListener('notificationclick', e => {
 
 // ── Główna logika: sprawdzaj wpisy leków on-demand ──────────────────────────
 
-self.addEventListener('message', async (event) => {
+self.addEventListener('message', (event) => {
   const { type, payload } = event.data || {}
 
   if (type === 'CHECK_MED_REMINDERS') {
-    await checkMedReminders(payload || {})
+    event.waitUntil(checkMedReminders(payload || {}))
   } else if (type === 'TEST_NOTIFICATION') {
-    await self.registration.showNotification(payload?.title || 'Spokojny Rodzic', {
-      body: payload?.body || 'Test',
-      icon: '/babylog/icon-192.png',
-      badge: '/babylog/icon-72.png',
-      tag: 'test-notification',
-      renotify: true,
-      vibrate: [200, 100, 200],
-      data: { url: '/babylog/' },
-    })
+    // event.waitUntil ZAWSZE — bez tego SW może być zamknięty zanim
+    // notyfikacja zostanie wyświetlona (TWA Android jest na to wrażliwe).
+    event.waitUntil(
+      self.registration.showNotification(payload?.title || 'Spokojny Rodzic', {
+        body: payload?.body || 'Test',
+        icon: '/babylog/icon-192.png',
+        badge: '/babylog/icon-72.png',
+        tag: 'test-notification',
+        renotify: true,
+        vibrate: [200, 100, 200],
+        requireInteraction: false,
+        data: { url: '/babylog/' },
+      }).then(() => {
+        // Powiadom klientów że notyfikacja została pokazana — do logów
+        self.clients.matchAll().then(clients => {
+          clients.forEach(c => c.postMessage({ type: 'NOTIFICATION_SHOWN', tag: 'test' }))
+        })
+      }).catch(err => {
+        // Powiadom klientów o błędzie — apka może to pokazać w UI
+        self.clients.matchAll().then(clients => {
+          clients.forEach(c => c.postMessage({
+            type: 'NOTIFICATION_ERROR',
+            tag: 'test',
+            error: err.message || String(err)
+          }))
+        })
+      })
+    )
   }
 })
 
