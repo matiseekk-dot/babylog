@@ -819,8 +819,15 @@ export default function App() {
           />
         )}
 
-        {/* STATUS CARD */}
-        {!showProfiles && !showMore && (
+        {/* STATUS CARD
+            v2.9.5: dla Premium userów ChildStatusBar (zwijany pasek u góry)
+            już komunikuje "brak ostrzeżeń" gdy topStatus='ok'. Renderowanie
+            dodatkowo ChildStatusCard z tym samym komunikatem to wizualny
+            duplikat (zaobserwowane na żywo). Dla Premium ok-status ukrywamy
+            Card. Dla każdego niezerowego statusu (warning/alert/critical)
+            Card zostaje — tam są konkretne komunikaty do działania.
+            Free user nie widzi Bara (Premium-only), więc Card zawsze widoczna. */}
+        {!showProfiles && !showMore && !(isPremium && visibleTopStatus === 'ok') && (
           <ChildStatusCard
             globalStatus={visibleStatus}
             topStatus={visibleTopStatus}

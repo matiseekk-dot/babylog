@@ -26,17 +26,29 @@ export default function DailyTab({ visibleTabs, ...sharedProps }) {
   const feedAvailable = visibleTabs?.feed !== false
   const diaperAvailable = visibleTabs?.diaper !== false
 
-  // Domyślnie feed (jeśli dostępny), inaczej diaper
-  const initialSegment = (() => {
+  // v2.9.5: helper czytający segment z localStorage z fallbackiem.
+  // Wywołany przy każdym mount (useEffect poniżej), żeby gdy user kliknął
+  // stat tile "pieluchy" w Today (która zapisała 'diaper' do localStorage),
+  // wejście na Feed tab pokazało segment Pieluchy nawet jeśli komponent
+  // jest cache-owany przez React.
+  const readStoredSegment = () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored === 'feed' && feedAvailable) return 'feed'
       if (stored === 'diaper' && diaperAvailable) return 'diaper'
     } catch {}
     return feedAvailable ? 'feed' : 'diaper'
-  })()
+  }
 
-  const [segment, setSegment] = useState(initialSegment)
+  const [segment, setSegment] = useState(readStoredSegment)
+
+  // Mount-time sync: jeśli localStorage został zmieniony zewnętrznie
+  // (np. TodayTab ustawił 'diaper' przed nawigacją), zaktualizuj state.
+  useEffect(() => {
+    const fresh = readStoredSegment()
+    if (fresh !== segment) setSegment(fresh)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Jeśli aktywny segment został wyłączony w Settings podczas sesji,
   // przerzuć na drugi.

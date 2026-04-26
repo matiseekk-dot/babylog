@@ -55,6 +55,19 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
     ? [...todayTemps].sort((a, b) => b.time.localeCompare(a.time))[0]
     : null
 
+  // v2.9.5: helpery nawigacji kontekstowej. Sub-zakładki (Feed/Diaper, Health
+  // segments) zapisują wybrany segment w localStorage — przed przekierowaniem
+  // na zagregowany tab ustawiamy preferowany segment. DailyTab/HealthTab czytają
+  // localStorage przy mount i lądują na właściwym widoku.
+  const navigateToFeed = (segment = 'feed') => {
+    try { localStorage.setItem('babylog_daily_segment', segment) } catch {}
+    onNavigate('feed')
+  }
+  const navigateToHealth = (segment = 'temp') => {
+    try { localStorage.setItem('babylog_health_segment', segment) } catch {}
+    onNavigate('health')
+  }
+
   // ── Timeline — łączymy wszystkie wpisy z tagiem typu i czasem ────────────
   const timeline = useMemo(() => {
     const items = []
@@ -68,7 +81,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         emoji: emojiForFeed(l.type),
         title: translateFeedType(l.type),
         sub: amount,
-        targetTab: 'feed',
+        onClick: () => navigateToFeed('feed'),
       })
     })
 
@@ -89,7 +102,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         emoji: '😴',
         title: t('today.timeline.sleep'),
         sub,
-        targetTab: 'sleep',
+        onClick: () => onNavigate('sleep'),
       })
     })
 
@@ -101,7 +114,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         emoji: emojiForDiaper(l.type),
         title: translateDiaperType(l.type),
         sub: '',
-        targetTab: 'feed',  // Diaper jest sub-segmentem Feed taba
+        onClick: () => navigateToFeed('diaper'),
       })
     })
 
@@ -114,7 +127,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         emoji: '🌡️',
         title: `${tempVal}°C`,
         sub: l.method ? ` · ${l.method}` : '',
-        targetTab: 'health',
+        onClick: () => navigateToHealth('temp'),
       })
     })
 
@@ -126,7 +139,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         emoji: '💊',
         title: l.med || t('today.timeline.med'),
         sub: l.dose ? ` · ${l.dose}` : '',
-        targetTab: 'health',
+        onClick: () => navigateToHealth('meds'),
       })
     })
 
@@ -183,7 +196,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
           emoji="🍼"
           value={todayFeeds.length}
           label={t('today.stat.feeds')}
-          onClick={() => onNavigate('feed')}
+          onClick={() => navigateToFeed('feed')}
           accent="#1D9E75"
           accentBg="#E1F5EE"
         />
@@ -199,7 +212,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
           emoji="👶"
           value={todayDiapers.length}
           label={t('today.stat.diapers')}
-          onClick={() => onNavigate('feed')}
+          onClick={() => navigateToFeed('diaper')}
           accent="#185FA5"
           accentBg="#E6F1FB"
         />
@@ -207,7 +220,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
           emoji="🌡️"
           value={lastTemp ? `${typeof lastTemp.temp === 'number' ? lastTemp.temp.toFixed(1) : lastTemp.temp}°` : '—'}
           label={lastTemp ? t('today.stat.last_temp') : t('today.stat.no_temp')}
-          onClick={() => onNavigate('health')}
+          onClick={() => navigateToHealth('temp')}
           accent="#D85A30"
           accentBg="#FEF3EE"
         />
@@ -251,7 +264,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
               <button
                 key={item.id}
                 type="button"
-                onClick={() => onNavigate(item.targetTab)}
+                onClick={item.onClick}
                 style={{
                   width: '100%',
                   display: 'flex', alignItems: 'center', gap: 12,

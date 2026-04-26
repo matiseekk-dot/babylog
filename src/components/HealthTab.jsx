@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useLocale } from '../i18n'
 import TempTab from './TempTab'
 import MedsTab from './MedsTab'
@@ -26,15 +26,26 @@ const STORAGE_KEY = 'babylog_health_segment'
 export default function HealthTab({ ...sharedProps }) {
   useLocale()
 
-  const initialSegment = (() => {
+  const readStoredSegment = () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored === 'temp' || stored === 'meds' || stored === 'symptoms') return stored
     } catch {}
     return 'temp'
-  })()
+  }
 
-  const [segment, setSegment] = useState(initialSegment)
+  const [segment, setSegment] = useState(readStoredSegment)
+
+  // v2.9.5: mount-time sync — TodayTab może zapisać preferred segment
+  // do localStorage tuż przed nawigacją (np. klik temp tile → 'temp',
+  // klik med w timeline → 'meds'). Synchronizujemy state przy mount żeby
+  // user wylądował na właściwym segmencie nawet jeśli komponent jest
+  // cache-owany przez React.
+  useEffect(() => {
+    const fresh = readStoredSegment()
+    if (fresh !== segment) setSegment(fresh)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const selectSegment = (seg) => {
     setSegment(seg)
