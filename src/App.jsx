@@ -407,10 +407,10 @@ export default function App() {
   }
 
   // ── Decision layer (v2.10.5 MDR EXIT) ──────────────────────────────────────
-  // useChildStatus zwraca neutralne observations + journal summary,
-  // BEZ severity (globalStatus, topStatus). Stare API (sectionMessages) pozostaje
-  // jako alias do sectionObservations dla backwards compat z SectionAlerts.
-  const { summary, observations, sectionObservations, refresh } = useChildStatus(
+  // useChildStatus zwraca neutralne observations + sectionObservations
+  // BEZ severity (globalStatus, topStatus). v2.10.5b: summary nieużywane,
+  // pomijamy w destructuring (computowanie zostało w hook dla backwards compat).
+  const { observations, sectionObservations, refresh } = useChildStatus(
     active.id, active.months, active.weight
   )
   const sectionMessages = sectionObservations
@@ -779,14 +779,10 @@ export default function App() {
         {/* v2.10.5: CallDoctorCard + ChildStatusCard usunięte (MDR exit refactor).
             Replaced by TodaySummaryCard — neutral journal stats card. */}
 
-        {/* TODAY SUMMARY — neutralna karta z journal stats (zastąpiło ChildStatusCard) */}
+        {/* TODAY SUMMARY — link do wytycznych PTP/AAP, dismissable.
+            v2.10.5b: po feedbacku — bez statystyk (są w TodayTab timeline). */}
         {!showProfiles && !showMore && (
-          <TodaySummaryCard
-            summary={summary}
-            onNavigate={navigate}
-            isPremium={isPremium}
-            onUpgrade={openPaywall}
-          />
+          <TodaySummaryCard onNavigate={navigate} />
         )}
 
         {/* AUTO-HIDE BANNER — one-time prompt po 3 latach dziecka */}

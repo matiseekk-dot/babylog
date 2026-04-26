@@ -109,34 +109,18 @@ const RULES = [
         type: 'info',
         title: t('obs.temp_rising.title'),
         message: t('obs.temp_rising.msg', { t1, t2, t3 }),
-        source: 'observation',
+        source: 'rule.source.observation',
       }
     },
   },
 
-  // ── Temp reference link — pokazuje link do statycznej tabeli ───────────────
-  // Aktywne TYLKO po wpisaniu temperatury (nie spam). Pasywny info, nie status.
-  // User klika "Zobacz wytyczne PTP" → przechodzi do ReferenceLibrary.
-  {
-    id: 'temp_reference_available',
-    section: 'temp',
-    check({ tempLogs }) {
-      if (!tempLogs?.length) return null
-      const last = lastOf(tempLogs)
-      if (!last) return null
-      // Pokaż referencję tylko gdy user mierzył temp w ciągu ostatniej doby
-      const minutesAgo = minutesSince(last.time, last.date)
-      if (minutesAgo > 24 * 60) return null
-      return {
-        type: 'reference',
-        title: t('obs.temp_reference.title'),
-        message: t('obs.temp_reference.msg'),
-        source: 'reference',
-        // UI hint: kliknięcie tej karty otwiera ReferenceLibrary
-        action: 'open_reference_temp',
-      }
-    },
-  },
+  // v2.10.5b: rule temp_reference_available USUNIĘTA. Powód:
+  //   - Generowała observation w TempTab z action: 'open_reference_temp'
+  //     które AlertBanner renderował jako tekst guzika "open reference temp"
+  //     (action powinno być labelem, nie identifierem)
+  //   - Redundancja: link do ReferenceLibrary jest już w TodaySummaryCard
+  //     i w More tab → "Wytyczne PTP/AAP". Trzecie miejsce = spam.
+  //   - User feedback: "po co powtarzać, zostawmy tylko te wytyczne"
 
   // ── Feed time — neutralny fakt: ostatnie karmienie X godzin temu ──────────
   // Pasywna informacja, nie ostrzeżenie. Bez wskazania "powinieneś nakarmić".
@@ -170,7 +154,7 @@ const RULES = [
         type: 'info',
         title: t('obs.feed_time.title'),
         message: t('obs.feed_time.msg', { hours: h, mins: minAgo % 60 }),
-        source: 'observation',
+        source: 'rule.source.observation',
       }
     },
   },
@@ -204,7 +188,7 @@ const RULES = [
           hours: Math.floor(ago / 60),
           mins: ago % 60,
         }),
-        source: 'timer',
+        source: 'rule.source.smpc',
       }
     },
   },
@@ -235,7 +219,7 @@ const RULES = [
         type: 'info',
         title: t('obs.med_count.title'),
         message: t('obs.med_count.msg', { list: parts.join(', ') }),
-        source: 'observation',
+        source: 'rule.source.observation',
       }
     },
   },
