@@ -3,6 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { VACCINATIONS } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
+import { toastWithUndo } from './Toast'
 import { t, useLocale, isEN } from '../i18n'
 
 export default function VaccinationsTab({uid, babyId, ageMonths }) {
@@ -54,11 +55,21 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
   }
 
   const removeCustom = (id) => {
+    const removedItem = customVacc.find(v => v.id === id)
+    const removedStatus = done[id]
     setCustomVacc(customVacc.filter(v => v.id !== id))
     const next = { ...done }
     delete next[id]
     setDone(next)
     setDeleteId(null)
+    if (removedItem) {
+      toastWithUndo(t('common.deleted'), () => {
+        setCustomVacc(prev => [removedItem, ...prev])
+        if (removedStatus !== undefined) {
+          setDone(prev => ({ ...prev, [id]: removedStatus }))
+        }
+      })
+    }
   }
 
   const doneCount = Object.keys(done).length

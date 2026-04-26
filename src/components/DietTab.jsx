@@ -3,6 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { DIET_ITEMS, DIET_ITEMS_EN } from '../data/staticData'
 import { genId } from '../utils/helpers'
 import Modal from './Modal'
+import { toastWithUndo } from './Toast'
 import { t, useLocale, isEN } from '../i18n'
 
 const EMOJI_OPTIONS = ['🥕','🥦','🍠','🎃','🍎','🍐','🍌','🫐','🍓','🍇','🍑','🥑','🧅','🧄','🫛','🌽','🍅','🥝','🍋','🫚','🐔','🐟','🥩','🥚','🧀','🥛','🌾','🍚','🫘','🥜','🍯','🧇','🥞']
@@ -37,11 +38,21 @@ export default function DietTab({uid, babyId, ageMonths }) {
   }
 
   const removeCustom = (id) => {
+    const removedItem = customItems.find(i => i.id === id)
+    const removedStatus = status[id]
     setCustomItems(customItems.filter(i => i.id !== id))
     const next = { ...status }
     delete next[id]
     setStatus(next)
     setDeleteId(null)
+    if (removedItem) {
+      toastWithUndo(t('common.deleted'), () => {
+        setCustomItems(prev => [removedItem, ...prev])
+        if (removedStatus !== undefined) {
+          setStatus(prev => ({ ...prev, [id]: removedStatus }))
+        }
+      })
+    }
   }
 
   const available = allItems.filter(d => d.months <= ageMonths)

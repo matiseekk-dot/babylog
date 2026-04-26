@@ -6,7 +6,7 @@ import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretMeds } from '../engine/interpretations'
-import { toast } from './Toast'
+import { toast, toastWithUndo } from './Toast'
 import { t, useLocale, isEN } from '../i18n'
 import { useMedReminder } from '../hooks/useMedReminder'
 import HistorySection from './HistorySection'
@@ -95,7 +95,12 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
     setForm({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
   }
 
-  const remove = (id) => setLogs(logs.filter(l=>l.id!==id))
+  const remove = (id) => {
+    const removed = logs.find(l => l.id === id)
+    if (!removed) return
+    setLogs(logs.filter(l => l.id !== id))
+    toastWithUndo(t('common.deleted'), () => setLogs(prev => [removed, ...prev]))
+  }
 
   const logDoseFromModal = () => {
     if (!doseModal?.med) return
@@ -256,7 +261,10 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           </div>
         )}
         summarize={entries => t('summary.meds_doses', { count: entries.length })}
-        onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
+        onDelete={(log) => {
+          setLogs(logs.filter(l => l.id !== log.id))
+          toastWithUndo(t('common.deleted'), () => setLogs(prev => [log, ...prev]))
+        }}
       />
       <button className="btn-add" onClick={openAdd}>+ Zapisz podanie leku</button>
 

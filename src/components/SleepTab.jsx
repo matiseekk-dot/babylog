@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { formatDuration, todayDate, dateYMD, genId } from '../utils/helpers'
 import Modal from './Modal'
-import { toast } from './Toast'
+import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
@@ -154,7 +154,12 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
     onDataChange?.()
   }
 
-  const remove = (id) => setLogs(logs.filter(l=>l.id!==id))
+  const remove = (id) => {
+    const removed = logs.find(l => l.id === id)
+    if (!removed) return
+    setLogs(logs.filter(l => l.id !== id))
+    toastWithUndo(t('common.deleted'), () => setLogs(prev => [removed, ...prev]))
+  }
 
   return (
     <>
@@ -232,7 +237,10 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
           const m = totalMin % 60
           return `${entries.length}× · ${h}h ${m}m`
         }}
-        onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
+        onDelete={(log) => {
+          setLogs(logs.filter(l => l.id !== log.id))
+          toastWithUndo(t('common.deleted'), () => setLogs(prev => [log, ...prev]))
+        }}
       />
 
       <button className="btn-add" onClick={openAdd}>

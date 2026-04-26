@@ -2,7 +2,7 @@ import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, genId, getTempClass, getTempLabel, displayMethod, parseNum } from '../utils/helpers'
 import Modal from './Modal'
-import { toast } from './Toast'
+import { toast, toastWithUndo } from './Toast'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
@@ -100,7 +100,15 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
                 <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C — {getTempLabel(l.temp)}</div>
                 <div className="log-detail">{l.time} · {displayMethod(l.method)}{l.note?` · ${l.note}`:''}</div>
               </div>
-              <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)); onDataChange?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button aria-label={t('common.delete_aria')} onClick={e => {
+                e.stopPropagation()
+                setLogs(logs.filter(x => x.id !== l.id))
+                onDataChange?.()
+                toastWithUndo(t('common.deleted'), () => {
+                  setLogs(prev => [l, ...prev])
+                  onDataChange?.()
+                })
+              }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }
@@ -123,7 +131,14 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
           const max = Math.max(...entries.map(e => Number(e.temp) || 0))
           return `${entries.length}× · max ${max.toFixed(1)}°C`
         }}
-        onDelete={(log) => { setLogs(logs.filter(x => x.id !== log.id)); onDataChange?.() }}
+        onDelete={(log) => {
+          setLogs(logs.filter(x => x.id !== log.id))
+          onDataChange?.()
+          toastWithUndo(t('common.deleted'), () => {
+            setLogs(prev => [log, ...prev])
+            onDataChange?.()
+          })
+        }}
       />
 
       <button className="btn-add" onClick={openAdd}>

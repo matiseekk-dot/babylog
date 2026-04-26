@@ -2,7 +2,7 @@ import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, genId, parseNum } from '../utils/helpers'
 import Modal from './Modal'
-import { toast } from './Toast'
+import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
 import { getWhoPercentiles, calculatePercentile, interpretPercentile } from '../data/whoNorms'
 const GrowthChart = React.lazy(() => import('./GrowthChart'))
@@ -200,7 +200,11 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
                   {l.weight && `${l.weight} kg`}{l.weight && l.height ? ' · ' : ''}{l.height && `${l.height} cm`}{l.headCirc ? ` · ${t('growth.head_short')} ${l.headCirc} cm` : ''}
                 </div>
               </div>
-              <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); setLogs(logs.filter(x=>x.id!==l.id)) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
+              <button aria-label={t('common.delete_aria')} onClick={e => {
+                e.stopPropagation()
+                setLogs(logs.filter(x => x.id !== l.id))
+                toastWithUndo(t('common.deleted'), () => setLogs(prev => [l, ...prev]))
+              }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
         }

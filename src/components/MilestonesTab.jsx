@@ -3,6 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { MILESTONES, MILESTONES_EN } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
+import { toastWithUndo } from './Toast'
 import { t, useLocale, isEN } from '../i18n'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
@@ -84,11 +85,21 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
   }
 
   const removeCustom = (id) => {
+    const removedItem = customMilestones.find(m => m.id === id)
+    const removedStatus = done[id]
     setCustomMilestones(customMilestones.filter(m => m.id !== id))
     const next = { ...done }
     delete next[id]
     setDone(next)
     setDeleteId(null)
+    if (removedItem) {
+      toastWithUndo(t('common.deleted'), () => {
+        setCustomMilestones(prev => [removedItem, ...prev])
+        if (removedStatus !== undefined) {
+          setDone(prev => ({ ...prev, [id]: removedStatus }))
+        }
+      })
+    }
   }
 
   const filtered = allMilestones.filter(m => {
