@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useLocale } from '../i18n'
+// v2.10.2: Lucide ikony dla segmentów Health (Temperatura/Leki/Objawy)
+import { Thermometer, Pill, HeartPulse } from 'lucide-react'
 import TempTab from './TempTab'
 import MedsTab from './MedsTab'
 import SymptomsTab from './SymptomsTab'
@@ -56,9 +58,9 @@ export default function HealthTab({ ...sharedProps }) {
     <>
       <SegmentedSwitcher
         segments={[
-          { id: 'temp',     labelKey: 'health.seg.temp',     emoji: '🌡️' },
-          { id: 'meds',     labelKey: 'health.seg.meds',     emoji: '💊' },
-          { id: 'symptoms', labelKey: 'health.seg.symptoms', emoji: '🤒' },
+          { id: 'temp',     labelKey: 'health.seg.temp',     Icon: Thermometer },
+          { id: 'meds',     labelKey: 'health.seg.meds',     Icon: Pill },
+          { id: 'symptoms', labelKey: 'health.seg.symptoms', Icon: HeartPulse },
         ]}
         active={segment}
         onSelect={selectSegment}

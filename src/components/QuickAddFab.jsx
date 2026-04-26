@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { t, useLocale } from '../i18n'
+// v2.10.2: Lucide ikony dla Sleep + Temp action tiles. Feed (🤱🍼) i Diaper
+// (💧💩🔄🚽) zostają jako emoji bo są semantycznie obrazowe dla rodzica
+// (kobieta z dzieckiem, butelka, mokra/brudna pielucha — natychmiastowo
+// zrozumiałe vs abstrakcyjne SVG).
+import { Moon, Square, Thermometer } from 'lucide-react'
 
 /**
  * QuickAddFab — floating button do szybkiego logowania.
@@ -251,13 +256,13 @@ export default function QuickAddFab({
             {/* Sen + Temp */}
             <SheetSection title={t('fab.section.other')}>
               <ActionTile
-                emoji={sleepInProgress ? '⏹' : '😴'}
+                Icon={sleepInProgress ? Square : Moon}
                 labelKey={sleepInProgress ? 'fab.action.sleep_stop' : 'fab.action.sleep_start'}
                 accent="var(--accent-500)" bg="var(--accent-50)"
                 onClick={() => act(() => onQuickSleepStart?.())}
               />
               <ActionTile
-                emoji="🌡️"
+                Icon={Thermometer}
                 labelKey="fab.action.temp"
                 accent="var(--alert-700)" bg="var(--alert-50)"
                 onClick={() => act(() => onQuickTemp?.())}
@@ -337,7 +342,7 @@ function SheetSection({ title, children }) {
   )
 }
 
-function ActionTile({ emoji, labelKey, accent, bg, onClick, highlighted }) {
+function ActionTile({ Icon, emoji, labelKey, accent, bg, onClick, highlighted }) {
   return (
     <button
       type="button"
@@ -355,7 +360,11 @@ function ActionTile({ emoji, labelKey, accent, bg, onClick, highlighted }) {
         transition: 'transform 0.08s ease',
       }}
     >
-      <div style={{ fontSize: 22, lineHeight: 1 }}>{emoji}</div>
+      {Icon ? (
+        <Icon size={22} strokeWidth={2} color={accent} />
+      ) : (
+        <div style={{ fontSize: 22, lineHeight: 1 }}>{emoji}</div>
+      )}
       <div style={{
         fontSize: 11, fontWeight: 700, color: accent,
         textAlign: 'center', lineHeight: 1.2,

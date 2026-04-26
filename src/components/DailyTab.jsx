@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { t, useLocale } from '../i18n'
+// v2.10.2: Lucide ikony dla segmentów Feed/Diaper
+import { Milk, Baby } from 'lucide-react'
 import FeedTab from './FeedTab'
 import DiaperTab from './DiaperTab'
 
@@ -74,8 +76,8 @@ export default function DailyTab({ visibleTabs, ...sharedProps }) {
       {showSwitcher && (
         <SegmentedSwitcher
           segments={[
-            { id: 'feed',   labelKey: 'daily.seg.feed',   emoji: '🍼' },
-            { id: 'diaper', labelKey: 'daily.seg.diaper', emoji: '👶' },
+            { id: 'feed',   labelKey: 'daily.seg.feed',   Icon: Milk },
+            { id: 'diaper', labelKey: 'daily.seg.diaper', Icon: Baby },
           ]}
           active={segment}
           onSelect={selectSegment}
@@ -124,7 +126,12 @@ export function SegmentedSwitcher({ segments, active, onSelect }) {
               transition: 'background 0.15s, color 0.15s',
             }}
           >
-            <span style={{ fontSize: 14 }}>{seg.emoji}</span>
+            {seg.Icon ? (
+              <seg.Icon size={15} strokeWidth={2}
+                color={isActive ? 'var(--text)' : 'var(--text-2)'} />
+            ) : seg.emoji ? (
+              <span style={{ fontSize: 14 }}>{seg.emoji}</span>
+            ) : null}
             <span>{t(seg.labelKey)}</span>
           </button>
         )

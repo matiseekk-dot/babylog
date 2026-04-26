@@ -177,3 +177,39 @@ Token system eliminuje:
 - Designer-developer disconnect (designer mówi "spacing comfortable", deweloper od razu wie czego użyć)
 
 Kiedy NIE używać tokens: dynamic computed values (np. `width: ${progress}%`), inline shadows które są jednorazowe i specyficzne, animation values.
+
+## Iconography (v2.10.2)
+
+Apka używa **lucide-react** dla UI chrome (nawigacja, stat tiles, segmenty, action tiles).
+
+**Emoji zostają** dla user content i semantyczne kontekstów gdzie emoji jest "lepszą reprezentacją":
+- Feed types (`🤱` lewa pierś, `🍼` butelka) — emoji są obrazowe i znane rodzicom
+- Diaper types (`💧💩🔄🚽`) — komunikują typ pieluchy natychmiast
+- Symptoms (`🤮🔴🤧`) — medyczne objawy, emoji jest standardem
+- User-added content (custom milestone names z emoji wyborem)
+
+**SVG Lucide używamy dla**:
+- Bottom nav (NAV_TABS już używał SVG od dawna)
+- More tabs: Star/Sparkles/Ruler/Wind/Syringe/Carrot/Stethoscope
+- Stat tiles na Today: Milk/Moon/Baby/Thermometer
+- Timeline rows na Today: Moon/Thermometer/Pill (dla generycznych wpisów)
+- Health segments: Thermometer/Pill/HeartPulse
+- Daily segments: Milk/Baby
+- FAB Sleep/Temp action tiles
+
+### Zasady ikonografii
+
+1. **Konsystencja stroku**: domyślnie `strokeWidth={1.8}` lub `2`. Nie miks różnych wartości na jednym ekranie.
+2. **Rozmiar zgodny z kontekstem**:
+   - Inline w buttonie: `size={15-16}`
+   - Stat tile / sekcja header: `size={20-22}`
+   - Empty state hero: `size={32-40}`
+3. **Kolor zawsze przez tokens**: `color="var(--brand-500)"` nie hardcoded `#1D9E75`.
+4. **Add comments dlaczego ten icon**: jeśli wybór nie jest oczywisty (np. `Sparkles` dla teething zamiast nieistniejącego "Tooth"), zostaw komentarz w kodzie.
+
+### Co lucide ma a co nie
+
+Jest: Star, Sparkles, Ruler, Wind, Syringe, Carrot, Stethoscope, Milk, Moon, Baby, Thermometer, Pill, HeartPulse, Activity, Heart, Apple, Smile, Inbox, Square, Bell, Calendar, Settings, User, Home
+
+Brak: Tooth (użyj Sparkles lub Smile), Bottle-baby specific, Diaper-specific (zostań przy emoji).
+

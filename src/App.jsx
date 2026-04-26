@@ -23,6 +23,15 @@ import TodayTab from './components/TodayTab'
 import DailyTab from './components/DailyTab'
 import HealthTab from './components/HealthTab'
 import QuickAddFab from './components/QuickAddFab'
+// v2.10.2: lucide-react ikony zamiast emoji w nawigacji.
+// Wybór ikon: semantic match (Pill→leki, Stethoscope→doktor, Carrot→dieta).
+// Sparkles użyte dla teething bo "Tooth" nie istnieje w lucide library.
+// Ikony są zoptymalizowane (~12kB tree-shaken), kolorowalne, vector — wyglądają
+// identycznie na każdej platformie (vs emoji które różnią się iOS/Android).
+import {
+  Star, Sparkles, Ruler, Wind, Syringe, Carrot, Stethoscope,
+  Milk, Moon, Baby, Thermometer, Pill, HeartPulse,
+} from 'lucide-react'
 import ProfilesScreen from './components/ProfilesScreen'
 import ChildStatusBar from './components/ChildStatusBar'
 import ChildStatusCard from './components/ChildStatusCard'
@@ -121,14 +130,15 @@ const NAV_TABS = [
 // v2.9.3: temp/meds/symptoms/diaper PRZENIESIONE do core (Health, Feed).
 // W More zostają: rozwojowe (milestones/teething/growth/cough/diet),
 // medyczna historia (vaccinations/doctor).
+// v2.10.2: emoji → Icon component z lucide-react (konsystencja platformowa).
 const MORE_TABS = [
-  { id:'milestones', emoji:'⭐', labelKey:'nav.milestones' },
-  { id:'teething',   emoji:'🦷', labelKey:'nav.teething' },
-  { id:'growth',     emoji:'📏', labelKey:'nav.growth' },
-  { id:'cough',      emoji:'💨', labelKey:'nav.cough' },
-  { id:'vacc',       emoji:'💉', labelKey:'nav.vacc' },
-  { id:'diet',       emoji:'🥕', labelKey:'nav.diet' },
-  { id:'doctor',     emoji:'🩺', labelKey:'nav.doctor' },
+  { id:'milestones', Icon: Star,        labelKey:'nav.milestones' },
+  { id:'teething',   Icon: Sparkles,    labelKey:'nav.teething' },
+  { id:'growth',     Icon: Ruler,       labelKey:'nav.growth' },
+  { id:'cough',      Icon: Wind,        labelKey:'nav.cough' },
+  { id:'vacc',       Icon: Syringe,     labelKey:'nav.vacc' },
+  { id:'diet',       Icon: Carrot,      labelKey:'nav.diet' },
+  { id:'doctor',     Icon: Stethoscope, labelKey:'nav.doctor' },
 ]
 
 // Status prosty dla free userów — bez szczegółów
@@ -873,17 +883,25 @@ export default function App() {
             <div style={{padding:'8px 16px 0',display:'flex',flexDirection:'column',gap:6}}>
               {MORE_TABS.map(tab => {
                 const count = visibleSection(tab.id).length
+                const Icon = tab.Icon
                 return (
                   <button key={tab.id} onClick={()=>selectMoreTab(tab.id)} style={{
-                    display:'flex',alignItems:'center',gap:14,padding:'14px 16px',
+                    display:'flex',alignItems:'center',gap:'var(--space)',
+                    padding:'var(--space) var(--space)',
                     background:'var(--surface)',border:'0.5px solid var(--border)',
-                    borderRadius:14,fontSize:15,fontWeight:500,color:'var(--text)',
+                    borderRadius:'var(--radius-comfortable)',fontSize:15,fontWeight:500,color:'var(--text)',
                     textAlign:'left',minHeight:56,cursor:'pointer'
                   }}>
-                    <span style={{fontSize:22}}>{tab.emoji}</span>
+                    <Icon size={22} strokeWidth={1.8} color="var(--brand-600)" />
                     {t(tab.labelKey)}
                     {count > 0 && (
-                      <span style={{marginLeft:6,background:'#D85A30',color:'#fff',fontSize:10,fontWeight:700,borderRadius:20,padding:'1px 6px'}}>{count}</span>
+                      <span style={{
+                        marginLeft:'var(--space-tight)',
+                        background:'var(--alert-500)',color:'var(--surface)',
+                        fontSize:10,fontWeight:700,
+                        borderRadius:'var(--radius-round)',
+                        padding:'1px 6px',
+                      }}>{count}</span>
                     )}
                     <span style={{marginLeft:'auto',color:'var(--text-3)',fontSize:18}}>›</span>
                   </button>

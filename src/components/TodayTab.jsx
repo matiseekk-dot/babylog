@@ -2,6 +2,9 @@ import React, { useMemo } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { todayDate } from '../utils/helpers'
 import { t, useLocale } from '../i18n'
+// v2.10.2: Lucide SVG ikony zamiast emoji w stat tiles i timeline rows.
+// Emoji zostają tylko dla kontentu (typy karmienia/pieluch w wpisach od usera).
+import { Milk, Moon, Baby, Thermometer, Pill, Inbox } from 'lucide-react'
 
 /**
  * TodayTab — centralny widok "co działo się dziś".
@@ -79,6 +82,8 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         time: l.time,
         sortKey: l.time,
         emoji: emojiForFeed(l.type),
+        // emoji zostaje — feed type to kontent (lewa pierś vs butelka vs odciągnięte)
+        // który semantycznie jest jasny w emoji formie (🤱 vs 🍼)
         title: translateFeedType(l.type),
         sub: amount,
         onClick: () => navigateToFeed('feed'),
@@ -99,7 +104,8 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         id: `sleep-${l.id}`,
         time,
         sortKey,
-        emoji: '😴',
+        Icon: Moon,                          // v2.10.2: SVG ikona
+        iconColor: 'var(--accent-500)',
         title: t('today.timeline.sleep'),
         sub,
         onClick: () => onNavigate('sleep'),
@@ -112,6 +118,8 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         time: l.time,
         sortKey: l.time,
         emoji: emojiForDiaper(l.type),
+        // emoji zostaje — typy pieluchy (mokra/brudna/obydwie) komunikują się
+        // jasniej emoji niż abstrakcyjne SVG
         title: translateDiaperType(l.type),
         sub: '',
         onClick: () => navigateToFeed('diaper'),
@@ -124,7 +132,8 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         id: `temp-${l.id}`,
         time: l.time,
         sortKey: l.time,
-        emoji: '🌡️',
+        Icon: Thermometer,                   // v2.10.2
+        iconColor: 'var(--alert-500)',
         title: `${tempVal}°C`,
         sub: l.method ? ` · ${l.method}` : '',
         onClick: () => navigateToHealth('temp'),
@@ -136,7 +145,8 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         id: `med-${l.id}`,
         time: l.time,
         sortKey: l.time,
-        emoji: '💊',
+        Icon: Pill,                          // v2.10.2
+        iconColor: 'var(--info-700)',
         title: l.med || t('today.timeline.med'),
         sub: l.dose ? ` · ${l.dose}` : '',
         onClick: () => navigateToHealth('meds'),
@@ -193,7 +203,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         padding: '0 var(--space) var(--space-snug)',
       }}>
         <StatTile
-          emoji="🍼"
+          Icon={Milk}
           value={todayFeeds.length}
           label={t('today.stat.feeds')}
           onClick={() => navigateToFeed('feed')}
@@ -201,7 +211,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
           accentBg="var(--brand-50)"
         />
         <StatTile
-          emoji="😴"
+          Icon={Moon}
           value={totalSleepMin > 0 ? `${sleepHours}h ${sleepRemainder}m` : '—'}
           label={t('today.stat.sleep')}
           onClick={() => onNavigate('sleep')}
@@ -209,7 +219,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
           accentBg="var(--accent-50)"
         />
         <StatTile
-          emoji="👶"
+          Icon={Baby}
           value={todayDiapers.length}
           label={t('today.stat.diapers')}
           onClick={() => navigateToFeed('diaper')}
@@ -217,7 +227,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
           accentBg="var(--info-50)"
         />
         <StatTile
-          emoji="🌡️"
+          Icon={Thermometer}
           value={lastTemp ? `${typeof lastTemp.temp === 'number' ? lastTemp.temp.toFixed(1) : lastTemp.temp}°` : '—'}
           label={lastTemp ? t('today.stat.last_temp') : t('today.stat.no_temp')}
           onClick={() => navigateToHealth('temp')}
@@ -245,7 +255,9 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
             color: 'var(--text-3)',
             fontSize: 14, lineHeight: 1.5,
           }}>
-            <div style={{ fontSize: 32, marginBottom: 'var(--space-snug)' }}>📭</div>
+            <div style={{ marginBottom: 'var(--space-snug)', display: 'flex', justifyContent: 'center' }}>
+              <Inbox size={32} strokeWidth={1.5} color="var(--text-3)" />
+            </div>
             <div style={{ marginBottom: 'var(--space-tight)', fontWeight: 600, color: 'var(--text-2)' }}>
               {t('today.timeline.empty_title')}
             </div>
@@ -280,8 +292,13 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
                 <div style={{
                   fontSize: 22, lineHeight: 1, flexShrink: 0,
                   width: 32, textAlign: 'center',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  {item.emoji}
+                  {item.Icon ? (
+                    <item.Icon size={20} strokeWidth={1.8} color={item.iconColor || 'var(--text-2)'} />
+                  ) : (
+                    item.emoji
+                  )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
@@ -314,7 +331,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
 // Helpers
 // ────────────────────────────────────────────────────────────────────────────
 
-function StatTile({ emoji, value, label, onClick, accent, accentBg }) {
+function StatTile({ Icon, value, label, onClick, accent, accentBg }) {
   return (
     <button
       type="button"
@@ -330,7 +347,9 @@ function StatTile({ emoji, value, label, onClick, accent, accentBg }) {
         display: 'flex', flexDirection: 'column', gap: 'var(--space-tight)',
       }}
     >
-      <div style={{ fontSize: 18, marginBottom: 'var(--space-tight)' }}>{emoji}</div>
+      <div style={{ marginBottom: 'var(--space-tight)' }}>
+        <Icon size={20} strokeWidth={2} color={accent} />
+      </div>
       <div style={{ fontSize: 18, fontWeight: 800, color: accent, lineHeight: 1.1 }}>
         {value}
       </div>
