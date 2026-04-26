@@ -347,6 +347,74 @@ const TRANSLATIONS = {
     'consent.checkbox':            'Przeczytałem(-am) powyższe informacje, rozumiem że Spokojny Rodzic nie zastępuje opieki medycznej i akceptuję warunki użytkowania.',
     'consent.accept':              'Rozumiem, kontynuuj',
 
+    // v2.10.5 MDR EXIT — Consent v2 (positive declaration)
+    'consent.v2.title':            'Zanim zaczniemy',
+    'consent.v2.intro':            'Spokojny Rodzic to dziennik zdrowia z biblioteką wytycznych pediatrycznych. Nie zastępuje pediatry ani diagnostyki.',
+    'consent.v2.what_app_does':    'Co robi ta aplikacja',
+    'consent.v2.what_app_doesnt':  'Czego ta aplikacja NIE robi',
+    'consent.v2.your_role':        'Twoja rola',
+    'consent.v2.point.journal':    'Pomaga zapisywać codzienne dane: temperaturę, karmienie, sen, leki — w jednym miejscu.',
+    'consent.v2.point.library':    'Pokazuje statyczne tabele z wytycznymi PTP / KOMPAS GORĄCZKA — jak fragment poradnika.',
+    'consent.v2.point.charts':     'Wizualizuje Twoje pomiary w czasie (wykresy, raport PDF dla pediatry).',
+    'consent.v2.not.diagnose':     'Nie diagnozuje chorób, nie ocenia stanu zdrowia dziecka.',
+    'consent.v2.not.recommend':    'Nie zaleca konkretnych działań ani leków.',
+    'consent.v2.not.dose':         'Nie wylicza dawek — informacje o lekach pochodzą z ulotek.',
+    'consent.v2.point.doctor':     'Decyzje medyczne podejmujesz Ty wspólnie z pediatrą lub farmaceutą.',
+    'consent.v2.point.emergency':  'W nagłej sytuacji dzwoń pod 112 — aplikacja nie zastępuje pomocy lekarskiej.',
+    'consent.v2.checkbox.understand': 'Rozumiem do czego służy aplikacja i czego nie robi.',
+    'consent.v2.checkbox.rodo':    'Wyrażam zgodę na przetwarzanie danych zdrowotnych mojego dziecka, jako jego przedstawiciel ustawowy, w celu świadczenia usługi przez aplikację.',
+    'consent.v2.rodo_note':        'Podstawa prawna: art. 6 ust. 1 lit. a + art. 9 ust. 2 lit. a RODO. Zgodę możesz cofnąć w każdej chwili poprzez usunięcie konta w Ustawieniach.',
+    'consent.v2.accept_btn':       'Akceptuję i zaczynam',
+    'consent.v2.privacy_link':     'Polityka prywatności',
+
+    // v2.10.5 — TodaySummaryCard
+    'summary.today_label':         'Dziś',
+    'summary.empty_msg':           'Brak wpisów dzisiaj. Użyj przycisku + żeby coś dodać.',
+    'summary.feeds':               'Karmienia',
+    'summary.sleep':               'Sen',
+    'summary.diapers':             'Pieluchy',
+    'summary.last_temp':           'Ostatnia temp.',
+    'summary.meds':                'Leki',
+    'summary.see_reference':       'Zobacz wytyczne PTP / KOMPAS GORĄCZKA →',
+    'summary.premium_hint':        'Wykresy, raport PDF, sharing z partnerem',
+    'summary.premium_cta':         'Sprawdź',
+
+    // v2.10.5 — Observations (zastąpiło rule.* z severity)
+    'obs.temp_rising.title':       'Trzy kolejne pomiary rosną',
+    'obs.temp_rising.msg':         '{t1}° → {t2}° → {t3}°C. Twoje ostatnie trzy pomiary.',
+    'obs.temp_reference.title':    'Tabela referencyjna',
+    'obs.temp_reference.msg':      'Zobacz statyczne progi temperatur wg wieku (PTP / KOMPAS GORĄCZKA).',
+    'obs.feed_time.title':         'Ostatnie karmienie',
+    'obs.feed_time.msg':           'Minęło {hours}h {mins}min od ostatniego wpisu.',
+    'obs.med_interval.title':      'Odstęp między dawkami',
+    'obs.med_interval.msg':        '{name}: ostatnia dawka {hours}h {mins}min temu. Sprawdź ulotkę przed kolejną dawką.',
+    'obs.med_count.title':         'Dawki w ciągu 24h',
+    'obs.med_count.msg':           '{list}. Sprawdź dobową dawkę maksymalną w ulotce.',
+
+    // v2.10.5 — ReferenceLibrary (statyczne wytyczne)
+    'ref.title':                   'Wytyczne pediatryczne',
+    'ref.intro':                   'Statyczna biblioteka wytycznych z polskich i międzynarodowych źródeł pediatrycznych. Treść taka sama dla wszystkich użytkowników — apka nie ocenia Twojego dziecka.',
+    'ref.section.temp':            'Temperatura wg wieku',
+    'ref.section.warning_signs':   'Sygnały ostrzegawcze',
+    'ref.section.emergency':       'Numer alarmowy',
+    'ref.tbl.age':                 'Wiek',
+    'ref.tbl.threshold':           'Próg',
+    'ref.tbl.note':                'Wskazanie',
+    'ref.disclaimer':              'Powyższe progi i sygnały to fragmenty wytycznych PTP / KOMPAS GORĄCZKA / AAP. Aplikacja nie zastępuje konsultacji z pediatrą — w razie wątpliwości skontaktuj się z lekarzem.',
+
+    // v2.10.5 — WhenToSeekHelpCard (statyczne warning signs)
+    'seek_help.title':             'Kiedy szukać pomocy medycznej',
+    'seek_help.intro':             'Lista sygnałów ostrzegawczych z wytycznych pediatrycznych. To statyczna referencja — nie reaguje na pomiary Twojego dziecka.',
+    'seek_help.expand':            'Pokaż wszystkie ({count})',
+    'seek_help.collapse':          'Zwiń',
+    'seek_help.emergency_label':   'Numer alarmowy',
+    'seek_help.prep_btn':          'Lista pytań do pediatry',
+    'seek_help.disclaimer':        'Powyższa lista to wytyczne PTP/AAP. To nie jest indywidualna porada medyczna. W razie wątpliwości — skontaktuj się z pediatrą lub zadzwoń 112.',
+
+    // v2.10.5 — Nawigacja More (nowe sekcje)
+    'nav.reference':               'Wytyczne PTP/AAP',
+    'nav.seek_help':               'Kiedy szukać pomocy',
+
     // Features Screen - przegląd wszystkich funkcji
     'features.title':              'Co potrafi Spokojny Rodzic',
     'features.subtitle':           'Przegląd wszystkich funkcji',
@@ -1632,6 +1700,74 @@ const TRANSLATIONS = {
     'consent.emergency_text':      'Call 112 (EU) / 911 (US) or go to the nearest ER. Do not use this app in a life-threatening situation.',
     'consent.checkbox':            'I have read the information above, I understand that Calm Parent does not replace medical care, and I accept the terms of use.',
     'consent.accept':              'I understand, continue',
+
+    // v2.10.5 MDR EXIT — Consent v2 (positive declaration)
+    'consent.v2.title':            'Before we start',
+    'consent.v2.intro':            'Calm Parent is a child health journal with a library of pediatric guidelines. It does not replace your pediatrician or any diagnostic procedure.',
+    'consent.v2.what_app_does':    'What this app does',
+    'consent.v2.what_app_doesnt':  'What this app does NOT do',
+    'consent.v2.your_role':        'Your role',
+    'consent.v2.point.journal':    'Helps you log everyday data: temperature, feeding, sleep, medications — all in one place.',
+    'consent.v2.point.library':    'Shows static tables with AAP guidelines — like a digital reference page.',
+    'consent.v2.point.charts':     'Visualizes your measurements over time (charts, PDF report for your pediatrician).',
+    'consent.v2.not.diagnose':     'Does not diagnose conditions or assess your child\'s health status.',
+    'consent.v2.not.recommend':    'Does not recommend specific actions or medications.',
+    'consent.v2.not.dose':         'Does not calculate doses — medication information comes from package inserts.',
+    'consent.v2.point.doctor':     'Medical decisions are yours, made together with your pediatrician or pharmacist.',
+    'consent.v2.point.emergency':  'In emergency, call 112 (EU) — the app does not replace medical assistance.',
+    'consent.v2.checkbox.understand': 'I understand what this app does and what it does not do.',
+    'consent.v2.checkbox.rodo':    'I consent to processing my child\'s health data as their legal guardian, for the purpose of providing this service.',
+    'consent.v2.rodo_note':        'Legal basis: GDPR Art. 6(1)(a) + Art. 9(2)(a). You can withdraw consent at any time by deleting your account in Settings.',
+    'consent.v2.accept_btn':       'Accept and start',
+    'consent.v2.privacy_link':     'Privacy policy',
+
+    // v2.10.5 — TodaySummaryCard
+    'summary.today_label':         'Today',
+    'summary.empty_msg':           'No entries today. Tap + to add one.',
+    'summary.feeds':               'Feeds',
+    'summary.sleep':               'Sleep',
+    'summary.diapers':             'Diapers',
+    'summary.last_temp':           'Last temp.',
+    'summary.meds':                'Meds',
+    'summary.see_reference':       'See AAP guidelines →',
+    'summary.premium_hint':        'Charts, PDF report, partner sharing',
+    'summary.premium_cta':         'Try',
+
+    // v2.10.5 — Observations
+    'obs.temp_rising.title':       'Three consecutive readings rising',
+    'obs.temp_rising.msg':         '{t1}° → {t2}° → {t3}°C. Your last three readings.',
+    'obs.temp_reference.title':    'Reference table',
+    'obs.temp_reference.msg':      'See static temperature thresholds by age (AAP, Mayo Clinic).',
+    'obs.feed_time.title':         'Last feeding',
+    'obs.feed_time.msg':           '{hours}h {mins}min since last entry.',
+    'obs.med_interval.title':      'Time since last dose',
+    'obs.med_interval.msg':        '{name}: last dose {hours}h {mins}min ago. Check the package insert before next dose.',
+    'obs.med_count.title':         'Doses in last 24h',
+    'obs.med_count.msg':           '{list}. Check maximum daily dose in the package insert.',
+
+    // v2.10.5 — ReferenceLibrary
+    'ref.title':                   'Pediatric guidelines',
+    'ref.intro':                   'Static library of guidelines from pediatric sources (AAP, Mayo Clinic). Content is identical for all users — the app does not assess your child.',
+    'ref.section.temp':            'Temperature by age',
+    'ref.section.warning_signs':   'Warning signs',
+    'ref.section.emergency':       'Emergency number',
+    'ref.tbl.age':                 'Age',
+    'ref.tbl.threshold':           'Threshold',
+    'ref.tbl.note':                'Indication',
+    'ref.disclaimer':              'Thresholds and signs above are excerpts from AAP / Mayo Clinic guidelines. The app does not replace pediatric consultation — when in doubt, contact a doctor.',
+
+    // v2.10.5 — WhenToSeekHelpCard
+    'seek_help.title':             'When to seek medical help',
+    'seek_help.intro':             'List of warning signs from pediatric guidelines. This is a static reference — does not react to your child\'s readings.',
+    'seek_help.expand':            'Show all ({count})',
+    'seek_help.collapse':          'Collapse',
+    'seek_help.emergency_label':   'Emergency number',
+    'seek_help.prep_btn':          'Pediatrician question list',
+    'seek_help.disclaimer':        'The above list is from AAP/Mayo Clinic guidelines. This is not individual medical advice. If concerned — contact your pediatrician or call 112 (EU) / 911 (US).',
+
+    // v2.10.5 — Navigation More
+    'nav.reference':               'AAP guidelines',
+    'nav.seek_help':                'When to seek help',
 
     // Features Screen - overview of all features
     'features.title':              'What Calm Parent can do',

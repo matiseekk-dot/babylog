@@ -3,36 +3,34 @@ import { t, useLocale } from '../i18n'
 import { addBreadcrumb } from '../sentry'
 
 /**
- * MedicalConsentScreen
+ * MedicalConsentScreen — v2.10.5 MDR EXIT REFACTOR.
  *
- * Zunifikowany ekran zgody medycznej + disclaimera.
- * Pokazany RAZ przed pierwszym użyciem aplikacji.
+ * GŁÓWNA ZMIANA vs v2.10.4:
+ *   Przeszliśmy z "defensive disclaimer" ("to nie jest wyrób medyczny,
+ *   nie diagnozuje") na "positive declaration of purpose" ("to jest
+ *   dziennik z biblioteką wytycznych").
  *
- * v2.9.0 (kwiecień 2026):
- *   - Połączenie dwóch ekranów (consent + disclaimer) w jeden
- *   - Usunięte: scroll-to-bottom requirement (irytujący UX)
- *   - JEDEN checkbox zamiast dwóch poziomów akceptacji
+ * Powód: pierwsza forma defensywna była częściowo skuteczna prawnie ale
+ *   zostawiała wrażenie że apka *robi* rzeczy medyczne i tylko prosi
+ *   o zwolnienie z odpowiedzialności. Druga forma deklaruje *intended
+ *   purpose* zgodnie z MDCG 2019-11 jako journal+reference, nie decision
+ *   support — co wzmacnia pozycję NIE-MDSW w ocenie URPL.
  *
- * Kompatybilność z istniejącymi userami:
- *   Sprawdzane są DWA klucze localStorage:
- *     - 'babylog_medical_consent_v1' === '1'  (stary krótki ekran)
- *     - 'med_disclaimer_version' === '1.0'    (stary długi ekran)
- *   Jeśli któryś z nich jest ustawiony — user ma zaakceptowane.
- *   Wersja stampa NIE jest bumpowana — userzy z 2.8.x nie muszą akceptować
- *   ponownie. Treść została skrócona i zreorganizowana, ale prawne
- *   istota disclaimera (apka nie jest wyrobem medycznym, nie diagnozuje,
- *   nie zastępuje lekarza, 112 w nagłej sytuacji) jest zachowana.
+ * Plus: dodajemy explicit consent na przetwarzanie special category data
+ *   (RODO art. 9 ust. 2 lit. a — dane zdrowotne dziecka).
  *
- * Przy nowej akceptacji zapisywane są OBA klucze defensywnie.
+ * Backwards compat: czytamy stare klucze localStorage żeby istniejący
+ *   userzy nie musieli akceptować ponownie.
  */
 
-export const CONSENT_VERSION = '1.0'
+export const CONSENT_VERSION = '2.0' // bump z 1.0 — nowa treść = nowa zgoda dla nowych userów
 
 function readsAccepted() {
   try {
     const v = localStorage.getItem('med_disclaimer_version')
     const ts = localStorage.getItem('med_disclaimer_accepted')
-    if (v === CONSENT_VERSION && !!ts) return true
+    // Akceptujemy v1.0 i v2.0 jako valid — istniejący userzy nie muszą re-acceptować.
+    if ((v === '1.0' || v === '2.0') && !!ts) return true
     if (localStorage.getItem('babylog_medical_consent_v1') === '1') return true
     return false
   } catch {
@@ -49,24 +47,29 @@ function saveAcceptance() {
     localStorage.setItem('med_disclaimer_version', CONSENT_VERSION)
     localStorage.setItem('med_disclaimer_accepted', new Date().toISOString())
     localStorage.setItem('babylog_medical_consent_v1', '1')
+    // RODO consent stamp — osobny od ogólnego acceptance
+    localStorage.setItem('rodo_health_data_consent', '1')
+    localStorage.setItem('rodo_health_data_consent_at', new Date().toISOString())
   } catch (e) {
-    // Safari Private Mode / quota exceeded — user zobaczy ekran znowu po reload.
     addBreadcrumb('storage', 'consent-save-failed', { msg: e?.message || 'unknown' })
   }
 }
 
 export default function MedicalConsentScreen({ onAccept }) {
   useLocale()
-  const [checked, setChecked] = useState(false)
+  // Dwa explicit checkboxy: (1) zrozumienie funkcji apki, (2) zgoda RODO art. 9
+  const [understandsFn, setUnderstandsFn] = useState(false)
+  const [consentRodo, setConsentRodo] = useState(false)
+  const canAccept = understandsFn && consentRodo
 
   const accept = () => {
-    if (!checked) return
+    if (!canAccept) return
     saveAcceptance()
     try {
       if (window.Sentry?.addBreadcrumb) {
         window.Sentry.addBreadcrumb({
           category: 'legal',
-          message: 'Medical consent accepted',
+          message: 'Consent accepted (purpose + RODO art. 9)',
           data: { version: CONSENT_VERSION, timestamp: new Date().toISOString() },
           level: 'info',
         })
@@ -76,7 +79,7 @@ export default function MedicalConsentScreen({ onAccept }) {
   }
 
   return (
-    <div className="app" style={{ overflow:'auto' }}>
+    <div className="app" style={{ overflow: 'auto' }}>
       <div style={{
         maxWidth: 480, margin: '0 auto',
         padding: 'var(--space-spacious) var(--space-comfortable) var(--space-comfortable)',
@@ -90,132 +93,170 @@ export default function MedicalConsentScreen({ onAccept }) {
           background: 'linear-gradient(135deg, var(--brand-600) 0%, var(--brand-500) 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 36, margin: '0 auto var(--space-comfortable)',
-          boxShadow: '0 4px 14px rgba(15, 110, 86, 0.25)',
         }}>
-          🍼
+          📔
         </div>
 
         {/* Title */}
         <h1 style={{
-          fontSize: 24, fontWeight: 800, color: 'var(--text)',
+          fontSize: 22, fontWeight: 800, color: 'var(--text)',
           textAlign: 'center', margin: '0 0 var(--space-snug)',
-          letterSpacing: '-0.02em',
+          letterSpacing: '-0.02em', lineHeight: 1.25,
         }}>
-          {t('consent.title')}
+          {t('consent.v2.title')}
         </h1>
 
         <p style={{
-          fontSize: 15, color: 'var(--text-2)',
+          fontSize: 14, color: 'var(--text-2)',
           textAlign: 'center', margin: '0 0 var(--space-comfortable)',
           lineHeight: 1.5,
         }}>
-          {t('consent.intro')}
+          {t('consent.v2.intro')}
         </p>
 
-        {/* Bullet points */}
-        <div style={{
-          display: 'flex', flexDirection: 'column',
-          gap: 'var(--space-snug)',
-          marginBottom: 'var(--space-comfortable)',
-        }}>
-          <ConsentPoint icon="📋" text={t('consent.p1')} />
-          <ConsentPoint icon="🩺" text={t('consent.p2')} />
-          <ConsentPoint icon="👨‍⚕️" text={t('consent.p3')} />
-          <ConsentPoint icon="🚨" text={t('consent.p4')} />
-        </div>
+        {/* SEKCJA 1: Co robi apka (positive declaration) */}
+        <Section title={t('consent.v2.what_app_does')}>
+          <Bullet icon="📔">{t('consent.v2.point.journal')}</Bullet>
+          <Bullet icon="📚">{t('consent.v2.point.library')}</Bullet>
+          <Bullet icon="📊">{t('consent.v2.point.charts')}</Bullet>
+        </Section>
 
-        {/* Emergency callout — wyróżniony wizualnie */}
+        {/* SEKCJA 2: Co apka NIE robi (clear boundaries) */}
+        <Section title={t('consent.v2.what_app_doesnt')}>
+          <Bullet icon="🚫">{t('consent.v2.not.diagnose')}</Bullet>
+          <Bullet icon="🚫">{t('consent.v2.not.recommend')}</Bullet>
+          <Bullet icon="🚫">{t('consent.v2.not.dose')}</Bullet>
+        </Section>
+
+        {/* SEKCJA 3: Twoje obowiązki */}
+        <Section title={t('consent.v2.your_role')}>
+          <Bullet icon="👨‍⚕️">{t('consent.v2.point.doctor')}</Bullet>
+          <Bullet icon="📞">{t('consent.v2.point.emergency')}</Bullet>
+        </Section>
+
+        {/* CHECKBOXES */}
         <div style={{
-          background: 'var(--alert-50)',
-          border: '1.5px solid var(--alert-500)',
+          marginTop: 'var(--space-snug)',
+          padding: 'var(--space-snug) var(--space)',
+          background: 'var(--bg)',
           borderRadius: 'var(--radius)',
-          padding: 'var(--space) var(--space)',
-          marginBottom: 'var(--space-comfortable)',
-          boxShadow: '0 1px 3px rgba(224, 93, 68, 0.12)',
         }}>
+          <Checkbox
+            checked={understandsFn}
+            onChange={setUnderstandsFn}
+            label={t('consent.v2.checkbox.understand')}
+          />
+          <div style={{ height: 'var(--space-snug)' }} />
+          <Checkbox
+            checked={consentRodo}
+            onChange={setConsentRodo}
+            label={t('consent.v2.checkbox.rodo')}
+          />
           <div style={{
-            fontSize: 13, fontWeight: 800,
-            color: 'var(--alert-700)', marginBottom: 'var(--space-tight)',
-            textTransform: 'uppercase', letterSpacing: '0.02em',
+            marginTop: 'var(--space-snug)',
+            paddingLeft: 32,
+            fontSize: 11,
+            color: 'var(--text-3)',
+            lineHeight: 1.45,
           }}>
-            🚨 {t('consent.emergency_title')}
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--alert-700)', lineHeight: 1.5, fontWeight: 600 }}>
-            {t('consent.emergency_text')}
+            {t('consent.v2.rodo_note')}
           </div>
         </div>
 
-        {/* Spacer pushes checkbox+button to bottom on tall screens */}
-        <div style={{ flex: 1, minHeight: 'var(--space-snug)' }} />
-
-        {/* Single checkbox */}
-        <label style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: 'var(--space-snug)',
-          marginBottom: 'var(--space)',
-          cursor: 'pointer',
-          padding: 'var(--space-tight) 0',
-        }}>
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={(e) => setChecked(e.target.checked)}
-            style={{
-              width: 22,
-              height: 22,
-              marginTop: 1,
-              flexShrink: 0,
-              cursor: 'pointer',
-              accentColor: 'var(--brand-500)',
-            }}
-          />
-          <span style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>
-            {t('consent.checkbox')}
-          </span>
-        </label>
-
-        {/* Accept button */}
+        {/* ACCEPT BUTTON */}
         <button
-          type="button"
           onClick={accept}
-          disabled={!checked}
+          disabled={!canAccept}
           style={{
-            background: checked
-              ? 'linear-gradient(135deg, var(--brand-600) 0%, var(--brand-500) 100%)'
+            marginTop: 'var(--space-comfortable)',
+            background: canAccept
+              ? 'var(--brand-500)'
               : 'var(--text-3)',
-            color: 'var(--surface)',
-            border: 'none',
+            color: 'var(--surface)', border: 'none',
             borderRadius: 'var(--radius-comfortable)',
-            padding: 'var(--space) var(--space)',
-            fontSize: 16,
-            fontWeight: 700,
-            cursor: checked ? 'pointer' : 'not-allowed',
-            boxShadow: checked ? '0 4px 14px rgba(15, 110, 86, 0.25)' : 'none',
-            minHeight: 56,
-            transition: 'background 0.2s, box-shadow 0.2s',
+            padding: 'var(--space-snug) var(--space-comfortable)',
+            fontSize: 15, fontWeight: 700,
+            cursor: canAccept ? 'pointer' : 'not-allowed',
+            minHeight: 52,
           }}
         >
-          {t('consent.accept')}
+          {t('consent.v2.accept_btn')}
+        </button>
+
+        {/* Privacy policy link */}
+        <button
+          onClick={() => {
+            window.open('https://matiseekk-dot.github.io/babylog/privacy.html', '_blank')
+          }}
+          style={{
+            marginTop: 'var(--space-snug)',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-3)',
+            fontSize: 12,
+            textDecoration: 'underline',
+            cursor: 'pointer',
+          }}
+        >
+          {t('consent.v2.privacy_link')}
         </button>
       </div>
     </div>
   )
 }
 
-function ConsentPoint({ icon, text }) {
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function Section({ title, children }) {
+  return (
+    <div style={{ marginBottom: 'var(--space)' }}>
+      <h2 style={{
+        fontSize: 12,
+        fontWeight: 700,
+        color: 'var(--text-2)',
+        marginBottom: 'var(--space-snug)',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+      }}>{title}</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-snug)' }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function Bullet({ icon, children }) {
   return (
     <div style={{ display: 'flex', gap: 'var(--space-snug)', alignItems: 'flex-start' }}>
       <div style={{
-        fontSize: 18, lineHeight: 1,
+        fontSize: 18, lineHeight: 1.2,
         flexShrink: 0, marginTop: 2,
-        width: 28, textAlign: 'center',
-      }}>
-        {icon}
-      </div>
-      <div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>
-        {text}
-      </div>
+        width: 24, textAlign: 'center',
+      }}>{icon}</div>
+      <div style={{
+        fontSize: 13,
+        color: 'var(--text)',
+        lineHeight: 1.5,
+      }}>{children}</div>
     </div>
+  )
+}
+
+function Checkbox({ checked, onChange, label }) {
+  return (
+    <label style={{
+      display: 'flex', alignItems: 'flex-start', gap: 'var(--space-snug)',
+      cursor: 'pointer',
+    }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        style={{ width: 20, height: 20, marginTop: 2, flexShrink: 0, cursor: 'pointer' }}
+      />
+      <span style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.45 }}>
+        {label}
+      </span>
+    </label>
   )
 }
