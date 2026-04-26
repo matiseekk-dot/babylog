@@ -16,6 +16,20 @@
 //
 // Dla 100% niezawodności w tle wymagany byłby FCM (push z serwera) — TODO.
 
+// v2.9.1: single source of truth dla interwałów leków.
+// importScripts() ładuje plik synchronicznie podczas registracji SW —
+// self.MED_INTERVALS jest dostępne natychmiast we wszystkich event handlerach.
+// Synchronizacja z src/data/medIntervals.json + functions/medIntervals.json
+// jest weryfikowana przez src/data/medIntervals.test.js.
+try {
+  importScripts('/babylog/medIntervals.constants.js')
+} catch (e) {
+  // Defensywnie — jeśli plik się nie załaduje, SW dalej działa, tylko
+  // bez notyfikacji o lekach. Lepiej niż crash całego SW.
+  console.error('[SW] medIntervals.constants.js load failed:', e)
+  self.MED_INTERVALS = {}
+}
+
 self.addEventListener('install', () => self.skipWaiting())
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()))
 
@@ -137,15 +151,17 @@ async function checkMedReminders({ logs = [], locale = 'pl', strings = {} }) {
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
-const MED_DURATION = {
-  paracetamol: 360,  // 6h
-  ibuprofen:   480,  // 8h
-}
+// v2.9.1: MED_DURATION (lokalny hardcode) usunięty. Wartości pochodzą z
+// self.MED_INTERVALS, załadowane przez importScripts() na górze pliku
+// z public/medIntervals.constants.js. Single source of truth zsynchronizowany
+// z src/data/medIntervals.json.
 
 function getDurationMin(medName) {
   const lc = (medName || '').toLowerCase()
-  if (lc.includes('paracetamol')) return MED_DURATION.paracetamol
-  if (lc.includes('ibuprofen'))   return MED_DURATION.ibuprofen
+  const intervals = self.MED_INTERVALS || {}
+  for (const [name, mins] of Object.entries(intervals)) {
+    if (lc.includes(name)) return mins
+  }
   return null
 }
 

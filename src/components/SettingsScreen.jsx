@@ -62,7 +62,11 @@ export default function SettingsScreen({
   const initRemainderMonths = totalMonths % 12
   const [years, setYears] = useState(String(initYears))
   const [months, setMonths] = useState(String(initRemainderMonths))
-  const [weight, setWeight] = useState(String(profile.weight))
+  // v2.9.0: weight może być null/undefined (opcjonalne w onboardingu).
+  // String(null) === 'null', dlatego defensywny fallback do ''.
+  const [weight, setWeight] = useState(
+    profile.weight != null && profile.weight !== '' ? String(profile.weight) : ''
+  )
   const [avatar, setAvatar] = useState(profile.avatar)
   const [sex, setSex] = useState(profile.sex || 'M')
   // Widoczne sekcje — defensywny default (istniejące profile mogą nie mieć)
@@ -75,10 +79,14 @@ export default function SettingsScreen({
   const [exporting, setExporting] = useState(false)
 
   const save = () => {
+    // v2.9.0: pusta waga → null (nie 0). Zero kg jest niesensowne i może
+    // przebijać się do siatek/PDF jako bzdurna wartość.
+    const trimmedWeight = String(weight).trim()
+    const parsedWeight = trimmedWeight ? Number(trimmedWeight.replace(',', '.')) : null
     onUpdate(profile.id, {
       name: name.trim() || profile.name,
       months: (Number(years) || 0) * 12 + (Number(months) || 0),
-      weight: Number(weight) || 0,
+      weight: (parsedWeight && !isNaN(parsedWeight)) ? parsedWeight : null,
       avatar,
       sex,
       toiletMode,
@@ -687,7 +695,20 @@ export default function SettingsScreen({
       <PdfReportModal
         open={pdfModal}
         onClose={() => setPdfModal(false)}
-        profile={{ ...profile, name, months: (Number(years) || 0) * 12 + (Number(months) || 0), weight: Number(weight), avatar, sex }}
+        profile={{
+          ...profile,
+          name,
+          months: (Number(years) || 0) * 12 + (Number(months) || 0),
+          // v2.9.0: pusta waga → null (zgodnie z polityką opcjonalnej wagi)
+          weight: (() => {
+            const w = String(weight).trim()
+            if (!w) return null
+            const n = Number(w.replace(',', '.'))
+            return (!isNaN(n) && n > 0) ? n : null
+          })(),
+          avatar,
+          sex,
+        }}
         loadData={loadPdfData}
       />
 

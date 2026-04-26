@@ -1,0 +1,13 @@
+{
+  "_comment_pl": "SINGLE SOURCE OF TRUTH dla interwałów leków. UWAGA: jeśli zmieniasz te wartości, MUSISZ zsynchronizować ręcznie z public/medIntervals.constants.js (dla Service Workera) ORAZ functions/medIntervals.json (dla Cloud Function). Test src/data/medIntervals.test.js sprawdza spójność i fail-eruje przy rozjeździe.",
+  "_comment_semantics": "Wartości w minutach reprezentują 'lek przestaje działać' / koniec konserwatywnego odstępu między dawkami. NIE są to minimalne ChPL odstępy (te są w src/engine/rulesEngine.js i są twardsze: 240 min / 360 min). Notyfikacja 'minął odstęp' przy tych wartościach jest celowo pozno-progowa — bezpieczniej po, niż za wcześnie.",
+  "_version": 1,
+  "intervals": {
+    "paracetamol": 360,
+    "panadol":     360,
+    "apap":        360,
+    "ibuprofen":   480,
+    "ibuprom":     480,
+    "nurofen":     480
+  }
+}

@@ -1,42 +1,30 @@
 import React, { useState } from 'react'
 import { t, useLocale, isEN } from '../i18n'
-
-function getTestimonials() {
-  if (isEN()) {
-    return [
-      { name: 'Sarah M.', child: 'mom of 4-month-old', quote: 'Share with my husband changed everything — we both see feedings in real time.', rating: 5 },
-      { name: 'Emily R.', child: 'mom of twins',       quote: 'Growth charts with percentiles save us a visit to the pediatrician every month.', rating: 5 },
-      { name: 'James K.', child: 'dad of 7-month-old', quote: 'Questions for pediatrician — no more forgetting what to ask during the visit.', rating: 5 },
-    ]
-  }
-  return [
-    { name: 'Ania K.',    child: 'mama 4-miesięcznej Zosi',  quote: 'Share z mężem to game changer — oboje widzimy karmienia w czasie rzeczywistym.', rating: 5 },
-    { name: 'Martyna P.', child: 'mama bliźniaków',          quote: 'Wykresy wzrostu z percentylami oszczędzają nam wizytę u pediatry co miesiąc.', rating: 5 },
-    { name: 'Kuba D.',    child: 'tata 7-miesięcznego Adama',quote: 'Pytania do pediatry — żadnych zapomnianych tematów na wizycie.', rating: 5 },
-  ]
-}
+import { getPlans } from '../data/premiumPlans'
 
 /**
- * NOWA OFERTA PREMIUM (2026-04-21, v2):
+ * NOWA OFERTA PREMIUM (2026-04-21 v2 + 2026-04-26 v2.9.2):
  *
  * UWAGA — sync między urządzeniami i backup Firestore są AUTOMATYCZNE dla
  * każdego zalogowanego usera. To NIE są Premium features. Nie można ich
  * tutaj sprzedawać (false advertising).
  *
- * Bezpieczeństwo ZAWSZE za darmo:
- *   - Kalkulator dawek paracetamolu/ibuprofenu
- *   - Alerty temperatury + crisis detection
+ * Bezpieczeństwo ZAWSZE za darmo (v2.9.2):
+ *   - Critical alerts (gorączka <3m, ≥40.5°C, kryzys odwodnienia) — pełna
+ *     informacja, nie ukryte za paywallem
+ *   - Reminder leków: "minął odstęp od ostatniej dawki" (NIE jest to
+ *     kalkulator — apka NIE wylicza dawek od v2.7.1)
  *   - Podstawowe tracking (karmienie, sen, pieluchy, temp, kaszel)
  *   - CSV export (RODO — prawo do danych)
  *   - Cross-device sync (automatyczne dla zalogowanych)
  *
- * Premium = WARTOŚĆ DODANA (nie fundament):
- *   - Share z partnerem (współdzielone konto — inny UID, inny flow)
+ * Premium = decision support i wartość dodana:
+ *   - Pełen status: warning/alert messages, trendy, sectionMessages
  *   - Wykresy wzrostu z percentylami WHO
+ *   - Share z partnerem (współdzielone konto — inny UID, inny flow)
  *   - Unlimited dzieci
  *   - PDF raport dla pediatry (formatowanie, nie sam eksport)
  *   - Notatki z wizyt + pytania do pediatry
- *   - (w przyszłości) AI chat z Claude API
  */
 function getFeatures() {
   if (isEN()) {
@@ -61,22 +49,24 @@ function getFeatures() {
   ]
 }
 
-function getPlans() {
-  const prices = isEN()
-    ? { monthly:'$6.99', yearly:'$49.99', lifetime:'$99.99' }
-    : { monthly:'14,99 zł', yearly:'99,99 zł', lifetime:'199,99 zł' }
-  return [
-    { id:'monthly',  label:t('paywall.plan.monthly'),  price:prices.monthly,  period:t('paywall.per.monthly'),  popular:false, badge:null },
-    { id:'yearly',   label:t('paywall.plan.yearly'),   price:prices.yearly,   period:t('paywall.per.yearly'),   popular:true,  badge:t('paywall.badge.yearly') },
-    { id:'lifetime', label:t('paywall.plan.lifetime'), price:prices.lifetime, period:t('paywall.per.lifetime'), popular:false, badge:null },
-  ]
-}
+// v2.9.2: getPlans() usunięte — single source of truth w src/data/premiumPlans.js.
+// Ten sam moduł importuje useRevenueCat. Eliminuje rozjazd cen.
 
 export default function PaywallScreen({ onActivate, onClose, checking }) {
   useLocale()
   const FEATURES = getFeatures()
-  const PLANS = getPlans()
+  // Use locale-aware getPlans() — przeliczy się przy zmianie języka dzięki useLocale().
+  const PLANS = getPlans(isEN() ? 'en' : 'pl')
   const [selected, setSelected] = useState('yearly')
+
+  // Aktualnie wybrany plan — używany do dynamicznego CTA z ceną
+  const selectedPlan = PLANS.find(p => p.id === selected) || PLANS[0]
+  const ctaLabel = checking
+    ? t('paywall.cta.loading')
+    : t('paywall.cta.try', {
+        price: selectedPlan.price,
+        period: selectedPlan.period,
+      })
 
   const freeBanner = t('paywall.free_banner')
 
@@ -211,35 +201,13 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
         ))}
       </div>
 
-      {/* TESTIMONIALS */}
-      <div style={{ padding:'18px 20px 12px' }}>
-        <div style={{
-          fontSize:11, fontWeight:700, color:'#5a5a56',
-          textTransform:'uppercase', letterSpacing:0.5, marginBottom:10,
-        }}>
-          {t('paywall.testimonials.title')}
-        </div>
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {getTestimonials().map((tst, i) => (
-            <div key={i} style={{
-              padding:'12px 14px',
-              background:'#F7F7F5', borderRadius:12,
-              border:'0.5px solid rgba(0,0,0,0.05)',
-            }}>
-              <div style={{ fontSize:12, color:'#3a3a36', lineHeight:1.5, marginBottom:6, fontStyle:'italic' }}>
-                "{tst.quote}"
-              </div>
-              <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                <span style={{ fontSize:11, color:'#EF9F27' }}>{'★'.repeat(tst.rating)}</span>
-                <span style={{ fontSize:11, color:'#9a9a94' }}>— {tst.name}, {tst.child}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ fontSize:9, color:'#c0c0b8', textAlign:'center', marginTop:8 }}>
-          {t('paywall.testimonials.disclaimer')}
-        </div>
-      </div>
+      {/* TESTIMONIALS — usunięte v2.9.1.
+          Powód: cytaty były wymyślone (Ania K., Martyna P., Kuba D. — fikcyjni
+          rodzice), wszyscy z 5/5 gwiazdkami. UOKiK risk (ustawa o przeciwdziałaniu
+          nieuczciwym praktykom rynkowym, art. 5–7) oraz Google Play "Misleading
+          Claims". Bez pisemnej zgody prawdziwych testerów na publikację cytatu
+          nie da się tego naprawić. Apka świeżo na rynku — brak social proof
+          to standard dla startupu, nie należy go fake'ować. */}
 
       {/* STICKY FOOTER — button na dole zawsze widoczny */}
       <div style={{
@@ -257,7 +225,7 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
           color:'#fff',border:'none',borderRadius:14,fontSize:17,fontWeight:800,
           cursor:checking?'default':'pointer',
         }}>
-          {checking ? t('paywall.cta.loading') : t('paywall.cta')}
+          {ctaLabel}
         </button>
         <div style={{textAlign:'center',fontSize:11,color:'#9a9a94',marginTop:8,lineHeight:1.4}}>
           {t('paywall.footer')}

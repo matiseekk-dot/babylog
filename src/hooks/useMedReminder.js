@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { t, getLocale } from '../i18n'
 import { loadFromStorage } from './useStorage'
 import { addBreadcrumb } from '../sentry'
+import medIntervalsData from '../data/medIntervals.json'
 
 /**
  * useMedReminder(babyId)
@@ -23,15 +24,17 @@ import { addBreadcrumb } from '../sentry'
  * cała logika dzieje się w checkAllReminders() wywoływanym automatycznie.
  */
 
-const MED_DURATION = {
-  paracetamol: 360,  // 6h
-  ibuprofen:   480,  // 8h
-}
+// v2.9.1: single source of truth — src/data/medIntervals.json.
+// Zsynchronizowane z public/medIntervals.constants.js (SW) i
+// functions/medIntervals.json (Cloud Function). Test sanity:
+// src/data/medIntervals.test.js.
+const MED_INTERVALS = medIntervalsData.intervals
 
 function getDurationMin(medName) {
   const lc = (medName || '').toLowerCase()
-  if (lc.includes('paracetamol')) return MED_DURATION.paracetamol
-  if (lc.includes('ibuprofen'))   return MED_DURATION.ibuprofen
+  for (const [name, mins] of Object.entries(MED_INTERVALS)) {
+    if (lc.includes(name)) return mins
+  }
   return null
 }
 

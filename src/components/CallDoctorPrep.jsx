@@ -100,7 +100,7 @@ export default function CallDoctorPrep({ profile, uid, onClose, onCall }) {
         <div style={{ fontSize: 13, color: '#3a3a36', lineHeight: 1.6 }}>
           <div><strong>{t('onb.setup.name')}:</strong> {profile.name}</div>
           <div><strong>{t('onb.setup.age')}:</strong> {profile.months} {t('prep.months')}</div>
-          <div><strong>{t('onb.setup.weight')}:</strong> {profile.weight} kg</div>
+          <div><strong>{t('onb.setup.weight')}:</strong> {profile.weight ? `${profile.weight} kg` : '—'}</div>
         </div>
       </Section>
 

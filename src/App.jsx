@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
-import MedicalConsentScreen from './components/MedicalConsentScreen'
+import MedicalConsentScreen, { needsConsent } from './components/MedicalConsentScreen'
 import { useRevenueCat } from './hooks/useRevenueCat'
 import { useChildStatus } from './hooks/useChildStatus'
 import { usePremium } from './hooks/usePremium'
@@ -20,14 +20,18 @@ import DietTab from './components/DietTab'
 import CoughTab from './components/CoughTab'
 import SymptomsTab from './components/SymptomsTab'
 import QuickDoseCard from './components/QuickDoseCard'
+import TodayTab from './components/TodayTab'
+import DailyTab from './components/DailyTab'
+import HealthTab from './components/HealthTab'
+import QuickAddFab from './components/QuickAddFab'
 import ProfilesScreen from './components/ProfilesScreen'
 import ChildStatusBar from './components/ChildStatusBar'
 import ChildStatusCard from './components/ChildStatusCard'
 import AutoHideBanner from './components/AutoHideBanner'
+import OnboardingTipsBanner from './components/OnboardingTipsBanner'
 import PaywallScreen from './components/PaywallScreen'
 import DoctorNotesTab from './components/DoctorNotesTab'
 import OnboardingScreen from './components/OnboardingScreen'
-import MedicalDisclaimerScreen, { needsDisclaimer } from './components/MedicalDisclaimerScreen'
 import ToastContainer from './components/Toast'
 import { toast } from './components/Toast'
 import { captureError, addBreadcrumb } from './sentry'
@@ -43,7 +47,7 @@ import { useCrisisDetection } from './hooks/useCrisisDetection'
 import { useServiceWorker } from './hooks/useServiceWorker'
 
 import { useLocale, t } from './i18n'
-import { todayDate } from './utils/helpers'
+import { todayDate, nowTime, genId } from './utils/helpers'
 
 const DEFAULT_PROFILE = {
   id: 'default',
@@ -76,7 +80,22 @@ function defaultVisibleTabs({ months, toiletMode }) {
   }
 }
 
+// v2.9.3: 4 podstawowe taby + More.
+//   today  — dashboard (Status Card, crisis, timeline dnia)
+//   feed   — Karmienia + Pieluchy jako wewnętrzne segmenty
+//   sleep  — sen
+//   health — Temperatura + Leki + Objawy jako wewnętrzne segmenty (tryb chory)
+//   more   — reszta sekcji (growth, vaccinations, milestones, teething, cough,
+//            diet, doctor)
 const NAV_TABS = [
+  { id:'today', icon:(
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  ), labelKey:'nav.today' },
   { id:'feed', icon:(
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M8 3v3a4 4 0 0 0 8 0V3"/><path d="M12 6v6"/><ellipse cx="12" cy="18" rx="5" ry="3"/>
@@ -87,11 +106,11 @@ const NAV_TABS = [
       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
     </svg>
   ), labelKey:'nav.sleep' },
-  { id:'diaper', icon:(
+  { id:'health', icon:(
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12h8M12 8v8"/>
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
     </svg>
-  ), labelKey:'nav.diaper' },
+  ), labelKey:'nav.health' },
   { id:'more', icon:(
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
@@ -99,14 +118,15 @@ const NAV_TABS = [
   ), labelKey:'nav.more' },
 ]
 
+// MORE_TABS — sekcje które nie są codzienne (kompetencyjne / referencyjne).
+// v2.9.3: temp/meds/symptoms/diaper PRZENIESIONE do core (Health, Feed).
+// W More zostają: rozwojowe (milestones/teething/growth/cough/diet),
+// medyczna historia (vaccinations/doctor).
 const MORE_TABS = [
   { id:'milestones', emoji:'⭐', labelKey:'nav.milestones' },
   { id:'teething',   emoji:'🦷', labelKey:'nav.teething' },
   { id:'growth',     emoji:'📏', labelKey:'nav.growth' },
-  { id:'temp',       emoji:'🌡️', labelKey:'nav.temp' },
-  { id:'symptoms',   emoji:'🤒', labelKey:'nav.symptoms' },
   { id:'cough',      emoji:'💨', labelKey:'nav.cough' },
-  { id:'meds',       emoji:'💊', labelKey:'nav.meds' },
   { id:'vacc',       emoji:'💉', labelKey:'nav.vacc' },
   { id:'diet',       emoji:'🥕', labelKey:'nav.diet' },
   { id:'doctor',     emoji:'🩺', labelKey:'nav.doctor' },
@@ -132,11 +152,11 @@ export default function App() {
   // Meds tab), przez co świeżo zainstalowana apka nigdy nie miała SW gotowego.
   useServiceWorker()
 
-  // Medical consent — must be accepted ONCE before first use
-  const [consentAccepted, setConsentAccepted] = useState(() => {
-    try { return localStorage.getItem('babylog_medical_consent_v1') === '1' }
-    catch { return false }
-  })
+  // Medical consent — must be accepted ONCE before first use.
+  // v2.9.0: zunifikowany ekran (consent + disclaimer w jednym).
+  // needsConsent() sprawdza OBA stare klucze localStorage dla kompatybilności
+  // z userami z 2.7.x/2.8.x — nikt nie musi akceptować ponownie.
+  const [consentAccepted, setConsentAccepted] = useState(() => !needsConsent())
   const [emptyHeroDismissed, setEmptyHeroDismissed] = useState(() => {
     try { return localStorage.getItem('babylog_empty_hero_dismissed') === '1' }
     catch { return false }
@@ -145,12 +165,9 @@ export default function App() {
     try { localStorage.setItem('babylog_empty_hero_dismissed', '1') } catch {}
     setEmptyHeroDismissed(true)
   }
+  // v2.9.0: MedicalConsentScreen sam zapisuje stampy do localStorage
+  // (oba klucze defensywnie). Tu tylko przełączamy stan w pamięci.
   const acceptConsent = () => {
-    try {
-      localStorage.setItem('babylog_medical_consent_v1', '1')
-    } catch (e) {
-      addBreadcrumb('storage', 'consent-save-failed', { msg: e?.message || 'unknown' })
-    }
     setConsentAccepted(true)
   }
   const [guestMode, setGuestMode] = useState(() => {
@@ -218,15 +235,13 @@ export default function App() {
 
   const [profiles, setProfiles] = useFirestore(uid, 'profiles', [DEFAULT_PROFILE])
   const [activeId, setActiveId] = useFirestore(uid, 'activeProfile', 'default')
-  const [tab, setTab] = useState('feed')
+  const [tab, setTab] = useState('today')
   const [showProfiles, setShowProfiles] = useState(false)
   const [showMore, setShowMore] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showPrep, setShowPrep] = useState(false)
   const [onboardingDone, setOnboardingDone] = useFirestore(uid, 'onboarding_done', false)
-  // Disclaimer medyczny — localStorage (NIE Firestore, ma być per-urządzenie)
-  const [disclaimerAccepted, setDisclaimerAccepted] = useState(() => !needsDisclaimer())
 
   // KRYTYCZNE — stabilna logika resolwowania aktywnego profilu.
   //
@@ -284,7 +299,15 @@ export default function App() {
       toiletMode: rawActive.toiletMode ?? 'diapers',
     }),
   }
-  const [sleepTimerTs] = useFirestore(uid, `sleep_timer_${active.id}`, null)
+  const [sleepTimerTs, setSleepTimerTs] = useFirestore(uid, `sleep_timer_${active.id}`, null)
+
+  // v2.9.3: quick-add stores dla FAB. Drobny duplicate listener względem
+  // FeedTab/SleepTab/DiaperTab gdy te są aktywne (Firestore real-time
+  // sync je deduplikuje na poziomie danych — oba zobaczą tę samą zawartość).
+  // Sleep używa już tego samego klucza co `sleep_timer_${active.id}` — to OK.
+  const [feedLogsForFab,   setFeedLogsForFab]   = useFirestore(uid, `feed_${active.id}`,   [])
+  const [sleepLogsForFab,  setSleepLogsForFab]  = useFirestore(uid, `sleep_${active.id}`,  [])
+  const [diaperLogsForFab, setDiaperLogsForFab] = useFirestore(uid, `diaper_${active.id}`, [])
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
   const { isPremium, isOnTrial, trialDaysLeft, purchased, activate, deactivate } = usePremium(uid)
@@ -426,17 +449,54 @@ export default function App() {
     } catch { return false }
   })()
 
-  const visibleStatus    = isPremium ? globalStatus    : (hasDataToday ? FREE_STATUS() : EMPTY_STATUS())
-  const visibleTopStatus = isPremium ? topStatus       : 'ok'
-  const visibleMessages  = isPremium ? messages        : []
-  const visibleSection   = (section) => isPremium ? sectionMessages(section) : []
+  // ── Visibility tier dla statusu / messages (v2.9.2) ───────────────────────
+  // Polityka: critical alerts (życie-zagrażające) są ZAWSZE widoczne, premium
+  // czy nie. Paywallowanie alertu typu "gorączka ≥40.5°C — zadzwoń 112" jest
+  // etycznie i prawnie problematyczne (apka która "wie" o zagrożeniu, ale
+  // ukrywa do czasu zakupu = potencjalne MDR/UOKiK ryzyko).
+  //
+  // Premium widzi pełny zestaw: critical + warning + alert + info, plus
+  // sectionMessages, plus FREE_STATUS / EMPTY_STATUS są zastąpione globalStatus.
+  //
+  // Free widzi:
+  //   - jeśli jest jakiś critical message → globalStatus i topStatus
+  //     "critical", oraz tylko critical wiadomości (bez upgrade-prompt — to
+  //     nieetyczne pod alertem o kryzysie)
+  //   - inaczej → FREE_STATUS lub EMPTY_STATUS jako placeholder
+  const criticalMessages = (messages || []).filter(m => m?.status === 'critical')
+  const hasCritical = criticalMessages.length > 0
+
+  const visibleStatus = isPremium
+    ? globalStatus
+    : hasCritical
+      ? globalStatus
+      : (hasDataToday ? FREE_STATUS() : EMPTY_STATUS())
+  const visibleTopStatus = isPremium
+    ? topStatus
+    : (hasCritical ? 'critical' : 'ok')
+  const visibleMessages = isPremium
+    ? messages
+    : criticalMessages
+  const visibleSection = (section) => {
+    const all = sectionMessages(section) || []
+    return isPremium ? all : all.filter(m => m?.status === 'critical')
+  }
 
   // Jeśli user jest na ukrytym tabie (np. Karmienia), przeskocz na pierwszy widoczny.
   // Scenariusz: user jest na Feed, idzie do Settings, wyłącza Karmienia → tab
   // znika z bottom nav, ale content dalej Feed. Trzeba go przenieść.
+  // v2.9.3: stara nawigacja miała 'diaper' jako osobny tab — teraz jest częścią
+  // 'feed' (subzakładka). Jeśli localStorage / state pamięta stary 'diaper'
+  // (lub 'temp'/'meds'/'symptoms' z More), przekieruj. Plus: jeśli oba sub-segmenty
+  // Feed (feed+diaper) są wyłączone w visibleTabs, wracaj na Today (rzadki edge case).
   useEffect(() => {
-    if (tab === 'feed'   && active.visibleTabs?.feed   === false) setTab('sleep')
-    if (tab === 'diaper' && active.visibleTabs?.diaper === false) setTab('sleep')
+    if (tab === 'diaper') { setTab('feed'); return }
+    if (tab === 'temp' || tab === 'meds' || tab === 'symptoms') { setTab('health'); return }
+    if (tab === 'feed' &&
+        active.visibleTabs?.feed === false &&
+        active.visibleTabs?.diaper === false) {
+      setTab('today')
+    }
   }, [active.visibleTabs, tab])
 
   const navigate = (targetTab) => {
@@ -473,33 +533,102 @@ export default function App() {
     onUpgrade: openPaywall,
   }
 
+  // ── Quick-add callbacks dla QuickAddFab (v2.9.3) ──────────────────────────
+  // Smart suggestion: sugeruj przeciwną pierś niż ostatnie karmienie z piersi
+  // (parytetowa naprzemienność, podstawowa zasada laktacji).
+  const lastBreastFeed = feedLogsForFab.find(l => l.type?.startsWith('Pierś'))
+  const suggestedFeedType = lastBreastFeed
+    ? (lastBreastFeed.type === 'Pierś lewa' ? 'Pierś prawa' : 'Pierś lewa')
+    : null
+
+  const quickAddFeed = (type, amount) => {
+    const entry = { id: genId(), type, amount, time: nowTime(), date: todayDate() }
+    setFeedLogsForFab([entry, ...feedLogsForFab])
+    refresh?.()
+    toast(`${t('toast.entry')}: ${type}`)
+  }
+
+  const quickAddDiaper = (type) => {
+    const entry = { id: genId(), type, time: nowTime(), date: todayDate() }
+    setDiaperLogsForFab([entry, ...diaperLogsForFab])
+    refresh?.()
+    toast(`${t('toast.entry')}: ${type}`)
+  }
+
+  const quickToggleSleep = () => {
+    if (sleepTimerTs) {
+      // Stop sleep — wyznacz duration, zapisz wpis, wyczyść timer
+      const dur = Math.floor((Date.now() - sleepTimerTs) / 1000)
+      const mins = Math.round(dur / 60)
+      const startDate = new Date(sleepTimerTs).toISOString().slice(0, 10)
+      const entry = {
+        id: genId(),
+        date: startDate,
+        durationMin: mins,
+        label: 'Drzemka',
+        manual: false,
+        startTs: sleepTimerTs,
+        endTs: Date.now(),
+      }
+      setSleepLogsForFab([entry, ...sleepLogsForFab])
+      setSleepTimerTs(null)
+      refresh?.()
+      const sessionH = Math.floor(dur / 3600)
+      const sessionM = Math.floor((dur % 3600) / 60)
+      const sessionStr = sessionH > 0 ? `${sessionH}h ${sessionM}m` : `${sessionM}m`
+      toast(`${t('toast.sleep_ended')}: ${sessionStr}`)
+    } else {
+      setSleepTimerTs(Date.now())
+      toast(t('toast.sleep_started'))
+    }
+  }
+
+  const quickAddTemp = () => {
+    // Temperatura wymaga pomiaru — nie da się "quick log" jak feed/diaper.
+    // Otwieramy Health tab (segment temp) — user kliknie "+ Add" tam.
+    navigate('health')
+  }
+
   const renderTab = () => {
     switch(tab) {
-      case 'feed':       return (
+      case 'today':      return (
         <>
           {!hasAnyData && !emptyHeroDismissed && (
             <EmptyStateHero onNavigate={navigate} onDismiss={dismissEmptyHero} />
           )}
-          <QuickDoseCard
-            ageMonths={active.months}
-            onNavigateToMeds={() => navigate('meds')}
-          />
-          <FeedTab {...sharedProps} sectionAlerts={visibleSection('feed')} onNavigate={navigate} />
+          <TodayTab uid={uid} babyId={active.id} onNavigate={navigate} />
         </>
       )
+      case 'feed':       return (
+        <DailyTab visibleTabs={active.visibleTabs} {...sharedProps}
+          toiletMode={active.toiletMode || 'diapers'}
+          sectionAlerts={visibleSection('feed')}
+          onNavigate={navigate} />
+      )
       case 'sleep':      return <SleepTab      {...sharedProps} sectionAlerts={visibleSection('sleep')}  onNavigate={navigate} />
-      case 'diaper':     return <DiaperTab     {...sharedProps} sectionAlerts={visibleSection('diaper')} onNavigate={navigate} />
+      case 'health':     return (
+        <HealthTab {...sharedProps}
+          sectionAlerts={[
+            ...visibleSection('temp'),
+            ...visibleSection('meds'),
+            ...visibleSection('symptoms'),
+          ]}
+          onNavigate={navigate} />
+      )
+      // ── More tabs (kompetencyjne / referencyjne) ──────────────────────────
       case 'milestones': return <MilestonesTab {...sharedProps} />
       case 'teething':   return <TeethingTab {...sharedProps} />
       case 'growth':     return <GrowthTab     {...sharedProps} />
-      case 'temp':       return <TempTab       {...sharedProps} sectionAlerts={visibleSection('temp')}   onNavigate={navigate} />
       case 'cough':      return <CoughTab      {...sharedProps} />
-      case 'symptoms':   return <SymptomsTab   {...sharedProps} />
-      case 'meds':       return <MedsTab       {...sharedProps} sectionAlerts={visibleSection('meds')}   onNavigate={navigate} />
       case 'vacc':       return <VaccinationsTab {...sharedProps} />
       case 'diet':       return <DietTab       {...sharedProps} />
       case 'doctor':     return <DoctorNotesTab {...sharedProps} />
-      default:           return <FeedTab       {...sharedProps} sectionAlerts={visibleSection('feed')}   onNavigate={navigate} />
+      // Defensywne fallbacki dla starych ID (gdyby ktoś trafił z głębokiego linka)
+      case 'diaper':     return <DiaperTab    {...sharedProps} sectionAlerts={visibleSection('diaper')} onNavigate={navigate} />
+      case 'temp':       return <TempTab      {...sharedProps} sectionAlerts={visibleSection('temp')}   onNavigate={navigate} />
+      case 'meds':       return <MedsTab      {...sharedProps} sectionAlerts={visibleSection('meds')}   onNavigate={navigate} />
+      case 'symptoms':   return <SymptomsTab  {...sharedProps} />
+      default:           return <TodayTab     uid={uid} babyId={active.id} onNavigate={navigate} />
     }
   }
 
@@ -536,11 +665,6 @@ export default function App() {
         />
       </div>
     )
-  }
-
-  // ── Medical Disclaimer (MUSI być zaakceptowany przed czymkolwiek innym) ──
-  if (!disclaimerAccepted) {
-    return <MedicalDisclaimerScreen onAccept={() => setDisclaimerAccepted(true)} />
   }
 
   // ── Onboarding ────────────────────────────────────────────────────────────
@@ -724,7 +848,10 @@ export default function App() {
             globalStatus={visibleStatus}
             topStatus={visibleTopStatus}
             messages={visibleMessages}
-            onNavigate={isPremium ? navigate : openPaywall}
+            // v2.9.2: free user z critical alertem klika → navigate do tabu
+            // (np. Temp przy gorączce). Paywall TYLKO gdy free + brak critical
+            // (czyli statusem jest FREE_STATUS placeholder zachęcający do Premium).
+            onNavigate={(isPremium || hasCritical) ? navigate : openPaywall}
             isPremium={isPremium}
             onUpgrade={openPaywall}
           />
@@ -733,6 +860,13 @@ export default function App() {
         {/* AUTO-HIDE BANNER — one-time prompt po 3 latach dziecka */}
         {!showProfiles && !showMore && (
           <AutoHideBanner profile={active} onUpdate={updateProfile} />
+        )}
+
+        {/* ONBOARDING TIPS — 3 edu tipy, dismissable, jednorazowy.
+            Pokazuje się tylko jeśli localStorage flaga nie ustawiona.
+            Po dismiss nie wraca. v2.9.2: zastępuje 3 slidy z onboardingu. */}
+        {!showProfiles && !showMore && (
+          <OnboardingTipsBanner />
         )}
 
         {showProfiles ? (
@@ -778,15 +912,32 @@ export default function App() {
       <nav className="bottom-nav" role="tablist" aria-label={t('nav.main_aria')}>
         {NAV_TABS
           .filter(n => {
-            // Ukryj Karmienia/Pieluchy jeśli user je wyłączył w Settings
-            if (n.id === 'feed'   && active.visibleTabs?.feed   === false) return false
-            if (n.id === 'diaper' && active.visibleTabs?.diaper === false) return false
+            // v2.9.3: jeśli oba sub-segmenty Feed (feed+diaper) są wyłączone,
+            // ukryj cały Feed tab — useEffect w guard już przekierowuje na today.
+            if (n.id === 'feed' &&
+                active.visibleTabs?.feed === false &&
+                active.visibleTabs?.diaper === false) return false
             return true
           })
           .map(n => {
-          const count = n.id !== 'more'
-            ? visibleSection(n.id).length
-            : MORE_TABS.reduce((s,tab) => s + visibleSection(tab.id).length, 0)
+          const count = (() => {
+            // v2.9.3: zagregowane taby liczą sumę alertów ze wszystkich
+            // sekcji które do nich należą.
+            if (n.id === 'today') return 0  // Today nie ma własnych alertów (te są w Status Card)
+            if (n.id === 'feed') {
+              return visibleSection('feed').length + visibleSection('diaper').length
+            }
+            if (n.id === 'health') {
+              return visibleSection('temp').length
+                + visibleSection('meds').length
+                + visibleSection('symptoms').length
+            }
+            if (n.id === 'sleep') return visibleSection('sleep').length
+            if (n.id === 'more') {
+              return MORE_TABS.reduce((s, tab) => s + visibleSection(tab.id).length, 0)
+            }
+            return 0
+          })()
           const isActive = navActive(n.id)
           const tabLabel = t(n.labelKey)
           return (
@@ -812,6 +963,25 @@ export default function App() {
           )
         })}
       </nav>
+
+      {/* QUICK ADD FAB (v2.9.3) — nad bottom nav, tap = bottom-sheet menu,
+          long-press 500ms = bezpośredni quick feed (smart breast suggestion).
+          Ukryty na ekranach modal-typu (Profiles) bo tam nie ma sensu szybko
+          logować — user jest w trybie zarządzania. Settings/Prep/Paywall to
+          osobne early returns wyżej, więc FAB i tak się tam nie renderuje. */}
+      {!showProfiles && (
+        <QuickAddFab
+          onQuickFeed={quickAddFeed}
+          onQuickDiaper={quickAddDiaper}
+          onQuickTemp={quickAddTemp}
+          onQuickSleepStart={quickToggleSleep}
+          suggestedFeedType={suggestedFeedType}
+          sleepInProgress={!!sleepTimerTs}
+          toiletMode={active.toiletMode || 'diapers'}
+          bottomOffset={80}
+        />
+      )}
+
       <ToastContainer />
       <GuestMigrationDialog
         open={guestMigrationDialog !== null}

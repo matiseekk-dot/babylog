@@ -21,6 +21,7 @@
 const { onSchedule } = require('firebase-functions/v2/scheduler')
 const { setGlobalOptions } = require('firebase-functions/v2')
 const admin = require('firebase-admin')
+const medIntervalsData = require('./medIntervals.json')
 
 admin.initializeApp()
 setGlobalOptions({ region: 'europe-west3' }) // Frankfurt — najbliżej Polski
@@ -28,15 +29,13 @@ setGlobalOptions({ region: 'europe-west3' }) // Frankfurt — najbliżej Polski
 const db = admin.firestore()
 const messaging = admin.messaging()
 
-// Czas działania leków w minutach (zgodnie z ulotkami SmPC)
-const MED_INTERVALS = {
-  'paracetamol': 4 * 60,  // 4h
-  'ibuprofen':   6 * 60,  // 6h
-  'panadol':     4 * 60,
-  'apap':        4 * 60,
-  'ibuprom':     6 * 60,
-  'nurofen':     6 * 60,
-}
+// v2.9.1: single source of truth — functions/medIntervals.json (kopia
+// src/data/medIntervals.json, weryfikowana przez src/data/medIntervals.test.js).
+// Wartości reprezentują "lek przestaje działać" / koniec konserwatywnego
+// odstępu między dawkami — celowo wyższe niż minimalne ChPL odstępy
+// (paracetamol 4h, ibuprofen 6h), żeby push nigdy nie sugerował podania
+// wcześniej niż dopuszcza ulotka.
+const MED_INTERVALS = medIntervalsData.intervals
 
 function getMedInterval(medName) {
   if (!medName) return null
@@ -160,7 +159,12 @@ async function processUser(uid, tokens) {
       if (minutesAfter < 0 || minutesAfter > 60) continue
 
       // Wyślij push do wszystkich tokenów
-      const title = `Lek przestaje działać: ${log.med}`
+      // v2.9.1: title zmieniony z "Lek przestaje działać: {med}" na neutralny.
+      // Stara fraza sugerowała implicit "lek przestał działać → podaj kolejną
+      // dawkę", co jest medical advice. Nowa fraza neutralnie informuje że
+      // minął bezpieczny odstęp; decyzja o podaniu kolejnej dawki jest
+      // explicit przekazana userowi w body.
+      const title = `Minął odstęp od ostatniej dawki ${log.med}`
       const body = `Podałeś/-aś o ${log.time}. Sprawdź czy potrzebna kolejna dawka (zgodnie z ulotką).`
 
       const message = {

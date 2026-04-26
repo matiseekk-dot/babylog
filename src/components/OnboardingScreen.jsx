@@ -1,335 +1,246 @@
 import React, { useState } from 'react'
 import { t, useLocale } from '../i18n'
 
-function getSlides() {
-  return [
-    { emoji:'📋', accentColor:'#1D9E75', accentLight:'#E1F5EE',
-      title: t('onb.slide1.title'), body: t('onb.slide1.body'), note: null },
-    { emoji:'🔍', accentColor:'#185FA5', accentLight:'#E6F1FB',
-      title: t('onb.slide2.title'), body: t('onb.slide2.body'), note: t('onb.slide2.note') },
-    { emoji:'💡', accentColor:'#BA7517', accentLight:'#FAEEDA',
-      title: t('onb.slide3.title'), body: t('onb.slide3.body'), note: t('onb.slide3.note') },
-  ]
-}
-
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
-
-function Dot({ active, color }) {
-  return (
-    <div style={{
-      width: active ? 20 : 7, height: 7, borderRadius: 4,
-      background: active ? color : 'rgba(0,0,0,0.12)',
-      transition: 'width 0.25s ease, background 0.25s ease',
-    }} />
-  )
-}
 
 /**
  * OnboardingScreen
- * Props:
- *   onComplete(profileData) – called with { name, months, weight, avatar, toiletMode } on finish
  *
- * ZMIANY 2026-04-21:
- *   - Wymuszenie wagi (required) — bez tego kalkulator leków nie działa
- *   - Skip USUNIĘTY z setup screen — user musi wypełnić, nie może uciec
- *   - Auto-toiletMode na podstawie wieku (diapers < 18m < potty < 42m < toilet)
+ * v2.9.2 (kwiecień 2026):
+ *   - Single step: imię + DOB + avatar + płeć (wszystko required)
+ *   - Wagi NIE pytamy w onboardingu — feature-gated później (np. siatki WHO
+ *     promptują "Dodaj pierwszy pomiar wagi" przy braku wpisów)
+ *   - 3 slidy edukacyjne PRZESUNIĘTE z onboardingu na dashboard jako
+ *     OnboardingTipsBanner (dismissable, jednorazowy)
+ *
+ * v2.9.0:
+ *   - Połączenie z MedicalDisclaimerScreen → jeden ekran consent
+ *   - Step 2 (waga) opcjonalny [→ usunięty całkowicie w 2.9.2]
+ *   - Data urodzenia (input type="date") zamiast lat+miesięcy
+ *
+ * Props:
+ *   onComplete(profileData) — wywoływane z {
+ *     name, months, weight (zawsze null po 2.9.2), avatar, sex, toiletMode
+ *   }
  */
 export default function OnboardingScreen({ onComplete }) {
   useLocale()
-  const SLIDES = getSlides()
-  const [current, setCurrent] = useState(0)
-  // Setup screen data
+
   const [name, setName] = useState('')
-  const [years, setYears] = useState('0')
-  const [months, setMonths] = useState('4')
-  const [weight, setWeight] = useState('')
+  const [dob, setDob] = useState('')   // YYYY-MM-DD
   const [avatar, setAvatar] = useState('👶')
-  const [sex, setSex] = useState('M')  // M / F — potrzebne do percentyli WHO
-  const [weightError, setWeightError] = useState('')
+  const [sex, setSex] = useState('M')
 
-  const totalSlides = SLIDES.length + 1 // +1 for setup screen
-  const isSetup = current === SLIDES.length
-  const slide = SLIDES[current]
+  const todayStr = new Date().toISOString().slice(0, 10)
 
-  // Waga musi być liczbą w rozsądnym zakresie 1-50 kg
-  const weightNum = Number(weight.replace(',', '.'))
-  const weightValid = !isNaN(weightNum) && weightNum >= 1 && weightNum <= 50
+  // ── Walidacje ─────────────────────────────────────────────────────────────
+  const nameValid = name.trim().length > 0
+  const dobValid = (() => {
+    if (!dob) return false
+    const d = new Date(dob)
+    if (isNaN(d.getTime())) return false
+    const now = new Date()
+    if (d > now) return false
+    const eighteenYearsAgo = new Date(now)
+    eighteenYearsAgo.setFullYear(now.getFullYear() - 18)
+    if (d < eighteenYearsAgo) return false
+    return true
+  })()
+  const canSubmit = nameValid && dobValid
 
-  const next = () => {
-    if (current < SLIDES.length) {
-      setCurrent(c => c + 1)
-      return
-    }
-    // Setup screen → walidacja
-    if (!name.trim()) {
-      return
-    }
-    if (!weight.trim() || !weightValid) {
-      setWeightError(t('onb.setup.weight_error'))
-      return
-    }
-    const totalMonths = (Number(years) || 0) * 12 + (Number(months) || 0)
+  // ── Konwersja DOB → months ────────────────────────────────────────────────
+  function dobToMonths(dobStr) {
+    const d = new Date(dobStr)
+    const now = new Date()
+    let months = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth())
+    if (now.getDate() < d.getDate()) months--
+    return Math.max(0, months)
+  }
+
+  const finish = () => {
+    if (!canSubmit) return
+    const months = dobToMonths(dob)
     onComplete({
       name: name.trim(),
-      months: totalMonths,
-      weight: weightNum,
+      months,
+      weight: null,  // v2.9.2: waga feature-gated później
       avatar,
       sex,
-      toiletMode: totalMonths < 18 ? 'diapers' : totalMonths < 42 ? 'potty' : 'toilet',
+      toiletMode: months < 18 ? 'diapers' : months < 42 ? 'potty' : 'toilet',
     })
   }
 
-  // Skip TYLKO dla slide'ów edukacyjnych, NIE dla setup
-  const skip = () => {
-    if (!isSetup) setCurrent(SLIDES.length)  // idź do setup, nie pomiń całkowicie
-  }
-
-  const canProceed = !isSetup
-    ? true
-    : (name.trim().length > 0 && weightValid)
-
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', background:'#fff', userSelect:'none' }}>
-
-      {!isSetup && (
-        <button onClick={skip} style={{
-          position:'absolute', top:16, right:16,
-          background:'transparent', border:'none', fontSize:14,
-          color:'#9a9a94', cursor:'pointer', padding:'8px 4px', fontFamily:'inherit',
-        }}>{t('onb.skip')}</button>
-      )}
-
-      {/* Hero / Setup header */}
-      {!isSetup ? (
-        <div style={{
-          flex:'0 0 auto',
-          background: slide.accentLight,
-          display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-          padding:'60px 32px 48px',
-          transition:'background 0.3s ease',
-        }}>
-          <div style={{
-            width:96, height:96, borderRadius:'50%', background:'#fff',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:48, boxShadow:`0 4px 20px ${slide.accentColor}22`, marginBottom:28,
-          }}>
-            {slide.emoji}
-          </div>
-          <div style={{
-            fontSize:26, fontWeight:800, color:'#1a1a18', textAlign:'center',
-            lineHeight:1.2, letterSpacing:-0.5, whiteSpace:'pre-line',
-          }}>
-            {slide.title}
-          </div>
+    <div style={{
+      display:'flex', flexDirection:'column', height:'100%',
+      background:'#fff', userSelect:'none',
+    }}>
+      {/* Header */}
+      <div style={{
+        flex:'0 0 auto',
+        background: 'linear-gradient(160deg,#0F6E56,#1D9E75)',
+        padding:'40px 28px 28px',
+        textAlign:'center',
+        paddingTop: 'max(40px, calc(env(safe-area-inset-top) + 24px))',
+      }}>
+        <div style={{fontSize:44,marginBottom:8}}>{avatar}</div>
+        <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:-0.5,lineHeight:1.2}}>
+          {t('onb.setup.title')}
         </div>
-      ) : (
-        <div style={{
-          flex:'0 0 auto',
-          background:'linear-gradient(160deg,#0F6E56,#1D9E75)',
-          padding:'48px 32px 32px', textAlign:'center',
-        }}>
-          <div style={{fontSize:48,marginBottom:12}}>{avatar}</div>
-          <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:-0.5}}>
-            {t('onb.setup.title')}
-          </div>
-          <div style={{fontSize:13,color:'rgba(255,255,255,0.8)',marginTop:8}}>
-            {t('onb.setup.subtitle')}
-          </div>
+        <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',marginTop:8,lineHeight:1.4}}>
+          {t('onb.setup.subtitle')}
         </div>
-      )}
+      </div>
 
       {/* Content */}
-      <div style={{ flex:1, padding:'28px 28px 0', display:'flex', flexDirection:'column', overflowY:'auto' }}>
-        {!isSetup ? (
-          <>
-            <p style={{ fontSize:16, color:'#3a3a36', lineHeight:1.65, margin:0 }}>
-              {slide.body}
-            </p>
-            {slide.note && (
-              <p style={{ fontSize:14, fontWeight:700, color:slide.accentColor, marginTop:16, lineHeight:1.4 }}>
-                {slide.note}
-              </p>
-            )}
-          </>
-        ) : (
-          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-
-            {/* Avatar picker */}
-            <div>
-              <div style={{fontSize:13,color:'var(--text-2)',fontWeight:500,marginBottom:8}}>{t('onb.setup.avatar')}</div>
-              <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
-                {AVATARS.map(a => (
-                  <button key={a} onClick={()=>setAvatar(a)} style={{
-                    width:48,height:48,fontSize:24,borderRadius:'50%',cursor:'pointer',
-                    border:`2px solid ${avatar===a?'#1D9E75':'transparent'}`,
-                    background:avatar===a?'#E1F5EE':'#f7f7f5',
-                  }}>{a}</button>
-                ))}
-              </div>
+      <div style={{
+        flex:1, padding:'24px 28px 0',
+        display:'flex', flexDirection:'column',
+        overflowY:'auto',
+      }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+          {/* Avatar */}
+          <div>
+            <div style={{fontSize:13,color:'var(--text-2)',fontWeight:500,marginBottom:8}}>
+              {t('onb.setup.avatar')}
             </div>
-
-            {/* Name */}
-            <div className="form-group">
-              <label className="form-label">{t('onb.setup.name')} *</label>
-              <input
-                className="form-input"
-                type="text" maxLength={40}
-                placeholder={t('onb.setup.name_ph')}
-                value={name}
-                onChange={e=>setName(e.target.value)}
-                autoFocus
-                style={{fontSize:16}}
-              />
-            </div>
-
-            {/* Sex — WYMAGANE do percentyli WHO */}
-            <div className="form-group">
-              <label className="form-label">{t('onb.sex_label')}</label>
-              <div style={{display:'flex',gap:8,marginTop:4}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+              {AVATARS.map(a => (
                 <button
-                  onClick={()=>setSex('M')}
+                  key={a}
+                  type="button"
+                  onClick={() => setAvatar(a)}
                   style={{
-                    flex:1,padding:'12px',minHeight:48,
-                    borderRadius:12,
-                    border:sex==='M' ? '2px solid #185FA5' : '0.5px solid var(--border)',
-                    background:sex==='M' ? '#E6F1FB' : '#fff',
-                    fontSize:14,fontWeight:700,color:sex==='M'?'#0C447C':'var(--text-2)',
+                    width:48, height:48, fontSize:24, borderRadius:'50%',
                     cursor:'pointer',
-                    display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+                    border: `2px solid ${avatar === a ? '#1D9E75' : 'transparent'}`,
+                    background: avatar === a ? '#E1F5EE' : '#f7f7f5',
                   }}
-                >
-                  {t('onb.sex_boy')}
-                </button>
-                <button
-                  onClick={()=>setSex('F')}
-                  style={{
-                    flex:1,padding:'12px',minHeight:48,
-                    borderRadius:12,
-                    border:sex==='F' ? '2px solid #C95A48' : '0.5px solid var(--border)',
-                    background:sex==='F' ? '#FEE7DF' : '#fff',
-                    fontSize:14,fontWeight:700,color:sex==='F'?'#7A1F0C':'var(--text-2)',
-                    cursor:'pointer',
-                    display:'flex',alignItems:'center',justifyContent:'center',gap:6,
-                  }}
-                >
-                  {t('onb.sex_girl')}
-                </button>
-              </div>
-              <div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>
-                {t('onb.sex_hint')}
-              </div>
-            </div>
-
-            {/* Age: years + months */}
-            <div>
-              <label className="form-label">{t('onb.setup.age')}</label>
-              <div className="form-row" style={{marginTop:4}}>
-                <div className="form-group" style={{marginTop:0}}>
-                  <input
-                    className="form-input"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    max="10"
-                    value={years}
-                    onChange={e=>setYears(e.target.value)}
-                    placeholder={t("onb.years_ph")}
-                  />
-                  <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
-                    {t('age.unit.years')}
-                  </div>
-                </div>
-                <div className="form-group" style={{marginTop:0}}>
-                  <input
-                    className="form-input"
-                    type="number"
-                    inputMode="numeric"
-                    min="0"
-                    max="11"
-                    value={months}
-                    onChange={e=>setMonths(e.target.value)}
-                    placeholder={t("onb.months_ph")}
-                  />
-                  <div style={{fontSize:11,color:'var(--text-3)',marginTop:4,textAlign:'center'}}>
-                    {t('age.unit.months')}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Weight — REQUIRED, z komunikatem */}
-            <div className="form-group">
-              <label className="form-label">
-                {t('onb.setup.weight')} *
-              </label>
-              <input
-                className="form-input"
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                min="1"
-                max="50"
-                value={weight}
-                onChange={e=>{
-                  setWeight(e.target.value.replace(",","."))
-                  if (weightError) setWeightError('')
-                }}
-                placeholder={t("onb.weight_ph")}
-                style={{
-                  borderColor: weightError ? '#E05D44' : undefined,
-                }}
-              />
-              {weightError && (
-                <div style={{fontSize:12, color:'#E05D44', marginTop:6, fontWeight:500}}>
-                  ⚠️ {weightError}
-                </div>
-              )}
-              <div style={{fontSize:11, color:'var(--text-3)', marginTop:6, lineHeight:1.5}}>
-                {t('onb.weight_hint')}
-              </div>
-            </div>
-
-            <div style={{fontSize:12,color:'var(--text-3)',lineHeight:1.5}}>
-              {t('onb.setup.hint')}
+                >{a}</button>
+              ))}
             </div>
           </div>
-        )}
+
+          {/* Name */}
+          <div className="form-group">
+            <label className="form-label">{t('onb.setup.name')} *</label>
+            <input
+              className="form-input"
+              type="text" maxLength={40}
+              placeholder={t('onb.setup.name_ph')}
+              value={name}
+              onChange={e => setName(e.target.value)}
+              autoFocus
+              style={{fontSize:16}}
+            />
+          </div>
+
+          {/* DOB */}
+          <div className="form-group">
+            <label className="form-label">{t('onb.setup.dob')} *</label>
+            <input
+              className="form-input"
+              type="date"
+              value={dob}
+              onChange={e => setDob(e.target.value)}
+              max={todayStr}
+              style={{
+                fontSize:16,
+                borderColor: (dob.length > 0 && !dobValid) ? '#E05D44' : undefined,
+              }}
+            />
+            {dob.length > 0 && !dobValid && (
+              <div style={{fontSize:12, color:'#E05D44', marginTop:6, fontWeight:500}}>
+                ⚠️ {t('onb.setup.dob_error')}
+              </div>
+            )}
+          </div>
+
+          {/* Sex */}
+          <div className="form-group">
+            <label className="form-label">{t('onb.sex_label')}</label>
+            <div style={{display:'flex',gap:8,marginTop:4}}>
+              <button
+                type="button"
+                onClick={() => setSex('M')}
+                style={{
+                  flex:1, padding:'12px', minHeight:48,
+                  borderRadius:12,
+                  border: sex === 'M' ? '2px solid #185FA5' : '0.5px solid var(--border)',
+                  background: sex === 'M' ? '#E6F1FB' : '#fff',
+                  fontSize:14, fontWeight:700,
+                  color: sex === 'M' ? '#0C447C' : 'var(--text-2)',
+                  cursor:'pointer',
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                }}
+              >
+                {t('onb.sex_boy')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSex('F')}
+                style={{
+                  flex:1, padding:'12px', minHeight:48,
+                  borderRadius:12,
+                  border: sex === 'F' ? '2px solid #C95A48' : '0.5px solid var(--border)',
+                  background: sex === 'F' ? '#FEE7DF' : '#fff',
+                  fontSize:14, fontWeight:700,
+                  color: sex === 'F' ? '#7A1F0C' : 'var(--text-2)',
+                  cursor:'pointer',
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                }}
+              >
+                {t('onb.sex_girl')}
+              </button>
+            </div>
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>
+              {t('onb.sex_hint')}
+            </div>
+          </div>
+
+          <div style={{
+            marginTop:8,
+            padding:'10px 14px',
+            background:'#F7F7F5',
+            borderRadius:10,
+            fontSize:11,
+            color:'var(--text-3)',
+            lineHeight:1.5,
+          }}>
+            💡 {t('onb.setup.weight_later_hint')}
+          </div>
+        </div>
       </div>
 
       {/* Bottom */}
       <div style={{
-        padding:'20px 28px',
+        padding:'16px 28px',
         paddingBottom:'max(20px, env(safe-area-inset-bottom))',
-        display:'flex', flexDirection:'column', gap:14, alignItems:'center',
+        display:'flex', flexDirection:'column', gap:10,
         background: '#fff',
-        borderTop: isSetup ? '0.5px solid rgba(0,0,0,0.06)' : 'none',
+        borderTop: '0.5px solid rgba(0,0,0,0.06)',
       }}>
-        {/* Dots */}
-        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-          {Array.from({length:totalSlides}).map((_,i) => (
-            <Dot key={i} active={i===current} color={isSetup?'#1D9E75':slide.accentColor} />
-          ))}
-        </div>
-
         <button
-          onClick={next}
-          disabled={!canProceed}
+          type="button"
+          onClick={finish}
+          disabled={!canSubmit}
           style={{
             width:'100%', padding:'16px', minHeight:54,
-            background: !canProceed ? '#ccc' : isSetup ? 'linear-gradient(135deg,#0F6E56,#1D9E75)' : slide.accentColor,
+            background: canSubmit
+              ? 'linear-gradient(135deg,#0F6E56,#1D9E75)'
+              : '#c0c0bc',
             color:'#fff', border:'none', borderRadius:14,
-            fontSize:17, fontWeight:800, cursor: canProceed ? 'pointer' : 'default',
+            fontSize:16, fontWeight:800,
+            cursor: canSubmit ? 'pointer' : 'not-allowed',
             letterSpacing:-0.2,
+            transition: 'background 0.2s',
           }}
         >
-          {isSetup ? `${t('onb.setup.cta')}, ${name.trim() || '👶'}! 🍼` : t('onb.next')}
+          {`${t('onb.setup.cta')}, ${name.trim() || '👶'}! 🍼`}
         </button>
-
-        {isSetup && (
-          <p style={{fontSize:11,color:'#9a9a94',textAlign:'center',margin:0,lineHeight:1.5}}>
-            {t('app.tagline')}
-          </p>
-        )}
+        <p style={{fontSize:11,color:'#9a9a94',textAlign:'center',margin:'4px 0 0',lineHeight:1.5}}>
+          {t('app.tagline')}
+        </p>
       </div>
     </div>
   )

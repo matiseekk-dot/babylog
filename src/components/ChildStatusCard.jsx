@@ -165,8 +165,12 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
           </div>
         )}
 
-        {/* FREE: CTA upgrade — tylko gdy expanded */}
-        {expanded && !isPremium && (
+        {/* FREE: CTA upgrade — tylko gdy expanded I status nie jest critical.
+            v2.9.2: free user widzi critical alerts, ale NIE widzi pod nimi
+            "Kup Premium" — to nieetyczne pod alertem o kryzysie
+            (gorączka ≥40.5°C, dziecko <3m + gorączka, ryzyko odwodnienia).
+            Upgrade CTA pojawia się tylko przy spokojnych statusach. */}
+        {expanded && !isPremium && status !== 'critical' && (
           <button
             onClick={onUpgrade}
             style={{

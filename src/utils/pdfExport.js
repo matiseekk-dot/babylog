@@ -66,7 +66,7 @@ export async function exportChildReport(profile, data, locale = 'pl') {
   const safeName = transliterate(profile.name || '-', locale)
   doc.text(`${L.name}: ${safeName}`, 20, 52)
   doc.text(`${L.age}: ${profile.months} ${L.months}`, 20, 59)
-  doc.text(`${L.weight}: ${profile.weight} kg`, 20, 66)
+  doc.text(`${L.weight}: ${profile.weight ? `${profile.weight} kg` : '-'}`, 20, 66)
 
   let y = 80
 

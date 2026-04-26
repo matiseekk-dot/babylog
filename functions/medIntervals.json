@@ -1,0 +1,12 @@
+{
+  "_comment_pl": "KOPIA src/data/medIntervals.json. Firebase Functions deploy izoluje folder functions/ — nie ma dostępu do src/. Test src/data/medIntervals.test.js sprawdza spójność i fail-eruje przy rozjeździe. Zawsze uruchom `npm test` przed deployem.",
+  "_version": 1,
+  "intervals": {
+    "paracetamol": 360,
+    "panadol":     360,
+    "apap":        360,
+    "ibuprofen":   480,
+    "ibuprom":     480,
+    "nurofen":     480
+  }
+}
