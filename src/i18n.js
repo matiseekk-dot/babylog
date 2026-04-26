@@ -367,6 +367,45 @@ const TRANSLATIONS = {
     'consent.v2.accept_btn':       'Akceptuję i zaczynam',
     'consent.v2.privacy_link':     'Polityka prywatności',
 
+    // v2.10.5b — Charts (TeethingChart + MilestonesChart)
+    'chart.age_months':            'wiek (mies.)',
+    'chart.months_short':          'mies.',
+    'chart.now':                   'teraz',
+    'teethchart.title':            'Wykres wyrżniętych zębów',
+    'teethchart.empty':            'Zaznacz wyrżnięte zęby aby zobaczyć wykres.',
+    'teethchart.your_child':       'Twoje dziecko',
+    'teethchart.early':            'Wcześniejszy rozwój',
+    'teethchart.typical':          'Typowo',
+    'teethchart.late':             'Późniejszy rozwój',
+    'teethchart.typical_range':    'Typowy zakres (AAPD)',
+    'teethchart.disclaimer':       'Zakresy referencyjne: American Academy of Pediatric Dentistry (AAPD). Każde dziecko rozwija się w swoim tempie — odchylenia są normalne.',
+    'teethchart.premium_hint':     'Premium: porównaj z typowymi zakresami wiekowymi',
+    'milechart.title':             'Wykres milestone\'ów',
+    'milechart.typical':           'Typowy wiek',
+    'milechart.achieved':          'Zaznaczone przez Ciebie',
+    'milechart.disclaimer':        'Zakresy referencyjne: CDC Developmental Milestones (2022). Każde dziecko rozwija się w swoim tempie — odchylenia są normalne.',
+    'milechart.premium_hint':      'Premium: porównaj z typowymi wiekami osiągania kamieni milowych',
+
+    // v2.10.5b — SleepChart
+    'sleepchart.title':            'Wykres snu',
+    'sleepchart.empty':            'Dodaj sesje snu aby zobaczyć wykres.',
+    'sleepchart.daily':            'Dzienny sen',
+    'sleepchart.rolling':          'Średnia 7-dniowa',
+    'sleepchart.hours':            'Godziny snu',
+    'sleepchart.typical_range':    'Typowy zakres',
+    'sleepchart.disclaimer':       'Zakresy referencyjne: AAP / National Sleep Foundation. Każde dziecko śpi inaczej — wahania są normalne.',
+    'sleepchart.premium_hint':     'Premium: porównaj z typowym zakresem dla wieku',
+
+    // v2.10.5b — FeedingFrequencyChart
+    'feedchart.title':             'Wykres karmień',
+    'feedchart.empty':             'Dodaj karmienia aby zobaczyć wykres.',
+    'feedchart.daily':             'Dziennie',
+    'feedchart.rolling':           'Średnia 7-dniowa',
+    'feedchart.count':             'Liczba karmień',
+    'feedchart.typical_range':     'Typowy zakres',
+    'feedchart.disclaimer':        'Liczone tylko karmienia mleczne (pierś + butelka). Zakresy: AAP / ESPGHAN. Karmienie na żądanie jest standardem — wahania są normalne.',
+    'feedchart.premium_hint':      'Premium: porównaj z typowym zakresem dla wieku',
+
     // v2.10.5 — TodaySummaryCard
     'summary.today_label':         'Dziś',
     'summary.empty_msg':           'Brak wpisów dzisiaj. Użyj przycisku + żeby coś dodać.',
@@ -1720,6 +1759,45 @@ const TRANSLATIONS = {
     'consent.v2.rodo_note':        'Legal basis: GDPR Art. 6(1)(a) + Art. 9(2)(a). You can withdraw consent at any time by deleting your account in Settings.',
     'consent.v2.accept_btn':       'Accept and start',
     'consent.v2.privacy_link':     'Privacy policy',
+
+    // v2.10.5b — Charts (TeethingChart + MilestonesChart)
+    'chart.age_months':            'age (mo.)',
+    'chart.months_short':          'mo.',
+    'chart.now':                   'now',
+    'teethchart.title':            'Teething chart',
+    'teethchart.empty':            'Mark erupted teeth to see the chart.',
+    'teethchart.your_child':       'Your child',
+    'teethchart.early':            'Earlier development',
+    'teethchart.typical':          'Typical',
+    'teethchart.late':             'Later development',
+    'teethchart.typical_range':    'Typical range (AAPD)',
+    'teethchart.disclaimer':       'Reference ranges: American Academy of Pediatric Dentistry (AAPD). Every child develops at their own pace — variations are normal.',
+    'teethchart.premium_hint':     'Premium: compare with typical age ranges',
+    'milechart.title':             'Milestones chart',
+    'milechart.typical':           'Typical age',
+    'milechart.achieved':          'Marked by you',
+    'milechart.disclaimer':        'Reference ranges: CDC Developmental Milestones (2022). Every child develops at their own pace — variations are normal.',
+    'milechart.premium_hint':      'Premium: compare with typical milestone ages',
+
+    // v2.10.5b — SleepChart
+    'sleepchart.title':            'Sleep chart',
+    'sleepchart.empty':            'Add sleep sessions to see the chart.',
+    'sleepchart.daily':            'Daily sleep',
+    'sleepchart.rolling':          '7-day average',
+    'sleepchart.hours':            'Sleep hours',
+    'sleepchart.typical_range':    'Typical range',
+    'sleepchart.disclaimer':       'Reference ranges: AAP / National Sleep Foundation. Every child sleeps differently — variations are normal.',
+    'sleepchart.premium_hint':     'Premium: compare with typical range for age',
+
+    // v2.10.5b — FeedingFrequencyChart
+    'feedchart.title':             'Feedings chart',
+    'feedchart.empty':             'Add feedings to see the chart.',
+    'feedchart.daily':             'Daily',
+    'feedchart.rolling':           '7-day average',
+    'feedchart.count':             'Feedings count',
+    'feedchart.typical_range':     'Typical range',
+    'feedchart.disclaimer':        'Only milk feedings counted (breast + bottle). Reference: AAP / ESPGHAN. On-demand feeding is standard — variations are normal.',
+    'feedchart.premium_hint':      'Premium: compare with typical range for age',
 
     // v2.10.5 — TodaySummaryCard
     'summary.today_label':         'Today',
