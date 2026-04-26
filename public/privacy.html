@@ -18,6 +18,8 @@
     .lang-switch a { margin-left: 12px; font-size: 14px; }
     .updated { color: #9a9a94; font-size: 14px; margin-bottom: 24px; }
     .hl { background: #FEF9F0; border-left: 3px solid #BA7517; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+    .hl-info { background: #E6F1FB; border-left: 3px solid #185FA5; padding: 12px 16px; margin: 16px 0; border-radius: 4px; }
+    address { font-style: normal; }
     ul { padding-left: 24px; }
     li { margin-bottom: 4px; }
     footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #e0e0dd; font-size: 13px; color: #9a9a94; }
@@ -37,7 +39,7 @@
 <section id="pl">
 
 <h1>Polityka prywatności</h1>
-<div class="updated">Ostatnia aktualizacja: 19 kwietnia 2026</div>
+<div class="updated">Wersja 2.10.5 — Ostatnia aktualizacja: 26 kwietnia 2026</div>
 
 <p>
   Niniejsza polityka prywatności opisuje w jaki sposób aplikacja <strong>Spokojny Rodzic</strong>
@@ -48,45 +50,73 @@
 <div class="hl">
   <strong>W skrócie:</strong> Aplikacja przechowuje dane dziecka (imię, wiek, waga, historia karmienia,
   snu, temperatury) wyłącznie na Twoim koncie Google. Nie sprzedajemy danych. Nie reklamujemy.
-  Nie udostępniamy nikomu poza dostawcami niezbędnymi do działania aplikacji (Google Firebase).
+  Nie udostępniamy nikomu poza dostawcami niezbędnymi do działania aplikacji (Google Firebase,
+  RevenueCat, Sentry).
 </div>
 
 <h2>1. Administrator danych</h2>
+<p>Administratorem danych osobowych jest:</p>
+<address>
+  <strong>SkuDev — Mateusz Skura</strong><br>
+  ul. Rzepakowa 4G/21<br>
+  40-541 Katowice, Polska<br>
+  E-mail: <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a>
+</address>
 <p>
-  Administratorem danych osobowych jest <strong>SkuDev</strong>, prowadzony przez Mateusza Skurę.
-  W sprawach ochrony danych skontaktuj się pod adresem:
-  <strong><a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a></strong>
+  W sprawach ochrony danych osobowych prosimy kierować pytania na podany adres e-mail.
+  Postaramy się odpowiedzieć w ciągu 30 dni od otrzymania wniosku, zgodnie z art. 12 ust. 3 RODO.
 </p>
 
-<h2>2. Jakie dane zbieramy</h2>
-<p>Aplikacja zbiera następujące kategorie danych:</p>
+<h2>2. Cel przetwarzania</h2>
+<p>
+  Dane przetwarzamy wyłącznie w celu świadczenia usługi aplikacji Spokojny Rodzic, która jest
+  <strong>dziennikiem zdrowia dziecka</strong> z biblioteką wytycznych pediatrycznych:
+</p>
+<ul>
+  <li>Przechowywanie wpisów wprowadzanych przez Ciebie (temperatura, karmienia, sen, leki,
+      pieluchy, szczepienia, kamienie milowe, dane wzrostu)</li>
+  <li>Synchronizacja danych między Twoimi urządzeniami (po zalogowaniu)</li>
+  <li>Generowanie wykresów i raportów PDF na podstawie Twoich pomiarów</li>
+  <li>Wysyłanie powiadomień przypominających o odstępach między dawkami leków
+      (timer oparty o czasy podane przez Ciebie)</li>
+</ul>
+<div class="hl">
+  <strong>Aplikacja Spokojny Rodzic nie jest wyrobem medycznym</strong> w rozumieniu
+  Rozporządzenia (UE) 2017/745 (MDR). Aplikacja nie diagnozuje, nie ocenia stanu zdrowia
+  dziecka, nie zaleca leków ani nie wylicza dawek. Pełni rolę dziennika i biblioteki
+  statycznych wytycznych pediatrycznych z publicznych źródeł (PTP/PTMR, AAP).
+</div>
 
-<h3>Dane identyfikacyjne (tylko przy logowaniu przez Google)</h3>
+<h2>3. Jakie dane zbieramy</h2>
+
+<h3>3.1 Dane identyfikacyjne (tylko przy logowaniu przez Google)</h3>
 <ul>
   <li>Adres e-mail</li>
   <li>Imię wyświetlane Twojego konta Google</li>
-  <li>Unikalny identyfikator Google (UID) — wewnętrzny klucz szyfrujący Twoje dane</li>
+  <li>Unikalny identyfikator Google (Firebase UID) — wewnętrzny klucz dostępu do Twoich danych</li>
 </ul>
 
-<h3>Dane zdrowotne dziecka (wpisywane przez Ciebie)</h3>
+<h3>3.2 Dane zdrowotne dziecka (szczególna kategoria danych — art. 9 RODO)</h3>
 <ul>
   <li>Imię dziecka, data urodzenia (lub wiek w miesiącach), waga, avatar</li>
   <li>Pomiary temperatury ciała</li>
   <li>Historia karmień (typ, czas, ilość)</li>
   <li>Historia snu</li>
-  <li>Zmiany pieluch</li>
+  <li>Zmiany pieluch i objawy</li>
   <li>Podane leki i dawki</li>
   <li>Kamienie milowe rozwoju</li>
-  <li>Szczepienia</li>
+  <li>Szczepienia (kalendarz PSO)</li>
   <li>Notatki rodzica (dziennik)</li>
   <li>Notatki z wizyt lekarskich</li>
 </ul>
 
-<h3>Dane techniczne</h3>
+<h3>3.3 Dane techniczne (anonimowe)</h3>
 <ul>
   <li>Wybrany język interfejsu (przechowywany lokalnie)</li>
   <li>Status subskrypcji Premium (z RevenueCat)</li>
-  <li>Anonimowe logi błędów (jeśli apka się wywali — pomaga nam ją naprawić)</li>
+  <li>FCM tokeny urządzenia (do wysyłania powiadomień push)</li>
+  <li>Anonimowe logi błędów (Sentry — bez PII, tylko stack trace)</li>
+  <li>Anonimowy identyfikator weryfikacji (App Check / reCAPTCHA — zapobiega botowym atakom)</li>
 </ul>
 
 <div class="hl">
@@ -94,110 +124,198 @@
   historii przeglądania, nagrań audio/wideo, danych biometrycznych.
 </div>
 
-<h2>3. W jaki sposób używamy Twoich danych</h2>
-<p>Dane służą wyłącznie do:</p>
+<h2>4. Podstawa prawna przetwarzania</h2>
+
+<h3>4.1 Dane konta i wpisy ogólne</h3>
+<p>
+  Art. 6 ust. 1 lit. b RODO — przetwarzanie niezbędne do wykonania umowy o świadczenie
+  usługi (dziennika).
+</p>
+
+<h3>4.2 Dane zdrowotne dziecka (kluczowa podstawa)</h3>
+<p>
+  <strong>Art. 9 ust. 2 lit. a RODO — wyraźna zgoda osoby, której dane dotyczą.</strong>
+  W przypadku dziecka zgody udziela przedstawiciel ustawowy (rodzic, opiekun prawny)
+  na podstawie art. 95 Kodeksu rodzinnego i opiekuńczego.
+</p>
+<p>
+  Zgodę wyrażasz na ekranie wstępnym aplikacji poprzez zaznaczenie odpowiednich checkboxów.
+  Możesz cofnąć zgodę w każdej chwili poprzez usunięcie konta w Ustawieniach — co spowoduje
+  usunięcie wszystkich Twoich danych i danych dziecka.
+</p>
+
+<h3>4.3 Powiadomienia push</h3>
+<p>
+  Art. 6 ust. 1 lit. a RODO — zgoda. Możesz cofnąć zgodę w ustawieniach systemowych
+  telefonu lub w Ustawieniach aplikacji.
+</p>
+
+<h3>4.4 Logi błędów (Sentry)</h3>
+<p>
+  Art. 6 ust. 1 lit. f RODO — uzasadniony interes administratora w utrzymaniu
+  stabilności i bezpieczeństwa aplikacji. Logi nie zawierają danych osobowych
+  ani zdrowotnych, tylko techniczne stack trace błędu.
+</p>
+
+<h2>5. Komu przekazujemy dane (procesory)</h2>
+
+<h3>5.1 Google LLC (Firebase, USA)</h3>
+<p>
+  Przetwarzanie danych odbywa się na infrastrukturze <strong>Firebase Firestore</strong>
+  i <strong>Firebase Cloud Messaging</strong> — usługach świadczonych przez Google LLC
+  z siedzibą w USA. Dane przechowywane są w regionie <code>europe-west3</code>
+  (Frankfurt, Niemcy).
+</p>
+<p>
+  Podstawą prawną transferu do USA są <strong>Standardowe Klauzule Umowne</strong>
+  (Standard Contractual Clauses, SCC) zaakceptowane przez Komisję Europejską
+  (Decyzja Wykonawcza KE 2021/914) oraz <strong>Data Processing Addendum (DPA)</strong>
+  zawarty z Google.
+</p>
+<p>
+  Po wyroku Schrems II (TSUE C-311/18) wdrożyliśmy odpowiednie środki dodatkowe
+  (przechowywanie danych w europejskim regionie, szyfrowanie at-rest i in-transit,
+  dostęp tylko przez Cloud Functions w europe-west3).
+</p>
+
+<h3>5.2 RevenueCat Inc. (USA) — tylko jeśli dokonasz zakupu Premium</h3>
+<p>
+  W razie zakupu subskrypcji Premium, RevenueCat Inc. (USA) przetwarza informacje
+  o subskrypcji (identyfikator użytkownika, status subskrypcji, daty). Nie przekazujemy
+  RevenueCat danych zdrowotnych dziecka.
+</p>
+
+<h3>5.3 Sentry GmbH (region UE)</h3>
+<p>
+  Logi błędów technicznych aplikacji przekazywane są do Sentry GmbH (region UE).
+  Logi nie zawierają danych osobowych ani zdrowotnych — tylko techniczne stack trace błędu.
+</p>
+
+<h3>5.4 Google Play Billing</h3>
+<p>
+  Płatności subskrypcji są obsługiwane przez Google Play Billing. Nie mamy dostępu
+  do Twoich danych płatniczych — Google Play przetwarza je bezpośrednio.
+</p>
+
+<h2>6. Jak długo przechowujemy dane</h2>
 <ul>
-  <li>Zapewnienia działania Aplikacji (zapisanie wpisów, analiza, synchronizacja między urządzeniami)</li>
-  <li>Personalizacji interfejsu (imię dziecka w nagłówkach, wiek w rekomendacjach)</li>
-  <li>Naliczenia subskrypcji Premium</li>
-  <li>Poprawy Aplikacji poprzez analizę anonimowych crashy</li>
+  <li><strong>Tak długo jak masz konto</strong> i korzystasz z aplikacji</li>
+  <li>Po usunięciu konta — wszystkie Twoje dane i dane dziecka są usuwane z Firestore w ciągu <strong>7 dni</strong></li>
+  <li>Backupy Firebase (zarządzane przez Google) są retencjonowane przez maksymalnie <strong>30 dni</strong> — po tym czasie dane są trwale usunięte</li>
+  <li>Logi błędów Sentry są usuwane automatycznie po <strong>90 dniach</strong></li>
 </ul>
 <p>
-  <strong>Nie wykorzystujemy Twoich danych do:</strong> reklamy (żadnej), profilowania marketingowego,
-  sprzedaży podmiotom trzecim, trenowania modeli AI.
+  Podczas korzystania z aplikacji bez logowania (tryb gościa) dane są przechowywane
+  wyłącznie lokalnie na Twoim urządzeniu (localStorage) i są usuwane gdy
+  odinstalowujesz aplikację.
 </p>
 
-<h2>4. Gdzie przechowywane są dane</h2>
-<p>
-  Dane przechowywane są w <strong>Google Firebase (Firestore)</strong>, serwery zlokalizowane w
-  <strong>Unii Europejskiej</strong> (region <code>europe-west3</code> — Frankfurt, Niemcy).
-  Google działa jako Procesor Danych zgodnie z DPA Google (<a href="https://cloud.google.com/terms/data-processing-addendum" target="_blank">link</a>).
-</p>
-<p>
-  Dane subskrypcji są przetwarzane przez <strong>RevenueCat</strong> (<a href="https://www.revenuecat.com/privacy" target="_blank">polityka</a>)
-  oraz <strong>Google Play Billing</strong>.
-</p>
-
-<h2>5. Jak długo przechowujemy dane</h2>
-<ul>
-  <li><strong>Tak długo jak masz konto</strong> i korzystasz z Aplikacji</li>
-  <li>Po usunięciu konta — dane są kasowane w ciągu <strong>30 dni</strong></li>
-  <li>Anonimowe logi błędów — maksymalnie <strong>90 dni</strong></li>
-</ul>
-
-<h2>6. Twoje prawa (RODO)</h2>
+<h2>7. Twoje prawa (RODO)</h2>
 <p>Zgodnie z RODO masz prawo do:</p>
 <ul>
-  <li><strong>Dostępu</strong> do swoich danych — możesz je wyeksportować jako PDF w aplikacji (Ustawienia → Eksport)</li>
-  <li><strong>Sprostowania</strong> danych — edytujesz je bezpośrednio w Aplikacji</li>
-  <li><strong>Usunięcia</strong> ("prawo do bycia zapomnianym") — usuń konto w Ustawieniach lub napisz do <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a></li>
-  <li><strong>Ograniczenia przetwarzania</strong></li>
-  <li><strong>Przenoszenia danych</strong> (export PDF / JSON na żądanie)</li>
-  <li><strong>Sprzeciwu</strong> wobec przetwarzania</li>
-  <li><strong>Skargi do UODO</strong> — <a href="https://uodo.gov.pl/" target="_blank">uodo.gov.pl</a></li>
+  <li><strong>Dostępu</strong> do swoich danych (art. 15 RODO) — możesz wyeksportować
+      wszystkie swoje dane jako plik CSV w Ustawieniach aplikacji</li>
+  <li><strong>Sprostowania</strong> danych (art. 16 RODO) — możesz edytować każdy wpis</li>
+  <li><strong>Usunięcia</strong> danych („prawo do bycia zapomnianym", art. 17 RODO) —
+      możesz usunąć swoje konto w Ustawieniach</li>
+  <li><strong>Ograniczenia przetwarzania</strong> (art. 18 RODO)</li>
+  <li><strong>Przenoszenia danych</strong> (art. 20 RODO) — eksport CSV/PDF w Ustawieniach</li>
+  <li><strong>Sprzeciwu</strong> wobec przetwarzania (art. 21 RODO)</li>
+  <li><strong>Cofnięcia zgody</strong> w dowolnym momencie (art. 7 ust. 3 RODO)</li>
 </ul>
-
-<h2>7. Podstawa prawna przetwarzania</h2>
 <p>
-  Dane przetwarzamy na podstawie art. 6 ust. 1 lit. b RODO (wykonanie umowy o świadczenie usługi Aplikacji)
-  oraz art. 6 ust. 1 lit. a RODO (zgoda — dla szczególnych kategorii danych zdrowotnych dziecka, art. 9 ust. 2 lit. a RODO).
+  Masz również prawo wniesienia <strong>skargi do organu nadzorczego</strong>
+  — Prezesa Urzędu Ochrony Danych Osobowych (PUODO):
+  <a href="https://uodo.gov.pl" target="_blank">uodo.gov.pl</a>.
 </p>
-<div class="hl">
-  <strong>Ważne:</strong> Dane o zdrowiu dziecka stanowią <strong>szczególne kategorie danych</strong> w rozumieniu RODO.
-  Aplikacja przetwarza je wyłącznie na podstawie Twojej wyraźnej zgody udzielonej przez zalogowanie się.
+
+<h2>8. Decyzje zautomatyzowane i profilowanie</h2>
+<div class="hl-info">
+  <strong>Aplikacja Spokojny Rodzic nie podejmuje wobec Ciebie żadnych decyzji
+  zautomatyzowanych, w tym profilowania</strong>, w rozumieniu art. 22 RODO.
 </div>
-
-<h2>8. Dzieci</h2>
 <p>
-  Aplikacja jest przeznaczona dla <strong>rodziców i opiekunów</strong>. Nie jest skierowana bezpośrednio
-  do dzieci. Konto musi prowadzić osoba dorosła. Dane dziecka wprowadzane przez rodzica są traktowane
-  jako dane osobowe i chronione tak samo jak dane konta.
+  Aplikacja przechowuje wprowadzone przez Ciebie dane i prezentuje je w formie
+  wykresów oraz statystyk. Aplikacja udostępnia także statyczne tabele wytycznych
+  pediatrycznych — treść tych tabel jest <strong>identyczna dla wszystkich
+  użytkowników</strong> i nie zmienia się w zależności od danych Twojego dziecka.
+</p>
+<p>
+  Aplikacja <strong>nie ocenia stanu zdrowia dziecka, nie diagnozuje, nie zaleca
+  leków ani nie wylicza dawek</strong>. Wszelkie decyzje medyczne podejmuje rodzic
+  wspólnie z lekarzem.
 </p>
 
-<h2>9. Bezpieczeństwo</h2>
-<p>Stosujemy standardowe środki bezpieczeństwa:</p>
+<h2>9. Dane dziecka — szczególna ochrona</h2>
+<p>
+  Dane przetwarzane przez aplikację dotyczą zdrowia dziecka — osoby małoletniej.
+  Zgodnie z art. 8 RODO i art. 95 Kodeksu rodzinnego i opiekuńczego, zgody
+  na przetwarzanie tych danych udziela rodzic lub opiekun prawny dziecka,
+  jako jego przedstawiciel ustawowy.
+</p>
+<p>Korzystając z aplikacji, oświadczasz że:</p>
 <ul>
-  <li>Szyfrowanie transmisji (HTTPS/TLS)</li>
-  <li>Szyfrowanie danych w spoczynku (Google Firebase standard)</li>
+  <li>jesteś rodzicem lub opiekunem prawnym dziecka, którego dane wprowadzasz</li>
+  <li>masz uprawnienie do udzielenia zgody na przetwarzanie danych zdrowotnych
+      dziecka w jego imieniu</li>
+  <li>akceptujesz zasady polityki prywatności w imieniu swoim i dziecka</li>
+</ul>
+<p>
+  Gdy dziecko osiągnie pełnoletniość (18 lat), przetwarzanie jego danych wymaga
+  jego własnej zgody — zalecamy w tym czasie usunięcie historycznych wpisów
+  lub eksport jako CSV i przekazanie dorosłemu dziecku.
+</p>
+
+<h2>10. Bezpieczeństwo</h2>
+<p>Stosujemy następujące środki bezpieczeństwa:</p>
+<ul>
+  <li>Szyfrowanie transmisji (HTTPS/TLS 1.3)</li>
+  <li>Szyfrowanie danych w spoczynku (Firebase encryption at-rest, AES-256)</li>
   <li>Uwierzytelnianie Google OAuth 2.0</li>
-  <li>Reguły bezpieczeństwa Firestore — każdy użytkownik widzi tylko swoje dane</li>
+  <li>Reguły bezpieczeństwa Firestore — każdy użytkownik widzi tylko swoje dane
+      (request.auth.uid == userId)</li>
+  <li>Status Premium i metadane subskrypcji są chronione przed manipulacją po
+      stronie klienta — zapis tych pól możliwy jest wyłącznie przez serwerową
+      Cloud Function po weryfikacji zakupu</li>
+  <li>App Check (reCAPTCHA v3 / Play Integrity) blokuje nieautoryzowane requesty
+      do API</li>
 </ul>
 
-<h2>10. Cookies i śledzenie</h2>
+<h2>11. Cookies i śledzenie</h2>
 <p>
-  Aplikacja nie używa cookies marketingowych ani narzędzi śledzących (Facebook Pixel, Google Analytics itp.).
-  Używamy <code>localStorage</code> przeglądarki do zapamiętania wybranego języka i trybu gościa.
+  Aplikacja nie używa cookies marketingowych ani narzędzi śledzących (Facebook Pixel,
+  Google Analytics itp.). Używamy <code>localStorage</code> przeglądarki do zapamiętania
+  wybranego języka i trybu gościa.
 </p>
 
-<h2>11. Usunięcie konta</h2>
-<p>
-  Aby usunąć konto i wszystkie dane:
-</p>
+<h2>12. Usunięcie konta</h2>
+<p>Aby usunąć konto i wszystkie dane:</p>
 <ol>
-  <li>Otwórz Aplikację → Ustawienia → Konto → Wyloguj</li>
-  <li>Napisz na <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a> z prośbą o trwałe usunięcie konta i danych</li>
+  <li>Otwórz Aplikację → Ustawienia → Konto → Usuń konto</li>
+  <li>Lub napisz na <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a>
+      z prośbą o trwałe usunięcie konta</li>
   <li>Podaj swój adres e-mail konta Google powiązany z Aplikacją</li>
-  <li>Dane zostaną usunięte w ciągu 30 dni</li>
+  <li>Dane zostaną usunięte w ciągu 7 dni</li>
 </ol>
 <p>
   Alternatywnie usunięcie dostępne jest na:
   <a href="https://matiseekk-dot.github.io/babylog/delete-account.html">matiseekk-dot.github.io/babylog/delete-account.html</a>
 </p>
 
-<h2>12. Zmiany polityki</h2>
+<h2>13. Zmiany polityki</h2>
 <p>
-  Wszelkie zmiany tej polityki będą publikowane na tej stronie. Data ostatniej aktualizacji jest podana
-  na górze dokumentu. O istotnych zmianach poinformujemy w Aplikacji.
+  Wszelkie zmiany tej polityki będą publikowane na tej stronie. Data ostatniej
+  aktualizacji jest podana na górze dokumentu. O istotnych zmianach poinformujemy
+  w Aplikacji co najmniej 14 dni przed wejściem w życie nowej wersji.
 </p>
 
-<h2>13. Kontakt</h2>
-<p>
-  W sprawach ochrony danych osobowych:
-</p>
-<p>
+<h2>14. Kontakt w sprawach RODO</h2>
+<address>
   <strong>SkuDev — Mateusz Skura</strong><br>
+  ul. Rzepakowa 4G/21<br>
+  40-541 Katowice, Polska<br>
   E-mail: <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a>
-</p>
+</address>
 
 <hr style="margin: 48px 0;">
 </section>
@@ -209,7 +327,7 @@
 <section id="en">
 
 <h1>Privacy Policy</h1>
-<div class="updated">Last updated: April 19, 2026</div>
+<div class="updated">Version 2.10.5 — Last updated: April 26, 2026</div>
 
 <p>
   This privacy policy describes how the <strong>Calm Parent</strong> app (the "App"), operated by
@@ -219,43 +337,71 @@
 <div class="hl">
   <strong>In short:</strong> The App stores your child's data (name, age, weight, feeding history, sleep,
   temperature) only on your Google account. We don't sell data. We don't serve ads. We don't share
-  data with anyone except providers necessary to run the App (Google Firebase).
+  data with anyone except providers necessary to run the App (Google Firebase, RevenueCat, Sentry).
 </div>
 
 <h2>1. Data Controller</h2>
+<address>
+  <strong>SkuDev — Mateusz Skura</strong><br>
+  ul. Rzepakowa 4G/21<br>
+  40-541 Katowice, Poland<br>
+  Email: <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a>
+</address>
 <p>
-  The data controller is <strong>SkuDev</strong>, operated by Mateusz Skura. For data protection matters,
-  contact: <strong><a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a></strong>
+  For data protection inquiries, please email the address above. We aim to respond within
+  30 days, in accordance with GDPR Art. 12(3).
 </p>
 
-<h2>2. What data we collect</h2>
+<h2>2. Purpose of processing</h2>
+<p>
+  We process data exclusively to provide the Calm Parent service, which is a
+  <strong>child health journal</strong> with a library of pediatric guidelines:
+</p>
+<ul>
+  <li>Storing entries you make (temperature, feedings, sleep, medications, diapers,
+      vaccinations, milestones, growth data)</li>
+  <li>Cross-device data sync (after sign-in)</li>
+  <li>Generating charts and PDF reports based on your measurements</li>
+  <li>Sending push notifications reminding you about medication intervals
+      (timer based on times you've entered)</li>
+</ul>
+<div class="hl">
+  <strong>Calm Parent is not a medical device</strong> within the meaning of Regulation
+  (EU) 2017/745 (MDR). The App does not diagnose, does not assess your child's health,
+  does not recommend medications, and does not calculate doses. It serves as a journal
+  and library of static pediatric guidelines from public sources (AAP, Mayo Clinic).
+</div>
 
-<h3>Identity data (only when signing in with Google)</h3>
+<h2>3. What data we collect</h2>
+
+<h3>3.1 Identity data (only when signing in with Google)</h3>
 <ul>
   <li>Email address</li>
   <li>Display name from your Google account</li>
-  <li>Google unique identifier (UID) — internal key that encrypts your data</li>
+  <li>Google unique identifier (Firebase UID) — internal key for accessing your data</li>
 </ul>
 
-<h3>Child health data (entered by you)</h3>
+<h3>3.2 Child health data (special category — GDPR Art. 9)</h3>
 <ul>
-  <li>Child's name, age, weight, avatar</li>
-  <li>Temperature measurements</li>
+  <li>Child's name, date of birth (or age in months), weight, avatar</li>
+  <li>Body temperature measurements</li>
   <li>Feeding history (type, time, amount)</li>
   <li>Sleep history</li>
-  <li>Diaper changes</li>
-  <li>Medications and doses</li>
+  <li>Diaper changes and symptoms</li>
+  <li>Medications and doses given</li>
   <li>Developmental milestones</li>
   <li>Vaccinations</li>
   <li>Parent notes (journal)</li>
   <li>Doctor visit notes</li>
 </ul>
 
-<h3>Technical data</h3>
+<h3>3.3 Technical data (anonymous)</h3>
 <ul>
   <li>Selected interface language (stored locally)</li>
   <li>Premium subscription status (via RevenueCat)</li>
-  <li>Anonymous crash logs</li>
+  <li>FCM device tokens (for push notifications)</li>
+  <li>Anonymous crash logs (Sentry — no PII, only stack trace)</li>
+  <li>Anonymous verification identifier (App Check / reCAPTCHA — prevents bot attacks)</li>
 </ul>
 
 <div class="hl">
@@ -263,104 +409,187 @@
   browsing history, audio/video recordings, biometric data.
 </div>
 
-<h2>3. How we use your data</h2>
-<p>Data is used exclusively for:</p>
-<ul>
-  <li>Running the App (saving entries, analysis, cross-device sync)</li>
-  <li>Interface personalization (child's name in headers, age-based recommendations)</li>
-  <li>Premium subscription billing</li>
-  <li>Improving the App through anonymous crash analysis</li>
-</ul>
+<h2>4. Legal basis for processing</h2>
+
+<h3>4.1 Account data and general entries</h3>
 <p>
-  <strong>We do not use your data for:</strong> advertising (none), marketing profiling,
-  selling to third parties, AI model training.
+  GDPR Art. 6(1)(b) — processing necessary for performance of service contract.
 </p>
 
-<h2>4. Where data is stored</h2>
+<h3>4.2 Child health data (key legal basis)</h3>
 <p>
-  Data is stored in <strong>Google Firebase (Firestore)</strong>, servers located in the
-  <strong>European Union</strong> (region <code>europe-west3</code> — Frankfurt, Germany).
-  Google acts as Data Processor under Google DPA (<a href="https://cloud.google.com/terms/data-processing-addendum" target="_blank">link</a>).
+  <strong>GDPR Art. 9(2)(a) — explicit consent of the data subject.</strong>
+  In the case of a child, consent is given by the legal guardian (parent) under
+  Polish Family Code Art. 95.
 </p>
 <p>
-  Subscription data is processed by <strong>RevenueCat</strong> (<a href="https://www.revenuecat.com/privacy" target="_blank">policy</a>)
-  and <strong>Google Play Billing</strong>.
+  You give consent on the welcome screen of the App by checking the relevant checkboxes.
+  You can withdraw consent anytime by deleting your account in Settings — this will
+  delete all your data and your child's data.
 </p>
 
-<h2>5. How long we keep data</h2>
+<h3>4.3 Push notifications</h3>
+<p>
+  GDPR Art. 6(1)(a) — consent. You can withdraw consent in your phone's system
+  settings or in the App's Settings.
+</p>
+
+<h3>4.4 Crash logs (Sentry)</h3>
+<p>
+  GDPR Art. 6(1)(f) — legitimate interest of the controller in maintaining
+  stability and security of the App. Logs do not contain personal or health data,
+  only technical error stack traces.
+</p>
+
+<h2>5. Who we share data with (processors)</h2>
+
+<h3>5.1 Google LLC (Firebase, USA)</h3>
+<p>
+  Data processing takes place on <strong>Firebase Firestore</strong> and
+  <strong>Firebase Cloud Messaging</strong> infrastructure — services provided by
+  Google LLC headquartered in the USA. Data is stored in the
+  <code>europe-west3</code> region (Frankfurt, Germany).
+</p>
+<p>
+  The legal basis for transfer to the USA are <strong>Standard Contractual Clauses</strong>
+  (SCC) approved by the European Commission (Implementing Decision EC 2021/914) and the
+  <strong>Data Processing Addendum (DPA)</strong> concluded with Google.
+</p>
+<p>
+  Following the Schrems II ruling (CJEU C-311/18), we have implemented additional
+  safeguards (data storage in EU region, encryption at-rest and in-transit, access only
+  through Cloud Functions in europe-west3).
+</p>
+
+<h3>5.2 RevenueCat Inc. (USA) — only if you purchase Premium</h3>
+<p>
+  When you purchase a Premium subscription, RevenueCat Inc. (USA) processes subscription
+  information (user identifier, subscription status, dates). We do not share child health
+  data with RevenueCat.
+</p>
+
+<h3>5.3 Sentry GmbH (EU region)</h3>
+<p>
+  Technical error logs are sent to Sentry GmbH (EU region). Logs do not contain personal
+  or health data — only technical error stack traces.
+</p>
+
+<h3>5.4 Google Play Billing</h3>
+<p>
+  Subscription payments are handled by Google Play Billing. We do not have access to your
+  payment data — Google Play processes it directly.
+</p>
+
+<h2>6. How long we keep data</h2>
 <ul>
   <li><strong>As long as you have an account</strong> and use the App</li>
-  <li>After account deletion — data is erased within <strong>30 days</strong></li>
-  <li>Anonymous crash logs — up to <strong>90 days</strong></li>
+  <li>After account deletion — all your data and your child's data is deleted from Firestore within <strong>7 days</strong></li>
+  <li>Firebase backups (managed by Google) are retained for up to <strong>30 days</strong> — after that, data is permanently erased</li>
+  <li>Sentry crash logs are automatically deleted after <strong>90 days</strong></li>
 </ul>
+<p>
+  When using the App without signing in (guest mode), data is stored only locally on
+  your device (localStorage) and is deleted when you uninstall the App.
+</p>
 
-<h2>6. Your rights (GDPR)</h2>
+<h2>7. Your rights (GDPR)</h2>
 <p>Under GDPR you have the right to:</p>
 <ul>
-  <li><strong>Access</strong> your data — export as PDF in-app (Settings → Export)</li>
-  <li><strong>Rectification</strong> — edit directly in the App</li>
-  <li><strong>Erasure</strong> ("right to be forgotten") — delete account in Settings or email <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a></li>
-  <li><strong>Restriction of processing</strong></li>
-  <li><strong>Data portability</strong> (PDF / JSON export on request)</li>
-  <li><strong>Objection</strong> to processing</li>
-  <li><strong>Lodge a complaint</strong> with your supervisory authority</li>
+  <li><strong>Access</strong> your data (Art. 15) — export all data as CSV in App Settings</li>
+  <li><strong>Rectification</strong> of data (Art. 16) — edit any entry directly</li>
+  <li><strong>Erasure</strong> ("right to be forgotten", Art. 17) — delete your account in Settings</li>
+  <li><strong>Restriction of processing</strong> (Art. 18)</li>
+  <li><strong>Data portability</strong> (Art. 20) — CSV/PDF export in Settings</li>
+  <li><strong>Object</strong> to processing (Art. 21)</li>
+  <li><strong>Withdraw consent</strong> at any time (Art. 7(3))</li>
 </ul>
-
-<h2>7. Legal basis for processing</h2>
 <p>
-  We process data under GDPR Art. 6(1)(b) (performance of service contract) and
-  Art. 6(1)(a) (consent — for special categories of child health data, Art. 9(2)(a) GDPR).
+  You also have the right to <strong>lodge a complaint with a supervisory authority</strong>.
+  In Poland: Prezes Urzędu Ochrony Danych Osobowych (PUODO),
+  <a href="https://uodo.gov.pl" target="_blank">uodo.gov.pl</a>.
 </p>
-<div class="hl">
-  <strong>Important:</strong> Child health data constitutes <strong>special category data</strong> under GDPR.
-  The App processes it only with your explicit consent given by signing in.
+
+<h2>8. Automated decision-making and profiling</h2>
+<div class="hl-info">
+  <strong>The Calm Parent App does not make any automated decisions, including profiling</strong>,
+  within the meaning of GDPR Art. 22.
 </div>
-
-<h2>8. Children</h2>
 <p>
-  The App is intended for <strong>parents and guardians</strong>. It is not directed at children.
-  The account must be held by an adult. Child data entered by a parent is treated as personal data
-  and protected identically to the account holder's data.
+  The App stores data you have entered and presents it as charts and statistics. The App
+  also provides static tables of pediatric guidelines — the content of these tables is
+  <strong>identical for all users</strong> and does not change based on your child's data.
+</p>
+<p>
+  The App <strong>does not assess your child's health, does not diagnose, does not
+  recommend medications, and does not calculate doses</strong>. All medical decisions are
+  made by the parent together with a doctor.
 </p>
 
-<h2>9. Security</h2>
-<p>We apply standard security measures:</p>
+<h2>9. Children's data — special protection</h2>
+<p>
+  Data processed by the App concerns the health of a child — a minor. Under GDPR Art. 8
+  and Polish Family Code Art. 95, consent for processing this data is given by the
+  parent or legal guardian as legal representative.
+</p>
+<p>By using the App, you declare that:</p>
 <ul>
-  <li>Transmission encryption (HTTPS/TLS)</li>
-  <li>Encryption at rest (Google Firebase standard)</li>
+  <li>you are the parent or legal guardian of the child whose data you enter</li>
+  <li>you have authority to consent to processing of your child's health data on their behalf</li>
+  <li>you accept the privacy policy on behalf of yourself and your child</li>
+</ul>
+<p>
+  When the child reaches adulthood (18 years), processing their data requires their own
+  consent — at that time we recommend deleting historical entries or exporting them as
+  CSV and handing them over to the adult child.
+</p>
+
+<h2>10. Security</h2>
+<p>We apply the following security measures:</p>
+<ul>
+  <li>Transmission encryption (HTTPS/TLS 1.3)</li>
+  <li>Encryption at rest (Firebase encryption, AES-256)</li>
   <li>Google OAuth 2.0 authentication</li>
-  <li>Firestore security rules — each user sees only their own data</li>
+  <li>Firestore security rules — each user sees only their own data
+      (request.auth.uid == userId)</li>
+  <li>Premium status and subscription metadata are protected from client-side
+      manipulation — these fields can only be written by a server-side Cloud Function
+      after purchase verification</li>
+  <li>App Check (reCAPTCHA v3 / Play Integrity) blocks unauthorized API requests</li>
 </ul>
 
-<h2>10. Cookies and tracking</h2>
+<h2>11. Cookies and tracking</h2>
 <p>
-  The App does not use marketing cookies or tracking tools (Facebook Pixel, Google Analytics etc.).
-  We use browser <code>localStorage</code> to remember language selection and guest mode.
+  The App does not use marketing cookies or tracking tools (Facebook Pixel, Google Analytics
+  etc.). We use browser <code>localStorage</code> to remember language selection and guest mode.
 </p>
 
-<h2>11. Account deletion</h2>
+<h2>12. Account deletion</h2>
+<p>To delete your account and all data:</p>
 <ol>
-  <li>Open App → Settings → Account → Sign out</li>
-  <li>Email <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a> requesting permanent account and data deletion</li>
+  <li>Open App → Settings → Account → Delete account</li>
+  <li>Or email <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a> requesting permanent deletion</li>
   <li>Provide your Google account email associated with the App</li>
-  <li>Data will be deleted within 30 days</li>
+  <li>Data will be deleted within 7 days</li>
 </ol>
 <p>
   Or use the self-service page:
   <a href="https://matiseekk-dot.github.io/babylog/delete-account.html">matiseekk-dot.github.io/babylog/delete-account.html</a>
 </p>
 
-<h2>12. Changes to this policy</h2>
+<h2>13. Changes to this policy</h2>
 <p>
-  Any changes to this policy will be published on this page. Last update date is shown at the top.
-  We will notify you of material changes in the App.
+  Any changes to this policy will be published on this page. The last update date is shown
+  at the top. We will notify you of material changes in the App at least 14 days before
+  the new version takes effect.
 </p>
 
-<h2>13. Contact</h2>
-<p>
+<h2>14. Contact for GDPR matters</h2>
+<address>
   <strong>SkuDev — Mateusz Skura</strong><br>
+  ul. Rzepakowa 4G/21<br>
+  40-541 Katowice, Poland<br>
   Email: <a href="mailto:privacy@skudev.pl">privacy@skudev.pl</a>
-</p>
+</address>
 
 </section>
 
