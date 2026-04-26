@@ -330,7 +330,9 @@ export default function App() {
   const closePaywall = () => setShowPaywall(false)
 
   // RevenueCat — weryfikacja subskrypcji
-  const { checking: rcChecking, checkPremium, activateWithToken } = useRevenueCat(uid, activate)
+  // v2.10.0: useRevenueCat już nie dostaje callback `activate`. Premium status
+  // jest pisany do Firestore tylko przez Cloud Function revenueCatWebhook.
+  const { checking: rcChecking, checkPremium, activateWithToken } = useRevenueCat(uid)
 
   // Bug 1 fix: Modal zachęcający do instalacji apki (zamiast brzydkiego alert())
   const [showPlayStoreModal, setShowPlayStoreModal] = useState(false)

@@ -52,12 +52,24 @@ function lsKeys() {
 
 /**
  * useFirestore(uid, key, fallback) — BEZPIECZNA WERSJA (fix Bug 3)
+ *
+ * v2.10.0: setDoc do Firestore jest debounce'owany (500ms). LocalStorage
+ * pisze synchronicznie (instant feedback w UI), Firestore z opóźnieniem.
+ * Powód: gdy user szybko zmienia coś (np. slider, wpisuje w input), bez
+ * debounce każde naciśnięcie klawisza wywoływałoby setDoc → koszt billing
+ * + niepotrzebny ruch sieciowy + ryzyko rate limit. Z debounce: ostatnia
+ * wartość wygrywa, jeden zapis na sekwencję zmian.
  */
+const FIRESTORE_DEBOUNCE_MS = 500
+
 export function useFirestore(uid, key, fallback) {
   const [state, setState] = useState(() => lsLoad(uid, key, fallback))
   const firstSnap = useRef(true)
   const prevUid = useRef(uid)
   const prevKey = useRef(key)
+  // v2.10.0: debounce timer + pending value dla setDoc
+  const debounceTimer = useRef(null)
+  const pendingValue = useRef(null)
 
   useEffect(() => {
     // Tylko gdy uid/key się RZECZYWIŚCIE zmieniły, zresetuj stan z ls
@@ -111,14 +123,43 @@ export function useFirestore(uid, key, fallback) {
 
   const set = (val) => {
     const next = typeof val === 'function' ? val(state) : val
+    // LocalStorage zapisz natychmiast — instant feedback w UI
     lsSave(uid, key, next)
     setState(next)
     if (uid) {
-      setDoc(docRef(uid, key), { value: next }).catch(e => {
-        captureError(e, { context: 'firestore-write', key, uid })
-      })
+      // v2.10.0: debounce setDoc. Jeśli user spamuje set(), ostatnia
+      // wartość wygrywa po 500ms ciszy. To zmniejsza koszt Firestore
+      // i obciążenie sieci dla szybkich zmian (np. slider, autocomplete).
+      pendingValue.current = next
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current)
+      }
+      debounceTimer.current = setTimeout(() => {
+        const valueToWrite = pendingValue.current
+        pendingValue.current = null
+        debounceTimer.current = null
+        setDoc(docRef(uid, key), { value: valueToWrite }).catch(e => {
+          captureError(e, { context: 'firestore-write', key, uid })
+        })
+      }, FIRESTORE_DEBOUNCE_MS)
     }
   }
+
+  // v2.10.0: cleanup pending writes przy unmount żeby uniknąć leaków
+  // i write po unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        // Flush pending — najlepszy effort, write idzie w tle
+        clearTimeout(debounceTimer.current)
+        if (pendingValue.current !== null && uid) {
+          setDoc(docRef(uid, key), { value: pendingValue.current }).catch(() => {})
+        }
+        debounceTimer.current = null
+        pendingValue.current = null
+      }
+    }
+  }, [uid, key])
 
   return [state, set]
 }

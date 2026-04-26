@@ -94,26 +94,28 @@ async function activateGooglePlayPurchase(uid, productId, purchaseToken) {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 /**
- * useRevenueCat(uid, onActivate)
+ * useRevenueCat(uid)
  *
- * uid        – Firebase UID
- * onActivate – callback wywoływany gdy zakup potwierdzony (wywołuje activate())
+ * v2.10.0: callback onActivate USUNIĘTY. Premium status jest teraz pisany
+ * do Firestore wyłącznie przez Cloud Function `revenueCatWebhook` (server-side).
+ * Client checkEntitlement wciąż dzwoni RevenueCat REST API żeby aktywnie
+ * sprawdzić status — ale tylko `setIsActive(true)` w lokalnym state. Pole
+ * `premium_purchased` w Firestore jest read-only z client-side.
+ *
+ * uid – Firebase UID
  *
  * Zwraca:
- *   customerInfo     – dane klienta z RC
- *   isActive         – czy ma aktywną subskrypcję
+ *   isActive         – czy ma aktywną subskrypcję wg RC API (może się różnić
+ *                      od `purchased` z Firestore podczas opóźnienia webhook)
  *   checking         – trwa sprawdzanie
  *   checkPremium()   – ręczne sprawdzenie (po zakupie)
- *   offerings        – dostępne plany (Monthly/Yearly/Lifetime)
+ *   activateWithToken(productId, token) – aktywacja przez Play purchase token
+ *   offerings        – dostępne plany
  */
-export function useRevenueCat(uid, onActivate) {
+export function useRevenueCat(uid) {
   const [isActive, setIsActive]   = useState(false)
   const [checking, setChecking]   = useState(false)
   const { locale } = useLocale()
-  // v2.9.2: ceny i lista planów pochodzą z src/data/premiumPlans.js
-  // (single source of truth, importowane też przez PaywallScreen.jsx).
-  // Offerings przeliczają się przy zmianie języka — zarówno cena (PLN/USD),
-  // jak i etykiety (i18n) zależą od locale.
   const offerings = useMemo(() => getPlans(locale), [locale])
 
   // Sprawdź przy montowaniu i po zmianie uid
@@ -123,7 +125,8 @@ export function useRevenueCat(uid, onActivate) {
     checkEntitlement(uid)
       .then(active => {
         setIsActive(active)
-        if (active) onActivate?.()
+        // v2.10.0: NIE wywołujemy już onActivate. Webhook RC obsługuje
+        // zapis `premium_purchased` do Firestore.
       })
       .finally(() => setChecking(false))
   }, [uid])
@@ -134,14 +137,16 @@ export function useRevenueCat(uid, onActivate) {
     try {
       const active = await checkEntitlement(uid)
       setIsActive(active)
-      if (active) onActivate?.()
       return active
     } finally {
       setChecking(false)
     }
   }, [uid])
 
-  // Aktywacja przez token Play (do użycia w TWA po zakupie)
+  // Aktywacja przez token Play (do użycia w TWA po zakupie).
+  // RC po przyjęciu fetch_token wysyła INITIAL_PURCHASE webhook → nasza
+  // Cloud Function `revenueCatWebhook` zapisze `premium_purchased = true`.
+  // Client zobaczy update przez Firestore real-time listener.
   const activateWithToken = useCallback(async (productId, purchaseToken) => {
     if (!uid) return
     try {

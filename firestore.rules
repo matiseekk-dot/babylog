@@ -1,20 +1,53 @@
 rules_version = '2';
 
-// Reguły Firestore dla Spokojny Rodzic
+// Reguły Firestore dla Spokojny Rodzic (v2.10.0)
 //
-// Pojedyncza prosta reguła: user ma pełen dostęp do wszystkiego pod users/{jego_uid}.
-// Pokrywa: data/, tokens/, profiles/ oraz wszystkie subkolekcje pod tymi ścieżkami.
+// Polityka:
 //
-// Bezpieczeństwo:
-// - Tylko zalogowani userzy
-// - User może operować tylko na swoich danych (request.auth.uid == userId)
-// - Cloud Functions używają admin SDK który bypassuje rules → może pisać do tokenów wszystkich userów
+//   1. User ma read/write dla swoich danych pod users/{uid}/...
+//      Z wyjątkiem POL CHRONIONYCH (poniżej) — te są read-only z client-side.
+//
+//   2. POLA CHRONIONE — tylko Admin SDK (Cloud Functions) może je zapisywać.
+//      Client widzi je, ale nie może zmienić.
+//      - premium_purchased   (status Premium subskrypcji)
+//      - premium_meta        (metadane subskrypcji od RevenueCat)
+//      - rc_event_*          (idempotency stamps webhook eventów)
+//
+//   3. FIELD VALIDATION dla zwykłych dokumentów:
+//      - Tylko klucz `value` na top-level (kontrakt useFirestore)
+//      - Map/list values: max 50k entries (anty-DoS)
+//
+//   4. Cloud Functions używają Admin SDK który BYPASSUJE rules.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Wszystko pod users/{uid} — user może czytać/pisać tylko swoje dane.
-    match /users/{userId}/{document=**} {
+    // Premium — tylko Admin SDK pisze (revenueCatWebhook)
+    match /users/{userId}/data/premium_purchased {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+    match /users/{userId}/data/premium_meta {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    // Idempotency stamps RC webhooka — write-only Admin, niewidoczne dla usera
+    match /users/{userId}/data/rc_event_{eventId} {
+      allow read, write: if false;
+    }
+
+    // Reszta data/* — user pisze swoje, ale tylko z polem `value`
+    // (kontrakt useFirestore: { value: <data> })
+    match /users/{userId}/data/{docId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['value']);
+    }
+
+    // Subkolekcje (tokens FCM, profiles, etc.)
+    match /users/{userId}/{subcol}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }

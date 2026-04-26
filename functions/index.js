@@ -19,12 +19,22 @@
  */
 
 const { onSchedule } = require('firebase-functions/v2/scheduler')
+const { onRequest } = require('firebase-functions/v2/https')
+const { defineSecret } = require('firebase-functions/params')
 const { setGlobalOptions } = require('firebase-functions/v2')
 const admin = require('firebase-admin')
 const medIntervalsData = require('./medIntervals.json')
 
 admin.initializeApp()
 setGlobalOptions({ region: 'europe-west3' }) // Frankfurt — najbliżej Polski
+
+// v2.10.0: Secret Manager dla RevenueCat webhook auth.
+// Wartość ustawiana lokalnie przez:
+//   firebase functions:secrets:set REVENUECAT_AUTH
+// Sekret nigdy nie jest hard-coded ani commitowany do repo.
+// Funkcja revenueCatWebhook deklaruje że go używa (parametr secrets:[]
+// w jej config) i przy starcie Firebase wstrzykuje wartość do process.env.
+const REVENUECAT_AUTH = defineSecret('REVENUECAT_AUTH')
 
 const db = admin.firestore()
 const messaging = admin.messaging()
@@ -234,3 +244,145 @@ function computeFireAt(date, time, intervalMin) {
     return null
   }
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// revenueCatWebhook (v2.10.0)
+// ──────────────────────────────────────────────────────────────────────────
+//
+// Server-side weryfikacja statusu Premium. Punkt końcowy POST który
+// RevenueCat (configured w Dashboard → Integrations → Webhooks) woła
+// po każdej zmianie subskrypcji usera.
+//
+// Flow:
+//   1. RevenueCat woła https://europe-west3-babylog-3c1cc.cloudfunctions.net/revenueCatWebhook
+//      z header `Authorization: Bearer <secret>` i JSON body
+//   2. Funkcja weryfikuje secret (z Firebase Secret Manager — nie z kodu)
+//   3. Parsuje event type i app_user_id (= Firebase UID)
+//   4. Pisze przez Admin SDK do users/{uid}/data/premium_purchased
+//      (Firestore rules blokują write z client — tylko Admin może)
+//
+// Eventy obsługiwane (z https://www.revenuecat.com/docs/webhooks):
+//   - INITIAL_PURCHASE  → premium_purchased = true
+//   - RENEWAL           → premium_purchased = true (re-affirm)
+//   - CANCELLATION      → no-op (subskrypcja jest aktywna do końca okresu)
+//   - EXPIRATION        → premium_purchased = false
+//   - BILLING_ISSUE     → no-op (RC sam ponawia, expiruje przy ostatecznym fail)
+//   - PRODUCT_CHANGE    → re-affirm (np. zmiana monthly→yearly)
+//   - REFUND            → premium_purchased = false (rzadkie)
+//   - SUBSCRIPTION_EXTENDED → premium_purchased = true
+//   - UNCANCELLATION    → premium_purchased = true (user odwołał kasowanie)
+//   - TRANSFER          → no-op (nie używamy multi-platform transfer)
+//
+// Zapisuje też metadane (premium_meta) do późniejszego diagnostyki:
+//   { last_event, last_event_at, expires_at, product_id, store }
+//
+// Idempotency: każdy event ma `event.id` z RC. Zapisujemy do
+// users/{uid}/data/processed_rc_events i ignorujemy jeśli już był.
+
+exports.revenueCatWebhook = onRequest({
+  // Secret jest zadeklarowany — Firebase nie pozwoli odpalić funkcji bez
+  // wcześniejszego `firebase functions:secrets:set REVENUECAT_AUTH`.
+  secrets: [REVENUECAT_AUTH],
+  // CORS: webhook woła tylko serwer RevenueCat, więc CORS nie jest istotny.
+  // Ale musimy mieć invoker public — RC nie autentykuje się przez Firebase IAM.
+  invoker: 'public',
+  // Timeout: RC retry wynosi do ~3min na request. 60s spokojnie wystarczy.
+  timeoutSeconds: 60,
+  // Memory: minimal — to tylko zapis do Firestore.
+  memory: '256MiB',
+}, async (req, res) => {
+  // Tylko POST
+  if (req.method !== 'POST') {
+    res.status(405).send('Method not allowed')
+    return
+  }
+
+  // Weryfikacja secret w nagłówku Authorization.
+  // RC pozwala wpisać dowolny header w Dashboard. Konwencja: "Bearer <secret>".
+  const expectedAuth = `Bearer ${REVENUECAT_AUTH.value()}`
+  const receivedAuth = req.get('Authorization') || ''
+  if (receivedAuth !== expectedAuth) {
+    console.warn('[rc-webhook] auth fail')
+    res.status(401).send('Unauthorized')
+    return
+  }
+
+  const body = req.body || {}
+  const event = body.event
+  if (!event || !event.type || !event.app_user_id) {
+    console.warn('[rc-webhook] malformed body', JSON.stringify(body).slice(0, 500))
+    res.status(400).send('Bad request')
+    return
+  }
+
+  const eventId = event.id
+  const eventType = event.type
+  const uid = event.app_user_id
+  const expiresAtMs = event.expiration_at_ms || null
+  const productId = event.product_id || null
+  const store = event.store || null
+
+  console.log(`[rc-webhook] ${eventType} uid=${uid} eventId=${eventId} product=${productId}`)
+
+  const userDataRef = admin.firestore()
+    .collection('users').doc(uid)
+    .collection('data')
+
+  // Idempotency check
+  if (eventId) {
+    const eventDoc = await userDataRef.doc(`rc_event_${eventId}`).get()
+    if (eventDoc.exists) {
+      console.log(`[rc-webhook] duplicate eventId=${eventId} — skip`)
+      res.status(200).send('OK (duplicate)')
+      return
+    }
+  }
+
+  // Decyzja: aktywować, deaktywować, czy nie ruszać premium_purchased
+  let action = null  // 'grant' | 'revoke' | null
+  switch (eventType) {
+    case 'INITIAL_PURCHASE':
+    case 'RENEWAL':
+    case 'PRODUCT_CHANGE':
+    case 'SUBSCRIPTION_EXTENDED':
+    case 'UNCANCELLATION':
+      action = 'grant'
+      break
+    case 'EXPIRATION':
+    case 'REFUND':
+      action = 'revoke'
+      break
+    case 'CANCELLATION':
+    case 'BILLING_ISSUE':
+    case 'TRANSFER':
+    case 'TEST':
+    default:
+      action = null
+      break
+  }
+
+  // Atomic write: premium_purchased + premium_meta + idempotency stamp
+  const batch = admin.firestore().batch()
+  if (action === 'grant') {
+    batch.set(userDataRef.doc('premium_purchased'), { value: true }, { merge: true })
+  } else if (action === 'revoke') {
+    batch.set(userDataRef.doc('premium_purchased'), { value: false }, { merge: true })
+  }
+  batch.set(userDataRef.doc('premium_meta'), {
+    value: {
+      last_event: eventType,
+      last_event_at: Date.now(),
+      expires_at: expiresAtMs,
+      product_id: productId,
+      store,
+    },
+  }, { merge: true })
+  if (eventId) {
+    batch.set(userDataRef.doc(`rc_event_${eventId}`), {
+      value: { type: eventType, processedAt: Date.now() },
+    })
+  }
+  await batch.commit()
+
+  res.status(200).send('OK')
+})
