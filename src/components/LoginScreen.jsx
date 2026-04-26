@@ -23,33 +23,38 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column',
-      height: '100%', background: '#fff',
+      height: '100%', background: 'var(--surface)',
     }}>
 
       {/* Hero */}
       <div style={{
-        background: 'linear-gradient(160deg, #0F6E56 0%, #1D9E75 60%, #5DCAA5 100%)',
-        padding: '72px 32px 48px',
+        background: 'linear-gradient(160deg, var(--brand-600) 0%, var(--brand-500) 60%, #5DCAA5 100%)',
+        padding: 'var(--space-spacious) var(--space-spacious) var(--space-comfortable)',
+        paddingTop: 'calc(var(--space-spacious) * 2 + var(--space-snug))',  // 72px ekvivalent
         textAlign: 'center',
         flex: '0 0 auto',
       }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>🍼</div>
+        <div style={{ fontSize: 64, marginBottom: 'var(--space)' }}>🍼</div>
         <div style={{
-          fontSize: 26, fontWeight: 800, color: '#fff',
+          fontSize: 26, fontWeight: 800, color: 'var(--surface)',
           letterSpacing: -0.5, lineHeight: 1.2,
         }}>
           {t('login.title')}
         </div>
         <div style={{
           fontSize: 14, color: 'rgba(255,255,255,0.8)',
-          marginTop: 10, lineHeight: 1.5,
+          marginTop: 'var(--space-snug)', lineHeight: 1.5,
         }}>
           {t('login.subtitle').split('\n').map((l,i)=><span key={i}>{l}{i===0?<br />:null}</span>)}
         </div>
       </div>
 
       {/* Treść */}
-      <div style={{ flex: 1, padding: '36px 28px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{
+        flex: 1,
+        padding: 'var(--space-spacious) var(--space-comfortable) 0',
+        display: 'flex', flexDirection: 'column', gap: 'var(--space)',
+      }}>
 
         {/* Benefity */}
         {[
@@ -57,27 +62,31 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
           { icon: '🔒', text: t('login.benefit2') },
           { icon: '📱', text: t('login.benefit3') },
         ].map(b => (
-          <div key={b.icon} style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div key={b.icon} style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--space)',
+          }}>
             <div style={{
-              width: 40, height: 40, borderRadius: 10,
-              background: '#E1F5EE', fontSize: 18,
+              width: 40, height: 40, borderRadius: 'var(--radius-tight)',
+              background: 'var(--brand-50)', fontSize: 18,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>{b.icon}</div>
-            <span style={{ fontSize: 14, color: '#3a3a36', lineHeight: 1.4 }}>{b.text}</span>
+            <span style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.4 }}>{b.text}</span>
           </div>
         ))}
       </div>
 
       {/* CTA */}
       <div style={{
-        padding: '28px 28px',
-        paddingBottom: 'max(28px, env(safe-area-inset-bottom))',
+        padding: 'var(--space-comfortable) var(--space-comfortable)',
+        paddingBottom: 'max(var(--space-comfortable), env(safe-area-inset-bottom))',
       }}>
         {error && (
           <div style={{
-            fontSize: 13, color: '#712B13', background: '#FAECE7',
-            borderRadius: 10, padding: '10px 14px', marginBottom: 14, textAlign: 'center',
+            fontSize: 13, color: 'var(--alert-700)', background: 'var(--alert-50)',
+            borderRadius: 'var(--radius-tight)',
+            padding: 'var(--space-snug) var(--space)',
+            marginBottom: 'var(--space)', textAlign: 'center',
           }}>{error}</div>
         )}
 
@@ -85,13 +94,14 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
           onClick={handleLogin}
           disabled={busy || loading}
           style={{
-            width: '100%', padding: '15px',
-            background: busy || loading ? '#9a9a94' : '#fff',
-            color: '#3a3a36',
-            border: '0.5px solid rgba(0,0,0,0.15)',
-            borderRadius: 14, fontSize: 16, fontWeight: 700,
+            width: '100%', padding: 'var(--space)',
+            background: busy || loading ? 'var(--text-3)' : 'var(--surface)',
+            color: 'var(--text)',
+            border: '0.5px solid var(--border-med)',
+            borderRadius: 'var(--radius-comfortable)',
+            fontSize: 16, fontWeight: 700,
             cursor: busy || loading ? 'default' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-snug)',
             minHeight: 54,
             boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
           }}
@@ -106,8 +116,8 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
             </svg>
           ) : (
             <div style={{
-              width: 20, height: 20, borderRadius: '50%',
-              border: '2px solid #ccc', borderTopColor: '#1D9E75',
+              width: 20, height: 20, borderRadius: 'var(--radius-round)',
+              border: '2px solid var(--border-med)', borderTopColor: 'var(--brand-500)',
               animation: 'spin .8s linear infinite',
             }} />
           )}
@@ -115,8 +125,8 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
         </button>
 
         <p style={{
-          fontSize: 11, color: '#9a9a94', textAlign: 'center',
-          marginTop: 14, lineHeight: 1.5,
+          fontSize: 11, color: 'var(--text-3)', textAlign: 'center',
+          marginTop: 'var(--space)', lineHeight: 1.5,
         }}>
           {t('login.footer').split('\n').map((l,i)=><span key={i}>{l}{i===0?<br />:null}</span>)}
         </p>
@@ -125,14 +135,16 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
         <button
           onClick={onSkip}
           style={{
-            width: '100%', marginTop: 14, padding: '14px',
-            background: '#F5F9F7',
-            color: '#0F6E56',
-            border: '1px solid #C5E8D9',
-            borderRadius: 12,
+            width: '100%',
+            marginTop: 'var(--space)',
+            padding: 'var(--space)',
+            background: 'var(--brand-50)',
+            color: 'var(--brand-600)',
+            border: '1px solid var(--brand-100)',
+            borderRadius: 'var(--radius)',
             fontSize: 15, fontWeight: 600, cursor: 'pointer',
             minHeight: 50,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-snug)',
           }}
         >
           <span style={{fontSize:16}}>🚀</span>
@@ -141,8 +153,8 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
 
         {/* Small note - sync is optional */}
         <p style={{
-          fontSize: 11, color: '#9a9a94', textAlign: 'center',
-          marginTop: 8, lineHeight: 1.4,
+          fontSize: 11, color: 'var(--text-3)', textAlign: 'center',
+          marginTop: 'var(--space-snug)', lineHeight: 1.4,
         }}>
           {t('login.guest_note')}
         </p>

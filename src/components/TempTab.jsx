@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, genId, getTempClass, getTempLabel, displayMethod, parseNum } from '../utils/helpers'
 import Modal from './Modal'
@@ -17,6 +17,27 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
   const [modal, setModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
+
+  // v2.10.4: Auto-open modal jeśli FAB ustawił flagę przed nawigacją.
+  // Flow: user klika FAB → 🌡️ Temperatura → App.jsx ustawia
+  // 'babylog_temp_open_add' = '1' → navigate('health') → HealthTab
+  // montuje TempTab → tu czytamy flagę i wywołujemy openAdd().
+  // Flagę kasujemy żeby nie otwierało się przy każdym remount.
+  useEffect(() => {
+    try {
+      const flag = localStorage.getItem('babylog_temp_open_add')
+      if (flag === '1') {
+        localStorage.removeItem('babylog_temp_open_add')
+        // Mały delay żeby HealthTab dokończył mount segment switching
+        setTimeout(() => {
+          setEditingId(null)
+          setForm({ temp:'37.0', time:nowTime(), date:todayDate(), method:'Odbytniczo', note:'' })
+          setModal(true)
+        }, 50)
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const openAdd = () => {
     setEditingId(null)

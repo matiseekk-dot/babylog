@@ -78,17 +78,18 @@ export default function MedicalConsentScreen({ onAccept }) {
   return (
     <div className="app" style={{ overflow:'auto' }}>
       <div style={{
-        maxWidth: 480, margin: '0 auto', padding: '32px 20px 24px',
+        maxWidth: 480, margin: '0 auto',
+        padding: 'var(--space-spacious) var(--space-comfortable) var(--space-comfortable)',
         minHeight: '100dvh', display: 'flex', flexDirection: 'column',
-        paddingTop: 'max(32px, env(safe-area-inset-top))',
-        paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+        paddingTop: 'max(var(--space-spacious), env(safe-area-inset-top))',
+        paddingBottom: 'max(var(--space-comfortable), env(safe-area-inset-bottom))',
       }}>
         {/* Icon */}
         <div style={{
-          width: 72, height: 72, borderRadius: 20,
-          background: 'linear-gradient(135deg, #0F6E56 0%, #1D9E75 100%)',
+          width: 72, height: 72, borderRadius: 'var(--space-comfortable)',
+          background: 'linear-gradient(135deg, var(--brand-600) 0%, var(--brand-500) 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 36, margin: '0 auto 20px',
+          fontSize: 36, margin: '0 auto var(--space-comfortable)',
           boxShadow: '0 4px 14px rgba(15, 110, 86, 0.25)',
         }}>
           🍼
@@ -97,7 +98,7 @@ export default function MedicalConsentScreen({ onAccept }) {
         {/* Title */}
         <h1 style={{
           fontSize: 24, fontWeight: 800, color: 'var(--text)',
-          textAlign: 'center', margin: '0 0 8px',
+          textAlign: 'center', margin: '0 0 var(--space-snug)',
           letterSpacing: '-0.02em',
         }}>
           {t('consent.title')}
@@ -105,14 +106,18 @@ export default function MedicalConsentScreen({ onAccept }) {
 
         <p style={{
           fontSize: 15, color: 'var(--text-2)',
-          textAlign: 'center', margin: '0 0 24px',
+          textAlign: 'center', margin: '0 0 var(--space-comfortable)',
           lineHeight: 1.5,
         }}>
           {t('consent.intro')}
         </p>
 
         {/* Bullet points */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+        <div style={{
+          display: 'flex', flexDirection: 'column',
+          gap: 'var(--space-snug)',
+          marginBottom: 'var(--space-comfortable)',
+        }}>
           <ConsentPoint icon="📋" text={t('consent.p1')} />
           <ConsentPoint icon="🩺" text={t('consent.p2')} />
           <ConsentPoint icon="👨‍⚕️" text={t('consent.p3')} />
@@ -121,36 +126,36 @@ export default function MedicalConsentScreen({ onAccept }) {
 
         {/* Emergency callout — wyróżniony wizualnie */}
         <div style={{
-          background: '#FEE7DF',
-          border: '1.5px solid #E05D44',
-          borderRadius: 12,
-          padding: '14px 16px',
-          marginBottom: 20,
+          background: 'var(--alert-50)',
+          border: '1.5px solid var(--alert-500)',
+          borderRadius: 'var(--radius)',
+          padding: 'var(--space) var(--space)',
+          marginBottom: 'var(--space-comfortable)',
           boxShadow: '0 1px 3px rgba(224, 93, 68, 0.12)',
         }}>
           <div style={{
             fontSize: 13, fontWeight: 800,
-            color: '#7A1F0C', marginBottom: 6,
+            color: 'var(--alert-700)', marginBottom: 'var(--space-tight)',
             textTransform: 'uppercase', letterSpacing: '0.02em',
           }}>
             🚨 {t('consent.emergency_title')}
           </div>
-          <div style={{ fontSize: 14, color: '#5A1808', lineHeight: 1.5, fontWeight: 600 }}>
+          <div style={{ fontSize: 14, color: 'var(--alert-700)', lineHeight: 1.5, fontWeight: 600 }}>
             {t('consent.emergency_text')}
           </div>
         </div>
 
         {/* Spacer pushes checkbox+button to bottom on tall screens */}
-        <div style={{ flex: 1, minHeight: 12 }} />
+        <div style={{ flex: 1, minHeight: 'var(--space-snug)' }} />
 
         {/* Single checkbox */}
         <label style={{
           display: 'flex',
           alignItems: 'flex-start',
-          gap: 12,
-          marginBottom: 14,
+          gap: 'var(--space-snug)',
+          marginBottom: 'var(--space)',
           cursor: 'pointer',
-          padding: '4px 0',
+          padding: 'var(--space-tight) 0',
         }}>
           <input
             type="checkbox"
@@ -162,7 +167,7 @@ export default function MedicalConsentScreen({ onAccept }) {
               marginTop: 1,
               flexShrink: 0,
               cursor: 'pointer',
-              accentColor: '#1D9E75',
+              accentColor: 'var(--brand-500)',
             }}
           />
           <span style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>
@@ -177,12 +182,12 @@ export default function MedicalConsentScreen({ onAccept }) {
           disabled={!checked}
           style={{
             background: checked
-              ? 'linear-gradient(135deg, #0F6E56 0%, #1D9E75 100%)'
-              : '#c0c0bc',
-            color: '#fff',
+              ? 'linear-gradient(135deg, var(--brand-600) 0%, var(--brand-500) 100%)'
+              : 'var(--text-3)',
+            color: 'var(--surface)',
             border: 'none',
-            borderRadius: 14,
-            padding: '16px 20px',
+            borderRadius: 'var(--radius-comfortable)',
+            padding: 'var(--space) var(--space)',
             fontSize: 16,
             fontWeight: 700,
             cursor: checked ? 'pointer' : 'not-allowed',
@@ -200,7 +205,7 @@ export default function MedicalConsentScreen({ onAccept }) {
 
 function ConsentPoint({ icon, text }) {
   return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', gap: 'var(--space-snug)', alignItems: 'flex-start' }}>
       <div style={{
         fontSize: 18, lineHeight: 1,
         flexShrink: 0, marginTop: 2,

@@ -174,11 +174,11 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
           <button
             onClick={onUpgrade}
             style={{
-              width:'100%',padding:'10px 14px',
-              background:'linear-gradient(135deg,#0F6E56,#1D9E75)',
-              color:'#fff',border:'none',borderRadius:10,
+              width:'100%',padding:'var(--space-snug) var(--space)',
+              background:'linear-gradient(135deg, var(--brand-600), var(--brand-500))',
+              color:'var(--surface)',border:'none',borderRadius:'var(--radius-tight)',
               fontSize:13,fontWeight:700,cursor:'pointer',
-              display:'flex',alignItems:'center',justifyContent:'center',gap:6,
+              display:'flex',alignItems:'center',justifyContent:'center',gap:'var(--space-tight)',
             }}
           >
             {t('status.upgrade_cta')}

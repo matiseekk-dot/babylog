@@ -73,48 +73,48 @@ export default function OnboardingScreen({ onComplete }) {
   return (
     <div style={{
       display:'flex', flexDirection:'column', height:'100%',
-      background:'#fff', userSelect:'none',
+      background:'var(--surface)', userSelect:'none',
     }}>
       {/* Header */}
       <div style={{
         flex:'0 0 auto',
-        background: 'linear-gradient(160deg,#0F6E56,#1D9E75)',
-        padding:'40px 28px 28px',
+        background: 'linear-gradient(160deg, var(--brand-600), var(--brand-500))',
+        padding:'var(--space-spacious) var(--space-comfortable) var(--space-comfortable)',
         textAlign:'center',
-        paddingTop: 'max(40px, calc(env(safe-area-inset-top) + 24px))',
+        paddingTop: 'max(var(--space-spacious), calc(env(safe-area-inset-top) + var(--space-comfortable)))',
       }}>
-        <div style={{fontSize:44,marginBottom:8}}>{avatar}</div>
-        <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:-0.5,lineHeight:1.2}}>
+        <div style={{fontSize:44,marginBottom:'var(--space-snug)'}}>{avatar}</div>
+        <div style={{fontSize:22,fontWeight:800,color:'var(--surface)',letterSpacing:-0.5,lineHeight:1.2}}>
           {t('onb.setup.title')}
         </div>
-        <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',marginTop:8,lineHeight:1.4}}>
+        <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',marginTop:'var(--space-snug)',lineHeight:1.4}}>
           {t('onb.setup.subtitle')}
         </div>
       </div>
 
       {/* Content */}
       <div style={{
-        flex:1, padding:'24px 28px 0',
+        flex:1, padding:'var(--space-comfortable) var(--space-comfortable) 0',
         display:'flex', flexDirection:'column',
         overflowY:'auto',
       }}>
-        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:'var(--space)' }}>
           {/* Avatar */}
           <div>
-            <div style={{fontSize:13,color:'var(--text-2)',fontWeight:500,marginBottom:8}}>
+            <div style={{fontSize:13,color:'var(--text-2)',fontWeight:500,marginBottom:'var(--space-snug)'}}>
               {t('onb.setup.avatar')}
             </div>
-            <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-snug)'}}>
               {AVATARS.map(a => (
                 <button
                   key={a}
                   type="button"
                   onClick={() => setAvatar(a)}
                   style={{
-                    width:48, height:48, fontSize:24, borderRadius:'50%',
+                    width:48, height:48, fontSize:24, borderRadius:'var(--radius-round)',
                     cursor:'pointer',
-                    border: `2px solid ${avatar === a ? '#1D9E75' : 'transparent'}`,
-                    background: avatar === a ? '#E1F5EE' : '#f7f7f5',
+                    border: `2px solid ${avatar === a ? 'var(--brand-500)' : 'transparent'}`,
+                    background: avatar === a ? 'var(--brand-50)' : 'var(--bg)',
                   }}
                 >{a}</button>
               ))}
@@ -146,11 +146,11 @@ export default function OnboardingScreen({ onComplete }) {
               max={todayStr}
               style={{
                 fontSize:16,
-                borderColor: (dob.length > 0 && !dobValid) ? '#E05D44' : undefined,
+                borderColor: (dob.length > 0 && !dobValid) ? 'var(--alert-500)' : undefined,
               }}
             />
             {dob.length > 0 && !dobValid && (
-              <div style={{fontSize:12, color:'#E05D44', marginTop:6, fontWeight:500}}>
+              <div style={{fontSize:12, color:'var(--alert-500)', marginTop:'var(--space-tight)', fontWeight:500}}>
                 ⚠️ {t('onb.setup.dob_error')}
               </div>
             )}
@@ -159,19 +159,19 @@ export default function OnboardingScreen({ onComplete }) {
           {/* Sex */}
           <div className="form-group">
             <label className="form-label">{t('onb.sex_label')}</label>
-            <div style={{display:'flex',gap:8,marginTop:4}}>
+            <div style={{display:'flex',gap:'var(--space-snug)',marginTop:'var(--space-tight)'}}>
               <button
                 type="button"
                 onClick={() => setSex('M')}
                 style={{
-                  flex:1, padding:'12px', minHeight:48,
-                  borderRadius:12,
-                  border: sex === 'M' ? '2px solid #185FA5' : '0.5px solid var(--border)',
-                  background: sex === 'M' ? '#E6F1FB' : '#fff',
+                  flex:1, padding:'var(--space-snug)', minHeight:48,
+                  borderRadius:'var(--radius)',
+                  border: sex === 'M' ? '2px solid var(--info-500)' : '0.5px solid var(--border)',
+                  background: sex === 'M' ? 'var(--info-50)' : 'var(--surface)',
                   fontSize:14, fontWeight:700,
-                  color: sex === 'M' ? '#0C447C' : 'var(--text-2)',
+                  color: sex === 'M' ? 'var(--info-700)' : 'var(--text-2)',
                   cursor:'pointer',
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:'var(--space-tight)',
                 }}
               >
                 {t('onb.sex_boy')}
@@ -180,29 +180,29 @@ export default function OnboardingScreen({ onComplete }) {
                 type="button"
                 onClick={() => setSex('F')}
                 style={{
-                  flex:1, padding:'12px', minHeight:48,
-                  borderRadius:12,
-                  border: sex === 'F' ? '2px solid #C95A48' : '0.5px solid var(--border)',
-                  background: sex === 'F' ? '#FEE7DF' : '#fff',
+                  flex:1, padding:'var(--space-snug)', minHeight:48,
+                  borderRadius:'var(--radius)',
+                  border: sex === 'F' ? '2px solid var(--alert-100)' : '0.5px solid var(--border)',
+                  background: sex === 'F' ? 'var(--alert-50)' : 'var(--surface)',
                   fontSize:14, fontWeight:700,
-                  color: sex === 'F' ? '#7A1F0C' : 'var(--text-2)',
+                  color: sex === 'F' ? 'var(--alert-700)' : 'var(--text-2)',
                   cursor:'pointer',
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:'var(--space-tight)',
                 }}
               >
                 {t('onb.sex_girl')}
               </button>
             </div>
-            <div style={{fontSize:11,color:'var(--text-3)',marginTop:4}}>
+            <div style={{fontSize:11,color:'var(--text-3)',marginTop:'var(--space-tight)'}}>
               {t('onb.sex_hint')}
             </div>
           </div>
 
           <div style={{
-            marginTop:8,
-            padding:'10px 14px',
-            background:'#F7F7F5',
-            borderRadius:10,
+            marginTop:'var(--space-snug)',
+            padding:'var(--space-snug) var(--space)',
+            background:'var(--bg)',
+            borderRadius:'var(--radius-tight)',
             fontSize:11,
             color:'var(--text-3)',
             lineHeight:1.5,
@@ -214,10 +214,10 @@ export default function OnboardingScreen({ onComplete }) {
 
       {/* Bottom */}
       <div style={{
-        padding:'16px 28px',
-        paddingBottom:'max(20px, env(safe-area-inset-bottom))',
-        display:'flex', flexDirection:'column', gap:10,
-        background: '#fff',
+        padding:'var(--space) var(--space-comfortable)',
+        paddingBottom:'max(var(--space-comfortable), env(safe-area-inset-bottom))',
+        display:'flex', flexDirection:'column', gap:'var(--space-snug)',
+        background: 'var(--surface)',
         borderTop: '0.5px solid rgba(0,0,0,0.06)',
       }}>
         <button
@@ -225,11 +225,11 @@ export default function OnboardingScreen({ onComplete }) {
           onClick={finish}
           disabled={!canSubmit}
           style={{
-            width:'100%', padding:'16px', minHeight:54,
+            width:'100%', padding:'var(--space)', minHeight:54,
             background: canSubmit
-              ? 'linear-gradient(135deg,#0F6E56,#1D9E75)'
-              : '#c0c0bc',
-            color:'#fff', border:'none', borderRadius:14,
+              ? 'linear-gradient(135deg, var(--brand-600), var(--brand-500))'
+              : 'var(--text-3)',
+            color:'var(--surface)', border:'none', borderRadius:'var(--radius-comfortable)',
             fontSize:16, fontWeight:800,
             cursor: canSubmit ? 'pointer' : 'not-allowed',
             letterSpacing:-0.2,
@@ -238,7 +238,7 @@ export default function OnboardingScreen({ onComplete }) {
         >
           {`${t('onb.setup.cta')}, ${name.trim() || '👶'}! 🍼`}
         </button>
-        <p style={{fontSize:11,color:'#9a9a94',textAlign:'center',margin:'4px 0 0',lineHeight:1.5}}>
+        <p style={{fontSize:11,color:'var(--text-3)',textAlign:'center',margin:'var(--space-tight) 0 0',lineHeight:1.5}}>
           {t('app.tagline')}
         </p>
       </div>

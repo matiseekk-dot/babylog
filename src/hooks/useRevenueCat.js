@@ -29,6 +29,26 @@ const RC_API = 'https://api.revenuecat.com/v1'
 const RC_KEY = import.meta.env.VITE_RC_PUBLIC_KEY || ''
 const ENTITLEMENT = import.meta.env.VITE_RC_ENTITLEMENT || 'Spokojny Rodzic Pro'
 
+// v2.10.3: Whitelist znanych product identifiers które są LIFETIME (one-time
+// purchase, nigdy nie wygasają). RC zwraca entitlement bez `expires_date`
+// dla:
+//   (a) prawdziwych lifetime products (np. "Pro Lifetime")
+//   (b) granted promotional bez expiration
+//   (c) niespodziewanych przypadków (bug w API, zmiana struktury)
+//
+// Wcześniej (v2.9.x) traktowaliśmy każde brak `expires_date` jako lifetime →
+// można było dostać "permanent Premium" przez granted promotional bez daty.
+// Teraz: tylko jeśli product_identifier jest na whiteliście, traktujemy jako
+// lifetime. Inaczej → fallback do "wygasłe / nie-Premium".
+//
+// ZAKTUALIZOWAĆ TO gdy w RC dashboard pojawi się prawdziwy lifetime product.
+// Aktualnie apka nie sprzedaje lifetime — tylko monthly/yearly subskrypcje.
+const LIFETIME_PRODUCT_IDS = [
+  // Pusta lista — apka nie ma jeszcze lifetime product.
+  // Gdyby kiedyś dodać "spokojny_rodzic_lifetime_499pln" albo podobny
+  // w Google Play Console, dorzucić tutaj.
+]
+
 // ─── REST API helpers ─────────────────────────────────────────────────────────
 
 async function rcFetch(path, options = {}) {
@@ -59,7 +79,16 @@ async function getOrCreateCustomer(uid) {
 }
 
 /**
- * Sprawdza czy użytkownik ma aktywne uprawnienie premium
+ * Sprawdza czy użytkownik ma aktywne uprawnienie premium.
+ *
+ * v2.10.3: defensywne sprawdzenie. Wcześniej brak `expires_date` był
+ * automatycznie traktowany jako lifetime — co było zbyt permisywne.
+ * Teraz:
+ *   - Jeśli `expires_date` jest → sprawdź czy w przyszłości
+ *   - Jeśli `expires_date` brak → musi być product na LIFETIME_PRODUCT_IDS
+ *     whiteliście, inaczej → false (defensywnie)
+ *   - Granted promotional bez expiration → też false (server webhook
+ *     zarządza Premium, nie polegamy na takich edge-case'ach)
  */
 async function checkEntitlement(uid) {
   try {
@@ -68,9 +97,26 @@ async function checkEntitlement(uid) {
     const entitlements = data?.subscriber?.entitlements || {}
     const premium = entitlements[ENTITLEMENT]
     if (!premium) return false
+
     const expiresAt = premium.expires_date
-    if (!expiresAt) return true // lifetime
-    return new Date(expiresAt) > new Date()
+    const productId = premium.product_identifier
+
+    if (expiresAt) {
+      // Standardowa subskrypcja — expires_date musi być w przyszłości
+      return new Date(expiresAt) > new Date()
+    }
+
+    // Brak expires_date — tylko jeśli product to autentyczny lifetime
+    if (productId && LIFETIME_PRODUCT_IDS.includes(productId)) {
+      addBreadcrumb('rc', 'lifetime-entitlement-confirmed', { productId })
+      return true
+    }
+
+    // Brak expires_date + product nie na whiteliście = nie traktujemy jako Premium.
+    // To może być granted promotional bez expiration albo niespodziewana
+    // struktura — bezpiecznie fail-closed.
+    console.warn('[RC] Entitlement bez expires_date i bez whitelisted product:', productId)
+    return false
   } catch {
     return false
   }

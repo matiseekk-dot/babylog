@@ -425,13 +425,18 @@ export default function App() {
   const { crisis, dismiss: dismissCrisis } = useCrisisDetection(tempLogsForCrisis, active.months)
 
   // Dla free — pusty zestaw alertów i uproszczony status
-  // Check if user has any data today
+  // Check if user has any data today.
+  // v2.10.3: bug fix — wcześniej hardcoded prefix 'babylog_' nie znajdował
+  // wpisów guest usera (które mają prefix 'babylog_guest_'). Skutek: nawet
+  // po dodaniu wpisu, status pokazywał EMPTY_STATUS ("Zacznij od pierwszego
+  // wpisu") dla guestów. Fix: użyj prawidłowego prefixu zależnie od uid.
   const hasDataToday = (() => {
     const today = todayDate()
+    const prefix = uid ? 'babylog_' : 'babylog_guest_'
     const keys = ['feed_','sleep_','diaper_','temp_']
     try {
       return keys.some(k => {
-        const v = localStorage.getItem('babylog_' + k + active.id)
+        const v = localStorage.getItem(prefix + k + active.id)
         if (!v) return false
         const arr = JSON.parse(v)
         return Array.isArray(arr) && arr.some(i => i.date === today)
@@ -574,8 +579,20 @@ export default function App() {
   }
 
   const quickAddTemp = () => {
-    // Temperatura wymaga pomiaru — nie da się "quick log" jak feed/diaper.
-    // Otwieramy Health tab (segment temp) — user kliknie "+ Add" tam.
+    // v2.10.4: Bug fix — wcześniej tylko nawigowaliśmy na Health, ale jeśli
+    // user był na innym segmencie (np. meds), trafiał na nieswoją zakładkę,
+    // i jeszcze musiał sam kliknąć "+ Dodaj pomiar". Ten quick action był
+    // bezsensowny — szybciej było iść ręcznie.
+    //
+    // Fix: ustawiamy w localStorage dwie flagi:
+    //   1. babylog_health_segment = 'temp' — wymuś segment Health=Temp
+    //   2. babylog_temp_open_add = '1' — TempTab przy mount otworzy modal
+    // Następnie navigate('health') → HealthTab montuje TempTab → useEffect
+    // tam czyta flagi i otwiera modal automatycznie.
+    try {
+      localStorage.setItem('babylog_health_segment', 'temp')
+      localStorage.setItem('babylog_temp_open_add', '1')
+    } catch {}
     navigate('health')
   }
 

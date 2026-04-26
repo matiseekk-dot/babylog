@@ -76,44 +76,45 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
       display:'flex',
       flexDirection:'column',
       minHeight:'100vh',
-      background:'#fff',
+      background:'var(--surface)',
       paddingBottom:110, // miejsce na sticky footer z buttonem
     }}>
       {/* X close — sticky w prawym górnym rogu */}
       <button aria-label="Zamknij" onClick={onClose} style={{
-        position:'fixed',top:16,right:16,background:'rgba(0,0,0,0.25)',
-        border:'none',borderRadius:'50%',width:36,height:36,fontSize:16,
+        position:'fixed',top:'var(--space)',right:'var(--space)',background:'rgba(0,0,0,0.25)',
+        border:'none',borderRadius:'var(--radius-round)',width:36,height:36,fontSize:16,
         cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
-        color:'#fff',zIndex:10,
+        color:'var(--surface)',zIndex:10,
       }}>✕</button>
 
       {/* HEADER */}
       <div style={{
-        background:'linear-gradient(160deg,#0F6E56 0%,#1D9E75 60%,#5DCAA5 100%)',
-        padding:'48px 24px 28px',textAlign:'center',
+        background:'linear-gradient(160deg, var(--brand-600) 0%, var(--brand-500) 60%, #5DCAA5 100%)',
+        padding:'var(--space-spacious) var(--space-comfortable) var(--space-comfortable)',
+        textAlign:'center',
       }}>
-        <div style={{fontSize:44,marginBottom:10}}>🍼</div>
-        <div style={{fontSize:22,fontWeight:800,color:'#fff',letterSpacing:-0.5,lineHeight:1.2}}>
+        <div style={{fontSize:44,marginBottom:'var(--space-snug)'}}>🍼</div>
+        <div style={{fontSize:22,fontWeight:800,color:'var(--surface)',letterSpacing:-0.5,lineHeight:1.2}}>
           {t('paywall.title')}
         </div>
-        <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',marginTop:8,lineHeight:1.5}}>
+        <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',marginTop:'var(--space-snug)',lineHeight:1.5}}>
           {t('paywall.subtitle')}
         </div>
       </div>
 
       {/* FREE banner */}
       <div style={{
-        margin:'14px 20px 0',
-        padding:'10px 14px',
-        background:'#E1F5EE',
-        border:'0.5px solid #9FE1CB',
-        borderRadius:10,
+        margin:'var(--space) var(--space) 0',
+        padding:'var(--space-snug) var(--space)',
+        background:'var(--brand-50)',
+        border:'0.5px solid var(--brand-100)',
+        borderRadius:'var(--radius-tight)',
         fontSize:12,
-        color:'#085041',
+        color:'var(--brand-700)',
         lineHeight:1.5,
         display:'flex',
         alignItems:'flex-start',
-        gap:8,
+        gap:'var(--space-snug)',
       }}>
         <span style={{fontSize:16,flexShrink:0,marginTop:-2}}>✅</span>
         <span>{freeBanner}</span>
@@ -121,32 +122,37 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
 
       {/* CO DOSTAJESZ W PREMIUM — nagłówek */}
       <div style={{
-        padding:'18px 20px 6px',
-        fontSize:11, fontWeight:700, color:'#5a5a56',
+        padding:'var(--space) var(--space) var(--space-tight)',
+        fontSize:11, fontWeight:700, color:'var(--text-2)',
         textTransform:'uppercase', letterSpacing:0.5,
       }}>
         {t('paywall.premium_header')}
       </div>
 
       {/* FEATURES */}
-      <div style={{padding:'0 20px'}}>
+      <div style={{padding:'0 var(--space)'}}>
         {FEATURES.map((f,i) => (
           <div key={i} style={{
-            display:'flex',alignItems:'flex-start',gap:12,padding:'12px 0',
+            display:'flex',alignItems:'flex-start',gap:'var(--space-snug)',padding:'var(--space-snug) 0',
             borderBottom:i<FEATURES.length-1?'0.5px solid rgba(0,0,0,0.06)':'none',
           }}>
-            <div style={{width:40,height:40,borderRadius:10,background:'#E1F5EE',
-              display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>
+            <div style={{
+              width:40,height:40,borderRadius:'var(--radius-tight)',background:'var(--brand-50)',
+              display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0,
+            }}>
               {f.icon}
             </div>
             <div style={{flex:1}}>
-              <div style={{fontSize:14,fontWeight:700,color:'#1a1a18',marginBottom:3,display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+              <div style={{
+                fontSize:14,fontWeight:700,color:'var(--text)',marginBottom:3,
+                display:'flex',alignItems:'center',gap:'var(--space-tight)',flexWrap:'wrap',
+              }}>
                 {f.title}
                 {f.comingSoon && (
                   <span style={{
                     fontSize:9,fontWeight:700,
-                    background:'#FAEEDA',color:'#8A5A12',
-                    borderRadius:20,padding:'1px 7px',
+                    background:'var(--warning-50)',color:'var(--warning-700)',
+                    borderRadius:'var(--radius-round)',padding:'1px 7px',
                     textTransform:'uppercase',letterSpacing:0.3,
                     whiteSpace:'nowrap',
                   }}>
@@ -154,9 +160,12 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
                   </span>
                 )}
               </div>
-              <div style={{fontSize:12,color:'#5a5a56',lineHeight:1.45}}>{f.desc}</div>
+              <div style={{fontSize:12,color:'var(--text-2)',lineHeight:1.45}}>{f.desc}</div>
             </div>
-            <div style={{color:f.comingSoon?'#c0c0b8':'#1D9E75',fontSize:16,marginTop:10,flexShrink:0,fontWeight:700}}>
+            <div style={{
+              color:f.comingSoon?'var(--text-3)':'var(--brand-500)',
+              fontSize:16,marginTop:'var(--space-snug)',flexShrink:0,fontWeight:700,
+            }}>
               {f.comingSoon ? '⏳' : '✓'}
             </div>
           </div>
@@ -164,37 +173,40 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
       </div>
 
       {/* PLANS */}
-      <div style={{padding:'22px 20px 8px',display:'flex',flexDirection:'column',gap:10}}>
+      <div style={{
+        padding:'var(--space-comfortable) var(--space) var(--space-snug)',
+        display:'flex',flexDirection:'column',gap:'var(--space-snug)',
+      }}>
         <div style={{
-          fontSize:11, fontWeight:700, color:'#5a5a56',
-          textTransform:'uppercase', letterSpacing:0.5, marginBottom:2,
+          fontSize:11, fontWeight:700, color:'var(--text-2)',
+          textTransform:'uppercase', letterSpacing:0.5, marginBottom:'var(--space-tight)',
         }}>
           {t('paywall.choose_plan')}
         </div>
         {PLANS.map(plan => (
           <div key={plan.id} onClick={() => setSelected(plan.id)} style={{
-            padding:'14px',cursor:'pointer',borderRadius:12,position:'relative',
-            border:selected===plan.id?'2px solid #1D9E75':'0.5px solid rgba(0,0,0,0.12)',
-            background:selected===plan.id?'#F4FCF9':'#fff',
-            display:'flex',alignItems:'center',gap:10,
+            padding:'var(--space)',cursor:'pointer',borderRadius:'var(--radius)',position:'relative',
+            border:selected===plan.id?'2px solid var(--brand-500)':'0.5px solid rgba(0,0,0,0.12)',
+            background:selected===plan.id?'var(--brand-50)':'var(--surface)',
+            display:'flex',alignItems:'center',gap:'var(--space-snug)',
           }}>
             <div style={{
-              width:20,height:20,borderRadius:'50%',flexShrink:0,background:'#fff',
-              border:selected===plan.id?'6px solid #1D9E75':'1.5px solid #ccc',
+              width:20,height:20,borderRadius:'var(--radius-round)',flexShrink:0,background:'var(--surface)',
+              border:selected===plan.id?'6px solid var(--brand-500)':'1.5px solid var(--border-med)',
             }}/>
             <div style={{flex:1}}>
-              <div style={{fontSize:15,fontWeight:700,color:'#1a1a18'}}>{plan.label}</div>
-              {plan.badge && <div style={{fontSize:11,color:'#0F6E56',fontWeight:600,marginTop:2}}>{plan.badge}</div>}
+              <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>{plan.label}</div>
+              {plan.badge && <div style={{fontSize:11,color:'var(--brand-600)',fontWeight:600,marginTop:'var(--space-tight)'}}>{plan.badge}</div>}
             </div>
             <div style={{textAlign:'right'}}>
-              <div style={{fontSize:17,fontWeight:800,color:'#1a1a18'}}>{plan.price}</div>
-              <div style={{fontSize:11,color:'#9a9a94'}}>{plan.period}</div>
+              <div style={{fontSize:17,fontWeight:800,color:'var(--text)'}}>{plan.price}</div>
+              <div style={{fontSize:11,color:'var(--text-3)'}}>{plan.period}</div>
             </div>
             {plan.popular && (
               <div style={{
-                position:'absolute',top:-10,right:14,
-                background:'#1D9E75',color:'#fff',
-                fontSize:10,fontWeight:700,borderRadius:20,padding:'2px 10px',
+                position:'absolute',top:-10,right:'var(--space)',
+                background:'var(--brand-500)',color:'var(--surface)',
+                fontSize:10,fontWeight:700,borderRadius:'var(--radius-round)',padding:'2px 10px',
               }}>{t('paywall.badge.popular')}</div>
             )}
           </div>
@@ -213,21 +225,22 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
       <div style={{
         position:'fixed',
         bottom:0, left:0, right:0,
-        padding:'14px 20px',
-        paddingBottom:'max(14px, env(safe-area-inset-bottom))',
-        background:'#fff',
-        borderTop:'0.5px solid rgba(0,0,0,0.08)',
+        padding:'var(--space) var(--space)',
+        paddingBottom:'max(var(--space), env(safe-area-inset-bottom))',
+        background:'var(--surface)',
+        borderTop:'0.5px solid var(--border)',
         boxShadow:'0 -2px 10px rgba(0,0,0,0.04)',
       }}>
         <button onClick={() => onActivate(selected)} disabled={checking} style={{
-          width:'100%',padding:'15px',minHeight:54,letterSpacing:-0.2,
-          background:checking?'#9a9a94':'linear-gradient(135deg,#0F6E56,#1D9E75)',
-          color:'#fff',border:'none',borderRadius:14,fontSize:17,fontWeight:800,
+          width:'100%',padding:'var(--space)',minHeight:54,letterSpacing:-0.2,
+          background:checking?'var(--text-3)':'linear-gradient(135deg, var(--brand-600), var(--brand-500))',
+          color:'var(--surface)',border:'none',borderRadius:'var(--radius-comfortable)',
+          fontSize:17,fontWeight:800,
           cursor:checking?'default':'pointer',
         }}>
           {ctaLabel}
         </button>
-        <div style={{textAlign:'center',fontSize:11,color:'#9a9a94',marginTop:8,lineHeight:1.4}}>
+        <div style={{textAlign:'center',fontSize:11,color:'var(--text-3)',marginTop:'var(--space-snug)',lineHeight:1.4}}>
           {t('paywall.footer')}
         </div>
       </div>
