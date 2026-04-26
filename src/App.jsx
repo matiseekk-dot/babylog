@@ -738,9 +738,9 @@ export default function App() {
             <button
               onClick={() => setShowSettings(true)}
               style={{
-                background: 'linear-gradient(135deg,#0F6E56,#1D9E75)',
-                color: '#fff', borderRadius: 20, border: 'none',
-                padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                background: 'linear-gradient(135deg, var(--brand-600), var(--brand-500))',
+                color: 'var(--surface)', borderRadius: 'var(--radius-round)', border: 'none',
+                padding: 'var(--space-tight) var(--space-snug)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
               }}
               aria-label={t('topbar.premium')}
             >
@@ -752,8 +752,8 @@ export default function App() {
               onClick={openPaywall}
               style={{
                 background: 'linear-gradient(135deg,#F59E0B,#FB923C)',
-                color: '#fff', borderRadius: 20, border: 'none',
-                padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                color: 'var(--surface)', borderRadius: 'var(--radius-round)', border: 'none',
+                padding: 'var(--space-tight) var(--space-snug)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
               }}
               aria-label={t('topbar.trial_cta')}
             >
@@ -764,9 +764,9 @@ export default function App() {
             <button
               onClick={openPaywall}
               style={{
-                background: '#E1F5EE', color: '#0F6E56',
-                border: '0.5px solid #9FE1CB', borderRadius: 20,
-                padding: '4px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                background: 'var(--brand-50)', color: 'var(--brand-600)',
+                border: '0.5px solid var(--brand-100)', borderRadius: 'var(--radius-round)',
+                padding: 'var(--space-tight) var(--space-snug)', fontSize: 11, fontWeight: 700, cursor: 'pointer',
               }}
               aria-label={t('paywall.cta')}
             >

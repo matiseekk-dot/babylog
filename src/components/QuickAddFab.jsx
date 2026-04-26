@@ -144,12 +144,12 @@ export default function QuickAddFab({
         onContextMenu={(e) => e.preventDefault()}
         style={{
           position: 'fixed',
-          right: 16,
+          right: 'var(--space)',
           bottom: bottomOffset,
           width: 56, height: 56,
-          borderRadius: '50%',
-          background: 'linear-gradient(135deg, #0F6E56 0%, #1D9E75 100%)',
-          color: '#fff',
+          borderRadius: 'var(--radius-round)',
+          background: 'linear-gradient(135deg, var(--brand-600) 0%, var(--brand-500) 100%)',
+          color: 'var(--surface)',
           border: 'none',
           fontSize: 28, fontWeight: 300,
           cursor: 'pointer',
@@ -157,11 +157,7 @@ export default function QuickAddFab({
           // v2.9.4: z-index 110 — wyżej niż bottom-nav (90) i niż backdrop (100)
           zIndex: 110,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          // Disable highlight on tap
           WebkitTapHighlightColor: 'transparent',
-          // v2.9.4: 'manipulation' zamiast 'none' — pozwala emisji click event
-          // na Android Webview / Samsung Internet, blokując tylko double-tap
-          // zoom (które i tak nie jest pożądane na FAB).
           touchAction: 'manipulation',
           userSelect: 'none',
           transition: 'transform 0.1s ease',
@@ -190,10 +186,10 @@ export default function QuickAddFab({
             style={{
               position: 'fixed',
               left: 0, right: 0, bottom: 0,
-              background: '#fff',
-              borderTopLeftRadius: 20, borderTopRightRadius: 20,
+              background: 'var(--surface)',
+              borderTopLeftRadius: 'var(--space-comfortable)', borderTopRightRadius: 'var(--space-comfortable)',
               zIndex: 101,
-              padding: '14px 16px max(20px, env(safe-area-inset-bottom)) 16px',
+              padding: 'var(--space) var(--space) max(var(--space-comfortable), env(safe-area-inset-bottom)) var(--space)',
               boxShadow: '0 -8px 24px rgba(0,0,0,0.14)',
               animation: 'qaf-slide-up 0.22s ease-out',
               maxHeight: '85vh', overflowY: 'auto',
@@ -201,19 +197,19 @@ export default function QuickAddFab({
           >
             {/* Drag handle */}
             <div style={{
-              width: 36, height: 4, borderRadius: 2,
+              width: 36, height: 4, borderRadius: 'var(--space-tight)',
               background: 'rgba(0,0,0,0.16)',
-              margin: '0 auto 14px',
+              margin: '0 auto var(--space)',
             }} />
 
             <div style={{
               fontSize: 15, fontWeight: 800, color: 'var(--text)',
-              marginBottom: 6, letterSpacing: '-0.01em',
+              marginBottom: 'var(--space-tight)', letterSpacing: '-0.01em',
             }}>
               {t('fab.menu_title')}
             </div>
             <div style={{
-              fontSize: 12, color: 'var(--text-3)', marginBottom: 14, lineHeight: 1.4,
+              fontSize: 12, color: 'var(--text-3)', marginBottom: 'var(--space)', lineHeight: 1.4,
             }}>
               {t('fab.menu_hint')}
             </div>
@@ -221,17 +217,20 @@ export default function QuickAddFab({
             {/* Karmienie */}
             <SheetSection title={t('fab.section.feed')}>
               <ActionTile
-                emoji="🤱" labelKey="feed.quick.left" accent="#085041" bg="#E1F5EE"
+                emoji="🤱" labelKey="feed.quick.left"
+                accent="var(--brand-700)" bg="var(--brand-50)"
                 onClick={() => act(() => onQuickFeed?.('Pierś lewa', '15'))}
                 highlighted={suggestedFeedType === 'Pierś lewa'}
               />
               <ActionTile
-                emoji="🤱" labelKey="feed.quick.right" accent="#085041" bg="#E1F5EE"
+                emoji="🤱" labelKey="feed.quick.right"
+                accent="var(--brand-700)" bg="var(--brand-50)"
                 onClick={() => act(() => onQuickFeed?.('Pierś prawa', '15'))}
                 highlighted={suggestedFeedType === 'Pierś prawa'}
               />
               <ActionTile
-                emoji="🍼" labelKey="feed.quick.bottle" accent="#0C447C" bg="#E6F1FB"
+                emoji="🍼" labelKey="feed.quick.bottle"
+                accent="var(--info-700)" bg="var(--info-50)"
                 onClick={() => act(() => onQuickFeed?.('Butelka', '120'))}
               />
             </SheetSection>
@@ -243,7 +242,7 @@ export default function QuickAddFab({
                   key={opt.key}
                   emoji={opt.emoji}
                   labelKey={opt.labelKey}
-                  accent="#0C447C" bg="#E6F1FB"
+                  accent="var(--info-700)" bg="var(--info-50)"
                   onClick={() => act(() => onQuickDiaper?.(opt.key))}
                 />
               ))}
@@ -254,23 +253,23 @@ export default function QuickAddFab({
               <ActionTile
                 emoji={sleepInProgress ? '⏹' : '😴'}
                 labelKey={sleepInProgress ? 'fab.action.sleep_stop' : 'fab.action.sleep_start'}
-                accent="#3C3489" bg="#EEEDFE"
+                accent="var(--accent-500)" bg="var(--accent-50)"
                 onClick={() => act(() => onQuickSleepStart?.())}
               />
               <ActionTile
                 emoji="🌡️"
                 labelKey="fab.action.temp"
-                accent="#7A1F0C" bg="#FEE7DF"
+                accent="var(--alert-700)" bg="var(--alert-50)"
                 onClick={() => act(() => onQuickTemp?.())}
               />
             </SheetSection>
 
             {/* Hint o long-press */}
             <div style={{
-              marginTop: 12,
-              padding: '10px 12px',
-              background: '#F7F7F5',
-              borderRadius: 10,
+              marginTop: 'var(--space-snug)',
+              padding: 'var(--space-snug) var(--space-snug)',
+              background: 'var(--bg)',
+              borderRadius: 'var(--radius-tight)',
               fontSize: 11,
               color: 'var(--text-3)',
               lineHeight: 1.5,
@@ -285,12 +284,12 @@ export default function QuickAddFab({
               onClick={close}
               style={{
                 width: '100%',
-                padding: '12px',
-                marginTop: 10,
+                padding: 'var(--space-snug)',
+                marginTop: 'var(--space-snug)',
                 background: 'transparent',
                 color: 'var(--text-2)',
                 border: '0.5px solid var(--border)',
-                borderRadius: 10,
+                borderRadius: 'var(--radius-tight)',
                 fontSize: 14, fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -317,19 +316,20 @@ export default function QuickAddFab({
 
 function SheetSection({ title, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
+    <div style={{ marginBottom: 'var(--space)' }}>
       <div style={{
         fontSize: 11, fontWeight: 700,
         color: 'var(--text-3)',
         textTransform: 'uppercase', letterSpacing: '0.06em',
-        marginBottom: 6, paddingLeft: 2,
+        marginBottom: 'var(--space-tight)',
+        paddingLeft: 'var(--space-tight)',
       }}>
         {title}
       </div>
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: 6,
+        gap: 'var(--space-tight)',
       }}>
         {children}
       </div>
@@ -345,13 +345,13 @@ function ActionTile({ emoji, labelKey, accent, bg, onClick, highlighted }) {
       style={{
         background: bg,
         border: highlighted ? `2px solid ${accent}` : 'none',
-        borderRadius: 12,
-        padding: '12px 8px',
+        borderRadius: 'var(--radius)',
+        padding: 'var(--space-snug) var(--space-snug)',
         minHeight: 72,
         cursor: 'pointer',
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        gap: 4,
+        gap: 'var(--space-tight)',
         transition: 'transform 0.08s ease',
       }}
     >

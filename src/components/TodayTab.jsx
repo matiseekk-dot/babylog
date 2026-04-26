@@ -164,16 +164,16 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
   }, [today])
 
   return (
-    <div style={{ padding: '4px 0 80px' }}>
+    <div style={{ padding: 'var(--space-tight) 0 80px' }}>
       {/* Header dnia */}
       <div style={{
-        padding: '8px 16px 12px',
+        padding: 'var(--space-snug) var(--space) var(--space-snug)',
       }}>
         <div style={{
           fontSize: 11, fontWeight: 700,
           color: 'var(--text-3)',
           textTransform: 'uppercase', letterSpacing: '0.06em',
-          marginBottom: 2,
+          marginBottom: 'var(--space-tight)',
         }}>
           {t('today.header')}
         </div>
@@ -189,48 +189,48 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: 8,
-        padding: '0 16px 12px',
+        gap: 'var(--space-snug)',
+        padding: '0 var(--space) var(--space-snug)',
       }}>
         <StatTile
           emoji="🍼"
           value={todayFeeds.length}
           label={t('today.stat.feeds')}
           onClick={() => navigateToFeed('feed')}
-          accent="#1D9E75"
-          accentBg="#E1F5EE"
+          accent="var(--brand-500)"
+          accentBg="var(--brand-50)"
         />
         <StatTile
           emoji="😴"
           value={totalSleepMin > 0 ? `${sleepHours}h ${sleepRemainder}m` : '—'}
           label={t('today.stat.sleep')}
           onClick={() => onNavigate('sleep')}
-          accent="#5346B3"
-          accentBg="#EEEDFE"
+          accent="var(--accent-500)"
+          accentBg="var(--accent-50)"
         />
         <StatTile
           emoji="👶"
           value={todayDiapers.length}
           label={t('today.stat.diapers')}
           onClick={() => navigateToFeed('diaper')}
-          accent="#185FA5"
-          accentBg="#E6F1FB"
+          accent="var(--info-500)"
+          accentBg="var(--info-50)"
         />
         <StatTile
           emoji="🌡️"
           value={lastTemp ? `${typeof lastTemp.temp === 'number' ? lastTemp.temp.toFixed(1) : lastTemp.temp}°` : '—'}
           label={lastTemp ? t('today.stat.last_temp') : t('today.stat.no_temp')}
           onClick={() => navigateToHealth('temp')}
-          accent="#D85A30"
-          accentBg="#FEF3EE"
+          accent="var(--alert-500)"
+          accentBg="var(--alert-50)"
         />
       </div>
 
       {/* Timeline */}
-      <div style={{ padding: '0 16px' }}>
+      <div style={{ padding: '0 var(--space)' }}>
         <div style={{
           fontSize: 13, fontWeight: 700, color: 'var(--text-2)',
-          padding: '8px 4px 6px',
+          padding: 'var(--space-snug) var(--space-tight) 6px',
           letterSpacing: '-0.01em',
         }}>
           {t('today.timeline.header')} {totalEvents > 0 && `· ${totalEvents}`}
@@ -238,15 +238,15 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
 
         {totalEvents === 0 ? (
           <div style={{
-            padding: '32px 20px',
+            padding: 'var(--space-spacious) var(--space-comfortable)',
             textAlign: 'center',
-            background: '#F7F7F5',
-            borderRadius: 14,
+            background: 'var(--bg)',
+            borderRadius: 'var(--radius-comfortable)',
             color: 'var(--text-3)',
             fontSize: 14, lineHeight: 1.5,
           }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>📭</div>
-            <div style={{ marginBottom: 4, fontWeight: 600, color: 'var(--text-2)' }}>
+            <div style={{ fontSize: 32, marginBottom: 'var(--space-snug)' }}>📭</div>
+            <div style={{ marginBottom: 'var(--space-tight)', fontWeight: 600, color: 'var(--text-2)' }}>
               {t('today.timeline.empty_title')}
             </div>
             <div style={{ fontSize: 13 }}>
@@ -255,9 +255,9 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
           </div>
         ) : (
           <div style={{
-            background: '#fff',
+            background: 'var(--surface)',
             border: '0.5px solid var(--border)',
-            borderRadius: 14,
+            borderRadius: 'var(--radius-comfortable)',
             overflow: 'hidden',
           }}>
             {timeline.map((item, i) => (
@@ -267,8 +267,8 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
                 onClick={item.onClick}
                 style={{
                   width: '100%',
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '12px 14px',
+                  display: 'flex', alignItems: 'center', gap: 'var(--space-snug)',
+                  padding: 'var(--space-snug) var(--space-snug)',
                   background: 'transparent',
                   border: 'none',
                   borderTop: i === 0 ? 'none' : '0.5px solid var(--border)',
@@ -322,19 +322,19 @@ function StatTile({ emoji, value, label, onClick, accent, accentBg }) {
       style={{
         background: accentBg,
         border: 'none',
-        borderRadius: 12,
-        padding: '12px 14px',
+        borderRadius: 'var(--radius)',
+        padding: 'var(--space-snug) var(--space-snug)',
         textAlign: 'left',
         cursor: 'pointer',
         minHeight: 68,
-        display: 'flex', flexDirection: 'column', gap: 2,
+        display: 'flex', flexDirection: 'column', gap: 'var(--space-tight)',
       }}
     >
-      <div style={{ fontSize: 18, marginBottom: 2 }}>{emoji}</div>
+      <div style={{ fontSize: 18, marginBottom: 'var(--space-tight)' }}>{emoji}</div>
       <div style={{ fontSize: 18, fontWeight: 800, color: accent, lineHeight: 1.1 }}>
         {value}
       </div>
-      <div style={{ fontSize: 11, color: '#5a5a56', fontWeight: 500 }}>
+      <div style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 500 }}>
         {label}
       </div>
     </button>

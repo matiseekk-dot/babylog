@@ -95,11 +95,11 @@ export function SegmentedSwitcher({ segments, active, onSelect }) {
   return (
     <div style={{
       display: 'flex',
-      gap: 4,
-      padding: 4,
-      margin: '8px 16px 4px',
-      background: '#F0EFEC',
-      borderRadius: 12,
+      gap: 'var(--space-tight)',
+      padding: 'var(--space-tight)',
+      margin: 'var(--space-snug) var(--space) var(--space-tight)',
+      background: 'var(--gray-light)',
+      borderRadius: 'var(--radius)',
     }}>
       {segments.map(seg => {
         const isActive = active === seg.id
@@ -111,16 +111,16 @@ export function SegmentedSwitcher({ segments, active, onSelect }) {
             style={{
               flex: 1,
               minHeight: 36,
-              padding: '6px 10px',
-              background: isActive ? '#fff' : 'transparent',
+              padding: 'var(--space-tight) var(--space-snug)',
+              background: isActive ? 'var(--surface)' : 'transparent',
               border: 'none',
-              borderRadius: 9,
+              borderRadius: 'var(--radius-tight)',
               fontSize: 13,
               fontWeight: isActive ? 700 : 500,
               color: isActive ? 'var(--text)' : 'var(--text-2)',
               cursor: 'pointer',
               boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-tight)',
               transition: 'background 0.15s, color 0.15s',
             }}
           >

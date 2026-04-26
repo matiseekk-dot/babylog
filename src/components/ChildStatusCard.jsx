@@ -109,26 +109,26 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
   return (
     <div style={{
       position:'sticky',top:0,zIndex:10,
-      margin:'12px 16px 0',background:cfg.bg,
-      borderRadius:16,border:'0.5px solid rgba(0,0,0,0.08)',
+      margin:'var(--space-snug) var(--space) 0',background:cfg.bg,
+      borderRadius:'var(--radius-comfortable)',border:'0.5px solid rgba(0,0,0,0.08)',
       overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,0.07)',
     }}>
       {/* Kolorowy pasek po lewej */}
       <div style={{
         position:'absolute',left:0,top:0,bottom:0,width:4,
-        background:cfg.barColor,borderRadius:'16px 0 0 16px',
+        background:cfg.barColor,borderRadius:'var(--radius-comfortable) 0 0 var(--radius-comfortable)',
       }} />
 
-      <div style={{padding: expanded ? '14px 14px 14px 18px' : '10px 14px 10px 18px'}}>
+      <div style={{padding: expanded ? 'var(--space) var(--space) var(--space) var(--space)' : 'var(--space-snug) var(--space) var(--space-snug) var(--space)'}}>
         {/* Header — klikalny dla non-ok statusów */}
         <button
           type="button"
           onClick={() => !isOk && toggleExpanded()}
           style={{
-            width: '100%', display: 'flex', alignItems: 'center', gap: expanded ? 12 : 10,
+            width: '100%', display: 'flex', alignItems: 'center', gap: expanded ? 'var(--space-snug)' : 'var(--space-snug)',
             background: 'transparent', border: 'none', padding: 0,
             cursor: isOk ? 'default' : 'pointer', textAlign: 'left',
-            marginBottom: expanded && (!isPremium || secondary.length) ? 12 : 0,
+            marginBottom: expanded && (!isPremium || secondary.length) ? 'var(--space-snug)' : 0,
           }}
         >
           <StatusIcon cfg={cfg} pulse={pulse} small={!expanded && !isOk} />
@@ -160,7 +160,7 @@ export default function ChildStatusCard({ globalStatus, topStatus, messages, onN
 
         {/* Sub-messages — tylko gdy expanded */}
         {expanded && isPremium && secondary.length > 0 && (
-          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+          <div style={{display:'flex',flexDirection:'column',gap:'var(--space-tight)'}}>
             {secondary.map(m => <SubMessage key={m.id} msg={m} onNavigate={onNavigate} />)}
           </div>
         )}

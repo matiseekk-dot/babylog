@@ -1,30 +1,112 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * DESIGN TOKENS (v2.10.1)
+ * ────────────────────────────────────────────────────────────────────────────
+ *
+ * Single source of truth dla wartości designu. Wszystkie nowe komponenty
+ * MUSZĄ używać tych zmiennych — nie hardcoded #1D9E75 ani padding: 13px.
+ *
+ * Zasady:
+ *   1. Brand color   = ZIELONY (--brand-*). To jest "Spokojny Rodzic green",
+ *      nie zmieniamy. Ujednolicony pod 5 stopni 50→700.
+ *   2. Status colors = niebieski/amber/coral/red — semantic, NIE brand.
+ *   3. Spacing       = 5 wartości, od 4 do 32px. Wszystko spoza tej skali
+ *      jest błędem (zaokrąglić do najbliższej).
+ *   4. Radius        = 4 wartości: tight/base/comfortable/round.
+ *
+ * Backwards compat: stare aliasy (--green, --green-light, --green-dark)
+ * mapują na nowe tokens — apka działa BEZ zmian w niezmigrowanych plikach,
+ * ale wszystkie nowe użycia powinny używać --brand-*.
+ * ────────────────────────────────────────────────────────────────────────── */
 :root {
-  --green: #1D9E75;
-  --green-light: #E1F5EE;
-  --green-dark: #0F6E56;
-  --purple: #534AB7;
-  --purple-light: #EEEDFE;
-  --amber: #BA7517;
-  --amber-light: #FAEEDA;
-  --coral: #D85A30;
-  --coral-light: #FAECE7;
-  --blue: #185FA5;
-  --blue-light: #E6F1FB;
-  --pink: #993556;
-  --pink-light: #FBEAF0;
-  --gray: #5F5E5A;
-  --gray-light: #F1EFE8;
-  --bg: #f7f7f5;
-  --surface: #ffffff;
-  --border: rgba(0,0,0,0.1);
+  /* ── Brand palette (zielony) ──────────────────────────────────────────── */
+  --brand-50:   #E1F5EE;  /* Najjaśniejszy bg, subtle highlights */
+  --brand-100:  #9FE1CB;  /* Border light, hover backgrounds */
+  --brand-500:  #1D9E75;  /* Primary brand — buttons, accents, FAB */
+  --brand-600:  #0F6E56;  /* Hover state, gradient end */
+  --brand-700:  #085041;  /* Text on --brand-50, dark accent */
+
+  /* ── Status colors (semantyczne, NIE brand) ──────────────────────────── */
+  /* Info — niebieski. Niski-priorytet komunikaty informacyjne. */
+  --info-50:    #E6F1FB;
+  --info-500:   #185FA5;
+  --info-700:   #0C447C;
+
+  /* Warning — amber. Średni priorytet, "uwaga ale nie pilne". */
+  --warning-50:  #FAEEDA;
+  --warning-100: #FAC775;
+  --warning-500: #BA7517;
+  --warning-700: #633806;
+
+  /* Alert — koralowy. Wysoki priorytet, "wymaga akcji". */
+  --alert-50:    #FAECE7;
+  --alert-100:   #F0997B;
+  --alert-500:   #D85A30;
+  --alert-700:   #712B13;
+
+  /* Critical — czerwony. Najwyższy priorytet, "życie/zdrowie zagrożone". */
+  --critical-50:  #FCEBEB;
+  --critical-100: #F09595;
+  --critical-500: #A32D2D;
+  --critical-700: #501313;
+
+  /* Accent — fiolet. Sleep/timer (kolor uspokajający). */
+  --accent-50:  #EEEDFE;
+  --accent-500: #534AB7;
+
+  /* ── Neutrals ─────────────────────────────────────────────────────────── */
+  --bg:        #F7F7F5;  /* Main background */
+  --surface:   #FFFFFF;  /* Card/modal background */
+  --border:    rgba(0,0,0,0.10);
   --border-med: rgba(0,0,0,0.15);
-  --text: #1a1a18;
-  --text-2: #5a5a56;
-  --text-3: #9a9a94;
-  --nav-h: 64px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --text:      #1A1A18;  /* Primary text — np. tytuły, ważne wartości */
+  --text-2:    #5A5A56;  /* Secondary text — opisy, sub-labels */
+  --text-3:    #9A9A94;  /* Tertiary text — captions, hints, placeholders */
+
+  /* ── Spacing scale ────────────────────────────────────────────────────── */
+  /* 5 poziomów. Każdy padding/margin/gap MUSI używać jednego z tych:
+   * - tight       (4px):  Inline gaps, micro-spacing
+   * - snug        (8px):  Default gap między elementami
+   * - base       (16px):  Container padding, default block spacing
+   * - comfortable (24px): Section padding, generous gap
+   * - spacious   (32px):  Hero spacing, separation pomiędzy sekcjami
+   */
+  --space-tight:       4px;
+  --space-snug:        8px;
+  --space:            16px;
+  --space-comfortable: 24px;
+  --space-spacious:   32px;
+
+  /* ── Radius scale ─────────────────────────────────────────────────────── */
+  --radius-tight:       8px;   /* Buttons inline, badges */
+  --radius:            12px;   /* Standard cards, inputs, buttons */
+  --radius-comfortable: 14px;  /* Larger cards, modals top */
+  --radius-round:      9999px; /* Pills, FAB, avatars */
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  --nav-h:        64px;
+  --safe-bottom:  env(safe-area-inset-bottom, 0px);
+
+  /* ── Backwards compat (deprecated, do usunięcia w v2.11+) ─────────────── */
+  /* Stare aliasy które niezmigrowane komponenty wciąż używają. NIE używać
+   * w nowym kodzie — używać --brand-* zamiast tego.                       */
+  --green:        var(--brand-500);
+  --green-light:  var(--brand-50);
+  --green-dark:   var(--brand-600);
+  --purple:       var(--accent-500);
+  --purple-light: var(--accent-50);
+  --amber:        var(--warning-500);
+  --amber-light:  var(--warning-50);
+  --coral:        var(--alert-500);
+  --coral-light:  var(--alert-50);
+  --blue:         var(--info-500);
+  --blue-light:   var(--info-50);
+  --pink:         #993556;
+  --pink-light:   #FBEAF0;
+  --gray:         #5F5E5A;
+  --gray-light:   #F1EFE8;
 }
 
 html { height: 100%; }
@@ -53,7 +135,7 @@ select:focus-visible,
 textarea:focus-visible,
 [role="button"]:focus-visible,
 [role="tab"]:focus-visible {
-  outline: 2px solid #1D9E75;
+  outline: 2px solid var(--brand-500);
   outline-offset: 2px;
 }
 
