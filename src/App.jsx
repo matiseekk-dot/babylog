@@ -7,7 +7,6 @@ import { useRevenueCat } from './hooks/useRevenueCat'
 import { useChildStatus } from './hooks/useChildStatus'
 import { usePremium } from './hooks/usePremium'
 import FeedTab from './components/FeedTab'
-import EmptyStateHero from './components/EmptyStateHero'
 import TeethingTab from './components/TeethingTab'
 import SleepTab from './components/SleepTab'
 import DiaperTab from './components/DiaperTab'
@@ -157,14 +156,6 @@ export default function App() {
   // needsConsent() sprawdza OBA stare klucze localStorage dla kompatybilności
   // z userami z 2.7.x/2.8.x — nikt nie musi akceptować ponownie.
   const [consentAccepted, setConsentAccepted] = useState(() => !needsConsent())
-  const [emptyHeroDismissed, setEmptyHeroDismissed] = useState(() => {
-    try { return localStorage.getItem('babylog_empty_hero_dismissed') === '1' }
-    catch { return false }
-  })
-  const dismissEmptyHero = () => {
-    try { localStorage.setItem('babylog_empty_hero_dismissed', '1') } catch {}
-    setEmptyHeroDismissed(true)
-  }
   // v2.9.0: MedicalConsentScreen sam zapisuje stampy do localStorage
   // (oba klucze defensywnie). Tu tylko przełączamy stan w pamięci.
   const acceptConsent = () => {
@@ -436,19 +427,6 @@ export default function App() {
     } catch { return false }
   })()
 
-  // Check if user has ANY data ever (for empty state hero)
-  const hasAnyData = (() => {
-    const keys = ['feed_','sleep_','diaper_','temp_','meds_','growth_']
-    try {
-      return keys.some(k => {
-        const v = localStorage.getItem('babylog_' + k + active.id)
-        if (!v) return false
-        const arr = JSON.parse(v)
-        return Array.isArray(arr) && arr.length > 0
-      })
-    } catch { return false }
-  })()
-
   // ── Visibility tier dla statusu / messages (v2.9.2) ───────────────────────
   // Polityka: critical alerts (życie-zagrażające) są ZAWSZE widoczne, premium
   // czy nie. Paywallowanie alertu typu "gorączka ≥40.5°C — zadzwoń 112" jest
@@ -592,12 +570,11 @@ export default function App() {
   const renderTab = () => {
     switch(tab) {
       case 'today':      return (
-        <>
-          {!hasAnyData && !emptyHeroDismissed && (
-            <EmptyStateHero onNavigate={navigate} onDismiss={dismissEmptyHero} />
-          )}
-          <TodayTab uid={uid} babyId={active.id} onNavigate={navigate} />
-        </>
+        // v2.9.4: EmptyStateHero usunięty stąd — duplikował komunikat
+        // "tu nic nie ma" z Today timeline empty state. Reszta empty
+        // signaling: ChildStatusCard (status system) + OnboardingTipsBanner
+        // (edu tipy, jednorazowo) + Today timeline empty state (lokalne).
+        <TodayTab uid={uid} babyId={active.id} onNavigate={navigate} />
       )
       case 'feed':       return (
         <DailyTab visibleTabs={active.visibleTabs} {...sharedProps}

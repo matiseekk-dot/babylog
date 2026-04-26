@@ -41,12 +41,19 @@ export default function QuickAddFab({
   const pointerDownTimeRef = useRef(0)
 
   // ── Long-press detection ──────────────────────────────────────────────────
+  // v2.9.4: Android/TWA fix.
+  //   - Pointer events tylko do detekcji long-press (timer)
+  //   - onClick obsługuje sam tap (release < 500ms)
+  //   - BEZ preventDefault na pointerdown — to blokowało emisję click
+  //     w Android Webview i Samsung Internet
+  //   - touch-action: manipulation (nie 'none') — pozwala native click
+  //     przy zachowaniu blokady double-tap zoom
   const LONG_PRESS_MS = 500
 
-  const handlePointerDown = (e) => {
-    e.preventDefault()
+  const handlePointerDown = () => {
     longPressFiredRef.current = false
     pointerDownTimeRef.current = Date.now()
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
     longPressTimerRef.current = setTimeout(() => {
       longPressFiredRef.current = true
       // Vibrate jako haptic feedback (jeśli dostępne)
@@ -57,19 +64,12 @@ export default function QuickAddFab({
     }, LONG_PRESS_MS)
   }
 
-  const handlePointerUp = (e) => {
-    e.preventDefault()
+  const handlePointerUp = () => {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
-    if (longPressFiredRef.current) {
-      // Long-press już zadziałał — nie otwieraj menu
-      longPressFiredRef.current = false
-      return
-    }
-    // Tap = open menu
-    setOpen(true)
+    // NIE wywołujemy setOpen tutaj — onClick to obsłuży
   }
 
   const handlePointerCancel = () => {
@@ -78,6 +78,17 @@ export default function QuickAddFab({
       longPressTimerRef.current = null
     }
     longPressFiredRef.current = false
+  }
+
+  // onClick — main tap handler, fired po pointer release jeśli wewnątrz buttona.
+  // Skoro long-press już strzelił feed log + vibrate, ignoruj click żeby
+  // nie otwierać dodatkowo menu.
+  const handleClick = () => {
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false
+      return
+    }
+    setOpen(true)
   }
 
   // Cleanup timer at unmount
@@ -128,7 +139,8 @@ export default function QuickAddFab({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerCancel}
         onPointerLeave={handlePointerCancel}
-        // Disable native context menu na long-press na touchpadach
+        onClick={handleClick}
+        // Disable native context menu na long-press (Android Webview/Chrome)
         onContextMenu={(e) => e.preventDefault()}
         style={{
           position: 'fixed',
@@ -142,11 +154,15 @@ export default function QuickAddFab({
           fontSize: 28, fontWeight: 300,
           cursor: 'pointer',
           boxShadow: '0 6px 16px rgba(15, 110, 86, 0.32), 0 2px 4px rgba(0,0,0,0.08)',
-          zIndex: 90,
+          // v2.9.4: z-index 110 — wyżej niż bottom-nav (90) i niż backdrop (100)
+          zIndex: 110,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           // Disable highlight on tap
           WebkitTapHighlightColor: 'transparent',
-          touchAction: 'none',
+          // v2.9.4: 'manipulation' zamiast 'none' — pozwala emisji click event
+          // na Android Webview / Samsung Internet, blokując tylko double-tap
+          // zoom (które i tak nie jest pożądane na FAB).
+          touchAction: 'manipulation',
           userSelect: 'none',
           transition: 'transform 0.1s ease',
         }}

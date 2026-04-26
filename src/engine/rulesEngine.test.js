@@ -11,10 +11,47 @@ import { evaluateRules } from './rulesEngine'
 const today = new Date().toISOString().slice(0, 10)
 const recentTime = new Date().toTimeString().slice(0, 5)
 
+// v2.9.4: pomocniki spójnej LOKALNEJ daty i czasu.
+// Apka zapisuje wpisy jako { date: 'YYYY-MM-DD', time: 'HH:MM' } gdzie OBA
+// pochodzą ze stref lokalnej. Reguła `med_daily_limit` rekonstruuje
+// timestamp przez `new Date(date + 'T' + time)` (też lokalna interpretacja).
+//
+// Mieszanie `d.toISOString().slice(0,10)` (UTC) z `d.toTimeString().slice(0,5)`
+// (lokalny) tworzyło wpisy które wyglądały jak przesunięte o ±24h przy filtrach
+// 24-godzinnych — paracCount=3 zamiast 4 i alert nie triggerował.
+function localISODate(d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+function localTimeHM(d) {
+  const h = String(d.getHours()).padStart(2, '0')
+  const m = String(d.getMinutes()).padStart(2, '0')
+  return `${h}:${m}`
+}
+
+// v2.9.4: ctxBase ma teraz "healthy baseline" — normalne sleepLogs i feedLogs
+// dla 12-miesięcznego dziecka.
+// Powód: reguła `combined_critical` (rulesEngine.js linia 382) triggeruje
+// gdy `temp >= 38 AND lowSleep AND lowFeed`. Z pustymi sleepLogs/feedLogs
+// `lowSleep` i `lowFeed` zawsze były TRUE → false-positive critical alert
+// dla testów które chciały izolować inne reguły (np. temp_critical).
+// Z baseline: 480 min snu (8h) + 4 karmienia → combined_critical NIE odpala.
+const baselineSleep = [
+  { id: 's1', date: today, durationMin: 480, label: 'Drzemka', startTs: Date.now() - 8*60*60*1000, endTs: Date.now() - 1*60*60*1000 },
+]
+const baselineFeed = [
+  { id: 'f1', date: today, time: '08:00', type: 'Pierś lewa',  amount: '15' },
+  { id: 'f2', date: today, time: '11:00', type: 'Pierś prawa', amount: '15' },
+  { id: 'f3', date: today, time: '14:00', type: 'Butelka',     amount: '120' },
+  { id: 'f4', date: today, time: '17:00', type: 'Pierś lewa',  amount: '15' },
+]
+
 const ctxBase = {
   tempLogs: [],
-  sleepLogs: [],
-  feedLogs: [],
+  sleepLogs: baselineSleep,
+  feedLogs: baselineFeed,
   medLogs: [],
   diaperLogs: [],
   ageMonths: 12,
@@ -72,8 +109,9 @@ describe('rulesEngine — medication rules', () => {
       logs.push({
         id: String(i),
         med: 'Paracetamol',
-        date: d.toISOString().slice(0, 10),
-        time: d.toTimeString().slice(0, 5),
+        // v2.9.4: lokalne (oba pola), spójne z apką
+        date: localISODate(d),
+        time: localTimeHM(d),
       })
     }
     const result = evaluateRules({ ...ctxBase, medLogs: logs })
@@ -85,8 +123,8 @@ describe('rulesEngine — medication rules', () => {
     const now = new Date()
     const earlier = new Date(now.getTime() - 5 * 60 * 60 * 1000)
     const logs = [
-      { id: '1', med: 'Paracetamol', date: now.toISOString().slice(0,10), time: now.toTimeString().slice(0,5) },
-      { id: '2', med: 'Paracetamol', date: earlier.toISOString().slice(0,10), time: earlier.toTimeString().slice(0,5) },
+      { id: '1', med: 'Paracetamol', date: localISODate(now),     time: localTimeHM(now) },
+      { id: '2', med: 'Paracetamol', date: localISODate(earlier), time: localTimeHM(earlier) },
     ]
     const result = evaluateRules({ ...ctxBase, medLogs: logs })
     // Może mieć alerty z innych powodów, ale nie z med_daily_limit
