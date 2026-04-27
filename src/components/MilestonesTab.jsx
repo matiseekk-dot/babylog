@@ -5,7 +5,6 @@ import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toastWithUndo } from './Toast'
 import { t, useLocale, isEN } from '../i18n'
-import MilestonesChart from './MilestonesChart'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
 
@@ -25,7 +24,7 @@ const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','�
  *   - Krótki tap na zaznaczony → modal edycji daty
  *   - ✕ (tylko na custom) → usuwa całkowicie milestone
  */
-export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgrade }) {
+export default function MilestonesTab({uid, babyId, ageMonths }) {
   useLocale()
   const [done, setDone] = useFirestore(uid, `milestones_${babyId}`, {})
   const [customMilestones, setCustomMilestones] = useFirestore(uid, `milestones_custom_${babyId}`, [])
@@ -157,46 +156,6 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
       <button className="btn-add" onClick={()=>{ setForm({name:'',emoji:'⭐',months:String(ageMonths)}); setModal(true) }}>
         {t('milestones.add')}
       </button>
-
-      {/* CHART — Wykres osiągniętych vs typowy wiek (v2.10.5b) */}
-      {doneCount > 0 && (
-        <div className="card" style={{ margin: '8px 16px 0', padding: 'var(--space)' }}>
-          <div className="card-header" style={{ marginBottom: 'var(--space-snug)' }}>
-            {t('milechart.title')}
-          </div>
-
-          {/* Premium teaser dla free userów */}
-          {!isPremium && (
-            <div
-              onClick={onUpgrade}
-              style={{
-                margin: '0 0 var(--space-snug)',
-                padding: 'var(--space-snug) var(--space)',
-                background: '#FAEEDA',
-                border: '1px solid #EACE95',
-                borderRadius: 'var(--radius-tight)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-snug)',
-                fontSize: 12,
-                color: '#633806',
-              }}
-            >
-              <span style={{ fontSize: 16 }}>📊</span>
-              <span style={{ flex: 1 }}>{t('milechart.premium_hint')}</span>
-              <span style={{ fontSize: 18, color: 'var(--brand-600)' }}>›</span>
-            </div>
-          )}
-
-          <MilestonesChart
-            milestones={allMilestones}
-            done={done}
-            currentAgeMonths={ageMonths}
-            showReference={isPremium}
-          />
-        </div>
-      )}
 
       {/* Modal: DODAJ nowy milestone */}
       <Modal open={modal} onClose={()=>setModal(false)} title={t('milestones.modal.title')}>

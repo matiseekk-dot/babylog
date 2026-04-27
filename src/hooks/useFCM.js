@@ -26,7 +26,17 @@ export function useFCM(userId) {
   const refreshToken = useCallback(async () => {
     if (!userId) return null
     if (typeof Notification === 'undefined') return null
-    if (Notification.permission !== 'granted') return null
+
+    // v2.10.5: explicit handling dla denied. Wcześniej cichy null.
+    if (Notification.permission === 'denied') {
+      addBreadcrumb('fcm', 'permission-denied', { userId })
+      console.warn('[useFCM] Notification.permission = "denied" — user musi ręcznie odblokować w ustawieniach systemu')
+      return null
+    }
+    if (Notification.permission !== 'granted') {
+      addBreadcrumb('fcm', 'permission-not-granted', { state: Notification.permission })
+      return null
+    }
 
     const messaging = await getMessagingIfSupported()
     if (!messaging) {

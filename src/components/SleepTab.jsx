@@ -3,7 +3,6 @@ import { useFirestore } from '../hooks/useFirestore'
 import { formatDuration, todayDate, dateYMD, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
-import SleepChart from './SleepChart'
 import { t, useLocale } from '../i18n'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
@@ -243,45 +242,6 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
           toastWithUndo(t('common.deleted'), () => setLogs(prev => [log, ...prev]))
         }}
       />
-
-      {/* CHART — Wykres snu vs typowy zakres (v2.10.5b) */}
-      {logs.length > 0 && (
-        <div className="card" style={{ margin: '8px 16px 0', padding: 'var(--space)' }}>
-          <div className="card-header" style={{ marginBottom: 'var(--space-snug)' }}>
-            {t('sleepchart.title')}
-          </div>
-
-          {/* Premium teaser dla free userów */}
-          {!isPremium && (
-            <div
-              onClick={onUpgrade}
-              style={{
-                margin: '0 0 var(--space-snug)',
-                padding: 'var(--space-snug) var(--space)',
-                background: '#FAEEDA',
-                border: '1px solid #EACE95',
-                borderRadius: 'var(--radius-tight)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-snug)',
-                fontSize: 12,
-                color: '#633806',
-              }}
-            >
-              <span style={{ fontSize: 16 }}>📊</span>
-              <span style={{ flex: 1 }}>{t('sleepchart.premium_hint')}</span>
-              <span style={{ fontSize: 18, color: 'var(--brand-600)' }}>›</span>
-            </div>
-          )}
-
-          <SleepChart
-            sleepLogs={logs}
-            currentAgeMonths={ageMonths}
-            showReference={isPremium}
-          />
-        </div>
-      )}
 
       <button className="btn-add" onClick={openAdd}>
         {t('sleep.add_manual')}

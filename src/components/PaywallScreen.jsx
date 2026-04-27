@@ -31,7 +31,7 @@ function getFeatures() {
     return [
       { icon:'👨‍👩‍👧', title:'Share with partner',        desc:'Both parents track together in real time. One child, two accounts.', comingSoon:true },
       { icon:'📊', title:'Growth charts with WHO percentiles', desc:'See where your child ranks compared to WHO norms.' },
-      { icon:'📈', title:'Analytics & norms',           desc:'Sleep, feeding, teething and milestones charts with comparison to typical age ranges (AAP/NSF/ESPGHAN/AAPD/CDC).' },
+      { icon:'📈', title:'Analytics & norms',           desc:'Trend charts and comparison with WHO development norms for teeth, cough, milestones.', comingSoon:true },
       { icon:'👶', title:'Unlimited children',          desc:'Twins, siblings — one subscription, no limits.' },
       { icon:'📄', title:'PDF report for pediatrician', desc:'Formatted summary: temperatures, doses, feedings for any date range.' },
       { icon:'🩺', title:'Doctor notes & questions',    desc:'Visit history, prescriptions, questions to ask next time.' },
@@ -41,7 +41,7 @@ function getFeatures() {
   return [
     { icon:'👨‍👩‍👧', title:'Udostępnij partnerowi',     desc:'Oboje rodziców śledzi razem w czasie rzeczywistym. Jedno dziecko, dwa konta.', comingSoon:true },
     { icon:'📊', title:'Wykresy wzrostu z percentylami WHO', desc:'Zobacz w którym percentylu jest twoje dziecko wg norm WHO.' },
-    { icon:'📈', title:'Analityka i normy',             desc:'Wykresy snu, karmień, ząbków i milestone\'ów z porównaniem do typowych zakresów wiekowych (AAP/NSF/ESPGHAN/AAPD/CDC).' },
+    { icon:'📈', title:'Analityka i normy',             desc:'Wykresy trendów i porównanie do norm WHO dla ząbków, kaszlu, milestone\'ów.', comingSoon:true },
     { icon:'👶', title:'Nielimitowane dzieci',          desc:'Bliźnięta, rodzeństwo — jedna subskrypcja, bez limitów.' },
     { icon:'📄', title:'Raport PDF dla pediatry',       desc:'Sformatowane podsumowanie: temperatury, dawki, karmienia za dowolny okres.' },
     { icon:'🩺', title:'Notatki i pytania do pediatry', desc:'Historia wizyt, recepty, pytania do zadania na następnej wizycie.' },
@@ -71,15 +71,11 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
   const freeBanner = t('paywall.free_banner')
 
   return (
-    // v2.10.5b: fix scroll bug — .app rodzic ma height:100dvh (fixed),
-    // wcześniej minHeight:100vh + brak overflow → content wypadał poza ekran
-    // i radio buttons z planami były niedostępne. Teraz: height pełen, overflow-y auto.
+    // JEDNA kolumna flex, JEDEN scroll na całość (z wyjątkiem sticky header + footer)
     <div style={{
       display:'flex',
       flexDirection:'column',
-      height:'100dvh',
-      overflowY:'auto',
-      WebkitOverflowScrolling:'touch',
+      minHeight:'100vh',
       background:'var(--surface)',
       paddingBottom:110, // miejsce na sticky footer z buttonem
     }}>

@@ -189,6 +189,15 @@ export function useMedReminder(babyId) {
   }, [babyId])
 
   const askPermission = useCallback(async () => {
+    // v2.10.5: jeśli już 'denied', requestPermission() zwróci natychmiast 'denied'
+    // bez pokazania popupa systemowego (browser/Android explicit deny).
+    // User musi sam pójść do Ustawień Androida i odblokować.
+    if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+      addBreadcrumb('reminder', 'permission-already-denied', {})
+      setPermission('denied')
+      return 'denied'
+    }
+
     let result = await requestPermission()
 
     // TWA fix: Android czasem ma opóźnienie przy aktualizacji Notification.permission

@@ -6,7 +6,6 @@ import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
 import { t, tPlural, useLocale } from '../i18n'
 import HistorySection from './HistorySection'
-import FeedingFrequencyChart from './FeedingFrequencyChart'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
 
@@ -19,7 +18,7 @@ function getQuickBtns() {
   ]
 }
 
-export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, onDataChange }) {
   useLocale()
   const QUICK_BTNS = getQuickBtns()
   const [logs, setLogs] = useFirestore(uid, `feed_${babyId}`, [])
@@ -205,45 +204,6 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
         }}
         onDelete={(log) => setLogs(logs.filter(l => l.id !== log.id))}
       />
-
-      {/* CHART — Wykres karmień vs typowy zakres (v2.10.5b) */}
-      {logs.length > 0 && (
-        <div className="card" style={{ margin: '8px 16px 0', padding: 'var(--space)' }}>
-          <div className="card-header" style={{ marginBottom: 'var(--space-snug)' }}>
-            {t('feedchart.title')}
-          </div>
-
-          {/* Premium teaser dla free userów */}
-          {!isPremium && (
-            <div
-              onClick={onUpgrade}
-              style={{
-                margin: '0 0 var(--space-snug)',
-                padding: 'var(--space-snug) var(--space)',
-                background: '#FAEEDA',
-                border: '1px solid #EACE95',
-                borderRadius: 'var(--radius-tight)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-snug)',
-                fontSize: 12,
-                color: '#633806',
-              }}
-            >
-              <span style={{ fontSize: 16 }}>📊</span>
-              <span style={{ flex: 1 }}>{t('feedchart.premium_hint')}</span>
-              <span style={{ fontSize: 18, color: 'var(--brand-600)' }}>›</span>
-            </div>
-          )}
-
-          <FeedingFrequencyChart
-            feedLogs={logs}
-            currentAgeMonths={ageMonths}
-            showReference={isPremium}
-          />
-        </div>
-      )}
 
       <button className="btn-add" onClick={openAdd}>
         {t('feed.add_detail')}

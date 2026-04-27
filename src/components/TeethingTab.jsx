@@ -4,7 +4,6 @@ import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
-import TeethingChart from './TeethingChart'
 
 /**
  * Teething tracker — log baby's teeth eruption.
@@ -52,7 +51,7 @@ const TEETH = [
   { id:'l-l2-molar',   position:'lower', col:10,nameKey:'teeth.lower.second_molar_l', typical:'23-31' },
 ]
 
-export default function TeethingTab({ uid, babyId, ageMonths, isPremium, onUpgrade }) {
+export default function TeethingTab({ uid, babyId }) {
   useLocale()
   const [teeth, setTeeth] = useFirestore(uid, `teething_${babyId}`, {})
   // teeth = { [toothId]: { date: 'YYYY-MM-DD', note: '' } }
@@ -207,46 +206,6 @@ export default function TeethingTab({ uid, babyId, ageMonths, isPremium, onUpgra
                 </div>
               )
             })}
-        </div>
-      )}
-
-      {/* CHART — Wykres wyrżniętych zębów vs typowy zakres (v2.10.5b) */}
-      {erupted > 0 && (
-        <div className="card" style={{ margin: '8px 16px 0', padding: 'var(--space)' }}>
-          <div className="card-header" style={{ marginBottom: 'var(--space-snug)' }}>
-            {t('teethchart.title')}
-          </div>
-
-          {/* Premium teaser dla free userów */}
-          {!isPremium && (
-            <div
-              onClick={onUpgrade}
-              style={{
-                margin: '0 0 var(--space-snug)',
-                padding: 'var(--space-snug) var(--space)',
-                background: '#FAEEDA',
-                border: '1px solid #EACE95',
-                borderRadius: 'var(--radius-tight)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-snug)',
-                fontSize: 12,
-                color: '#633806',
-              }}
-            >
-              <span style={{ fontSize: 16 }}>📊</span>
-              <span style={{ flex: 1 }}>{t('teethchart.premium_hint')}</span>
-              <span style={{ fontSize: 18, color: 'var(--brand-600)' }}>›</span>
-            </div>
-          )}
-
-          <TeethingChart
-            teeth={teeth}
-            teethDef={TEETH}
-            currentAgeMonths={ageMonths}
-            showReference={isPremium}
-          />
         </div>
       )}
 

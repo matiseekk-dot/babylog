@@ -30,12 +30,11 @@ import QuickAddFab from './components/QuickAddFab'
 // identycznie na każdej platformie (vs emoji które różnią się iOS/Android).
 import {
   Star, Sparkles, Ruler, Wind, Syringe, Carrot, Stethoscope,
-  Milk, Moon, Baby, Thermometer, Pill, HeartPulse, BookOpen, AlertCircle,
+  Milk, Moon, Baby, Thermometer, Pill, HeartPulse,
 } from 'lucide-react'
 import ProfilesScreen from './components/ProfilesScreen'
-import TodaySummaryCard from './components/TodaySummaryCard'
-import ReferenceLibrary from './components/ReferenceLibrary'
-import WhenToSeekHelpCard from './components/WhenToSeekHelpCard'
+import ChildStatusBar from './components/ChildStatusBar'
+import ChildStatusCard from './components/ChildStatusCard'
 import AutoHideBanner from './components/AutoHideBanner'
 import OnboardingTipsBanner from './components/OnboardingTipsBanner'
 import PaywallScreen from './components/PaywallScreen'
@@ -47,10 +46,12 @@ import { captureError, addBreadcrumb } from './sentry'
 import SleepIndicator from './components/SleepIndicator'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import SettingsScreen from './components/SettingsScreen'
+import CallDoctorCard from './components/CallDoctorCard'
 import CallDoctorPrep from './components/CallDoctorPrep'
 import GuestMigrationDialog from './components/GuestMigrationDialog'
 import PlayStoreModal from './components/PlayStoreModal'
 import PremiumOnboardingModal from './components/PremiumOnboardingModal'
+import { useCrisisDetection } from './hooks/useCrisisDetection'
 import { useServiceWorker } from './hooks/useServiceWorker'
 
 import { useLocale, t } from './i18n'
@@ -131,8 +132,6 @@ const NAV_TABS = [
 // medyczna historia (vaccinations/doctor).
 // v2.10.2: emoji → Icon component z lucide-react (konsystencja platformowa).
 const MORE_TABS = [
-  { id:'reference',  Icon: BookOpen,    labelKey:'nav.reference' },   // v2.10.5: wytyczne PTP/AAP (statyczne)
-  { id:'seek_help',  Icon: AlertCircle, labelKey:'nav.seek_help' },   // v2.10.5: kiedy szukać pomocy (statyczne)
   { id:'milestones', Icon: Star,        labelKey:'nav.milestones' },
   { id:'teething',   Icon: Sparkles,    labelKey:'nav.teething' },
   { id:'growth',     Icon: Ruler,       labelKey:'nav.growth' },
@@ -142,8 +141,18 @@ const MORE_TABS = [
   { id:'doctor',     Icon: Stethoscope, labelKey:'nav.doctor' },
 ]
 
-// v2.10.5: FREE_STATUS / EMPTY_STATUS USUNIĘTE — TodaySummaryCard sam handluje
-// empty state. Status hierarchy zniknął razem z MDR exit refactor.
+// Status prosty dla free userów — bez szczegółów
+const FREE_STATUS = () => ({
+  status: 'ok',
+  title: t('status.free.title'),
+  message: t('status.free.message'),
+})
+
+const EMPTY_STATUS = () => ({
+  status: 'info',
+  title: t('status.empty.title'),
+  message: t('status.empty.message'),
+})
 
 export default function App() {
   const { user, loading: authLoading, login, logout } = useAuth()
@@ -406,20 +415,67 @@ export default function App() {
     setShowPlayStoreModal(false)
   }
 
-  // ── Decision layer (v2.10.5 MDR EXIT) ──────────────────────────────────────
-  // useChildStatus zwraca neutralne observations + sectionObservations
-  // BEZ severity (globalStatus, topStatus). v2.10.5b: summary nieużywane,
-  // pomijamy w destructuring (computowanie zostało w hook dla backwards compat).
-  const { observations, sectionObservations, refresh } = useChildStatus(
+  // ── Decision layer (zawsze liczymy, ale pokazujemy tylko premium) ──────────
+  const { globalStatus, topStatus, messages, sectionMessages, refresh } = useChildStatus(
     active.id, active.months, active.weight
   )
-  const sectionMessages = sectionObservations
 
-  // v2.10.5: visibleSection bez severity filtering — wszystkie observations są
-  // neutralne (info/reference), więc free i premium widzą to samo.
-  // Premium różni się gdzie indziej: zaawansowane wykresy, sharing, PDF report,
-  // unlimited dzieci, doctor notes (patrz PaywallScreen.jsx).
-  const visibleSection = (section) => sectionMessages(section) || []
+  // Crisis detection — reads tempLogs from Firestore (nie localStorage)
+  const [tempLogsForCrisis] = useFirestore(uid, `temp_${active.id}`, [])
+  const { crisis, dismiss: dismissCrisis } = useCrisisDetection(tempLogsForCrisis, active.months)
+
+  // Dla free — pusty zestaw alertów i uproszczony status
+  // Check if user has any data today.
+  // v2.10.3: bug fix — wcześniej hardcoded prefix 'babylog_' nie znajdował
+  // wpisów guest usera (które mają prefix 'babylog_guest_'). Skutek: nawet
+  // po dodaniu wpisu, status pokazywał EMPTY_STATUS ("Zacznij od pierwszego
+  // wpisu") dla guestów. Fix: użyj prawidłowego prefixu zależnie od uid.
+  const hasDataToday = (() => {
+    const today = todayDate()
+    const prefix = uid ? 'babylog_' : 'babylog_guest_'
+    const keys = ['feed_','sleep_','diaper_','temp_']
+    try {
+      return keys.some(k => {
+        const v = localStorage.getItem(prefix + k + active.id)
+        if (!v) return false
+        const arr = JSON.parse(v)
+        return Array.isArray(arr) && arr.some(i => i.date === today)
+      })
+    } catch { return false }
+  })()
+
+  // ── Visibility tier dla statusu / messages (v2.9.2) ───────────────────────
+  // Polityka: critical alerts (życie-zagrażające) są ZAWSZE widoczne, premium
+  // czy nie. Paywallowanie alertu typu "gorączka ≥40.5°C — zadzwoń 112" jest
+  // etycznie i prawnie problematyczne (apka która "wie" o zagrożeniu, ale
+  // ukrywa do czasu zakupu = potencjalne MDR/UOKiK ryzyko).
+  //
+  // Premium widzi pełny zestaw: critical + warning + alert + info, plus
+  // sectionMessages, plus FREE_STATUS / EMPTY_STATUS są zastąpione globalStatus.
+  //
+  // Free widzi:
+  //   - jeśli jest jakiś critical message → globalStatus i topStatus
+  //     "critical", oraz tylko critical wiadomości (bez upgrade-prompt — to
+  //     nieetyczne pod alertem o kryzysie)
+  //   - inaczej → FREE_STATUS lub EMPTY_STATUS jako placeholder
+  const criticalMessages = (messages || []).filter(m => m?.status === 'critical')
+  const hasCritical = criticalMessages.length > 0
+
+  const visibleStatus = isPremium
+    ? globalStatus
+    : hasCritical
+      ? globalStatus
+      : (hasDataToday ? FREE_STATUS() : EMPTY_STATUS())
+  const visibleTopStatus = isPremium
+    ? topStatus
+    : (hasCritical ? 'critical' : 'ok')
+  const visibleMessages = isPremium
+    ? messages
+    : criticalMessages
+  const visibleSection = (section) => {
+    const all = sectionMessages(section) || []
+    return isPremium ? all : all.filter(m => m?.status === 'critical')
+  }
 
   // Jeśli user jest na ukrytym tabie (np. Karmienia), przeskocz na pierwszy widoczny.
   // Scenariusz: user jest na Feed, idzie do Settings, wyłącza Karmienia → tab
@@ -566,9 +622,6 @@ export default function App() {
           onNavigate={navigate} />
       )
       // ── More tabs (kompetencyjne / referencyjne) ──────────────────────────
-      // v2.10.5: nowe statyczne sekcje MDR-exit
-      case 'reference':  return <ReferenceLibrary />
-      case 'seek_help':  return <WhenToSeekHelpCard onPrepNotes={() => setShowPrep(true)} />
       case 'milestones': return <MilestonesTab {...sharedProps} />
       case 'teething':   return <TeethingTab {...sharedProps} />
       case 'growth':     return <GrowthTab     {...sharedProps} />
@@ -771,18 +824,50 @@ export default function App() {
         </div>
       </div>
 
-      {/* v2.10.5: ChildStatusBar usunięty (severity-based UI = MDR) */}
+      {/* STATUS BAR — tylko premium */}
+      {!showProfiles && isPremium && (
+        <ChildStatusBar
+          globalStatus={visibleStatus}
+          topStatus={visibleTopStatus}
+          allMessages={visibleMessages}
+          onNavigate={navigate}
+        />
+      )}
 
       {/* CONTENT */}
       <div className="content">
 
-        {/* v2.10.5: CallDoctorCard + ChildStatusCard usunięte (MDR exit refactor).
-            Replaced by TodaySummaryCard — neutral journal stats card. */}
+        {/* CRISIS CARD — killer feature, highest priority */}
+        {crisis && !showProfiles && !showMore && (
+          <CallDoctorCard
+            severity={crisis.severity}
+            reason={crisis.reason}
+            onDismiss={dismissCrisis}
+            onNavigate={navigate}
+            onPrep={() => setShowPrep(true)}
+          />
+        )}
 
-        {/* TODAY SUMMARY — link do wytycznych PTP/AAP, dismissable.
-            v2.10.5b: po feedbacku — bez statystyk (są w TodayTab timeline). */}
-        {!showProfiles && !showMore && (
-          <TodaySummaryCard onNavigate={navigate} />
+        {/* STATUS CARD
+            v2.9.5: dla Premium userów ChildStatusBar (zwijany pasek u góry)
+            już komunikuje "brak ostrzeżeń" gdy topStatus='ok'. Renderowanie
+            dodatkowo ChildStatusCard z tym samym komunikatem to wizualny
+            duplikat (zaobserwowane na żywo). Dla Premium ok-status ukrywamy
+            Card. Dla każdego niezerowego statusu (warning/alert/critical)
+            Card zostaje — tam są konkretne komunikaty do działania.
+            Free user nie widzi Bara (Premium-only), więc Card zawsze widoczna. */}
+        {!showProfiles && !showMore && !(isPremium && visibleTopStatus === 'ok') && (
+          <ChildStatusCard
+            globalStatus={visibleStatus}
+            topStatus={visibleTopStatus}
+            messages={visibleMessages}
+            // v2.9.2: free user z critical alertem klika → navigate do tabu
+            // (np. Temp przy gorączce). Paywall TYLKO gdy free + brak critical
+            // (czyli statusem jest FREE_STATUS placeholder zachęcający do Premium).
+            onNavigate={(isPremium || hasCritical) ? navigate : openPaywall}
+            isPremium={isPremium}
+            onUpgrade={openPaywall}
+          />
         )}
 
         {/* AUTO-HIDE BANNER — one-time prompt po 3 latach dziecka */}

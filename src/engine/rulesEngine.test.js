@@ -1,29 +1,24 @@
 import { describe, it, expect } from 'vitest'
-import { evaluateRules, getSectionObservations } from './rulesEngine'
+import { evaluateRules } from './rulesEngine'
 
 /**
- * Smoke tests dla rulesEngine — v2.10.5 MDR EXIT REFACTOR.
- *
- * GŁÓWNA ZMIANA vs v2.10.4:
- *   Engine NIE generuje już clinical assessments z statusami severity.
- *   Zwraca neutralne observations (type: 'info' | 'reference').
- *
- * Reguły usunięte (NIE wracają — to MDR exit):
- *   temp_infant_emergency, temp_extreme, temp_critical, temp_alert,
- *   temp_young_infant, combined_critical, sleep_deficit, med_not_working,
- *   med_too_soon, med_daily_limit, med_expired, no_entries_today, all_ok
- *
- *   Apka pokazuje statyczne tabele PTP/AAP w komponentach ReferenceLibrary
- *   i WhenToSeekHelpCard zamiast personalized clinical output.
- *
- * Reguły zachowane (jako neutralne observations):
- *   temp_rising, temp_reference_available, feed_time, med_interval_passed,
- *   med_count_24h
+ * Smoke tests dla rulesEngine — sanity check że krytyczne reguły kliniczne
+ * nadal działają. Nie pokrywa wszystkiego, ale chroni przed regresjami
+ * w najbardziej ryzykownych progach (gorączka u niemowlaka, ekstremalna temp,
+ * przekroczenie limitu dobowego dawek).
  */
 
 const today = new Date().toISOString().slice(0, 10)
 const recentTime = new Date().toTimeString().slice(0, 5)
 
+// v2.9.4: pomocniki spójnej LOKALNEJ daty i czasu.
+// Apka zapisuje wpisy jako { date: 'YYYY-MM-DD', time: 'HH:MM' } gdzie OBA
+// pochodzą ze stref lokalnej. Reguła `med_daily_limit` rekonstruuje
+// timestamp przez `new Date(date + 'T' + time)` (też lokalna interpretacja).
+//
+// Mieszanie `d.toISOString().slice(0,10)` (UTC) z `d.toTimeString().slice(0,5)`
+// (lokalny) tworzyło wpisy które wyglądały jak przesunięte o ±24h przy filtrach
+// 24-godzinnych — paracCount=3 zamiast 4 i alert nie triggerował.
 function localISODate(d) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -36,6 +31,13 @@ function localTimeHM(d) {
   return `${h}:${m}`
 }
 
+// v2.9.4: ctxBase ma teraz "healthy baseline" — normalne sleepLogs i feedLogs
+// dla 12-miesięcznego dziecka.
+// Powód: reguła `combined_critical` (rulesEngine.js linia 382) triggeruje
+// gdy `temp >= 38 AND lowSleep AND lowFeed`. Z pustymi sleepLogs/feedLogs
+// `lowSleep` i `lowFeed` zawsze były TRUE → false-positive critical alert
+// dla testów które chciały izolować inne reguły (np. temp_critical).
+// Z baseline: 480 min snu (8h) + 4 karmienia → combined_critical NIE odpala.
 const baselineSleep = [
   { id: 's1', date: today, durationMin: 480, label: 'Drzemka', startTs: Date.now() - 8*60*60*1000, endTs: Date.now() - 1*60*60*1000 },
 ]
@@ -56,17 +58,94 @@ const ctxBase = {
   weightKg: 10,
 }
 
-describe('rulesEngine — struktura odpowiedzi (v2.10.5)', () => {
-  it('zwraca obiekt z polem observations', () => {
+describe('rulesEngine — fever rules', () => {
+  it('niemowlak <3mo + temp >=38°C → critical (AAP 2021)', () => {
+    const result = evaluateRules({
+      ...ctxBase,
+      ageMonths: 2,
+      tempLogs: [{ id: '1', date: today, time: recentTime, temp: 38.2 }],
+    })
+    const critical = result.messages.find(m => m.status === 'critical')
+    expect(critical).toBeDefined()
+    expect(critical.title).toBeTruthy()
+  })
+
+  it('temp >=40.5°C → critical w każdym wieku', () => {
+    const result = evaluateRules({
+      ...ctxBase,
+      ageMonths: 36,
+      tempLogs: [{ id: '1', date: today, time: recentTime, temp: 40.6 }],
+    })
+    expect(result.messages.some(m => m.status === 'critical')).toBe(true)
+  })
+
+  it('temp 38.5-39 + dziecko >=6mo → alert (nie critical)', () => {
+    const result = evaluateRules({
+      ...ctxBase,
+      ageMonths: 12,
+      tempLogs: [{ id: '1', date: today, time: recentTime, temp: 38.7 }],
+    })
+    expect(result.messages.some(m => m.status === 'alert')).toBe(true)
+    expect(result.messages.some(m => m.status === 'critical')).toBe(false)
+  })
+
+  it('temp poniżej progów → brak fever alertu', () => {
+    const result = evaluateRules({
+      ...ctxBase,
+      tempLogs: [{ id: '1', date: today, time: recentTime, temp: 37.2 }],
+    })
+    const feverMsgs = result.messages.filter(m =>
+      m.status === 'alert' || m.status === 'critical'
+    )
+    expect(feverMsgs.length).toBe(0)
+  })
+})
+
+describe('rulesEngine — medication rules', () => {
+  it('4× paracetamol w 24h → med_daily_limit alert', () => {
+    const logs = []
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(Date.now() - i * 4 * 60 * 60 * 1000)
+      logs.push({
+        id: String(i),
+        med: 'Paracetamol',
+        // v2.9.4: lokalne (oba pola), spójne z apką
+        date: localISODate(d),
+        time: localTimeHM(d),
+      })
+    }
+    const result = evaluateRules({ ...ctxBase, medLogs: logs })
+    const limitMsg = result.messages.find(m => m.status === 'alert')
+    expect(limitMsg).toBeDefined()
+  })
+
+  it('paracetamol 2× w odstępie 5h → bez med_daily_limit', () => {
+    const now = new Date()
+    const earlier = new Date(now.getTime() - 5 * 60 * 60 * 1000)
+    const logs = [
+      { id: '1', med: 'Paracetamol', date: localISODate(now),     time: localTimeHM(now) },
+      { id: '2', med: 'Paracetamol', date: localISODate(earlier), time: localTimeHM(earlier) },
+    ]
+    const result = evaluateRules({ ...ctxBase, medLogs: logs })
+    // Może mieć alerty z innych powodów, ale nie z med_daily_limit
+    const limitMsg = result.messages.find(m =>
+      m.title?.toLowerCase().includes('limit') || m.title?.toLowerCase().includes('dobow')
+    )
+    expect(limitMsg).toBeUndefined()
+  })
+})
+
+describe('rulesEngine — wynik ma poprawną strukturę', () => {
+  it('zawsze zwraca {messages, topStatus}', () => {
     const result = evaluateRules(ctxBase)
-    expect(result).toHaveProperty('observations')
-    expect(Array.isArray(result.observations)).toBe(true)
+    expect(result).toHaveProperty('messages')
+    expect(result).toHaveProperty('topStatus')
+    expect(Array.isArray(result.messages)).toBe(true)
   })
 
   it('puste konteksty → brak crashu', () => {
     const result = evaluateRules({})
-    expect(result.observations).toBeDefined()
-    expect(Array.isArray(result.observations)).toBe(true)
+    expect(result.messages).toBeDefined()
   })
 
   it('null logs → brak crashu', () => {
@@ -74,134 +153,7 @@ describe('rulesEngine — struktura odpowiedzi (v2.10.5)', () => {
       ...ctxBase,
       tempLogs: null,
       medLogs: null,
-      sleepLogs: null,
-      feedLogs: null,
     })
-    expect(result.observations).toBeDefined()
-  })
-
-  it('observations mają type bez severity', () => {
-    const result = evaluateRules({
-      ...ctxBase,
-      tempLogs: [{ id: '1', date: today, time: recentTime, temp: 37.2 }],
-    })
-    result.observations.forEach(obs => {
-      expect(['info', 'reference']).toContain(obs.type)
-      expect(obs.status).toBeUndefined()
-    })
-  })
-})
-
-describe('rulesEngine — temp observations (neutralne)', () => {
-  it('trzy kolejne pomiary rosnące → temp_rising', () => {
-    const result = evaluateRules({
-      ...ctxBase,
-      tempLogs: [
-        { id: '1', date: today, time: '10:00', temp: 37.0 },
-        { id: '2', date: today, time: '11:00', temp: 37.5 },
-        { id: '3', date: today, time: '12:00', temp: 38.0 },
-      ],
-    })
-    const rising = result.observations.find(o => o.id === 'temp_rising')
-    expect(rising).toBeDefined()
-    expect(rising.type).toBe('info')
-    expect(rising.title).toBeTruthy()
-  })
-
-  it('jakikolwiek pomiar w ciągu 24h → bez observation w TempTab', () => {
-    // v2.10.5b: usunięto regułę temp_reference_available — link do
-    // ReferenceLibrary jest tylko w TodaySummaryCard (jeden punkt wejścia).
-    const result = evaluateRules({
-      ...ctxBase,
-      tempLogs: [{ id: '1', date: today, time: recentTime, temp: 37.2 }],
-    })
-    const tempObs = result.observations.filter(o => o.section === 'temp')
-    // Jedyny temp observation to temp_rising — wymaga 3 pomiarów rosnących
-    // (tutaj tylko 1 pomiar, więc lista pusta)
-    expect(tempObs.length).toBe(0)
-  })
-
-  it('brak pomiarów temp → brak temp observations', () => {
-    const result = evaluateRules({ ...ctxBase, tempLogs: [] })
-    const tempObs = result.observations.filter(o => o.section === 'temp')
-    expect(tempObs.length).toBe(0)
-  })
-
-  it('wysoka temp NIE generuje severity (kluczowy test MDR exit)', () => {
-    const result = evaluateRules({
-      ...ctxBase,
-      tempLogs: [{ id: '1', date: today, time: recentTime, temp: 40.6 }],
-    })
-    expect(result.observations.some(o => o.status === 'critical')).toBe(false)
-    expect(result.observations.some(o => o.status === 'alert')).toBe(false)
-    expect(result.observations.some(o => o.status === 'warning')).toBe(false)
-    const allNeutral = result.observations.every(o =>
-      ['info', 'reference'].includes(o.type)
-    )
-    expect(allNeutral).toBe(true)
-  })
-})
-
-describe('rulesEngine — medication observations', () => {
-  it('paracetamol >6h temu → med_interval observation (info)', () => {
-    const sevenHoursAgo = new Date(Date.now() - 7 * 60 * 60 * 1000)
-    const logs = [
-      {
-        id: '1',
-        med: 'Paracetamol',
-        date: localISODate(sevenHoursAgo),
-        time: localTimeHM(sevenHoursAgo),
-      },
-    ]
-    const result = evaluateRules({ ...ctxBase, medLogs: logs })
-    const interval = result.observations.find(o => o.id === 'med_interval_passed')
-    expect(interval).toBeDefined()
-    expect(interval.type).toBe('info')
-  })
-
-  it('3× paracetamol w 24h → med_count observation (info, NIE alert)', () => {
-    const logs = []
-    for (let i = 0; i < 3; i++) {
-      const d = new Date(Date.now() - i * 5 * 60 * 60 * 1000)
-      logs.push({
-        id: String(i),
-        med: 'Paracetamol',
-        date: localISODate(d),
-        time: localTimeHM(d),
-      })
-    }
-    const result = evaluateRules({ ...ctxBase, medLogs: logs })
-    const count = result.observations.find(o => o.id === 'med_count_24h')
-    expect(count).toBeDefined()
-    expect(count.type).toBe('info')
-    expect(count.status).toBeUndefined()
-  })
-
-  it('1× paracetamol → bez med_count', () => {
-    const now = new Date()
-    const logs = [
-      { id: '1', med: 'Paracetamol', date: localISODate(now), time: localTimeHM(now) },
-    ]
-    const result = evaluateRules({ ...ctxBase, medLogs: logs })
-    const count = result.observations.find(o => o.id === 'med_count_24h')
-    expect(count).toBeUndefined()
-  })
-})
-
-describe('rulesEngine — getSectionObservations', () => {
-  it('filtruje observations po sekcji', () => {
-    const result = evaluateRules({
-      ...ctxBase,
-      tempLogs: [{ id: '1', date: today, time: recentTime, temp: 37.2 }],
-    })
-    const tempObs = getSectionObservations(result.observations, 'temp')
-    expect(Array.isArray(tempObs)).toBe(true)
-    tempObs.forEach(o => expect(o.section).toBe('temp'))
-  })
-
-  it('nieistniejąca sekcja → pusta tablica', () => {
-    const result = evaluateRules(ctxBase)
-    const obs = getSectionObservations(result.observations, 'nieistniejaca')
-    expect(obs).toEqual([])
+    expect(result.messages).toBeDefined()
   })
 })
