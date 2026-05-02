@@ -16,13 +16,8 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/babylog/sw.js', { scope: '/babylog/' })
-            .catch(e => console.warn('SW:', e))
-        })
-      }
-    </script>
+    <!-- v2.10.6: SW registration moved to src/hooks/useServiceWorker.js (single source
+         of truth — adds Sentry breadcrumbs + captureError on failure). Removing the
+         inline registration here eliminates the duplicate register-on-load race. -->
   </body>
 </html>

@@ -1299,8 +1299,33 @@ const TRANSLATIONS = {
     'settings.backup.success':      '✓ Backup zapisany',
     'settings.backup.error':        'Nie udało się zapisać backupu',
 
+    // ── v2.10.6 — MDR EXIT REFACTOR — new i18n keys ──────────────────────────
+    // Nav (More tab entries)
+    'nav.reference':                'Wytyczne PTP/AAP',
+    'nav.seek_help':                'Kiedy szukać pomocy',
 
+    // TodaySummaryCard
+    'summary.see_reference':        '📚 Zobacz wytyczne pediatryczne PTP/AAP',
 
+    // ReferenceLibrary
+    'ref.title':                    'Wytyczne pediatryczne',
+    'ref.intro':                    'Statyczna biblioteka — tabele referencyjne PTP/AAP. Identyczna treść niezależnie od danych Twojego dziecka. Materiał do przeczytania, nie diagnoza.',
+    'ref.section.temp':             'Progi temperatury wg wieku',
+    'ref.section.warning_signs':    'Objawy alarmowe',
+    'ref.section.emergency':        'Numer alarmowy',
+    'ref.tbl.age':                  'Wiek',
+    'ref.tbl.threshold':            'Próg',
+    'ref.tbl.note':                 'Uwaga',
+    'ref.disclaimer':               'Te tabele to skrót materiałów PTP/PTMR i AAP. Nie zastępują konsultacji lekarskiej. W razie wątpliwości zadzwoń do pediatry lub na numer alarmowy.',
+
+    // WhenToSeekHelpCard
+    'seek_help.title':              'Kiedy szukać pomocy',
+    'seek_help.intro':              'Lista objawów alarmowych według PTP/AAP. Otwórz, gdy chcesz przejrzeć — apka nie sugeruje nic na podstawie wpisów Twojego dziecka.',
+    'seek_help.expand':             'Pokaż wszystkie ({count})',
+    'seek_help.collapse':           'Zwiń',
+    'seek_help.emergency_label':    'NUMER ALARMOWY',
+    'seek_help.prep_btn':           'Lista pytań do pediatry',
+    'seek_help.disclaimer':         'Ta lista to materiał edukacyjny. W razie wątpliwości skontaktuj się z lekarzem lub zadzwoń pod numer alarmowy.',
 
 
 
@@ -2580,8 +2605,33 @@ const TRANSLATIONS = {
     'settings.backup.success':      '✓ Backup saved',
     'settings.backup.error':        'Backup failed',
 
+    // ── v2.10.6 — MDR EXIT REFACTOR — new i18n keys ──────────────────────────
+    // Nav (More tab entries)
+    'nav.reference':                'AAP/PTP guidelines',
+    'nav.seek_help':                'When to seek help',
 
+    // TodaySummaryCard
+    'summary.see_reference':        '📚 See pediatric guidelines (AAP/PTP)',
 
+    // ReferenceLibrary
+    'ref.title':                    'Pediatric guidelines',
+    'ref.intro':                    'Static library — AAP/PTP reference tables. Identical content regardless of your child\'s data. Reading material, not a diagnosis.',
+    'ref.section.temp':             'Temperature thresholds by age',
+    'ref.section.warning_signs':    'Warning signs',
+    'ref.section.emergency':        'Emergency number',
+    'ref.tbl.age':                  'Age',
+    'ref.tbl.threshold':            'Threshold',
+    'ref.tbl.note':                 'Note',
+    'ref.disclaimer':               'These tables summarize AAP and PTP/PTMR materials. They do not replace medical consultation. When in doubt, call your pediatrician or emergency services.',
+
+    // WhenToSeekHelpCard
+    'seek_help.title':              'When to seek help',
+    'seek_help.intro':              'List of warning signs per AAP/PTP. Open it when you want to review — the app suggests nothing based on your child\'s entries.',
+    'seek_help.expand':             'Show all ({count})',
+    'seek_help.collapse':           'Collapse',
+    'seek_help.emergency_label':    'EMERGENCY NUMBER',
+    'seek_help.prep_btn':           'Questions to ask the pediatrician',
+    'seek_help.disclaimer':         'This list is educational material. When in doubt, contact a doctor or call emergency services.',
 
 
 

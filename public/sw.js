@@ -1,4 +1,4 @@
-// Spokojny Rodzic — Service Worker v3
+// Spokojny Rodzic — Service Worker v4 (bumped for v2.10.6 MDR exit completion)
 //
 // WZORZEC PS5 VAULT — uproszczony i niezawodny:
 //

@@ -33,8 +33,6 @@ import {
   Milk, Moon, Baby, Thermometer, Pill, HeartPulse,
 } from 'lucide-react'
 import ProfilesScreen from './components/ProfilesScreen'
-import ChildStatusBar from './components/ChildStatusBar'
-import ChildStatusCard from './components/ChildStatusCard'
 import AutoHideBanner from './components/AutoHideBanner'
 import OnboardingTipsBanner from './components/OnboardingTipsBanner'
 import PaywallScreen from './components/PaywallScreen'
@@ -46,12 +44,17 @@ import { captureError, addBreadcrumb } from './sentry'
 import SleepIndicator from './components/SleepIndicator'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import SettingsScreen from './components/SettingsScreen'
-import CallDoctorCard from './components/CallDoctorCard'
 import CallDoctorPrep from './components/CallDoctorPrep'
 import GuestMigrationDialog from './components/GuestMigrationDialog'
 import PlayStoreModal from './components/PlayStoreModal'
 import PremiumOnboardingModal from './components/PremiumOnboardingModal'
-import { useCrisisDetection } from './hooks/useCrisisDetection'
+// v2.10.6 — MDR EXIT REFACTOR: replaced active crisis UI with passive reference content.
+// Removed: ChildStatusBar / ChildStatusCard / CallDoctorCard / useCrisisDetection.
+// Added:   TodaySummaryCard (passive reference link), ReferenceLibrary (static AAP/PTP tables),
+//          WhenToSeekHelpCard (static warning-signs list).
+import TodaySummaryCard from './components/TodaySummaryCard'
+import ReferenceLibrary from './components/ReferenceLibrary'
+import WhenToSeekHelpCard from './components/WhenToSeekHelpCard'
 import { useServiceWorker } from './hooks/useServiceWorker'
 
 import { useLocale, t } from './i18n'
@@ -131,7 +134,11 @@ const NAV_TABS = [
 // W More zostają: rozwojowe (milestones/teething/growth/cough/diet),
 // medyczna historia (vaccinations/doctor).
 // v2.10.2: emoji → Icon component z lucide-react (konsystencja platformowa).
+// v2.10.6: dodane 'reference' i 'seek_help' (MDR EXIT — statyczne biblioteki
+// wytycznych PTP/AAP, zastępują active crisis detection).
 const MORE_TABS = [
+  { id:'reference',  Icon: HeartPulse,  labelKey:'nav.reference' },
+  { id:'seek_help',  Icon: Stethoscope, labelKey:'nav.seek_help' },
   { id:'milestones', Icon: Star,        labelKey:'nav.milestones' },
   { id:'teething',   Icon: Sparkles,    labelKey:'nav.teething' },
   { id:'growth',     Icon: Ruler,       labelKey:'nav.growth' },
@@ -141,18 +148,8 @@ const MORE_TABS = [
   { id:'doctor',     Icon: Stethoscope, labelKey:'nav.doctor' },
 ]
 
-// Status prosty dla free userów — bez szczegółów
-const FREE_STATUS = () => ({
-  status: 'ok',
-  title: t('status.free.title'),
-  message: t('status.free.message'),
-})
-
-const EMPTY_STATUS = () => ({
-  status: 'info',
-  title: t('status.empty.title'),
-  message: t('status.empty.message'),
-})
+// v2.10.6 — FREE_STATUS / EMPTY_STATUS removed. ChildStatusCard (their consumer)
+// is gone per MDR EXIT REFACTOR — apka nie pokazuje już globalnego statusu zdrowia.
 
 export default function App() {
   const { user, loading: authLoading, login, logout } = useAuth()
@@ -415,67 +412,19 @@ export default function App() {
     setShowPlayStoreModal(false)
   }
 
-  // ── Decision layer (zawsze liczymy, ale pokazujemy tylko premium) ──────────
-  const { globalStatus, topStatus, messages, sectionMessages, refresh } = useChildStatus(
+  // ── Decision layer (v2.10.6 — MDR EXIT) ────────────────────────────────────
+  // Apka NIE liczy już globalnego statusu zdrowia ani crisis detection.
+  // useChildStatus zostaje wywoływane TYLKO dla `sectionMessages` i `refresh`,
+  // które są używane przez poszczególne taby do lokalnych observations.
+  // Globalny crisis UI (ChildStatusBar/ChildStatusCard/CallDoctorCard) usunięty.
+  const { sectionMessages, refresh } = useChildStatus(
     active.id, active.months, active.weight
   )
 
-  // Crisis detection — reads tempLogs from Firestore (nie localStorage)
-  const [tempLogsForCrisis] = useFirestore(uid, `temp_${active.id}`, [])
-  const { crisis, dismiss: dismissCrisis } = useCrisisDetection(tempLogsForCrisis, active.months)
-
-  // Dla free — pusty zestaw alertów i uproszczony status
-  // Check if user has any data today.
-  // v2.10.3: bug fix — wcześniej hardcoded prefix 'babylog_' nie znajdował
-  // wpisów guest usera (które mają prefix 'babylog_guest_'). Skutek: nawet
-  // po dodaniu wpisu, status pokazywał EMPTY_STATUS ("Zacznij od pierwszego
-  // wpisu") dla guestów. Fix: użyj prawidłowego prefixu zależnie od uid.
-  const hasDataToday = (() => {
-    const today = todayDate()
-    const prefix = uid ? 'babylog_' : 'babylog_guest_'
-    const keys = ['feed_','sleep_','diaper_','temp_']
-    try {
-      return keys.some(k => {
-        const v = localStorage.getItem(prefix + k + active.id)
-        if (!v) return false
-        const arr = JSON.parse(v)
-        return Array.isArray(arr) && arr.some(i => i.date === today)
-      })
-    } catch { return false }
-  })()
-
-  // ── Visibility tier dla statusu / messages (v2.9.2) ───────────────────────
-  // Polityka: critical alerts (życie-zagrażające) są ZAWSZE widoczne, premium
-  // czy nie. Paywallowanie alertu typu "gorączka ≥40.5°C — zadzwoń 112" jest
-  // etycznie i prawnie problematyczne (apka która "wie" o zagrożeniu, ale
-  // ukrywa do czasu zakupu = potencjalne MDR/UOKiK ryzyko).
-  //
-  // Premium widzi pełny zestaw: critical + warning + alert + info, plus
-  // sectionMessages, plus FREE_STATUS / EMPTY_STATUS są zastąpione globalStatus.
-  //
-  // Free widzi:
-  //   - jeśli jest jakiś critical message → globalStatus i topStatus
-  //     "critical", oraz tylko critical wiadomości (bez upgrade-prompt — to
-  //     nieetyczne pod alertem o kryzysie)
-  //   - inaczej → FREE_STATUS lub EMPTY_STATUS jako placeholder
-  const criticalMessages = (messages || []).filter(m => m?.status === 'critical')
-  const hasCritical = criticalMessages.length > 0
-
-  const visibleStatus = isPremium
-    ? globalStatus
-    : hasCritical
-      ? globalStatus
-      : (hasDataToday ? FREE_STATUS() : EMPTY_STATUS())
-  const visibleTopStatus = isPremium
-    ? topStatus
-    : (hasCritical ? 'critical' : 'ok')
-  const visibleMessages = isPremium
-    ? messages
-    : criticalMessages
-  const visibleSection = (section) => {
-    const all = sectionMessages(section) || []
-    return isPremium ? all : all.filter(m => m?.status === 'critical')
-  }
+  // v2.10.6: section alerts są nadal pokazywane w tabach (lokalne observations
+  // na poziomie sekcji typu "ostatni feed był 4h temu"). Visibility tier free/premium
+  // już niepotrzebne — wszyscy widzą te same neutral observations.
+  const visibleSection = (section) => sectionMessages(section) || []
 
   // Jeśli user jest na ukrytym tabie (np. Karmienia), przeskocz na pierwszy widoczny.
   // Scenariusz: user jest na Feed, idzie do Settings, wyłącza Karmienia → tab
@@ -622,6 +571,11 @@ export default function App() {
           onNavigate={navigate} />
       )
       // ── More tabs (kompetencyjne / referencyjne) ──────────────────────────
+      // v2.10.6 — MDR EXIT: 'reference' i 'seek_help' są STATYCZNE biblioteki,
+      // identyczne dla wszystkich, niezależne od danych dziecka. To główny
+      // mechanizm wyłączenia apki z definicji MDSW (brak personalnego output).
+      case 'reference':  return <ReferenceLibrary onClose={() => setTab('today')} />
+      case 'seek_help':  return <WhenToSeekHelpCard onClose={() => setTab('today')} onPrepNotes={() => setShowPrep(true)} />
       case 'milestones': return <MilestonesTab {...sharedProps} />
       case 'teething':   return <TeethingTab {...sharedProps} />
       case 'growth':     return <GrowthTab     {...sharedProps} />
@@ -824,50 +778,19 @@ export default function App() {
         </div>
       </div>
 
-      {/* STATUS BAR — tylko premium */}
-      {!showProfiles && isPremium && (
-        <ChildStatusBar
-          globalStatus={visibleStatus}
-          topStatus={visibleTopStatus}
-          allMessages={visibleMessages}
-          onNavigate={navigate}
-        />
-      )}
-
       {/* CONTENT */}
       <div className="content">
 
-        {/* CRISIS CARD — killer feature, highest priority */}
-        {crisis && !showProfiles && !showMore && (
-          <CallDoctorCard
-            severity={crisis.severity}
-            reason={crisis.reason}
-            onDismiss={dismissCrisis}
-            onNavigate={navigate}
-            onPrep={() => setShowPrep(true)}
-          />
-        )}
-
-        {/* STATUS CARD
-            v2.9.5: dla Premium userów ChildStatusBar (zwijany pasek u góry)
-            już komunikuje "brak ostrzeżeń" gdy topStatus='ok'. Renderowanie
-            dodatkowo ChildStatusCard z tym samym komunikatem to wizualny
-            duplikat (zaobserwowane na żywo). Dla Premium ok-status ukrywamy
-            Card. Dla każdego niezerowego statusu (warning/alert/critical)
-            Card zostaje — tam są konkretne komunikaty do działania.
-            Free user nie widzi Bara (Premium-only), więc Card zawsze widoczna. */}
-        {!showProfiles && !showMore && !(isPremium && visibleTopStatus === 'ok') && (
-          <ChildStatusCard
-            globalStatus={visibleStatus}
-            topStatus={visibleTopStatus}
-            messages={visibleMessages}
-            // v2.9.2: free user z critical alertem klika → navigate do tabu
-            // (np. Temp przy gorączce). Paywall TYLKO gdy free + brak critical
-            // (czyli statusem jest FREE_STATUS placeholder zachęcający do Premium).
-            onNavigate={(isPremium || hasCritical) ? navigate : openPaywall}
-            isPremium={isPremium}
-            onUpgrade={openPaywall}
-          />
+        {/* v2.10.6 — MDR EXIT REFACTOR
+            Usunięte: ChildStatusBar, CallDoctorCard (crisis), ChildStatusCard.
+            Te komponenty implementowały active clinical decision support
+            (severity hierarchy, "zadzwoń do lekarza") = MDSW pod MDR Rule 11.
+            Zastąpione: TodaySummaryCard — pasywny link do statycznych wytycznych
+            PTP/AAP. Apka pokazuje user'owi (a) jego własne dane w tabach,
+            (b) statyczne tabele dostępne pod More → "Wytyczne PTP/AAP".
+            Apka nie ocenia, nie alertuje, nie diagnozuje. */}
+        {!showProfiles && !showMore && tab === 'today' && (
+          <TodaySummaryCard onNavigate={navigate} />
         )}
 
         {/* AUTO-HIDE BANNER — one-time prompt po 3 latach dziecka */}
