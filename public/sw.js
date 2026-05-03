@@ -1,4 +1,4 @@
-// Spokojny Rodzic — Service Worker v5 (bumped for v2.11.0 full MDR exit, engine refactored)
+// Spokojny Rodzic — Service Worker v6 (v2.11.5: dodany app-shell cache + fetch handler)
 //
 // WZORZEC PS5 VAULT — uproszczony i niezawodny:
 //
@@ -15,6 +15,27 @@
 // uczciwe i przewidywalne, nie jak wcześniejszy "może działa, może nie".
 //
 // Dla 100% niezawodności w tle wymagany byłby FCM (push z serwera) — TODO.
+//
+// v2.11.5 — App-shell caching:
+// Dodany fetch handler ze strategią network-first dla strony głównej, cache-first
+// dla statycznych zasobów (assets/*, icons, manifest). To daje:
+//   1. Lighthouse PWA score: pass
+//   2. Szybszy load przy powtórnych wizytach
+//   3. Podstawowe offline support — jeśli userka ma utracone połączenie w
+//      trakcie sesji, apka nie crashuje a oferuje to co już ściągnięte.
+// Cache versioning: zmiana SHELL_CACHE invaliduje wszystko (np. przy nowym
+// release). Bezpieczne — Firebase data nadal pochodzi z sieci, tylko app-shell
+// (HTML/JS/CSS/assets) jest cache'owany.
+
+const SHELL_CACHE = 'babylog-shell-v6'
+const SHELL_FILES = [
+  '/babylog/',
+  '/babylog/manifest.json',
+  '/babylog/icon-192.png',
+  '/babylog/icon-512.png',
+  '/babylog/icon-72.png',
+  '/babylog/icon-96.png',
+]
 
 // v2.9.1: single source of truth dla interwałów leków.
 // importScripts() ładuje plik synchronicznie podczas registracji SW —
@@ -30,8 +51,82 @@ try {
   self.MED_INTERVALS = {}
 }
 
-self.addEventListener('install', () => self.skipWaiting())
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()))
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(SHELL_CACHE)
+      .then(c => c.addAll(SHELL_FILES))
+      .catch(err => console.warn('[SW] shell cache prefill failed:', err))
+  )
+  self.skipWaiting()
+})
+
+self.addEventListener('activate', e => {
+  // Wyczyść stare cache versions (każdy bump SHELL_CACHE invalidate'uje stary)
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k.startsWith('babylog-shell-') && k !== SHELL_CACHE)
+        .map(k => caches.delete(k))
+    )).then(() => self.clients.claim())
+  )
+})
+
+// ── Fetch handler — network-first dla nawigacji, cache-first dla statyki ────
+//
+// Strategy:
+//   1. Firebase / Firestore / RevenueCat API — bypass cache (zawsze sieć).
+//   2. App-shell HTML (navigation request) — network-first z fallback do cache.
+//   3. Statyczne assety (.js/.css/.png/.svg/.woff itd.) — cache-first z update
+//      w tle (stale-while-revalidate-lite).
+self.addEventListener('fetch', event => {
+  const req = event.request
+  if (req.method !== 'GET') return
+
+  const url = new URL(req.url)
+
+  // 1. Bypass dla third-party API (Firebase, RC, Sentry, recaptcha)
+  if (!url.origin.includes(self.location.origin) ||
+      url.pathname.includes('/google.firestore') ||
+      url.pathname.startsWith('/api/') ||
+      url.pathname.includes('recaptcha') ||
+      url.pathname.includes('firestore')) {
+    return // pozwól browserowi obsłużyć normalnie
+  }
+
+  // 2. Navigation request — HTML — network-first
+  if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    event.respondWith(
+      fetch(req)
+        .then(res => {
+          // Update cache w tle
+          if (res && res.status === 200) {
+            const clone = res.clone()
+            caches.open(SHELL_CACHE).then(c => c.put(req, clone)).catch(() => {})
+          }
+          return res
+        })
+        .catch(() => caches.match(req).then(r => r || caches.match('/babylog/')))
+    )
+    return
+  }
+
+  // 3. Statyczne assety — cache-first
+  if (req.url.match(/\.(js|css|png|svg|jpg|jpeg|webp|woff2?|ttf|json)$/)) {
+    event.respondWith(
+      caches.match(req).then(cached => {
+        const fetchPromise = fetch(req).then(res => {
+          if (res && res.status === 200) {
+            const clone = res.clone()
+            caches.open(SHELL_CACHE).then(c => c.put(req, clone)).catch(() => {})
+          }
+          return res
+        }).catch(() => cached)
+        return cached || fetchPromise
+      })
+    )
+    return
+  }
+  // Wszystko inne — domyślnie sieć
+})
 
 // ── Push (gdyby kiedyś FCM) ──────────────────────────────────────────────────
 

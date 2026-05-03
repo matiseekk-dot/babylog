@@ -357,7 +357,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                         </div>
                         {!isAnsweringThis && (
                           <>
-                            <button aria-label="Edytuj"
+                            <button aria-label={t('common.edit')}
                               onClick={() => startEditQuestion(q)}
                               style={{
                                 background:'none',border:'none',color:'var(--text-3)',
@@ -512,7 +512,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                     </div>
                     {!isEditingThisAnswer && (
                       <>
-                        <button aria-label="Edytuj"
+                        <button aria-label={t('common.edit')}
                           onClick={() => startEditAnswer(q)}
                           style={{
                             background:'none',border:'none',color:'var(--text-3)',

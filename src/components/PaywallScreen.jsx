@@ -80,7 +80,7 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
       paddingBottom:110, // miejsce na sticky footer z buttonem
     }}>
       {/* X close — sticky w prawym górnym rogu */}
-      <button aria-label="Zamknij" onClick={onClose} style={{
+      <button aria-label={t('common.close')} onClick={onClose} style={{
         position:'fixed',top:'var(--space)',right:'var(--space)',background:'rgba(0,0,0,0.25)',
         border:'none',borderRadius:'var(--radius-round)',width:36,height:36,fontSize:16,
         cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',

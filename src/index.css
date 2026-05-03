@@ -172,9 +172,9 @@ input[type=text], input[type=number], input[type=time], input[type=date], select
   flex-shrink: 0;
   padding-top: max(12px, env(safe-area-inset-top));
 }
-.topbar-left { display: flex; flex-direction: column; gap: 1px; }
-.topbar-logo { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
-.topbar-sub { font-size: 12px; color: var(--text-3); }
+.topbar-left { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex-shrink: 1; }
+.topbar-logo { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-sub { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .baby-chip {
   display: flex; align-items: center; gap: 6px;
   background: var(--green-light);
@@ -185,6 +185,14 @@ input[type=text], input[type=number], input[type=time], input[type=date], select
   font-size: 13px;
   font-weight: 600;
   min-height: 36px;
+  /* v2.11.5 — chronimy layout topbara przed bardzo długimi imionami dziecka.
+     Wcześniej imię typu "Józef-Jędrzej Świętopełk Żółtawiec" wybijało wysokość
+     chipa na 88px wieloliniowo, łamiąc grid topbara. Teraz max ~10ch + ellipsis. */
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
 }
 .baby-chip-avatar {
   width: 22px; height: 22px;

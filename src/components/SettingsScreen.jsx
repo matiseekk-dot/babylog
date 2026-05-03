@@ -138,7 +138,7 @@ export default function SettingsScreen({
   // (można w przyszłości użyć do przywrócenia danych na innym urządzeniu)
   const handleFullBackupJson = async () => {
     try {
-      const result = await exportAllDataAsJson(uid)
+      const result = await exportAllDataAsJson(uid, APP_VERSION)
       toast(t('settings.backup.success', { count: result.recordCount }))
     } catch (e) {
       console.error('[Backup JSON]', e)

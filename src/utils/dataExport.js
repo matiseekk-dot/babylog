@@ -86,7 +86,12 @@ export async function collectAllData(uid) {
  *   "data": { ...wszystkie klucze... }
  * }
  */
-export async function exportAllDataAsJson(uid, appVersion = '2.5.5') {
+export async function exportAllDataAsJson(uid, appVersion) {
+  // Fallback do __APP_VERSION__ z Vite define jeśli caller nie przekazał.
+  // Wcześniej domyślne '2.5.5' powodowało, że backup kłamał o wersji apki.
+  if (!appVersion) {
+    appVersion = (typeof __APP_VERSION__ !== 'undefined') ? __APP_VERSION__ : 'unknown'
+  }
   addBreadcrumb('export', 'json-start', { uid })
   const data = await collectAllData(uid)
   const payload = {
