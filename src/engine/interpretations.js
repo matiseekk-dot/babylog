@@ -91,7 +91,7 @@ export function interpretTemp(logs) {
   const label = trend ? TREND_LABEL[trend] : t('interp.temp.last', { temp: temp.toFixed(1) })
   const detail = sorted.length >= 3
     ? sorted.slice(-3).map(l => `${Number(l.temp).toFixed(1)}°`).join(' → ')
-    : `Ostatni pomiar: ${temp.toFixed(1)}°C`
+    : t('interp.temp.last_measurement', { temp: temp.toFixed(1) })
 
   return { label, detail, status }
 }

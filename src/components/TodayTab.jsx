@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { todayDate } from '../utils/helpers'
+import { todayDate, displayMethod } from '../utils/helpers'
 import { t, useLocale } from '../i18n'
 // v2.10.2: Lucide SVG ikony zamiast emoji w stat tiles i timeline rows.
 // Emoji zostają tylko dla kontentu (typy karmienia/pieluch w wpisach od usera).
@@ -135,7 +135,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
         Icon: Thermometer,                   // v2.10.2
         iconColor: 'var(--alert-500)',
         title: `${tempVal}°C`,
-        sub: l.method ? ` · ${l.method}` : '',
+        sub: l.method ? ` · ${displayMethod(l.method)}` : '',
         onClick: () => navigateToHealth('temp'),
       })
     })

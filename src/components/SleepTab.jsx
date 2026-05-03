@@ -185,7 +185,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
           <div className="stat-val">{totalMin >= 60 ? `${Math.floor(totalMin/60)}h${totalMin%60>0?` ${totalMin%60}m`:''}` : `${totalMin}m`}</div>
           <div className="stat-lbl">{t('sleep.today_total')}</div>
         </div>
-        <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">sesje snu</div></div>
+        <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">{t('sleep.sessions_label')}</div></div>
         <div className="stat-card"><div className="stat-val">{norm}h</div><div className="stat-lbl">{t('sleep.norm_label')}</div></div>
       </div>
 
