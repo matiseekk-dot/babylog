@@ -692,7 +692,10 @@ export default function App() {
   // ── Paywall overlay ───────────────────────────────────────────────────────
   if (showPaywall) {
     return (
-      <div className="app" style={{ position: 'relative' }}>
+      // v2.11.7: overflowY:'auto' — bez tego PaywallScreen (minHeight:100vh + paddingBottom)
+      // wystawał poza .app (display:flex height:100dvh) i content się ucinał.
+      // User zgłosił że na PaywallScreen nie działa scroll, plan picker był niedostępny.
+      <div className="app" style={{ position: 'relative', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <PaywallScreen onActivate={handleActivate} onClose={closePaywall} checking={rcChecking} />
       </div>
     )
