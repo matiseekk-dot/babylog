@@ -91,6 +91,21 @@ export function displayMethod(method) {
   }
 }
 
+/**
+ * displayFeedType — mapuje wewnętrzną (polską) nazwę typu karmienia na
+ * przetłumaczony label z i18n. Analogicznie do displayMethod.
+ * Używane w CSV/PDF eksportach + w dowolnym UI gdzie pokazujemy l.type.
+ */
+export function displayFeedType(type) {
+  switch (type) {
+    case 'Pierś lewa':         return t('feed.type.left')
+    case 'Pierś prawa':        return t('feed.type.right')
+    case 'Butelka':            return t('feed.type.bottle')
+    case 'Odciągnięte mleko':  return t('feed.type.pumped')
+    default:                   return type || ''
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // USUNIĘTE W v2.7.1: calcParacetamol, calcIbuprofen
 //

@@ -26,6 +26,7 @@ import { db } from '../firebase'
 import { doc } from 'firebase/firestore'
 import { captureError, addBreadcrumb } from '../sentry'
 import { todayDate } from './helpers'
+import { t } from '../i18n'
 
 const LS_PREFIX = 'babylog_'
 const GUEST_PREFIX = 'babylog_guest_'
@@ -97,7 +98,7 @@ export async function exportAllDataAsJson(uid, appVersion = '2.5.5') {
   }
   const json = JSON.stringify(payload, null, 2)
   const blob = new Blob([json], { type: 'application/json' })
-  const fname = `spokojny-rodzic-backup-${todayDate()}.json`
+  const fname = `babylog-backup-${todayDate()}.json`
   triggerDownload(blob, fname)
   addBreadcrumb('export', 'json-success', { recordCount: Object.keys(data).length })
   return { success: true, recordCount: Object.keys(data).length }
@@ -170,7 +171,7 @@ export async function exportAllDataAsCsv(uid) {
 
   // Profile info (wspólne, nie per dziecko)
   if (data.profiles) {
-    parts.push('# PROFILE DZIECI')
+    parts.push(`# ${t('csv.section.profiles')}`)
     parts.push(arrayToCsv(data.profiles, ['id', 'name', 'months', 'weight', 'sex', 'avatar']))
     parts.push('')
   }
@@ -193,7 +194,7 @@ export async function exportAllDataAsCsv(uid) {
 
   const csvContent = '\ufeff' + parts.join('\n')  // BOM UTF-8 na początku dla Excel
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' })
-  const fname = `spokojny-rodzic-dane-${todayDate()}.csv`
+  const fname = `babylog-data-${todayDate()}.csv`
   triggerDownload(blob, fname)
   return { success: true, categoriesCount: parts.filter(p => p.startsWith('#')).length }
 }
