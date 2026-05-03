@@ -72,7 +72,7 @@ export default function DietTab({uid, babyId, ageMonths }) {
       </div>
 
       <div className="segment">
-        <button className={`seg-btn ${filter==='all'?'active':''}`} onClick={()=>setFilter('all')}>Wszystkie</button>
+        <button className={`seg-btn ${filter==='all'?'active':''}`} onClick={()=>setFilter('all')}>{t('common.all')}</button>
         <button className={`seg-btn ${filter==='available'?'active':''}`} onClick={()=>setFilter('available')}>{t('diet.filter.available')}</button>
         <button className={`seg-btn ${filter==='upcoming'?'active':''}`} onClick={()=>setFilter('upcoming')}>{t('diet.filter.upcoming')}</button>
       </div>
@@ -115,9 +115,9 @@ export default function DietTab({uid, babyId, ageMonths }) {
         {t('diet.add_custom')}
       </button>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title="Nowy produkt">
+      <Modal open={modal} onClose={()=>setModal(false)} title={t('diet.modal.title')}>
         <div className="form-group">
-          <label className="form-label">Emoji produktu</label>
+          <label className="form-label">{t('diet.emoji_label')}</label>
           <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:4,maxHeight:120,overflowY:'auto'}}>
             {EMOJI_OPTIONS.map(e => (
               <button key={e} onClick={()=>setForm(f=>({...f,emoji:e}))} style={{

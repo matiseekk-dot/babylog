@@ -270,7 +270,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
 
       <Modal open={addMedModal} onClose={()=>setAddMedModal(false)} title={t('meds.add_custom.modal')}>
         <div className="form-group">
-          <label className="form-label">Emoji leku</label>
+          <label className="form-label">{t('meds.emoji_label')}</label>
           <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:4}}>
             {EMOJI_OPTIONS.map(e => (
               <button key={e} onClick={()=>setMedForm(f=>({...f,emoji:e}))} style={{width:40,height:40,fontSize:20,borderRadius:8,cursor:'pointer',border:`1.5px solid ${medForm.emoji===e?'var(--green)':'var(--border)'}`,background:medForm.emoji===e?'var(--green-light)':'var(--surface)'}}>{e}</button>

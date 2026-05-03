@@ -688,7 +688,7 @@ export default function SettingsScreen({
       </div>
 
       <div style={{ padding: '16px', fontSize: 10, color: '#9a9a94', textAlign: 'center' }}>
-        Spokojny Rodzic v{APP_VERSION} · SkuDev
+        {t('app.title')} v{APP_VERSION} · SkuDev
       </div>
 
       {/* PDF Report modal — Premium only */}

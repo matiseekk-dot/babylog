@@ -485,7 +485,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
 
         <div className="form-row">
           <div className="form-group">
-            <label className="form-label">Data</label>
+            <label className="form-label">{t('common.date')}</label>
             <input
               className="form-input"
               type="date"
@@ -494,7 +494,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Godzina</label>
+            <label className="form-label">{t('common.time')}</label>
             <input
               className="form-input"
               type="time"
@@ -505,7 +505,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
         </div>
 
         <div className="form-group">
-          <label className="form-label">Notatka (opcjonalnie)</label>
+          <label className="form-label">{t('common.note_optional')}</label>
           <textarea
             className="form-input"
             rows={2}

@@ -299,7 +299,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
     y = addSectionTitle(doc, t('pdf.section.growth'), y)
     _renderTable(autoTable, doc, {
       startY: y,
-      head: [[t('pdf.header.date'), t('pdf.child.weight'), 'Wzrost', 'Obwód głowy']],
+      head: [[t('pdf.header.date'), t('pdf.child.weight'), t('pdf.col.height'), t('pdf.col.head_circ')]],
       body: growthLogs.map(l => [
         formatDateLocale(l.date),
         l.weight ? `${l.weight} kg` : '—',

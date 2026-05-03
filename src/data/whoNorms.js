@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+
 /**
  * WHO Child Growth Standards — percentyle
  *
@@ -253,25 +255,32 @@ export function calculatePercentile(value, percentiles) {
 
 /**
  * Generuje interpretację percentyla dla użytkownika.
+ *
+ * v2.11.2: pełna lokalizacja (PL+EN). Wcześniej cały string był hardkodowany
+ * po polsku — w EN użytkownicy widzieli polskie komunikaty na siatce wzrostu.
  */
 export function interpretPercentile(percentile, type) {
-  const typeLabel = type === 'weight' ? 'waga' : type === 'height' ? 'wzrost' : 'obwód głowy'
+  const typeKey = type === 'weight' ? 'who.type.weight'
+                : type === 'height' ? 'who.type.height'
+                : 'who.type.head_circ'
+  const typeLabel = t(typeKey)
+  const labelCapped = typeLabel[0].toUpperCase() + typeLabel.slice(1)
 
   if (percentile === '<3') return {
     level: 'warning',
-    text: `${typeLabel[0].toUpperCase()+typeLabel.slice(1)} poniżej P3 — warto skonsultować z pediatrą`,
+    text: t('who.below_p3', { label: labelCapped }),
   }
   if (percentile === '>97') return {
     level: 'warning',
-    text: `${typeLabel[0].toUpperCase()+typeLabel.slice(1)} powyżej P97 — warto skonsultować z pediatrą`,
+    text: t('who.above_p97', { label: labelCapped }),
   }
 
   const pct = Number(percentile)
-  if (pct >= 40 && pct <= 60) return { level: 'ok', text: `Blisko mediany (P50) — typowy rozwój` }
-  if (pct >= 25 && pct < 75)  return { level: 'ok', text: `W normie — zdrowy rozwój` }
-  if (pct >= 15 && pct < 25)  return { level: 'info', text: `Na niższym końcu normy, ale OK` }
-  if (pct > 75  && pct <= 85) return { level: 'info', text: `Na wyższym końcu normy, ale OK` }
-  if (pct > 3   && pct < 15)  return { level: 'info', text: `Niższy percentyl — obserwuj trend` }
-  if (pct > 85  && pct < 97)  return { level: 'info', text: `Wyższy percentyl — obserwuj trend` }
-  return { level: 'ok', text: 'W normie' }
+  if (pct >= 40 && pct <= 60) return { level: 'ok', text: t('who.near_median') }
+  if (pct >= 25 && pct < 75)  return { level: 'ok', text: t('who.in_range') }
+  if (pct >= 15 && pct < 25)  return { level: 'info', text: t('who.lower_normal') }
+  if (pct > 75  && pct <= 85) return { level: 'info', text: t('who.upper_normal') }
+  if (pct > 3   && pct < 15)  return { level: 'info', text: t('who.lower_observe') }
+  if (pct > 85  && pct < 97)  return { level: 'info', text: t('who.upper_observe') }
+  return { level: 'ok', text: t('who.in_range') }
 }

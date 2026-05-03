@@ -118,7 +118,7 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
       </div>
 
       <div className="segment">
-        <button className={`seg-btn ${filter==='all'?'active':''}`} onClick={()=>setFilter('all')}>Wszystkie</button>
+        <button className={`seg-btn ${filter==='all'?'active':''}`} onClick={()=>setFilter('all')}>{t('common.all')}</button>
         <button className={`seg-btn ${filter==='upcoming'?'active':''}`} onClick={()=>setFilter('upcoming')}>{t('milestones.filter.upcoming')}</button>
         <button className={`seg-btn ${filter==='done'?'active':''}`} onClick={()=>setFilter('done')}>{t('milestones.filter.done')}</button>
       </div>
@@ -160,7 +160,7 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
       {/* Modal: DODAJ nowy milestone */}
       <Modal open={modal} onClose={()=>setModal(false)} title={t('milestones.modal.title')}>
         <div className="form-group">
-          <label className="form-label">Emoji</label>
+          <label className="form-label">{t('milestones.emoji_label')}</label>
           <div style={{display:'flex',flexWrap:'wrap',gap:6,marginTop:4,maxHeight:110,overflowY:'auto'}}>
             {EMOJI_OPTIONS.map(e => (
               <button key={e} onClick={()=>setForm(f=>({...f,emoji:e}))} style={{
@@ -172,7 +172,7 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Opis etapu</label>
+          <label className="form-label">{t('milestones.desc_label')}</label>
           <input
             className="form-input"
             type="text"

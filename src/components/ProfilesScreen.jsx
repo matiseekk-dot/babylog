@@ -43,7 +43,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
   }
 
   const ageLabel = (m) => {
-    if (m < 1) return 'Noworodek'
+    if (m < 1) return t('profiles.age.newborn')
     if (m < 12) return t('profiles.age.months', {count: m})
     const y = Math.floor(m/12); const mo = m%12
     return mo > 0 ? t('profiles.age.years_months', {years: y, months: mo}) : (y === 1 ? t('profiles.age.year', {count: y}) : t('profiles.age.months', {count: m}))
@@ -76,17 +76,17 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
       </div>
 
       <button className="btn-add" onClick={openAdd}>
-        + Dodaj dziecko
+        {t('profiles.add')}
       </button>
 
-      <Modal open={modal} onClose={()=>setModal(false)} title="Nowe dziecko">
+      <Modal open={modal} onClose={()=>setModal(false)} title={t('profiles.add.title')}>
         <>
       <div className="form-group">
         <label className="form-label">{t('onb.setup.name')}</label>
         <input className="form-input" type="text" maxLength={40} placeholder={t('profiles.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
       </div>
       <div className="form-group">
-        <label className="form-label">Avatar</label>
+        <label className="form-label">{t('profiles.avatar_label')}</label>
         <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:4}}>
           {AVATARS.map((a,i) => (
             <button key={a} onClick={()=>setForm(f=>({...f,avatar:a,avatarColor:AVATAR_COLORS[i]}))} style={{
@@ -186,7 +186,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
         <input className="form-input" type="text" maxLength={40} placeholder={t('profiles.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
       </div>
       <div className="form-group">
-        <label className="form-label">Avatar</label>
+        <label className="form-label">{t('profiles.avatar_label')}</label>
         <div style={{display:'flex',flexWrap:'wrap',gap:8,marginTop:4}}>
           {AVATARS.map((a,i) => (
             <button key={a} onClick={()=>setForm(f=>({...f,avatar:a,avatarColor:AVATAR_COLORS[i]}))} style={{
