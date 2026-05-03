@@ -9,6 +9,7 @@ import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretSleep } from '../engine/interpretations'
 import HistorySection from './HistorySection'
+import SleepChart from './SleepChart'
 
 export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   useLocale()
@@ -188,6 +189,10 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
         <div className="stat-card"><div className="stat-val">{todayLogs.length}</div><div className="stat-lbl">{t('sleep.sessions_label')}</div></div>
         <div className="stat-card"><div className="stat-val">{norm}h</div><div className="stat-lbl">{t('sleep.norm_label')}</div></div>
       </div>
+
+      {/* v2.11.8: SleepChart wpięty (był dead file). Free: wykres z surowymi danymi.
+          Premium: wykres + reference range vs normy WHO + interpretation insight. */}
+      <SleepChart sleepLogs={logs} currentAgeMonths={ageMonths} showReference={isPremium} />
 
       {isPremium
         ? <InlineInsight insight={interpretSleep(logs, ageMonths)} />

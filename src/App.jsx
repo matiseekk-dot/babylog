@@ -453,7 +453,18 @@ export default function App() {
     }
   }
 
-  const addProfile    = (p) => { setProfiles([...profiles, p]); setActiveId(p.id) }
+  // v2.11.8: gate addProfile by Premium — paywall obiecuje "Unlimited children"
+  // jako Premium feature. Wcześniej free user mógł dodać ile chce profili.
+  // Free: max 1 child. Premium/Trial: unlimited. Próba dodania jako free
+  // otwiera paywall zamiast zapisać.
+  const addProfile = (p) => {
+    if (!isPremium && profiles.length >= 1) {
+      openPaywall()
+      return
+    }
+    setProfiles([...profiles, p])
+    setActiveId(p.id)
+  }
   const updateProfile = (id, data) => setProfiles(profiles.map(p => p.id === id ? { ...p, ...data } : p))
   const deleteProfile = (id) => {
     const next = profiles.filter(p => p.id !== id)

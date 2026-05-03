@@ -4,6 +4,8 @@ import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
+import TeethingChart from './TeethingChart'
+import PremiumTeaser from './PremiumTeaser'
 
 /**
  * Teething tracker — log baby's teeth eruption.
@@ -51,7 +53,7 @@ const TEETH = [
   { id:'l-l2-molar',   position:'lower', col:10,nameKey:'teeth.lower.second_molar_l', typical:'23-31' },
 ]
 
-export default function TeethingTab({ uid, babyId }) {
+export default function TeethingTab({ uid, babyId, ageMonths, isPremium, onUpgrade }) {
   useLocale()
   const [teeth, setTeeth] = useFirestore(uid, `teething_${babyId}`, {})
   // teeth = { [toothId]: { date: 'YYYY-MM-DD', note: '' } }
@@ -180,6 +182,11 @@ export default function TeethingTab({ uid, babyId }) {
           {t('teething.hint')}
         </div>
       </div>
+
+      {/* v2.11.8: TeethingChart wpięty (był dead file). Free: timeline z user data.
+          Premium: timeline + reference range AAPD wg typowych wieków wyrznięcia. */}
+      <TeethingChart teeth={teeth} teethDef={TEETH} currentAgeMonths={ageMonths} showReference={isPremium} />
+      {!isPremium && <PremiumTeaser label={t('teething.premium.label') || 'Wykres rozwoju zębów'} onUpgrade={onUpgrade} />}
 
       {/* Recent teeth list */}
       {erupted > 0 && (

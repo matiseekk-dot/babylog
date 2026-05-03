@@ -5,6 +5,8 @@ import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toastWithUndo } from './Toast'
 import { t, useLocale, isEN } from '../i18n'
+import MilestonesChart from './MilestonesChart'
+import PremiumTeaser from './PremiumTeaser'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
 
@@ -24,7 +26,7 @@ const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','�
  *   - Krótki tap na zaznaczony → modal edycji daty
  *   - ✕ (tylko na custom) → usuwa całkowicie milestone
  */
-export default function MilestonesTab({uid, babyId, ageMonths }) {
+export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgrade }) {
   useLocale()
   const [done, setDone] = useFirestore(uid, `milestones_${babyId}`, {})
   const [customMilestones, setCustomMilestones] = useFirestore(uid, `milestones_custom_${babyId}`, [])
@@ -152,6 +154,11 @@ export default function MilestonesTab({uid, babyId, ageMonths }) {
           <p>{t('milestones.empty')}</p>
         </div>
       )}
+
+      {/* v2.11.8: MilestonesChart wpięty (był dead file). Free: scatter user data.
+          Premium: + reference range typowych wieków osiągnięcia milestone'ów. */}
+      <MilestonesChart milestones={builtInMilestones} done={done} currentAgeMonths={ageMonths} showReference={isPremium} />
+      {!isPremium && <PremiumTeaser label={t('milestones.premium.label')} onUpgrade={onUpgrade} />}
 
       <button className="btn-add" onClick={()=>{ setForm({name:'',emoji:'⭐',months:String(ageMonths)}); setModal(true) }}>
         {t('milestones.add')}

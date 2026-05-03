@@ -189,6 +189,7 @@ const TRANSLATIONS = {
     // Teething tab
     'nav.teething':                'Ząbki',
     'teething.title':              'Ząbkowanie',
+    'teething.premium.label':      'Wykres rozwoju zębów + normy AAPD',
     'teething.desc':               'Wyrżnęło się {count} z {total} ząbków',
     'teething.upper':              'Górne',
     'teething.lower':              'Dolne',
@@ -271,6 +272,7 @@ const TRANSLATIONS = {
 
     // Feed tab
     'feed.title':         'Karmienie',
+    'feed.premium.label':  'Wykres częstości karmień + zakresy wg wieku',
     'feed.desc':          'Rejestruj karmienia piersią i butelką',
     'feed.quick.left':    'Pierś\nlewa',
     'feed.quick.right':   'Pierś\nprawa',
@@ -683,6 +685,7 @@ const TRANSLATIONS = {
 
     // Milestones tab
     'milestones.title':          'Kamienie milowe',
+    'milestones.premium.label':  'Wykres milestone\'ów + zakresy referencyjne',
     'milestones.desc':           '{done}/{total} osiągniętych · Własne: {custom}',
     'milestones.filter.upcoming':'Nadchodzące',
     'milestones.filter.done':    'Osiągnięte',
@@ -1556,6 +1559,7 @@ const TRANSLATIONS = {
     // Teething tab
     'nav.teething':                'Teething',
     'teething.title':              'Teething',
+    'teething.premium.label':      'Teething chart + AAPD reference',
     'teething.desc':               '{count} of {total} teeth erupted',
     'teething.upper':              'Upper',
     'teething.lower':              'Lower',
@@ -1638,6 +1642,7 @@ const TRANSLATIONS = {
 
     // Feed tab
     'feed.title':         'Feeding',
+    'feed.premium.label':  'Feeding frequency chart + age-based ranges',
     'feed.desc':          'Track breast and bottle feeds',
     'feed.quick.left':    'Left\nbreast',
     'feed.quick.right':   'Right\nbreast',
@@ -2048,6 +2053,7 @@ const TRANSLATIONS = {
 
     // Milestones tab
     'milestones.title':          'Milestones',
+    'milestones.premium.label':  'Milestones chart + reference ranges',
     'milestones.desc':           '{done}/{total} achieved · Custom: {custom}',
     'milestones.filter.upcoming':'Upcoming',
     'milestones.filter.done':    'Achieved',

@@ -6,6 +6,8 @@ import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
 import { t, tPlural, useLocale } from '../i18n'
 import HistorySection from './HistorySection'
+import FeedingFrequencyChart from './FeedingFrequencyChart'
+import PremiumTeaser from './PremiumTeaser'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
 
@@ -18,7 +20,7 @@ function getQuickBtns() {
   ]
 }
 
-export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, onDataChange }) {
+export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   useLocale()
   const QUICK_BTNS = getQuickBtns()
   const [logs, setLogs] = useFirestore(uid, `feed_${babyId}`, [])
@@ -145,6 +147,11 @@ export default function FeedTab({uid, babyId, sectionAlerts = [], onNavigate, on
         <div className="stat-card"><div className="stat-val">{totalMl > 0 ? `${totalMl}ml` : `${breastCount}×`}</div><div className="stat-lbl">{totalMl > 0 ? t('feed.stat.bottle') : t('feed.stat.breast')}</div></div>
         <div className="stat-card"><div className="stat-val">{lastAgo}</div><div className="stat-lbl">{t('feed.stat.ago')}</div></div>
       </div>
+
+      {/* v2.11.8: FeedingFrequencyChart wpięty (był dead file). Free: wykres user data.
+          Premium: + reference range — typowa liczba karmień/dzień wg wieku. */}
+      <FeedingFrequencyChart feedLogs={logs} currentAgeMonths={ageMonths} showReference={isPremium} />
+      {!isPremium && <PremiumTeaser label={t('feed.premium.label')} onUpgrade={onUpgrade} />}
 
       <div className="card">
         <div className="card-header">{t('feed.today')}</div>
