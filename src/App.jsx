@@ -831,6 +831,8 @@ export default function App() {
             onAdd={addProfile}
             onUpdate={updateProfile}
             onDelete={deleteProfile}
+            isPremium={isPremium}
+            onUpgrade={() => { setShowProfiles(false); openPaywall() }}
           />
         ) : showMore ? (
           <div style={{paddingBottom:8}}>

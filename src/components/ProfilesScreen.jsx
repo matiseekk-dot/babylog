@@ -6,13 +6,21 @@ import { genId, parseNum } from '../utils/helpers'
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 const AVATAR_COLORS = ['#E1F5EE','#FAEEDA','#EEEDFE','#FAECE7','#E6F1FB','#FBEAF0','#EAF3DE','#FCEBEB']
 
-export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, onUpdate, onDelete }) {
+export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, onUpdate, onDelete, isPremium, onUpgrade }) {
   useLocale()
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(null)
   const [form, setForm] = useState({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE', toiletMode:'diapers' })
 
   const openAdd = () => {
+    // v2.11.9: gate Add Profile button — free user max 1 profile.
+    // Wcześniej free user mógł otworzyć modal, wypełnić formularz, dopiero
+    // przy Save dostać paywall. Teraz paywall otwiera się od razu —
+    // czystsze UX, użytkownik wie czego się spodziewać.
+    if (!isPremium && profiles.length >= 1) {
+      onUpgrade?.()
+      return
+    }
     setForm({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE', toiletMode:'diapers' })
     setModal(true)
   }
