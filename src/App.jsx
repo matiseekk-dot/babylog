@@ -703,7 +703,11 @@ export default function App() {
       {/* TOPBAR */}
       <div className="topbar">
         <div className="topbar-left">
-          <div className="topbar-logo">🍼 {t('app.title')}</div>
+          {/* v2.11.6: bez emoji w logo — emoji 🍼 wraz z "Spokojny Rodzic" + 4 elementami
+              po prawej (PL/EN, Trial, ⚙, baby chip) nie mieściło się na 432px viewport,
+              powodując ellipsis "Spokojny Ro...". Teraz tytuł sam, emoji już nie eatuje
+              ~22px szerokości. */}
+          <div className="topbar-logo">{t('app.title')}</div>
           <div className="topbar-sub">
             {showProfiles ? t('topbar.profiles') : showMore ? t('topbar.more') : currentMoreTab ? t(currentMoreTab.labelKey) : t(NAV_TABS.find(x=>x.id===tab)?.labelKey || 'nav.feed')}
           </div>

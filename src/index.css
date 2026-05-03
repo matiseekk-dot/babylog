@@ -172,9 +172,29 @@ input[type=text], input[type=number], input[type=time], input[type=date], select
   flex-shrink: 0;
   padding-top: max(12px, env(safe-area-inset-top));
 }
-.topbar-left { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex-shrink: 1; }
-.topbar-logo { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.topbar-sub { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar-left { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+/* v2.11.6: responsive font-size — na małych ekranach ("Spokojny Rodzic" 15 chars + emoji
+   nie mieści się w 18px obok 4 buttonów topbar). clamp() skaluje od 14 do 18px w zależności
+   od dostępnej szerokości viewport. */
+.topbar-logo {
+  /* v2.11.6: 16px stale (było 18px) — "Spokojny Rodzic" + emoji nie mieściły się
+     na 432px viewport obok 4 elementów topbar (PL/EN, Trial, settings, baby-chip).
+     16px daje trochę luzu i nadal czytelne. */
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.topbar-sub {
+  font-size: clamp(10px, 3vw, 12px);
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .baby-chip {
   display: flex; align-items: center; gap: 6px;
   background: var(--green-light);

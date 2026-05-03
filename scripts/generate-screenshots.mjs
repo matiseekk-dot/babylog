@@ -26,6 +26,12 @@ const PROFILE_ID = 'demo'
 function buildState(locale = 'pl') {
   const today = new Date().toISOString().slice(0, 10)
   const yest = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  // v2.11.6: locale-aware notes — w PL "Po Paracetamolu", w EN "After paracetamol".
+  // User notes są user content, nie tłumaczone przez i18n; ale dla screenshotów
+  // marketing-quality ujednolicamy ze wzgędu na locale.
+  const noteAfterMed = locale === 'en' ? 'After paracetamol' : 'Po Paracetamolu'
+  const sleepLabelMorning = locale === 'en' ? 'Morning nap' : 'Drzemka poranna'
+  const sleepLabelAfternoon = locale === 'en' ? 'Afternoon nap' : 'Drzemka popołudniowa'
   return {
     'babylog_medical_consent_v1': '1',
     'med_disclaimer_version': '1.0',
@@ -49,8 +55,8 @@ function buildState(locale = 'pl') {
       { id: 'f5', date: today, time: '19:00', type: 'Pierś prawa', amount: '15' },
     ]),
     [`babylog_guest_sleep_${PROFILE_ID}`]: JSON.stringify([
-      { id: 's1', date: today, label: 'Drzemka poranna', durationMin: 75, manual: false, startTs: Date.now() - 8*3600000, endTs: Date.now() - 7*3600000 },
-      { id: 's2', date: today, label: 'Drzemka popołudniowa', durationMin: 90, manual: false, startTs: Date.now() - 4*3600000, endTs: Date.now() - 2.5*3600000 },
+      { id: 's1', date: today, label: sleepLabelMorning, durationMin: 75, manual: false, startTs: Date.now() - 8*3600000, endTs: Date.now() - 7*3600000 },
+      { id: 's2', date: today, label: sleepLabelAfternoon, durationMin: 90, manual: false, startTs: Date.now() - 4*3600000, endTs: Date.now() - 2.5*3600000 },
     ]),
     [`babylog_guest_diaper_${PROFILE_ID}`]: JSON.stringify([
       { id: 'd1', date: today, time: '07:00', type: 'Mokra', note: '' },
@@ -62,7 +68,7 @@ function buildState(locale = 'pl') {
       { id: 't1', date: yest, time: '18:00', temp: 36.8, method: 'Pod pachą', note: '' },
       { id: 't2', date: today, time: '09:00', temp: 37.2, method: 'Pod pachą', note: '' },
       { id: 't3', date: today, time: '13:00', temp: 37.4, method: 'Pod pachą', note: '' },
-      { id: 't4', date: today, time: '17:30', temp: 37.6, method: 'Pod pachą', note: 'Po Paracetamolu' },
+      { id: 't4', date: today, time: '17:30', temp: 37.6, method: 'Pod pachą', note: noteAfterMed },
     ]),
     [`babylog_guest_meds_${PROFILE_ID}`]: JSON.stringify([
       { id: 'm1', date: today, time: '14:00', med: 'Paracetamol', dose: '2.5 ml', note: '' },
@@ -167,7 +173,10 @@ async function screenshotForLocale(browser, locale) {
   for (const shot of SHOTS) {
     if (shot.action) {
       await shot.action(page)
-      await sleep(1500)
+      // Per-shot wait. Screen 02 (temperature) has recharts that needs ~2s
+      // to mount + animate. Inne ekrany się ładują szybciej.
+      const waitMs = shot.name.startsWith('02-') ? 3000 : 1500
+      await sleep(waitMs)
     }
     const file = path.join(localeDir, `${shot.name}.png`)
     await page.screenshot({
