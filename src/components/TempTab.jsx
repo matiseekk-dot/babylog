@@ -169,7 +169,12 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
       <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('temp.modal.title')}>
         <div className="form-group">
           <label className="form-label">{t('temp.modal.value')}</label>
-          <input className="form-input" type="number" step="0.1" min="35" max="42" value={form.temp} onChange={e=>setForm(f=>({...f,temp:e.target.value}))} />
+          {/* v2.11.4: type="text" + inputMode="decimal" zamiast type="number" — pozwala
+              użytkownikom z polską klawiaturą wpisywać przecinek jako separator dziesiętny
+              (38,7°C). parseNum() przy save normalizuje przecinek na kropkę.
+              type="number" w Chrome silently odrzucał wartości z przecinkiem, przez co
+              userzy widzieli puste pole zamiast swojego pomiaru. */}
+          <input className="form-input" type="text" inputMode="decimal" pattern="[0-9.,]*" maxLength={5} value={form.temp} onChange={e=>setForm(f=>({...f,temp:e.target.value.replace(/[^0-9.,]/g,'')}))} />
         </div>
         <div className="form-group">
           <label className="form-label">{t('temp.modal.method')}</label>

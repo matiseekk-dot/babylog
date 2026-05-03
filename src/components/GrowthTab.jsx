@@ -220,18 +220,20 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
           <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
         </div>
         <div className="form-row">
+          {/* v2.11.4: type="text" + inputMode="decimal" — patrz TempTab. parseNum() w save()
+              normalizuje przecinek → kropkę, więc PL klawiatura z "6,5 kg" działa. */}
           <div className="form-group">
             <label className="form-label">{t('growth.modal.weight')}</label>
-            <input className="form-input" type="number" step="0.1" placeholder={t('growth.weight_ph')} value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
+            <input className="form-input" type="text" inputMode="decimal" pattern="[0-9.,]*" maxLength={6} placeholder={t('growth.weight_ph')} value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value.replace(/[^0-9.,]/g,'')}))} />
           </div>
           <div className="form-group">
             <label className="form-label">{t('growth.modal.height')}</label>
-            <input className="form-input" type="number" step="0.5" placeholder={t('growth.height_ph')} value={form.height} onChange={e=>setForm(f=>({...f,height:e.target.value}))} />
+            <input className="form-input" type="text" inputMode="decimal" pattern="[0-9.,]*" maxLength={6} placeholder={t('growth.height_ph')} value={form.height} onChange={e=>setForm(f=>({...f,height:e.target.value.replace(/[^0-9.,]/g,'')}))} />
           </div>
         </div>
         <div className="form-group">
           <label className="form-label">{t('growth.modal.head')}</label>
-          <input className="form-input" type="number" step="0.5" placeholder={t('growth.head_ph')} value={form.headCirc} onChange={e=>setForm(f=>({...f,headCirc:e.target.value}))} />
+          <input className="form-input" type="text" inputMode="decimal" pattern="[0-9.,]*" maxLength={6} placeholder={t('growth.head_ph')} value={form.headCirc} onChange={e=>setForm(f=>({...f,headCirc:e.target.value.replace(/[^0-9.,]/g,'')}))} />
         </div>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button>

@@ -170,7 +170,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
       </div>
       <div className="form-group">
         <label className="form-label">{t('onb.setup.weight')}</label>
-        <input className="form-input" type="number" step="0.1" min="1" max="50" value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
+        <input className="form-input" type="text" inputMode="decimal" pattern="[0-9.,]*" maxLength={5} value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value.replace(/[^0-9.,]/g,'')}))} />
       </div>
     </>
         <div className="modal-btns">
@@ -270,7 +270,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
       </div>
       <div className="form-group">
         <label className="form-label">{t('onb.setup.weight')}</label>
-        <input className="form-input" type="number" step="0.1" min="1" max="50" value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value}))} />
+        <input className="form-input" type="text" inputMode="decimal" pattern="[0-9.,]*" maxLength={5} value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value.replace(/[^0-9.,]/g,'')}))} />
       </div>
     </>
         <div className="modal-btns">

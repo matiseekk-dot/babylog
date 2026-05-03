@@ -1,6 +1,6 @@
 {
   "name": "babylog",
-  "version": "2.11.3",
+  "version": "2.11.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
