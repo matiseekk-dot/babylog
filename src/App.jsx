@@ -348,13 +348,32 @@ export default function App() {
   // CTA gdy true. Wcześniej user klikał "Spróbuj" i widział nic przez ~2-5s
   // (czas otwarcia natywnego Google Play sheet) — myśląc że klik nie zadziałał.
   const [purchasing, setPurchasing] = useState(false)
+  // v2.11.13 — pending activation state. Po zakupie czekamy na webhook RC →
+  // Firestore update. Pokazujemy modal z spinnerem i timeoutem 60s. Jeśli
+  // Premium nie odblokuje się w tym czasie → instrukcja kontaktu z support.
+  const [pendingActivation, setPendingActivation] = useState(null)
+  // null | { productId, purchaseToken, startedAt, status: 'waiting'|'success'|'failed', errorReason? }
 
   const handleActivate = async (planId) => {
-    addBreadcrumb('purchase', 'handle-activate-clicked', { planId })
+    addBreadcrumb('purchase', 'handle-activate-clicked', { planId, hasUid: !!uid })
+
+    // v2.11.13 — KRYTYCZNY FIX: gate guests from purchase. Free user without
+    // Firebase login (uid=null) cannot activate Premium because RC requires
+    // app_user_id. Wcześniej guest mógł kupić, Google pobierał kasę, a
+    // activateWithToken cicho returnował (uid=null check) — money lost.
+    // Teraz: prompt do logowania zamiast otwierania Google Pay.
+    if (!uid) {
+      addBreadcrumb('purchase', 'guest-blocked-needs-login', {})
+      toast(t('paywall.need_login'), 'error')
+      // Sygnalizujemy LoginScreen — wyloguj guest mode, pokaż login.
+      try { localStorage.removeItem('babylog_guest') } catch {}
+      setGuestMode(false)
+      setShowPaywall(false)
+      return
+    }
+
     // v2.11.12 — KRYTYCZNY FIX: Google Play oczekuje pełnego SKU
     // (`spokojny_rodzic_premium_yearly`), NIE internal id ('yearly').
-    // Wcześniej DGA flow przekazywał planId jako sku — Google odrzucał
-    // transakcję, user widział error na natywnym sheet bez zrozumienia czemu.
     const plan = findPlan(isEN() ? 'en' : 'pl', planId)
     const productId = plan?.productId
     if (!productId) {
@@ -371,7 +390,7 @@ export default function App() {
           if (service) {
             const paymentMethod = [{
               supportedMethods: 'https://play.google.com/billing',
-              data: { sku: productId }, // v2.11.12: was planId — fixed
+              data: { sku: productId },
             }]
             const paymentDetails = {
               total: {
@@ -383,27 +402,49 @@ export default function App() {
             const response = await request.show()
             const purchaseToken = response.details?.purchaseToken
             if (purchaseToken) {
-              await activateWithToken(productId, purchaseToken) // v2.11.12: was planId
-              await response.complete('success')
+              // v2.11.13 — Google pobrał kasę. Save token do localStorage queue
+              // PRZED próbą RC activation — gdyby cokolwiek poszło nie tak (RC
+              // down, network drop), gnijemy w queue i retry przy następnym
+              // mount (App.jsx useEffect odpala retry). Token jest critical —
+              // bez niego ZACO user zapłacił.
+              const pending = { productId, purchaseToken, ts: Date.now() }
+              try {
+                const q = JSON.parse(localStorage.getItem('babylog_pending_activations') || '[]')
+                q.push(pending)
+                localStorage.setItem('babylog_pending_activations', JSON.stringify(q))
+              } catch {}
+
+              setPendingActivation({ ...pending, status: 'waiting' })
               setShowPaywall(false)
-              toast(t('paywall.activated'))
-              return
+              try {
+                await activateWithToken(productId, purchaseToken)
+                await response.complete('success')
+                // Don't toast yet — wait for Firestore premium_purchased update
+                // Effect monitoring `purchased` will handle final UI state.
+                return
+              } catch (rcErr) {
+                // RC activation failed (4xx, network, malformed token, etc.)
+                // Token zostaje w queue dla późniejszego retry.
+                console.error('[paywall] RC activation failed:', rcErr)
+                captureError(rcErr, { context: 'paywall-rc-activation', planId, productId })
+                setPendingActivation(p => ({ ...p, status: 'failed', errorReason: rcErr?.message || 'unknown' }))
+                await response.complete('success') // Google was paid — don't tell Google "fail"
+                return
+              }
             }
             await response.complete('fail')
           }
         } catch (dgaErr) {
-          // AbortError = user cancelled — to nie błąd, nie zgłaszaj.
           if (dgaErr?.name !== 'AbortError') {
             console.warn('[paywall] DGA flow failed, falling through:', dgaErr)
             captureError(dgaErr, { context: 'paywall-dga', planId, productId })
           }
-          // Nie zwracaj - pójdź do fallback
         }
       }
 
       // 2. Custom Android bridge (stary mechanizm, jeśli kiedyś będzie)
       if (window.Android?.launchBilling) {
-        window.Android.launchBilling(productId) // v2.11.12: was planId
+        window.Android.launchBilling(productId)
         return
       }
 
@@ -420,12 +461,74 @@ export default function App() {
     } catch (e) {
       console.error('[handleActivate]', e)
       captureError(e, { context: 'paywall-activate', planId, productId })
-      // User widzi feedback ze coś poszło nie tak (zamiast cichej śmierci)
       toast(t('paywall.error'), 'error')
     } finally {
       setPurchasing(false)
     }
   }
+
+  // v2.11.13 — Watch isPremium. Gdy pendingActivation w stanie 'waiting' i
+  // isPremium flips to true (webhook RC napisał do Firestore, listener pickedup)
+  // → success toast + clear pending + remove z localStorage queue.
+  useEffect(() => {
+    if (!pendingActivation || pendingActivation.status !== 'waiting') return
+    if (isPremium) {
+      addBreadcrumb('purchase', 'activation-completed', { productId: pendingActivation.productId })
+      toast(t('paywall.activated'))
+      setPendingActivation(null)
+      // Clear z localStorage queue
+      try {
+        const q = JSON.parse(localStorage.getItem('babylog_pending_activations') || '[]')
+        const filtered = q.filter(p => p.purchaseToken !== pendingActivation.purchaseToken)
+        localStorage.setItem('babylog_pending_activations', JSON.stringify(filtered))
+      } catch {}
+    }
+  }, [isPremium, pendingActivation])
+
+  // v2.11.13 — Timeout pending activation po 60s. Jeśli webhook RC nie dotarł
+  // do Firestore w tym czasie, pokazujemy modal z error + instrukcja kontaktu
+  // z support. Token zostaje w localStorage queue dla manualnego retry przez
+  // technical support albo następnym razem przy app start.
+  useEffect(() => {
+    if (!pendingActivation || pendingActivation.status !== 'waiting') return
+    const timer = setTimeout(() => {
+      setPendingActivation(p => p?.status === 'waiting'
+        ? { ...p, status: 'failed', errorReason: 'timeout' }
+        : p)
+    }, 60000)
+    return () => clearTimeout(timer)
+  }, [pendingActivation])
+
+  // v2.11.13 — Retry pending activations on app start. Jeśli user wcześniej
+  // kupił ale RC był chwilowo down, próbujemy ponownie. Limit 3 prób per
+  // token, potem usuwamy z queue (probably permanent failure — support).
+  useEffect(() => {
+    if (!uid) return
+    if (isPremium) return // already active, no retry needed
+    let cancelled = false
+    ;(async () => {
+      try {
+        const q = JSON.parse(localStorage.getItem('babylog_pending_activations') || '[]')
+        if (!q.length) return
+        const fresh = []
+        for (const p of q) {
+          if (cancelled) break
+          const attempts = p.attempts || 0
+          if (attempts >= 3) continue // drop after 3 retries
+          try {
+            await activateWithToken(p.productId, p.purchaseToken)
+            // Success → don't re-add to queue
+          } catch {
+            fresh.push({ ...p, attempts: attempts + 1, lastTry: Date.now() })
+          }
+        }
+        if (!cancelled) {
+          localStorage.setItem('babylog_pending_activations', JSON.stringify(fresh))
+        }
+      } catch {}
+    })()
+    return () => { cancelled = true }
+  }, [uid, isPremium, activateWithToken])
 
   const openPlayStore = () => {
     // Link do sklepu Google Play — wypełnia się po publikacji na Production
@@ -1004,6 +1107,65 @@ export default function App() {
         onClose={() => setShowPlayStoreModal(false)}
         onOpenPlayStore={openPlayStore}
       />
+      {/* v2.11.13 — Pending activation modal. Pokazuje się po purchase gdy
+          czekamy na webhook RC → Firestore. Status:
+          - 'waiting': spinner + "Aktywujemy Premium..."
+          - 'failed':  error + email do support + token saved for retry */}
+      {pendingActivation && (
+        <div role="dialog" aria-modal="true" style={{
+          position:'fixed',top:0,left:0,right:0,bottom:0,
+          background:'rgba(0,0,0,0.6)',zIndex:10001,
+          display:'flex',alignItems:'center',justifyContent:'center',padding:20,
+        }}>
+          <div style={{
+            background:'#fff',borderRadius:16,padding:'28px 24px',
+            maxWidth:420,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.3)',
+            textAlign:'center',
+          }}>
+            {pendingActivation.status === 'waiting' && (
+              <>
+                <div style={{fontSize:40,marginBottom:14}}>⏳</div>
+                <svg width="48" height="48" viewBox="0 0 24 24" style={{animation:'spin 0.8s linear infinite',marginBottom:14}}>
+                  <circle cx="12" cy="12" r="10" stroke="#0F6E56" strokeWidth="3" fill="none" strokeOpacity="0.25"/>
+                  <path d="M12 2 a10 10 0 0 1 10 10" stroke="#0F6E56" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                </svg>
+                <h2 style={{fontSize:18,fontWeight:800,marginBottom:10,color:'#1a1a18'}}>
+                  {t('paywall.activating.title')}
+                </h2>
+                <p style={{fontSize:14,lineHeight:1.5,color:'#5a5a56'}}>
+                  {t('paywall.activating.body')}
+                </p>
+              </>
+            )}
+            {pendingActivation.status === 'failed' && (
+              <>
+                <div style={{fontSize:40,marginBottom:14}}>⚠️</div>
+                <h2 style={{fontSize:18,fontWeight:800,marginBottom:12,color:'#7a3a05'}}>
+                  {t('paywall.activation_failed.title')}
+                </h2>
+                <p style={{fontSize:14,lineHeight:1.55,color:'#5a5a56',marginBottom:16,textAlign:'left'}}>
+                  {t('paywall.activation_failed.body')}
+                </p>
+                <div style={{
+                  background:'#FAEEDA',border:'1px solid #FAC775',borderRadius:8,
+                  padding:12,fontSize:12,color:'#633806',marginBottom:16,textAlign:'left',
+                }}>
+                  {t('paywall.activation_failed.support_hint')}
+                  <a href="mailto:skudev6@gmail.com?subject=Premium activation failed" style={{display:'block',marginTop:6,fontWeight:700,color:'#0F6E56'}}>
+                    skudev6@gmail.com
+                  </a>
+                </div>
+                <button onClick={() => setPendingActivation(null)} style={{
+                  width:'100%',padding:12,background:'#0F6E56',color:'#fff',
+                  border:'none',borderRadius:10,fontSize:14,fontWeight:700,cursor:'pointer',
+                }}>
+                  {t('common.close')}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <PremiumOnboardingModal
         open={showPremiumOnboarding}
         onClose={closePremiumOnboarding}

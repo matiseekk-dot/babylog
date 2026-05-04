@@ -193,16 +193,30 @@ export function useRevenueCat(uid) {
   // RC po przyjęciu fetch_token wysyła INITIAL_PURCHASE webhook → nasza
   // Cloud Function `revenueCatWebhook` zapisze `premium_purchased = true`.
   // Client zobaczy update przez Firestore real-time listener.
+  //
+  // v2.11.13: RZUCA error zamiast cicho catchować. Wcześniej silent catch ukrywał
+  // przed handleActivate fakt że RC odrzucił token (np. uprawnienia Service Account
+  // brakujące, malformed token, RC API down). User widział fake success toast
+  // mimo że pieniądze poszły do Google a Premium nie aktywne.
+  // Caller MUSI mieć try/catch + odpowiedni UX dla failure case.
   const activateWithToken = useCallback(async (productId, purchaseToken) => {
-    if (!uid) return
+    if (!uid) {
+      throw new Error('Cannot activate without uid (user not logged in)')
+    }
+    addBreadcrumb('purchase', 'activate-with-token-start', { productId })
     try {
-      addBreadcrumb('purchase', 'activate-with-token-start', { productId })
-      await activateGooglePlayPurchase(uid, productId, purchaseToken)
+      const result = await activateGooglePlayPurchase(uid, productId, purchaseToken)
+      if (result === null) {
+        // rcFetch returned null → RC API key not configured (env missing).
+        throw new Error('RC API key not configured')
+      }
       await checkPremium()
       addBreadcrumb('purchase', 'activate-with-token-success', { productId })
+      return result
     } catch (e) {
       console.warn('RC activation failed:', e)
       captureError(e, { context: 'rc-activation', productId, uid })
+      throw e // re-throw so caller can show proper UX
     }
   }, [uid, checkPremium])
 
