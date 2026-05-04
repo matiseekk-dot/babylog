@@ -452,6 +452,42 @@ export default function App() {
 
             setPendingActivation({ ...pending, status: 'waiting' })
             setShowPaywall(false)
+
+            // v2.11.15 — KRYTYCZNY FIX: acknowledge purchase token PRZED czymkolwiek.
+            // Google Play Billing wymaga `acknowledge` w ciągu 3 dni od zakupu.
+            // Bez tego Google AUTO-CANCEL'uje subskrypcję i zwraca pieniądze →
+            // user dostaje email "anulowano ze względu na brak potwierdzenia".
+            //
+            // Wcześniej (do v2.11.14) NIE było acknowledge w kodzie — to wyjaśnia
+            // dlaczego wszystkie 13 customers w RC mają 0 active subscriptions
+            // mimo płatnych zakupów.
+            //
+            // RC SDK robi to automatycznie, ale my używamy REST API → musimy sami:
+            // https://www.revenuecat.com/docs/google-play-billing-library
+            //
+            // Próbujemy 'repeatable' (subscription) najpierw, potem 'onetime' (one-time).
+            // Niektóre wersje DGA API wymagają drugi argument, niektóre nie.
+            // Robimy to BEFORE RC — kasa pobrana, bezwzględnie musimy potwierdzić,
+            // niezależnie czy RC odpowie OK czy fail.
+            try {
+              try {
+                await service.acknowledge(purchaseToken, 'repeatable')
+              } catch (e1) {
+                // Fallback dla starszych wersji DGA bez 2-go argumentu
+                await service.acknowledge(purchaseToken)
+              }
+              addBreadcrumb('purchase', 'acknowledge-success', { productId })
+            } catch (ackErr) {
+              // Nawet jeśli acknowledge fail, kontynuujemy — RC może być w stanie
+              // potwierdzić server-side (przez SubscriptionPurchases.acknowledge)
+              // jeśli ma odpowiednie perms. Loguj do Sentry żeby było wiadomo.
+              console.error('[paywall] acknowledge failed:', ackErr)
+              captureError(ackErr, { context: 'paywall-acknowledge', productId })
+              addBreadcrumb('purchase', 'acknowledge-failed', {
+                message: (ackErr?.message || '').slice(0, 200),
+              })
+            }
+
             try {
               await activateWithToken(productId, purchaseToken)
               await response.complete('success')
@@ -548,6 +584,11 @@ export default function App() {
   // v2.11.13 — Retry pending activations on app start. Jeśli user wcześniej
   // kupił ale RC był chwilowo down, próbujemy ponownie. Limit 3 prób per
   // token, potem usuwamy z queue (probably permanent failure — support).
+  //
+  // v2.11.15: Dodano acknowledge fallback. Tokeny które nie zostały
+  // acknowledżowane przy pierwszej próbie (np. user zamknął apkę przed RC
+  // returnem, albo DGA service crashed) — przy retry ponownie próbujemy
+  // acknowledge. Bez tego Google auto-cancel po 3 dniach.
   useEffect(() => {
     if (!uid) return
     if (isPremium) return // already active, no retry needed
@@ -556,11 +597,40 @@ export default function App() {
       try {
         const q = JSON.parse(localStorage.getItem('babylog_pending_activations') || '[]')
         if (!q.length) return
+        // Pobieramy DGA service raz dla wszystkich pending. Jeśli nie jest dostępny
+        // (apka jest na non-TWA, np. desktop browser), acknowledge jest skipowany —
+        // RC przy walidacji tokena może go acknowledżować jeśli ma odpowiednie perms.
+        let dgaService = null
+        if ('getDigitalGoodsService' in window) {
+          try {
+            dgaService = await window.getDigitalGoodsService('https://play.google.com/billing')
+          } catch {}
+        }
         const fresh = []
         for (const p of q) {
           if (cancelled) break
           const attempts = p.attempts || 0
           if (attempts >= 3) continue // drop after 3 retries
+
+          // v2.11.15: TRY ACKNOWLEDGE FIRST — niezależnie od RC outcome.
+          // Idempotent: jeśli już acknowledged, Google zwraca ok bez side-effectu.
+          if (dgaService && !p.acknowledged) {
+            try {
+              try {
+                await dgaService.acknowledge(p.purchaseToken, 'repeatable')
+              } catch {
+                await dgaService.acknowledge(p.purchaseToken)
+              }
+              p.acknowledged = true // mark żeby przy następnym retry nie próbować
+              addBreadcrumb('purchase', 'acknowledge-retry-success', { productId: p.productId })
+            } catch (ackErr) {
+              addBreadcrumb('purchase', 'acknowledge-retry-failed', {
+                message: (ackErr?.message || '').slice(0, 200),
+              })
+              // Continue mimo to — RC może się powieść
+            }
+          }
+
           try {
             await activateWithToken(p.productId, p.purchaseToken)
             // Success → don't re-add to queue
