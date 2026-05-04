@@ -27,7 +27,11 @@
 // release). Bezpieczne — Firebase data nadal pochodzi z sieci, tylko app-shell
 // (HTML/JS/CSS/assets) jest cache'owany.
 
-const SHELL_CACHE = 'babylog-shell-v6'
+// v2.11.25: bump to v7 — invalidates ALL cached assets from older versions.
+// Fixes "stuck on old version after reinstall" — Chrome trzyma SW + cache
+// per origin (matiseekk-dot.github.io), reinstall apki nie czyści tego.
+// Jedyny niezawodny sposób inwalidacji: bump cache name + skipWaiting.
+const SHELL_CACHE = 'babylog-shell-v7'
 const SHELL_FILES = [
   '/babylog/',
   '/babylog/manifest.json',
@@ -109,19 +113,23 @@ self.addEventListener('fetch', event => {
     return
   }
 
-  // 3. Statyczne assety — cache-first
+  // 3. Statyczne assety — v2.11.25: NETWORK-FIRST z fallback do cache.
+  // Wcześniej (do v2.11.24) było cache-first — user dostawał starą wersję
+  // bundle'a po update'cie hostingu, fresh wersja ściągała się dopiero w tle
+  // dla NASTĘPNEGO loada. Czyli każdy update wymagał 2× otwarcia apki.
+  // Teraz: zawsze próbujemy fetch (świeża), fallback do cache tylko offline.
+  // Cost: lekko wolniejsze online (1 roundtrip zamiast cache hit), ale
+  // zawsze aktualne. Vite content-hashes bundle'i więc cache i tak rzadko
+  // bywa hit'em (każdy build ma inny URL).
   if (req.url.match(/\.(js|css|png|svg|jpg|jpeg|webp|woff2?|ttf|json)$/)) {
     event.respondWith(
-      caches.match(req).then(cached => {
-        const fetchPromise = fetch(req).then(res => {
-          if (res && res.status === 200) {
-            const clone = res.clone()
-            caches.open(SHELL_CACHE).then(c => c.put(req, clone)).catch(() => {})
-          }
-          return res
-        }).catch(() => cached)
-        return cached || fetchPromise
-      })
+      fetch(req).then(res => {
+        if (res && res.status === 200) {
+          const clone = res.clone()
+          caches.open(SHELL_CACHE).then(c => c.put(req, clone)).catch(() => {})
+        }
+        return res
+      }).catch(() => caches.match(req))
     )
     return
   }
