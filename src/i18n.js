@@ -691,6 +691,8 @@ const TRANSLATIONS = {
     'meds.modal.dose_placeholder':'np. 2 ml, 50 mg',
     'meds.other':                'Inny',
     'meds.delete.confirm':       'Usunąć ten wpis?',
+    'meds.error.no_med':         'Wybierz lek',
+    'meds.error.no_dose':        'Wpisz dawkę',
 
     // Growth tab
     'growth.title':              'Wzrost i waga',
@@ -2090,6 +2092,8 @@ const TRANSLATIONS = {
     'meds.modal.dose_placeholder':'e.g. 2 ml, 50 mg',
     'meds.other':                'Other',
     'meds.delete.confirm':       'Delete this entry?',
+    'meds.error.no_med':         'Select a medicine',
+    'meds.error.no_dose':        'Enter a dose',
 
     // Growth tab
     'growth.title':              'Growth',

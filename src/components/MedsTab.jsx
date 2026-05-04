@@ -82,13 +82,38 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   }
 
   const save = () => {
+    // v2.11.21: Walidacja dose — wcześniej user mógł kliknąć "Zapisz"
+    // bez żadnej dawki, dostawał silent close modal i nic się nie działo
+    // (toast był wywoływany TYLKO przy edycji, nie przy nowym wpisie).
+    // Teraz: jeśli pusty dose lub brak med → toast error + nie zamykamy.
+    if (!form.med) {
+      toast(t('meds.error.no_med') || 'Wybierz lek', 'error')
+      return
+    }
+    if (!form.dose || !form.dose.trim()) {
+      toast(t('meds.error.no_dose') || 'Wpisz dawkę', 'error')
+      return
+    }
+
     if (editingId) {
       setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
       toast(t('common.saved'))
     } else {
       const entry = { id:genId(), ...form }
       setLogs([entry, ...logs])
-      if (permission === 'granted') scheduleReminder(entry)
+      // v2.11.21: BRAKOWAŁO TOAST dla nowych wpisów. User klikał Zapisz,
+      // modal się zamykał, a wpis dodawał się "po cichu" — ekran wyglądał
+      // jak nic się nie zmieniło bo nowy wpis był poniżej viewportu.
+      toast(t('common.saved'))
+      // v2.11.21: scheduleReminder w try/catch — jeśli SW notifications API
+      // failuje (Chrome WebView w TWA czasem), nie blokujmy reszty save flow.
+      if (permission === 'granted') {
+        try {
+          scheduleReminder(entry)
+        } catch (e) {
+          console.warn('[MedsTab] scheduleReminder failed:', e)
+        }
+      }
     }
     setModal(false)
     setEditingId(null)
