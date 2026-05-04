@@ -141,7 +141,24 @@ async function checkEntitlement(uid) {
 }
 
 /**
- * Aktywuje zakup przez token Google Play (używane w TWA)
+ * Aktywuje zakup przez token Google Play (używane w TWA).
+ *
+ * v2.11.19 — KRYTYCZNY FIX: usunięto `type: 'android'` z body.
+ *
+ * Wcześniej (do v2.11.18) wysyłaliśmy `type: 'android'` w body. Nowy RC API
+ * (v1) tego pola NIE AKCEPTUJE — zwraca błąd 400:
+ *   {"code":7226,"message":"type: Extra inputs are not permitted"}
+ *
+ * Platforma jest specyfikowana TYLKO przez header `X-Platform: android`
+ * (już ustawiamy w rcFetch). Pole `type` w body to leftover ze starej
+ * wersji API. To dosłownie blokowało WSZYSTKIE walidacje purchase tokenów —
+ * dlatego mieliśmy 13 customers w RC ale 0 active subscriptions.
+ *
+ * Każdy testowy zakup użytkownika (paid + unpaid) odbijał się o ten 400 →
+ * RC nie rejestrował zakupu → webhook nigdy nie firował → Premium nigdy
+ * się nie aktywował, mimo że Google Play pobrał kasę i acknowledge zadziałał.
+ *
+ * Reference: https://www.revenuecat.com/reference/receipts
  */
 async function activateGooglePlayPurchase(uid, productId, purchaseToken) {
   return rcFetch(`/receipts`, {
@@ -150,7 +167,8 @@ async function activateGooglePlayPurchase(uid, productId, purchaseToken) {
       app_user_id: uid,
       fetch_token: purchaseToken,
       product_id: productId,
-      type: 'android',
+      // ❌ NIE WOLNO dodawać `type` — RC zwróci 7226 i całe purchase flow się
+      // wywali. Platform = X-Platform header w rcFetch.
     }),
   })
 }
