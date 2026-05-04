@@ -31,12 +31,36 @@ export function usePremium(uid) {
   // z permission-denied — to OK, nikt go nie wywołuje od v2.10.0.
   const [purchased] = useFirestore(uid, 'premium_purchased', false)
 
-  // Zapisz start trialu przy pierwszym uruchomieniu
+  // v2.11.16: Race-condition fix dla "trial reset on refresh".
+  //
+  // Wcześniej: przy refresh apki, useFirestore zwracało initialState z
+  // localStorage. Jeśli localStorage był pusty (clear data, reinstall, fresh
+  // device, TWA cache wyczyszczony), trialStart = null. useEffect natychmiast
+  // wywoływał setTrialStart(Date.now()) — overwriting prawdziwego trial_start
+  // który dopiero ładował się z Firestore (~200-1500ms).
+  //
+  // Skutek: każdy refresh apki resetował trial do "14 dni od teraz", nawet
+  // jeśli user był na trialu od miesiąca.
+  //
+  // Fix:
+  //   - Dla guesta (no uid): zapisuj od razu (Firestore nie istnieje, race nie ma)
+  //   - Dla zalogowanego: czekaj 2s na onSnapshot. Jeśli w międzyczasie Firestore
+  //     dostarczy starszą wartość, useEffect odpali się ponownie ze świeżym
+  //     trialStart, a cleanup cancluje stary setTimeout. Jeśli po 2s wciąż null,
+  //     to faktycznie nowy user — wtedy zapisujemy.
   useEffect(() => {
-    if (trialStart === null) {
+    if (trialStart !== null) return // już ustawione, no-op
+    if (!uid) {
+      // Guest — Firestore nie wchodzi, brak race condition
       setTrialStart(Date.now())
+      return
     }
-  }, [trialStart])
+    // Zalogowany — daj 2s na onSnapshot żeby załadował z Firestore
+    const t = setTimeout(() => {
+      setTrialStart(Date.now())
+    }, 2000)
+    return () => clearTimeout(t)
+  }, [trialStart, uid])
 
   // Wylicz czy Premium jest aktywny
   const now = Date.now()

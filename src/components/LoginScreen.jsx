@@ -21,9 +21,16 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
   }
 
   return (
+    // v2.11.16: outer container scrolluje, gdy content + hero + CTA przerasta
+    // viewport (np. małe telefony, landscape, dynamiczne paski systemowe).
+    // Wcześniej height:100% bez overflow obcinał ostatnią sekcję — user nie
+    // widział "Use without account" i Google login na 5" ekranach.
     <div style={{
       display: 'flex', flexDirection: 'column',
-      height: '100%', background: 'var(--surface)',
+      minHeight: '100%',
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch', // smooth scroll na iOS
+      background: 'var(--surface)',
     }}>
 
       {/* Hero */}
