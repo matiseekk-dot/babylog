@@ -1,54 +1,56 @@
 rules_version = '2';
 
-// Reguły Firestore dla Spokojny Rodzic (v2.10.0)
+// Reguły Firestore dla Spokojny Rodzic (v2.11.20)
 //
 // Polityka:
 //
-//   1. User ma read/write dla swoich danych pod users/{uid}/...
-//      Z wyjątkiem POL CHRONIONYCH (poniżej) — te są read-only z client-side.
+//   1. User ma read/write dla swoich danych pod users/{uid}/data/...
+//      Z wyjątkiem POL CHRONIONYCH (poniżej) — te są read-only z client-side
+//      (Admin SDK z Cloud Functions może wszystko, omija rules).
 //
 //   2. POLA CHRONIONE — tylko Admin SDK (Cloud Functions) może je zapisywać.
-//      Client widzi je, ale nie może zmienić.
-//      - premium_purchased   (status Premium subskrypcji)
-//      - premium_meta        (metadane subskrypcji od RevenueCat)
-//      - rc_event_*          (idempotency stamps webhook eventów)
+//      Client widzi je (read), ale nie może zmienić.
+//      - premium_purchased  (status Premium subskrypcji — set przez RC webhook)
+//      - premium_meta       (metadane subskrypcji od RevenueCat)
+//      - trial_start        (legacy — od v2.11.20 trial start = auth creationTime)
+//      - rc_event_*         (idempotency stamps webhook eventów)
 //
-//   3. FIELD VALIDATION dla zwykłych dokumentów:
-//      - Tylko klucz `value` na top-level (kontrakt useFirestore)
-//      - Map/list values: max 50k entries (anty-DoS)
+//   3. KONTRAKT useFirestore — dokumenty zwykłe mają tylko klucz `value`.
+//      To zapobiega user'owi dopisywaniu dziwnych pól które break'owałyby
+//      logikę aplikacji.
 //
-//   4. Cloud Functions używają Admin SDK który BYPASSUJE rules.
+//   4. v2.11.20: Wildcard match jest TERAZ jedynym match'em dla data/*. Wcześniej
+//      mieliśmy specific match'e dla każdego chronionego pola, ale w Firestore
+//      Security Rules **OR semantics** — jeśli wildcard ALLOW write, specific
+//      DENY jest IGNOROWANE. Czyli user mógł pisać do premium_purchased.
+//      Teraz wildcard EXPLICIT exclude'uje protected docId'y w warunku write.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Premium — tylko Admin SDK pisze (revenueCatWebhook)
-    match /users/{userId}/data/premium_purchased {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false;
-    }
-    match /users/{userId}/data/premium_meta {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if false;
-    }
-
-    // Idempotency stamps RC webhooka — write-only Admin, niewidoczne dla usera
-    match /users/{userId}/data/rc_event_{eventId} {
-      allow read, write: if false;
-    }
-
-    // Reszta data/* — user pisze swoje, ale tylko z polem `value`
-    // (kontrakt useFirestore: { value: <data> })
+    // Wszystkie dokumenty pod /users/{userId}/data/{docId}
     match /users/{userId}/data/{docId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      // READ: tylko własne (uid match), wszystkie dokumenty
+      allow read: if request.auth != null
+        && request.auth.uid == userId;
+
+      // WRITE: tylko własne + nie protected + tylko klucz `value`
       allow write: if request.auth != null
         && request.auth.uid == userId
+        // Protected fields (Admin SDK only)
+        && docId != 'premium_purchased'
+        && docId != 'premium_meta'
+        && docId != 'trial_start'
+        && !docId.matches('rc_event_.*')
+        // Kontrakt useFirestore: tylko {value: <data>}
         && request.resource.data.keys().hasOnly(['value']);
     }
 
     // Subkolekcje (tokens FCM, profiles, etc.)
+    // Pełny dostęp dla własnego uid.
     match /users/{userId}/{subcol}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
     }
   }
 }
