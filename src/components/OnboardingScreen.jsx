@@ -71,13 +71,24 @@ export default function OnboardingScreen({ onComplete }) {
   }
 
   return (
+    // v2.11.29: outer-scroll architecture (jak consent v2.11.26).
+    //
+    // Wcześniej: outer flex column z height:100%, inner content z flex:1
+    // + overflowY:auto. Na Android Chrome WebView TWA inner overflow:auto
+    // łapał touch i nie propagował do parent — scroll w ogóle nie działał.
+    // User mógł "zaginąć" w avatarach lub date input bez możliwości
+    // dotarcia do button "Zaczynamy" na dole.
+    //
+    // Fix identyczny jak consent: outer JEST scroller'em, content jako
+    // flow, button bottom jako sticky footer (zawsze widoczny).
     <div style={{
-      display:'flex', flexDirection:'column', height:'100%',
+      position:'fixed', inset:0,
+      overflowY:'auto',
+      WebkitOverflowScrolling:'touch',
       background:'var(--surface)', userSelect:'none',
     }}>
       {/* Header */}
       <div style={{
-        flex:'0 0 auto',
         background: 'linear-gradient(160deg, var(--brand-600), var(--brand-500))',
         padding:'var(--space-spacious) var(--space-comfortable) var(--space-comfortable)',
         textAlign:'center',
@@ -92,11 +103,9 @@ export default function OnboardingScreen({ onComplete }) {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content — zwykły div bez własnego overflow */}
       <div style={{
-        flex:1, padding:'var(--space-comfortable) var(--space-comfortable) 0',
-        display:'flex', flexDirection:'column',
-        overflowY:'auto',
+        padding:'var(--space-comfortable) var(--space-comfortable) 0',
       }}>
         <div style={{ display:'flex', flexDirection:'column', gap:'var(--space)' }}>
           {/* Avatar */}
@@ -212,8 +221,9 @@ export default function OnboardingScreen({ onComplete }) {
         </div>
       </div>
 
-      {/* Bottom */}
+      {/* Bottom — v2.11.29 sticky footer, button zawsze widoczny */}
       <div style={{
+        position:'sticky', bottom:0,
         padding:'var(--space) var(--space-comfortable)',
         paddingBottom:'max(var(--space-comfortable), env(safe-area-inset-bottom))',
         display:'flex', flexDirection:'column', gap:'var(--space-snug)',
