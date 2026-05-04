@@ -18,6 +18,19 @@ build/
 service-account.json
 service-account-*.json
 
+# 🚨 KEYSTORE & SIGNING — KRYTYCZNE BEZPIECZEŃSTWO
+# Te pliki pozwalają podpisywać .apk/.aab jako Twoja apka. Wyciek =
+# atakujący może opublikować złośliwe wersje udające Twoją apkę.
+# NIGDY w git, NIGDY w cloud bez szyfrowania.
+*.keystore
+*.jks
+*.p12
+*.pem
+signing-key-info.txt
+signing-key-info-*.txt
+upload-keystore*
+release-keystore*
+
 # Editor
 .vscode/
 .idea/
