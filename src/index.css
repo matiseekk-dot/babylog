@@ -111,6 +111,12 @@
 
 html { height: 100%; }
 
+/* v2.11.12: spin animation used by paywall purchase loading spinner */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   background: var(--bg);

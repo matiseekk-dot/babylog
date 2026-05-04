@@ -57,7 +57,8 @@ import ReferenceLibrary from './components/ReferenceLibrary'
 import WhenToSeekHelpCard from './components/WhenToSeekHelpCard'
 import { useServiceWorker } from './hooks/useServiceWorker'
 
-import { useLocale, t } from './i18n'
+import { useLocale, t, isEN } from './i18n'
+import { findPlan } from './data/premiumPlans'
 import { todayDate, nowTime, genId } from './utils/helpers'
 
 const DEFAULT_PROFILE = {
@@ -343,9 +344,25 @@ export default function App() {
 
   // Bug 1 fix: Modal zachęcający do instalacji apki (zamiast brzydkiego alert())
   const [showPlayStoreModal, setShowPlayStoreModal] = useState(false)
+  // v2.11.12 — Local "purchasing" state. PaywallScreen pokazuje spinner + disabled
+  // CTA gdy true. Wcześniej user klikał "Spróbuj" i widział nic przez ~2-5s
+  // (czas otwarcia natywnego Google Play sheet) — myśląc że klik nie zadziałał.
+  const [purchasing, setPurchasing] = useState(false)
 
   const handleActivate = async (planId) => {
     addBreadcrumb('purchase', 'handle-activate-clicked', { planId })
+    // v2.11.12 — KRYTYCZNY FIX: Google Play oczekuje pełnego SKU
+    // (`spokojny_rodzic_premium_yearly`), NIE internal id ('yearly').
+    // Wcześniej DGA flow przekazywał planId jako sku — Google odrzucał
+    // transakcję, user widział error na natywnym sheet bez zrozumienia czemu.
+    const plan = findPlan(isEN() ? 'en' : 'pl', planId)
+    const productId = plan?.productId
+    if (!productId) {
+      console.error('[handleActivate] no productId for planId:', planId)
+      toast(t('paywall.error'), 'error')
+      return
+    }
+    setPurchasing(true)
     try {
       // 1. TWA z Play Billing przez Digital Goods API (standardowe podejście PWABuilder)
       if ('getDigitalGoodsService' in window && window.PaymentRequest) {
@@ -354,7 +371,7 @@ export default function App() {
           if (service) {
             const paymentMethod = [{
               supportedMethods: 'https://play.google.com/billing',
-              data: { sku: planId },
+              data: { sku: productId }, // v2.11.12: was planId — fixed
             }]
             const paymentDetails = {
               total: {
@@ -366,23 +383,27 @@ export default function App() {
             const response = await request.show()
             const purchaseToken = response.details?.purchaseToken
             if (purchaseToken) {
-              await activateWithToken(planId, purchaseToken)
+              await activateWithToken(productId, purchaseToken) // v2.11.12: was planId
               await response.complete('success')
               setShowPaywall(false)
+              toast(t('paywall.activated'))
               return
             }
             await response.complete('fail')
           }
         } catch (dgaErr) {
-          console.warn('[paywall] DGA flow failed, falling through:', dgaErr)
-          captureError(dgaErr, { context: 'paywall-dga', planId })
+          // AbortError = user cancelled — to nie błąd, nie zgłaszaj.
+          if (dgaErr?.name !== 'AbortError') {
+            console.warn('[paywall] DGA flow failed, falling through:', dgaErr)
+            captureError(dgaErr, { context: 'paywall-dga', planId, productId })
+          }
           // Nie zwracaj - pójdź do fallback
         }
       }
 
       // 2. Custom Android bridge (stary mechanizm, jeśli kiedyś będzie)
       if (window.Android?.launchBilling) {
-        window.Android.launchBilling(planId)
+        window.Android.launchBilling(productId) // v2.11.12: was planId
         return
       }
 
@@ -398,9 +419,11 @@ export default function App() {
       setShowPlayStoreModal(true)
     } catch (e) {
       console.error('[handleActivate]', e)
-      captureError(e, { context: 'paywall-activate', planId })
+      captureError(e, { context: 'paywall-activate', planId, productId })
       // User widzi feedback ze coś poszło nie tak (zamiast cichej śmierci)
       toast(t('paywall.error'), 'error')
+    } finally {
+      setPurchasing(false)
     }
   }
 
@@ -721,7 +744,11 @@ export default function App() {
       // pojawiał (early return paywall był aktywny). Teraz dostępny w obu
       // ścieżkach renderowania.
       <div className="app" style={{ position: 'relative' }}>
-        <PaywallScreen onActivate={handleActivate} onClose={closePaywall} checking={rcChecking} />
+        <PaywallScreen
+          onActivate={handleActivate}
+          onClose={closePaywall}
+          checking={rcChecking || purchasing}
+        />
         <PlayStoreModal
           open={showPlayStoreModal}
           onClose={() => setShowPlayStoreModal(false)}
