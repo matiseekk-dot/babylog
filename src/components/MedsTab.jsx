@@ -48,6 +48,12 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   const [modal, setModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [doseModal, setDoseModal] = useState(null)
+  // v2.11.24: inline form error — pokazuje błąd walidacji w modal'u zamiast tylko
+  // toast. Toast może nie być widoczny w TWA (z-index issues, animacja, scroll
+  // pozycja). User klikał "Zapisz" w MedsTab, walidacja blokowała (brak dawki),
+  // toast wyświetlał się "Wpisz dawkę" ale niewidoczny → user widział "nic się
+  // nie dzieje". Inline error w modal = zawsze widoczny.
+  const [formError, setFormError] = useState(null)
   const [addMedModal, setAddMedModal] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
   const [form, setForm] = useState({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
@@ -85,13 +91,18 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
     // v2.11.21: Walidacja dose — wcześniej user mógł kliknąć "Zapisz"
     // bez żadnej dawki, dostawał silent close modal i nic się nie działo
     // (toast był wywoływany TYLKO przy edycji, nie przy nowym wpisie).
-    // Teraz: jeśli pusty dose lub brak med → toast error + nie zamykamy.
+    // v2.11.24: inline error w modal'u (toast może nie być widoczny).
+    setFormError(null)
     if (!form.med) {
-      toast(t('meds.error.no_med') || 'Wybierz lek', 'error')
+      const msg = t('meds.error.no_med') || 'Wybierz lek'
+      setFormError(msg)
+      toast(msg, 'error')
       return
     }
     if (!form.dose || !form.dose.trim()) {
-      toast(t('meds.error.no_dose') || 'Wpisz dawkę', 'error')
+      const msg = t('meds.error.no_dose') || 'Wpisz dawkę'
+      setFormError(msg)
+      toast(msg, 'error')
       return
     }
 
@@ -308,7 +319,16 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         <div className="modal-btns"><button className="btn-secondary" onClick={()=>setAddMedModal(false)}>{t('common.cancel')}</button><button className="btn-primary" onClick={addCustomMed}>{t('common.save')}</button></div>
       </Modal>
 
-      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('meds.modal.title')}>
+      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null); setFormError(null) }} title={editingId ? t('common.edit') : t('meds.modal.title')}>
+        {/* v2.11.24: inline error banner — alert level visible nawet gdy toast nie działa */}
+        {formError && (
+          <div role="alert" style={{
+            background:'#FEE7DF', border:'1px solid #E05D44', borderRadius:8,
+            padding:'10px 12px', marginBottom:12, fontSize:13, color:'#7A1F0C', fontWeight:600,
+          }}>
+            ⚠️ {formError}
+          </div>
+        )}
         <div className="form-group"><label className="form-label">{t('meds.modal.drug')}</label><select className="form-select" value={form.med} onChange={e=>setForm(f=>({...f,med:e.target.value}))}>{allMedNames.map(mn => (
             <option key={mn} value={mn}>
               {mn === 'Paracetamol'        ? t('med.name.paracetamol')
@@ -336,7 +356,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           </select>
         </div>
         <div className="form-row">
-          <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" maxLength={100} placeholder={t("meds.custom.dose_ph")} value={form.dose} onChange={e=>setForm(f=>({...f,dose:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" maxLength={100} placeholder={t("meds.custom.dose_ph")} value={form.dose} onChange={e=>{ setForm(f=>({...f,dose:e.target.value})); if(formError) setFormError(null) }} /></div>
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
         </div>
         <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>

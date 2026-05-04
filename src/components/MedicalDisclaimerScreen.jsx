@@ -57,8 +57,10 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
   const [rejectedMessage, setRejectedMessage] = useState(false)
   const scrollRef = useRef(null)
 
-  // Check if content already fits without scrolling (tall devices / short content)
-  // If so, consider user as having "seen all" — allow checkbox immediately.
+  // v2.11.24: outer container scrolls (not inner content). scrollRef
+  // points to outer scroller. Check is "scroll bottom of outer hit?".
+  // Bonus: jeśli content się mieści w viewport (krótki disclaimer / wysoki
+  // ekran), traktujemy jako "scrolled to bottom" od razu.
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
@@ -68,7 +70,6 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
       }
     }
     checkFit()
-    // Recheck on resize (orientation change)
     window.addEventListener('resize', checkFit)
     return () => window.removeEventListener('resize', checkFit)
   }, [])
@@ -99,20 +100,35 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
   }
 
   return (
-    // v2.11.17: minHeight:0 na outer aby flex children mogły overflow.
-    // Bez tego flex domyślnie wyłącza overflow na inner content (klasyczny
-    // CSS gotcha — flex item ma `min-height: auto`, nie `0`).
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: '#fff',
-      zIndex: 9999,
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: 0,
-      paddingTop: 'env(safe-area-inset-top)',
-      paddingBottom: 'env(safe-area-inset-bottom)',
-    }}>
+    // v2.11.24: ARCHITEKTURA "outer-scroll + sticky footer".
+    //
+    // Wcześniej (v2.11.17): outer fixed inset:0 z flex column, inner content
+    // miał overflowY:auto. Na Android Chrome WebView TWA touch lądował na
+    // inner element z overflow:auto, WebView "hijack'ował" touch (kierował
+    // do tego elementu nawet gdy nie ma czego scrollować) i NIE propagował
+    // do parent. Outer nigdy nie dostawał touch → scroll w ogóle nie działał.
+    //
+    // Fix: outer JEST scroller'em (overflowY:auto + position:fixed inset:0).
+    // Header normal, content normal, footer position:sticky bottom:0 — przykleja
+    // się do dolnej krawędzi viewport gdy widoczny. Touch zawsze ląduje na
+    // outer = jeden scroll target = WebView nie hijack'uje.
+    //
+    // Bonus: footer jest "sticky" → user widzi accept button cały czas, nawet
+    // gdy scrolluje przez tekst. Lepszy UX niż chowanie footera za content'em.
+    <div
+      ref={scrollRef}
+      onScroll={handleScroll}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: '#fff',
+        zIndex: 9999,
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}
+    >
       {/* Header */}
       <div style={{
         padding: '20px 24px 16px',
@@ -140,28 +156,8 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
         </p>
       </div>
 
-      {/* Scrollable content */}
-      {/*
-        v2.11.17: dodane minHeight:0 + WebkitOverflowScrolling + touchAction.
-        - minHeight:0 — KRYTYCZNE w flex column: inaczej flex:1 dziecko ma
-          implicit min-height:auto, co rozpycha kontener i wyłącza overflow.
-        - WebkitOverflowScrolling:'touch' — momentum scroll na iOS Safari.
-        - touchAction:'pan-y' — explicitnie pozwala na pionowy scroll w
-          starszych WebView TWA gdzie domyślny touch-action może blokować
-          gestures.
-      */}
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        style={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-y',
-          padding: '20px 24px',
-        }}
-      >
+      {/* Content — zwykły div, nie scroller (parent scrolluje) */}
+      <div style={{ padding: '20px 24px' }}>
         <DisclaimerSection
           title={t('disclaimer.s1.title')}
           body={t('disclaimer.s1.body')}
@@ -208,8 +204,13 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
         )}
       </div>
 
-      {/* Acceptance footer */}
+      {/* Acceptance footer — v2.11.24 sticky bottom (zawsze widoczny przy
+          scrollowaniu). Bez tego user musiał scrollować do końca żeby zobaczyć
+          accept button — mylące UX. Sticky daje "zawsze tam jest, czekam na
+          przeczytanie + check + klik". */}
       <div style={{
+        position: 'sticky',
+        bottom: 0,
         padding: '16px 24px 20px',
         borderTop: '0.5px solid rgba(0,0,0,0.08)',
         background: '#F7F7F5',
