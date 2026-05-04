@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
@@ -18,7 +18,7 @@ const BUILT_IN_MEDS_PL = ['Paracetamol','Ibuprofen','Sól fizjologiczna','Probio
 const BUILT_IN_MEDS_EN = ['Paracetamol','Ibuprofen']
 const EMOJI_OPTIONS = ['💊','🌡️','💨','🦠','🩹','🧴','💉','🩺','🌿','🍯','🧪','💧','🫀','🧬','⚕️']
 
-export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
+export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade, preselectedMed = null, onPreselectedMedHandled }) {
   useLocale()
   // Translate stored Polish med names for display
   const displayMedName = (name) => {
@@ -73,11 +73,29 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   const BUILT_IN_MEDS = isEN() ? BUILT_IN_MEDS_EN : BUILT_IN_MEDS_PL
   const allMedNames = [...BUILT_IN_MEDS, ...customMeds.map(m=>m.name), t('meds.other')]
 
-  const openAdd = () => {
+  const openAdd = (medOverride = null) => {
     setEditingId(null)
-    setForm({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
+    setForm({
+      med: medOverride || 'Paracetamol',
+      form:'tablet',
+      dose:'',
+      time:nowTime(),
+      date:todayDate(),
+      note:'',
+    })
     setModal(true)
   }
+
+  // v2.11.28: preselectedMed pickup z QuickDoseCard (przez HealthTab).
+  // Gdy user kliknie "Zapisz podanie" w accordionie, otwieramy modal z
+  // odpowiednim lekiem preselected. Wcześniej kliknięcie nic nie robiło.
+  useEffect(() => {
+    if (preselectedMed) {
+      openAdd(preselectedMed)
+      onPreselectedMedHandled?.()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preselectedMed])
 
   const openEdit = (entry) => {
     setEditingId(entry.id)

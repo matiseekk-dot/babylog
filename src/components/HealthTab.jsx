@@ -54,6 +54,16 @@ export default function HealthTab({ ...sharedProps }) {
     try { localStorage.setItem(STORAGE_KEY, seg) } catch {}
   }
 
+  // v2.11.28: preselected med pickup z QuickDoseCard. Gdy user klika "Zapisz
+  // podanie" w accordionie, ustawiamy nazwę leku (Paracetamol/Ibuprofen) — MedsTab
+  // ją odbiera, otwiera modal entry z preselected med, dose pusty (user wpisuje).
+  // Wcześniej onNavigateToMeds był pustą funkcją "już jesteśmy w meds segment" —
+  // klik nic nie robił, classic bug "komentarz zamiast implementacji".
+  const [preselectedMed, setPreselectedMed] = useState(null)
+  const handleQuickDoseAction = (medName) => {
+    setPreselectedMed(medName)
+  }
+
   return (
     <>
       <SegmentedSwitcher
@@ -72,9 +82,13 @@ export default function HealthTab({ ...sharedProps }) {
               ibuprofenu" — kontekstowe wsparcie zaraz nad listą leków. */}
           <QuickDoseCard
             ageMonths={sharedProps.ageMonths}
-            onNavigateToMeds={() => {/* już jesteśmy w meds segment */}}
+            onNavigateToMeds={handleQuickDoseAction}
           />
-          <MedsTab {...sharedProps} />
+          <MedsTab
+            {...sharedProps}
+            preselectedMed={preselectedMed}
+            onPreselectedMedHandled={() => setPreselectedMed(null)}
+          />
         </>
       )}
       {segment === 'symptoms' && <SymptomsTab {...sharedProps} />}

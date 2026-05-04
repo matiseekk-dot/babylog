@@ -102,7 +102,17 @@ export default function QuickDoseCard({ ageMonths, onNavigateToMeds }) {
           }}>
             {info}
             <button
-              onClick={(e) => { e.stopPropagation(); onNavigateToMeds?.() }}
+              onClick={(e) => {
+                e.stopPropagation()
+                // v2.11.28: przekazujemy NAZWĘ leku (Paracetamol/Ibuprofen) do
+                // callback'a — wcześniej nie przekazywaliśmy nic, plus callback
+                // w HealthTab był pusty (komentarz "już jesteśmy w meds"). Klik
+                // "Zapisz podanie" dosłownie nic nie robił.
+                const medName = med === 'paracetamol' ? 'Paracetamol'
+                              : med === 'ibuprofen'   ? 'Ibuprofen'
+                              : null
+                onNavigateToMeds?.(medName)
+              }}
               style={{
                 marginTop:10,
                 background:'#E6F1FB',
