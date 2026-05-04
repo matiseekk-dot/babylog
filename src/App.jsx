@@ -1262,6 +1262,27 @@ export default function App() {
                 <p style={{fontSize:14,lineHeight:1.55,color:'#5a5a56',marginBottom:16,textAlign:'left'}}>
                   {t('paywall.activation_failed.body')}
                 </p>
+                {/* v2.11.18 — DEBUG INFO. Pokazujemy konkretny error code +
+                    productId + tokenPrefix żeby user mógł skopiować i wysłać
+                    do supportu, a my mogli zdiagnozować KONKRETNY błąd RC.
+                    Bez tego user widzi tylko "nie powiodła się" — bezużyteczne
+                    diagnostycznie. */}
+                <div style={{
+                  background:'#F7F4EE',border:'1px solid #E0D7C5',borderRadius:8,
+                  padding:10,fontSize:11,color:'#5a4a30',marginBottom:14,
+                  textAlign:'left',fontFamily:'monospace',wordBreak:'break-all',
+                }}>
+                  <div style={{fontWeight:700,marginBottom:6,fontSize:10,color:'#7a6a40'}}>
+                    DEBUG INFO (skopiuj do support):
+                  </div>
+                  <div>product: {pendingActivation.productId || '(none)'}</div>
+                  <div>error: {pendingActivation.errorReason || '(none)'}</div>
+                  {pendingActivation.errorStatus && (
+                    <div>status: {pendingActivation.errorStatus}</div>
+                  )}
+                  <div>token: {(pendingActivation.purchaseToken || '').slice(0, 12)}…</div>
+                  <div>ts: {new Date(pendingActivation.ts || Date.now()).toISOString()}</div>
+                </div>
                 <div style={{
                   background:'#FAEEDA',border:'1px solid #FAC775',borderRadius:8,
                   padding:12,fontSize:12,color:'#633806',marginBottom:16,textAlign:'left',
