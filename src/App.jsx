@@ -714,11 +714,19 @@ export default function App() {
   // ── Paywall overlay ───────────────────────────────────────────────────────
   if (showPaywall) {
     return (
-      // v2.11.7: overflowY:'auto' — bez tego PaywallScreen (minHeight:100vh + paddingBottom)
-      // wystawał poza .app (display:flex height:100dvh) i content się ucinał.
-      // User zgłosił że na PaywallScreen nie działa scroll, plan picker był niedostępny.
-      <div className="app" style={{ position: 'relative', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      // v2.11.11: PaywallScreen ma teraz własny layout (flex column z internal
+      // scroll + non-fixed footer), więc .app jest tylko cienkim wrapperem.
+      // PlayStoreModal renderowany TUTAJ — wcześniej był tylko w main return,
+      // czyli klik "Spróbuj" → setShowPlayStoreModal(true) ale modal się nie
+      // pojawiał (early return paywall był aktywny). Teraz dostępny w obu
+      // ścieżkach renderowania.
+      <div className="app" style={{ position: 'relative' }}>
         <PaywallScreen onActivate={handleActivate} onClose={closePaywall} checking={rcChecking} />
+        <PlayStoreModal
+          open={showPlayStoreModal}
+          onClose={() => setShowPlayStoreModal(false)}
+          onOpenPlayStore={openPlayStore}
+        />
       </div>
     )
   }

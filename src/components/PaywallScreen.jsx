@@ -71,21 +71,34 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
   const freeBanner = t('paywall.free_banner')
 
   return (
-    // JEDNA kolumna flex, JEDEN scroll na całość (z wyjątkiem sticky header + footer)
+    // v2.11.11: kompletny rewrite layoutu paywall — flex column z osobnym
+    // scroll-area + bottom footer (NIE fixed, normalny flow). Wcześniej fixed
+    // footer pokrywał plany przy max scroll (Roczny widać w połowie, Dożywotni
+    // niewidoczny). Nowy layout: outer flex column zajmuje 100dvh, scroll-area
+    // ma flex:1 + overflow-y:auto, footer ma flex:0 0 auto. Czysta separacja
+    // bez paddingBottom hack.
     <div style={{
       display:'flex',
       flexDirection:'column',
-      minHeight:'100vh',
+      height:'100dvh',
+      maxHeight:'100dvh',
       background:'var(--surface)',
-      paddingBottom:110, // miejsce na sticky footer z buttonem
+      position:'relative',
     }}>
-      {/* X close — sticky w prawym górnym rogu */}
+      {/* X close — absolute w prawym górnym rogu */}
       <button aria-label={t('common.close')} onClick={onClose} style={{
-        position:'fixed',top:'var(--space)',right:'var(--space)',background:'rgba(0,0,0,0.25)',
+        position:'absolute',top:'var(--space)',right:'var(--space)',background:'rgba(0,0,0,0.25)',
         border:'none',borderRadius:'var(--radius-round)',width:36,height:36,fontSize:16,
         cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
         color:'var(--surface)',zIndex:10,
       }}>✕</button>
+
+      {/* SCROLL AREA — wszystko od headera do plan picker */}
+      <div style={{
+        flex:1,
+        overflowY:'auto',
+        WebkitOverflowScrolling:'touch',
+      }}>
 
       {/* HEADER */}
       <div style={{
@@ -221,10 +234,13 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
           nie da się tego naprawić. Apka świeżo na rynku — brak social proof
           to standard dla startupu, nie należy go fake'ować. */}
 
-      {/* STICKY FOOTER — button na dole zawsze widoczny */}
+      </div>
+      {/* /SCROLL AREA */}
+
+      {/* FOOTER — naturalny flow w flex column, na dole bo last child.
+          Już nie position:fixed → nie pokrywa plan picker. */}
       <div style={{
-        position:'fixed',
-        bottom:0, left:0, right:0,
+        flex:'0 0 auto',
         padding:'var(--space) var(--space)',
         paddingBottom:'max(var(--space), env(safe-area-inset-bottom))',
         background:'var(--surface)',
