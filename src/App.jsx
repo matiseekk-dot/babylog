@@ -443,6 +443,17 @@ export default function App() {
     }
   }, [active.visibleTabs, tab])
 
+  // v2.11.10: Reset scroll position on tab/view change.
+  // Bug repro: enter More menu (lista 9 items, scrollable) → scroll down 200px →
+  // click ostatni item (Doctor Notes) → tab content otwiera się ze scrollTop=200
+  // (browser clamp do max scroll new content, np. 49px). User widzi tab już
+  // zescrollowany "w połowie" i myśli że scroll jest zepsuty.
+  // Fix: gdy `tab`, `showMore` lub `showProfiles` się zmienią, zresetuj scrollTop.
+  useEffect(() => {
+    const content = document.querySelector('.content')
+    if (content) content.scrollTop = 0
+  }, [tab, showMore, showProfiles])
+
   const navigate = (targetTab) => {
     if (!targetTab) return
     if (targetTab === 'settings') { setShowSettings(true); return }
