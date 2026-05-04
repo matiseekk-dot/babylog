@@ -44,9 +44,12 @@ const ENTITLEMENT = import.meta.env.VITE_RC_ENTITLEMENT || 'Spokojny Rodzic Pro'
 // ZAKTUALIZOWAĆ TO gdy w RC dashboard pojawi się prawdziwy lifetime product.
 // Aktualnie apka nie sprzedaje lifetime — tylko monthly/yearly subskrypcje.
 const LIFETIME_PRODUCT_IDS = [
-  // Pusta lista — apka nie ma jeszcze lifetime product.
-  // Gdyby kiedyś dodać "spokojny_rodzic_lifetime_499pln" albo podobny
-  // w Google Play Console, dorzucić tutaj.
+  // v2.11.14: lifetime SKU dodany defensywnie. Jest w premiumPlans.js i UI
+  // pokazuje go w paywall — gdy user kupi, RC entitlement nie ma `expires_date`
+  // (one-time purchase). Bez tej whitelisty checkEntitlement zwracałby false →
+  // user płaci za lifetime ale apka nie widzi Premium. Jeśli kiedykolwiek SKU
+  // zmieni nazwę w Play Console — ZSYNCHRONIZOWAĆ tutaj.
+  'spokojny_rodzic_premium_lifetime',
 ]
 
 // ─── REST API helpers ─────────────────────────────────────────────────────────
@@ -67,7 +70,22 @@ async function rcFetch(path, options = {}) {
       ...(options.headers || {}),
     },
   })
-  if (!res.ok) throw new Error(`RC ${res.status}`)
+  if (!res.ok) {
+    // v2.11.14: spróbuj wyciągnąć body — RC zwraca JSON {code, message}
+    // przy 4xx/5xx. Wcześniej rzucaliśmy `RC 400` bez kontekstu → niemożliwe
+    // do zdiagnozowania w Sentry. Teraz: `RC 400: 7110 - The receipt is invalid`.
+    let detail = ''
+    try {
+      const body = await res.text()
+      // Limit do 500 znaków — gdyby RC zwrócił duży payload (mało prawdopodobne)
+      detail = body.slice(0, 500)
+    } catch {}
+    const err = new Error(`RC ${res.status}${detail ? `: ${detail}` : ''}`)
+    err.status = res.status
+    err.body = detail
+    err.path = path
+    throw err
+  }
   return res.json()
 }
 
@@ -203,7 +221,15 @@ export function useRevenueCat(uid) {
     if (!uid) {
       throw new Error('Cannot activate without uid (user not logged in)')
     }
-    addBreadcrumb('purchase', 'activate-with-token-start', { productId })
+    // v2.11.14: log token prefix (NIGDY pełny token — to secret) + productId.
+    // To pojawi się w Sentry breadcrumbs gdy następny zakup się posypie —
+    // zobaczymy czy token w ogóle dotarł, jaki SKU, jakiego użył usera.
+    const tokenPrefix = (purchaseToken || '').slice(0, 12)
+    addBreadcrumb('purchase', 'activate-with-token-start', {
+      productId,
+      tokenPrefix: `${tokenPrefix}…`,
+      tokenLen: purchaseToken?.length || 0,
+    })
     try {
       const result = await activateGooglePlayPurchase(uid, productId, purchaseToken)
       if (result === null) {
@@ -214,8 +240,23 @@ export function useRevenueCat(uid) {
       addBreadcrumb('purchase', 'activate-with-token-success', { productId })
       return result
     } catch (e) {
-      console.warn('RC activation failed:', e)
-      captureError(e, { context: 'rc-activation', productId, uid })
+      // v2.11.14: bogatsze logowanie. Status code z RC + body (zawiera RC error code,
+      // np. 7110 = invalid receipt → Service Account nie ma perms; 7240 = product
+      // not configured w RC dashboard; etc.).
+      const ctx = {
+        context: 'rc-activation',
+        productId,
+        uid,
+        status: e.status || null,
+        body: e.body || null,
+        path: e.path || null,
+      }
+      console.warn('[RC] activation failed:', e.message, ctx)
+      addBreadcrumb('purchase', 'activate-with-token-failed', {
+        status: e.status || 'unknown',
+        message: (e.message || '').slice(0, 200),
+      })
+      captureError(e, ctx)
       throw e // re-throw so caller can show proper UX
     }
   }, [uid, checkPremium])

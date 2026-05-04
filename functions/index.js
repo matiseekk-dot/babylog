@@ -386,3 +386,94 @@ exports.revenueCatWebhook = onRequest({
 
   res.status(200).send('OK')
 })
+
+// ──────────────────────────────────────────────────────────────────────────
+// purchasePipelineHealth — diagnostic endpoint
+// ──────────────────────────────────────────────────────────────────────────
+//
+// v2.11.14: Health check pipeline'u zakupów. Wywołuje się z curl z secretem:
+//
+//   curl -H "Authorization: Bearer $REVENUECAT_AUTH" \
+//        https://europe-west3-babylog-3c1cc.cloudfunctions.net/purchasePipelineHealth
+//
+// Zwraca JSON:
+//   {
+//     ok: true/false,
+//     checks: {
+//       secret_configured: bool,
+//       firestore_writable: bool,
+//       last_rc_event_at: timestamp | null,
+//       last_rc_event_type: string | null,
+//       seen_event_count_24h: number,
+//     }
+//   }
+//
+// To pomoże szybko sprawdzić "czy webhook RC działa" bez grzebania w logach.
+// Wymagana auth bo nie chcemy public diagnostic endpoint (XSS / scraping).
+
+exports.purchasePipelineHealth = onRequest({
+  secrets: [REVENUECAT_AUTH],
+  invoker: 'public',
+  timeoutSeconds: 30,
+  memory: '256MiB',
+}, async (req, res) => {
+  const expectedAuth = `Bearer ${REVENUECAT_AUTH.value()}`
+  if ((req.get('Authorization') || '') !== expectedAuth) {
+    res.status(401).send('Unauthorized')
+    return
+  }
+
+  const checks = {
+    secret_configured: !!REVENUECAT_AUTH.value(),
+    firestore_writable: false,
+    last_rc_event_at: null,
+    last_rc_event_type: null,
+    seen_event_count_24h: 0,
+  }
+
+  // Sanity: write + delete do specjalnego doc'a
+  try {
+    const healthRef = admin.firestore().collection('_health').doc('purchase_pipeline')
+    await healthRef.set({ pingAt: Date.now() }, { merge: true })
+    checks.firestore_writable = true
+  } catch (e) {
+    console.error('[health] firestore write failed:', e)
+  }
+
+  // Sprawdź ostatnie RC eventy w Firestore — collection group query po
+  // wszystkich users/{uid}/data/rc_event_* (idempotency stamps zapisywane
+  // przez webhook). Nie indeksujemy ich, więc używamy collection groupy
+  // i prostej iteracji po rosnącym czasie. Limit 100 dla bezpieczeństwa.
+  try {
+    const since24h = Date.now() - 24 * 60 * 60 * 1000
+    const allUsers = await admin.firestore().collection('users').limit(50).get()
+    let count24h = 0
+    let latestAt = 0
+    let latestType = null
+    for (const userDoc of allUsers.docs) {
+      const events = await userDoc.ref.collection('data')
+        .where('value.processedAt', '>=', since24h)
+        .limit(20)
+        .get()
+        .catch(() => ({ docs: [] }))
+      for (const ev of events.docs) {
+        const v = ev.data()?.value
+        if (!v?.processedAt || !v?.type) continue
+        if (!ev.id.startsWith('rc_event_')) continue
+        count24h += 1
+        if (v.processedAt > latestAt) {
+          latestAt = v.processedAt
+          latestType = v.type
+        }
+      }
+    }
+    checks.seen_event_count_24h = count24h
+    checks.last_rc_event_at = latestAt || null
+    checks.last_rc_event_type = latestType
+  } catch (e) {
+    console.error('[health] event scan failed:', e)
+  }
+
+  const ok = checks.secret_configured && checks.firestore_writable
+  res.status(200).json({ ok, checks, ts: Date.now() })
+})

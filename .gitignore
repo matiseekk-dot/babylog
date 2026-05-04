@@ -13,6 +13,11 @@ build/
 .env.local
 .env.production
 
+# Firebase Admin SDK Service Account — używany przez scripts/grant-premium.mjs.
+# NIGDY nie commituj — ma full admin access do projektu.
+service-account.json
+service-account-*.json
+
 # Editor
 .vscode/
 .idea/

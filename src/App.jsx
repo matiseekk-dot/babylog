@@ -400,39 +400,85 @@ export default function App() {
             }
             const request = new PaymentRequest(paymentMethod, paymentDetails)
             const response = await request.show()
-            const purchaseToken = response.details?.purchaseToken
-            if (purchaseToken) {
-              // v2.11.13 — Google pobrał kasę. Save token do localStorage queue
-              // PRZED próbą RC activation — gdyby cokolwiek poszło nie tak (RC
-              // down, network drop), gnijemy w queue i retry przy następnym
-              // mount (App.jsx useEffect odpala retry). Token jest critical —
-              // bez niego ZACO user zapłacił.
-              const pending = { productId, purchaseToken, ts: Date.now() }
-              try {
-                const q = JSON.parse(localStorage.getItem('babylog_pending_activations') || '[]')
-                q.push(pending)
-                localStorage.setItem('babylog_pending_activations', JSON.stringify(q))
-              } catch {}
-
-              setPendingActivation({ ...pending, status: 'waiting' })
+            // v2.11.14: różne wersje TWA / Chrome wystawiają purchase token
+            // pod różnymi kluczami w response.details. Zbieramy wszystko co
+            // mogłoby się przydać dla diagnostyki — przy normalnym flow
+            // `purchaseToken` powinno być, ale spotykane też: `token`,
+            // `details.token`, `purchaseInfo.purchaseToken`.
+            const details = response.details || {}
+            const purchaseToken =
+              details.purchaseToken ||
+              details.token ||
+              details?.purchaseInfo?.purchaseToken ||
+              null
+            // Loguj klucze details (bez wartości — klucze nie są secret)
+            // żeby diagnozować gdy token brak. Sentry breadcrumbs to wciągnie.
+            addBreadcrumb('purchase', 'payment-request-completed', {
+              detailsKeys: Object.keys(details).join(','),
+              hasToken: !!purchaseToken,
+              tokenLen: purchaseToken?.length || 0,
+            })
+            if (!purchaseToken) {
+              // Google sheet zamknął się bez tokena (rare — albo user anulował,
+              // albo wersja TWA wystawia token pod jakimś innym kluczem).
+              // Loguj DUŻY error żeby Sentry to wyłapał. Money mogło zostać
+              // pobrane (response był success), ale my nie mamy tokena → user
+              // dostanie support contact na PendingActivationModal.
+              const err = new Error(`PaymentRequest returned no purchaseToken. details keys: ${Object.keys(details).join(',') || '(empty)'}`)
+              console.error('[paywall]', err.message, details)
+              captureError(err, { context: 'paywall-no-token', planId, productId, detailsKeys: Object.keys(details) })
+              await response.complete('fail')
+              setPendingActivation({
+                productId,
+                purchaseToken: null,
+                ts: Date.now(),
+                status: 'failed',
+                errorReason: 'no-token',
+              })
               setShowPaywall(false)
-              try {
-                await activateWithToken(productId, purchaseToken)
-                await response.complete('success')
-                // Don't toast yet — wait for Firestore premium_purchased update
-                // Effect monitoring `purchased` will handle final UI state.
-                return
-              } catch (rcErr) {
-                // RC activation failed (4xx, network, malformed token, etc.)
-                // Token zostaje w queue dla późniejszego retry.
-                console.error('[paywall] RC activation failed:', rcErr)
-                captureError(rcErr, { context: 'paywall-rc-activation', planId, productId })
-                setPendingActivation(p => ({ ...p, status: 'failed', errorReason: rcErr?.message || 'unknown' }))
-                await response.complete('success') // Google was paid — don't tell Google "fail"
-                return
-              }
+              return
             }
-            await response.complete('fail')
+            // v2.11.13 — Google pobrał kasę. Save token do localStorage queue
+            // PRZED próbą RC activation — gdyby cokolwiek poszło nie tak (RC
+            // down, network drop), gnijemy w queue i retry przy następnym
+            // mount (App.jsx useEffect odpala retry). Token jest critical —
+            // bez niego ZACO user zapłacił.
+            const pending = { productId, purchaseToken, ts: Date.now() }
+            try {
+              const q = JSON.parse(localStorage.getItem('babylog_pending_activations') || '[]')
+              q.push(pending)
+              localStorage.setItem('babylog_pending_activations', JSON.stringify(q))
+            } catch {}
+
+            setPendingActivation({ ...pending, status: 'waiting' })
+            setShowPaywall(false)
+            try {
+              await activateWithToken(productId, purchaseToken)
+              await response.complete('success')
+              // Don't toast yet — wait for Firestore premium_purchased update
+              // Effect monitoring `purchased` will handle final UI state.
+              return
+            } catch (rcErr) {
+              // RC activation failed (4xx, network, malformed token, etc.)
+              // Token zostaje w queue dla późniejszego retry.
+              // v2.11.14 lepsze logowanie: rcErr.status / rcErr.body z RC
+              console.error('[paywall] RC activation failed:', rcErr.status, rcErr.message)
+              captureError(rcErr, {
+                context: 'paywall-rc-activation',
+                planId,
+                productId,
+                rcStatus: rcErr.status,
+                rcBody: rcErr.body,
+              })
+              setPendingActivation(p => ({
+                ...p,
+                status: 'failed',
+                errorReason: rcErr?.message || 'unknown',
+                errorStatus: rcErr?.status || null,
+              }))
+              await response.complete('success') // Google was paid — don't tell Google "fail"
+              return
+            }
           }
         } catch (dgaErr) {
           if (dgaErr?.name !== 'AbortError') {
