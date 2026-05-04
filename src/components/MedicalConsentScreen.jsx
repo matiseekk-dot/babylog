@@ -76,13 +76,36 @@ export default function MedicalConsentScreen({ onAccept }) {
   }
 
   return (
-    <div className="app" style={{ overflow:'auto' }}>
+    // v2.11.26: outer-scroll architecture (jak fix disclaimer w v2.11.24).
+    //
+    // Wcześniej: outer .app z height:100dvh + display:flex flexDirection:column,
+    // inner z minHeight:100dvh + flex:1 spacer pchający checkbox+button na dół.
+    // Bug: na małych ekranach (5", landscape, dynamiczne paski Android, safe area)
+    // content (ikona 72px + 4 bullet points + emergency callout) zajmował więcej
+    // niż 100dvh-paddings. Spacer:flex:1 kompresował się do 0, ale checkbox+button
+    // już nie mieściły się w viewport. User widział TYLKO button "Rozumiem,
+    // kontynuuj" wystający dolnym brzegiem, klik = nic (button disabled, bo
+    // checkbox NIEWIDOCZNY = niezaznaczony).
+    //
+    // Plus na Android Chrome WebView TWA inner overflow:auto był touch-hijacked
+    // (jak disclaimer screen), scroll w ogóle nie działał.
+    //
+    // Fix: outer position:fixed inset:0 + overflowY:auto = THE scroller. Content
+    // jako zwykły flow. Footer (checkbox + button) sticky bottom:0 — ZAWSZE
+    // widoczny niezależnie od wielkości ekranu / wysokości content.
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      background: 'var(--bg)',
+      zIndex: 9999,
+    }}>
       <div style={{
-        maxWidth: 480, margin: '0 auto',
-        padding: 'var(--space-spacious) var(--space-comfortable) var(--space-comfortable)',
-        minHeight: '100dvh', display: 'flex', flexDirection: 'column',
+        maxWidth: 480,
+        margin: '0 auto',
+        padding: 'var(--space-spacious) var(--space-comfortable) 0',
         paddingTop: 'max(var(--space-spacious), env(safe-area-inset-top))',
-        paddingBottom: 'max(var(--space-comfortable), env(safe-area-inset-bottom))',
       }}>
         {/* Icon */}
         <div style={{
@@ -144,10 +167,21 @@ export default function MedicalConsentScreen({ onAccept }) {
             {t('consent.emergency_text')}
           </div>
         </div>
+      </div>
 
-        {/* Spacer pushes checkbox+button to bottom on tall screens */}
-        <div style={{ flex: 1, minHeight: 'var(--space-snug)' }} />
-
+      {/* Sticky footer — checkbox + button ZAWSZE widoczne, niezależnie od scroll
+          pozycji. To gwarantuje że user widzi co musi zaznaczyć i co kliknąć,
+          bez konieczności docierania do końca strony. */}
+      <div style={{
+        position: 'sticky',
+        bottom: 0,
+        background: 'var(--bg)',
+        borderTop: '0.5px solid var(--border)',
+        padding: 'var(--space) var(--space-comfortable)',
+        paddingBottom: 'max(var(--space-comfortable), env(safe-area-inset-bottom))',
+        maxWidth: 480,
+        margin: '0 auto',
+      }}>
         {/* Single checkbox */}
         <label style={{
           display: 'flex',
@@ -181,6 +215,7 @@ export default function MedicalConsentScreen({ onAccept }) {
           onClick={accept}
           disabled={!checked}
           style={{
+            width: '100%',
             background: checked
               ? 'linear-gradient(135deg, var(--brand-600) 0%, var(--brand-500) 100%)'
               : 'var(--text-3)',

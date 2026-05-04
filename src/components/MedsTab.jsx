@@ -54,6 +54,11 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   // toast wyświetlał się "Wpisz dawkę" ale niewidoczny → user widział "nic się
   // nie dzieje". Inline error w modal = zawsze widoczny.
   const [formError, setFormError] = useState(null)
+  // v2.11.26: inline success state w modal'u. Po kliknięciu Zapisz pokazujemy
+  // "✓ Zapisano!" w modal'u przez 1.5s zanim go zamkniemy. Toast może nie być
+  // widoczny w TWA, plus user może nie scrollować do nowego wpisu na liście —
+  // visible feedback w modal'u eliminuje "nic się nie dzieje" feeling.
+  const [formSuccess, setFormSuccess] = useState(null)
   const [addMedModal, setAddMedModal] = useState(false)
   const [deleteId, setDeleteId] = useState(null)
   const [form, setForm] = useState({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
@@ -106,6 +111,12 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
       return
     }
 
+    // v2.11.26: pokaż success message PRZED zamknięciem modal'a. Toast +
+    // listę wpisów łatwo przeoczyć w TWA. Inline success w modal'u jest
+    // niezaprzeczalny — user widzi "✓ Zapisano" gdzie patrzył gdy klikał.
+    const successMsg = `✓ ${t('common.saved') || 'Zapisano'}: ${form.med}${form.dose ? ` ${form.dose}` : ''}`
+    setFormSuccess(successMsg)
+
     if (editingId) {
       setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
       toast(t('common.saved'))
@@ -126,9 +137,14 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         }
       }
     }
-    setModal(false)
-    setEditingId(null)
-    setForm({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
+
+    // v2.11.26: zamknij modal po 1.2s żeby user zdążył zobaczyć success message.
+    setTimeout(() => {
+      setModal(false)
+      setEditingId(null)
+      setFormSuccess(null)
+      setForm({ med:'Paracetamol', form:'tablet', dose:'', time:nowTime(), date:todayDate(), note:'' })
+    }, 1200)
   }
 
   const remove = (id) => {
@@ -319,7 +335,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         <div className="modal-btns"><button className="btn-secondary" onClick={()=>setAddMedModal(false)}>{t('common.cancel')}</button><button className="btn-primary" onClick={addCustomMed}>{t('common.save')}</button></div>
       </Modal>
 
-      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null); setFormError(null) }} title={editingId ? t('common.edit') : t('meds.modal.title')}>
+      <Modal open={modal} onClose={() => { setModal(false); setEditingId(null); setFormError(null); setFormSuccess(null) }} title={editingId ? t('common.edit') : t('meds.modal.title')}>
         {/* v2.11.24: inline error banner — alert level visible nawet gdy toast nie działa */}
         {formError && (
           <div role="alert" style={{
@@ -327,6 +343,16 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
             padding:'10px 12px', marginBottom:12, fontSize:13, color:'#7A1F0C', fontWeight:600,
           }}>
             ⚠️ {formError}
+          </div>
+        )}
+        {/* v2.11.26: inline SUCCESS banner — pokazuje się przez 1.2s po Zapisz */}
+        {formSuccess && (
+          <div role="status" style={{
+            background:'#D7F0E0', border:'1px solid #0F6E56', borderRadius:8,
+            padding:'12px 14px', marginBottom:12, fontSize:14, color:'#0F6E56', fontWeight:700,
+            textAlign:'center',
+          }}>
+            {formSuccess}
           </div>
         )}
         <div className="form-group"><label className="form-label">{t('meds.modal.drug')}</label><select className="form-select" value={form.med} onChange={e=>setForm(f=>({...f,med:e.target.value}))}>{allMedNames.map(mn => (
