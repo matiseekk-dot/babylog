@@ -99,6 +99,9 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
   }
 
   return (
+    // v2.11.17: minHeight:0 na outer aby flex children mogły overflow.
+    // Bez tego flex domyślnie wyłącza overflow na inner content (klasyczny
+    // CSS gotcha — flex item ma `min-height: auto`, nie `0`).
     <div style={{
       position: 'fixed',
       inset: 0,
@@ -106,6 +109,7 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
       zIndex: 9999,
       display: 'flex',
       flexDirection: 'column',
+      minHeight: 0,
       paddingTop: 'env(safe-area-inset-top)',
       paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
@@ -137,12 +141,24 @@ export default function MedicalDisclaimerScreen({ onAccept }) {
       </div>
 
       {/* Scrollable content */}
+      {/*
+        v2.11.17: dodane minHeight:0 + WebkitOverflowScrolling + touchAction.
+        - minHeight:0 — KRYTYCZNE w flex column: inaczej flex:1 dziecko ma
+          implicit min-height:auto, co rozpycha kontener i wyłącza overflow.
+        - WebkitOverflowScrolling:'touch' — momentum scroll na iOS Safari.
+        - touchAction:'pan-y' — explicitnie pozwala na pionowy scroll w
+          starszych WebView TWA gdzie domyślny touch-action może blokować
+          gestures.
+      */}
       <div
         ref={scrollRef}
         onScroll={handleScroll}
         style={{
           flex: 1,
+          minHeight: 0,
           overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-y',
           padding: '20px 24px',
         }}
       >

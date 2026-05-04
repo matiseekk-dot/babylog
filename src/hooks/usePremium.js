@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 import { useFirestore } from './useFirestore'
 
 const TRIAL_DAYS = 14
@@ -31,23 +33,21 @@ export function usePremium(uid) {
   // z permission-denied — to OK, nikt go nie wywołuje od v2.10.0.
   const [purchased] = useFirestore(uid, 'premium_purchased', false)
 
-  // v2.11.16: Race-condition fix dla "trial reset on refresh".
+  // v2.11.17: Robust trial loading dla zalogowanych — direct getDoc fallback.
   //
-  // Wcześniej: przy refresh apki, useFirestore zwracało initialState z
-  // localStorage. Jeśli localStorage był pusty (clear data, reinstall, fresh
-  // device, TWA cache wyczyszczony), trialStart = null. useEffect natychmiast
-  // wywoływał setTrialStart(Date.now()) — overwriting prawdziwego trial_start
-  // który dopiero ładował się z Firestore (~200-1500ms).
+  // History:
+  //   v2.11.16 — dodane 2s setTimeout żeby onSnapshot zdążył z odpowiedzią.
+  //              W praktyce nie wystarczyło: na slow networks, App Check token
+  //              warm-up (~3-5s), albo gdy onSnapshot listener nie odpalił się
+  //              w 2s — i tak resetowało trial.
   //
-  // Skutek: każdy refresh apki resetował trial do "14 dni od teraz", nawet
-  // jeśli user był na trialu od miesiąca.
-  //
-  // Fix:
-  //   - Dla guesta (no uid): zapisuj od razu (Firestore nie istnieje, race nie ma)
-  //   - Dla zalogowanego: czekaj 2s na onSnapshot. Jeśli w międzyczasie Firestore
-  //     dostarczy starszą wartość, useEffect odpali się ponownie ze świeżym
-  //     trialStart, a cleanup cancluje stary setTimeout. Jeśli po 2s wciąż null,
-  //     to faktycznie nowy user — wtedy zapisujemy.
+  //   v2.11.17 — dodano explicit getDoc race against timeout. Po wykryciu że
+  //              trialStart jest null + uid jest, robimy DWA równoległe asyncy:
+  //                1. getDoc(users/{uid}/data/trial_start) — 1 strzał, network roundtrip
+  //                2. setTimeout(5s) — fallback gdy network powolny lub doc nie ma
+  //              Pierwszy który wraca, decyduje. Jeśli getDoc zwróci wartość →
+  //              ustawiamy ją (NIE Date.now). Jeśli getDoc zwróci że doc nie ma,
+  //              dopiero wtedy ustawiamy Date.now (świeży trial).
   useEffect(() => {
     if (trialStart !== null) return // już ustawione, no-op
     if (!uid) {
@@ -55,11 +55,43 @@ export function usePremium(uid) {
       setTrialStart(Date.now())
       return
     }
-    // Zalogowany — daj 2s na onSnapshot żeby załadował z Firestore
-    const t = setTimeout(() => {
+
+    let cancelled = false
+    let timer = null
+
+    const tryGetDoc = async () => {
+      try {
+        const ref = doc(db, 'users', uid, 'data', 'trial_start')
+        const snap = await getDoc(ref)
+        if (cancelled) return
+        if (snap.exists()) {
+          // Stary trial znaleziony w Firestore — ustaw go w state (nie zapis,
+          // bo onSnapshot też go ustawi; to jest tylko fast-path).
+          const v = snap.data()?.value
+          if (typeof v === 'number') {
+            setTrialStart(v)
+            return
+          }
+        }
+        // Doc nie istnieje albo jest dziwny → świeży trial
+        setTrialStart(Date.now())
+      } catch (e) {
+        // Network error / permission denied — czekamy na timeout fallback
+        // (nie ustawiamy nic, niech 5s timeout zrobi reset jako last resort)
+      }
+    }
+
+    tryGetDoc()
+    timer = setTimeout(() => {
+      if (cancelled) return
+      // Last resort — getDoc zawiódł lub nie odpowiedział; ustawiamy fresh trial
       setTrialStart(Date.now())
-    }, 2000)
-    return () => clearTimeout(t)
+    }, 5000)
+
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
   }, [trialStart, uid])
 
   // Wylicz czy Premium jest aktywny
