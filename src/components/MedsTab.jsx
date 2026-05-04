@@ -93,19 +93,18 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   }
 
   const save = () => {
-    // v2.11.21: Walidacja dose — wcześniej user mógł kliknąć "Zapisz"
-    // bez żadnej dawki, dostawał silent close modal i nic się nie działo
-    // (toast był wywoływany TYLKO przy edycji, nie przy nowym wpisie).
-    // v2.11.24: inline error w modal'u (toast może nie być widoczny).
+    // v2.11.27: USUNIĘTA walidacja dose — przed v2.11.21 dose był optional
+    // i save zawsze działał. v2.11.21 dodało wymaganie dose, ale toast error
+    // jest niewidoczny w TWA (modal sheet przykrywa toast bottom area), a
+    // inline error v2.11.24 mógł być przegapiony — user widział "Zapisz nic
+    // nie robi" bo modal nie zamykał się.
+    //
+    // Powrót do oryginalnego zachowania: zapisuj nawet z pustym dose.
+    // User może edytować wpis później jeśli chce dopisać dawkę.
+    // Walidujemy tylko `med` bo to wymagane (selecty + custom meds).
     setFormError(null)
     if (!form.med) {
       const msg = t('meds.error.no_med') || 'Wybierz lek'
-      setFormError(msg)
-      toast(msg, 'error')
-      return
-    }
-    if (!form.dose || !form.dose.trim()) {
-      const msg = t('meds.error.no_dose') || 'Wpisz dawkę'
       setFormError(msg)
       toast(msg, 'error')
       return
