@@ -163,7 +163,7 @@ export default function MedicalConsentScreen({ onAccept }) {
           }}>
             🚨 {t('consent.emergency_title')}
           </div>
-          <div style={{ fontSize: 14, color: 'var(--alert-700)', lineHeight: 1.5, fontWeight: 600 }}>
+          <div style={{ fontSize: 15, color: 'var(--alert-700)', lineHeight: 1.5, fontWeight: 600 }}>
             {t('consent.emergency_text')}
           </div>
         </div>
@@ -204,7 +204,7 @@ export default function MedicalConsentScreen({ onAccept }) {
               accentColor: 'var(--brand-500)',
             }}
           />
-          <span style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>
+          <span style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.5 }}>
             {t('consent.checkbox')}
           </span>
         </label>
@@ -248,7 +248,7 @@ function ConsentPoint({ icon, text }) {
       }}>
         {icon}
       </div>
-      <div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.5 }}>
+      <div style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.5 }}>
         {text}
       </div>
     </div>

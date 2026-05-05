@@ -158,20 +158,45 @@ export default function SettingsScreen({
   }
 
   return (
-    <div style={{ minHeight: '100%', background: '#F7F7F5' }}>
+    // v2.11.30: outer-scroll architecture (jak inne screen fixed inset:0).
+    // Wcześniej: `<div minHeight:100%>` bez własnego scroll'a. SettingsScreen
+    // ma DUŻO opcji (export CSV/JSON/PDF, FCM, profiles, premium, legal links,
+    // logout) — na małym ekranie content overflows ale nie ma overflow:auto.
+    // .app parent ma height:100dvh + overflow:hidden, więc dolne opcje były
+    // niedostępne. Plus header był 'sticky' co działa tylko gdy parent jest
+    // scroll'em — nie był.
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 100,
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      background: '#F7F7F5',
+    }}>
       {/* Header */}
       <div style={{
         background: '#fff',
-        padding: '16px',
+        padding: '12px 16px',
         display: 'flex', alignItems: 'center', gap: 12,
         borderBottom: '0.5px solid rgba(0,0,0,0.08)',
         position: 'sticky', top: 0, zIndex: 10,
+        paddingTop: 'max(12px, env(safe-area-inset-top))',
       }}>
-        <button onClick={onClose} style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          fontSize: 20, color: '#3a3a36', padding: 4, minHeight: 36,
-        }}>←</button>
-        <div style={{ fontSize: 17, fontWeight: 700, color: '#1a1a18' }}>
+        {/* v2.11.30: back button 36px → 48x48px (Material minimum touch target).
+            Wcześniej padding:4 + minHeight:36 = ~36x36 click area, poniżej WCAG
+            2.1 AAA i Material Design 3 guidelines. QA report PrimeTestLab
+            złapał to jako Issue #3. */}
+        <button
+          onClick={onClose}
+          aria-label={t('common.back') || 'Wstecz'}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: 24, color: '#3a3a36',
+            minWidth: 48, minHeight: 48,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            borderRadius: 8,
+            margin: '-8px 0',
+          }}
+        >←</button>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#1a1a18' }}>
           {t('settings.title')}
         </div>
       </div>

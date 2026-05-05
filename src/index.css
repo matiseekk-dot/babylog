@@ -118,7 +118,17 @@ html { height: 100%; }
 }
 
 body {
+  /* v2.11.30: explicit base font-size 16px + line-height 1.5 dla body text.
+     QA report (PrimeTestLab) Issue #2: tekst za mały na mobile. WCAG 2.1
+     SC 1.4.4 wymaga 16px minimum dla body text + możliwość zoom do 200%.
+     Ustawiamy bazę żeby wszystkie elementy bez explicit font-size dziedziczyły
+     czytelny rozmiar. text-size-adjust: 100% — Android WebView czasem skaluje
+     teksty automatycznie ("text inflation"), wyłączamy żeby UI był stabilny. */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   background: var(--bg);
   color: var(--text);
   height: 100%;
@@ -158,13 +168,30 @@ input[type=text], input[type=number], input[type=time], input[type=date], select
 }
 
 .app {
+  /* v2.11.30: bumped max-width 430 → 600. QA report (PrimeTestLab) Issue #3:
+     "Settings page renders with document-style layout, large side margins" —
+     na większych telefonach (6.7"+ ekrany, 412-428dp width) i tabletach,
+     430px max-width zostawiał wide white margins po bokach (apka wycentrowana
+     na ~70% width tableta). 600px daje breathing room na większych telefonach
+     i tabletach w portrait, nie wpływa na mniejsze (te zawsze ≤ 430). Plus
+     w landscape apka rozciąga się rozsądnie zamiast być cienkim paskiem. */
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  max-width: 430px;
+  max-width: 600px;
   margin: 0 auto;
   position: relative;
   background: var(--bg);
+}
+
+/* v2.11.30: minimum touch target dla wszystkich klikalnych elementów.
+   WCAG 2.5.5 (Target Size, AAA): minimum 44×44 CSS px.
+   Material Design: 48dp recommended.
+   Wymuszamy 44px minimum (tighter niż MD3 zostawia mało miejsca na densely
+   listed itemy, ale 44 jest WCAG floor). Komponenty mogą override większą
+   wartością gdy potrzeba (np. primary CTA buttons mają minHeight:54). */
+button, [role="button"], a.btn, .btn-add, .btn-primary, .btn-secondary {
+  min-height: 44px;
 }
 
 /* TOPBAR */
@@ -269,7 +296,7 @@ input[type=text], input[type=number], input[type=time], input[type=date], select
   padding: 16px 16px 8px;
 }
 .section-title { font-size: 20px; font-weight: 700; color: var(--text); }
-.section-desc { font-size: 13px; color: var(--text-3); margin-top: 2px; }
+.section-desc { font-size: 14px; color: var(--text-3); margin-top: 2px; }
 
 /* CARDS */
 .card {
@@ -318,9 +345,11 @@ input[type=text], input[type=number], input[type=time], input[type=date], select
 .log-item:last-child { border-bottom: none; }
 .log-icon { font-size: 18px; min-width: 24px; text-align: center; }
 .log-body { flex: 1; min-width: 0; }
-.log-name { font-size: 14px; font-weight: 500; color: var(--text); }
-.log-detail { font-size: 12px; color: var(--text-3); margin-top: 1px; }
-.log-time { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+/* v2.11.30: bumped log-name 14→15, log-detail/time 12→13. QA report Issue #2:
+   body text za mały. Logi (karmienie, sen, leki) to body content, user czyta. */
+.log-name { font-size: 15px; font-weight: 500; color: var(--text); }
+.log-detail { font-size: 13px; color: var(--text-3); margin-top: 2px; line-height: 1.4; }
+.log-time { font-size: 13px; color: var(--text-3); white-space: nowrap; }
 
 /* BADGES */
 .badge {
@@ -563,7 +592,7 @@ input[type=text], input[type=number], input[type=time], input[type=date], select
   color: var(--text-3);
 }
 .empty-state .empty-icon { font-size: 40px; margin-bottom: 10px; }
-.empty-state p { font-size: 14px; line-height: 1.5; }
+.empty-state p { font-size: 15px; line-height: 1.5; }
 
 /* CHART WRAPPER */
 .chart-wrap {
