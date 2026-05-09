@@ -7,6 +7,7 @@ import {
   persistentMultipleTabManager,
 } from 'firebase/firestore'
 import { getFunctions } from 'firebase/functions'
+import { getAnalytics, isSupported as isAnalyticsSupported } from 'firebase/analytics'
 import { getMessaging, isSupported } from 'firebase/messaging'
 
 const firebaseConfig = {
@@ -93,6 +94,29 @@ export const db = initializeFirestore(app, {
 // v2.11.31: Cloud Functions client. Region musi pasować do CF (europe-west3).
 // Używane przez usePremium → initTrial (server-side trial start).
 export const functions = getFunctions(app, 'europe-west3')
+
+// v2.11.32: Firebase Analytics — funnel events do mierzenia conversion.
+// Lazy init bo getAnalytics() wymaga browser environment + analytics support
+// (niektóre przeglądarki / TWA / Brave blokują).
+// Tracking events: src/utils/analytics.js (custom logEvent z fallback gdy null).
+let analyticsInstance = null
+let analyticsChecked = false
+export async function getAnalyticsIfSupported() {
+  if (analyticsChecked) return analyticsInstance
+  analyticsChecked = true
+  try {
+    const supported = await isAnalyticsSupported()
+    if (!supported) {
+      console.warn('[firebase] Analytics not supported in this environment')
+      return null
+    }
+    analyticsInstance = getAnalytics(app)
+    return analyticsInstance
+  } catch (err) {
+    console.error('[firebase] Analytics init failed:', err)
+    return null
+  }
+}
 
 // Messaging — lazy init, bo isSupported() jest async i nie każda przeglądarka
 // to wspiera (np. Safari iOS przed 16.4, niektóre wersje TWA).

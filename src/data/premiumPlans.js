@@ -27,11 +27,23 @@ import { t } from '../i18n'
  *   badge     — opcjonalny label nad planem ("Najlepsza oferta")
  */
 
+// v2.11.32 — Sprint B P1-2d: usunięto plan `lifetime`. Nie jest aktywny w
+// Google Play Console (tylko monthly/yearly subscriptions skonfigurowane).
+// Klik "Lifetime" przez user'a powodował błąd "SKU not found" → modal failure
+// → confidence killer na nowo zdobytych userach.
+//
+// Aby przywrócić lifetime: utworzyć "in-app product" (NIE subscription, lifetime
+// to one-time non-consumable) w Play Console:
+//   Monetize → Products → In-app products → Create
+//   ID: spokojny_rodzic_premium_lifetime
+// Plus zsynchronizować z RC dashboard jako entitlement attached do lifetime.
+// Plus dodać do LIFETIME_PRODUCT_IDS w useRevenueCat.js (już jest tam
+// defensywnie — patrz v2.11.14 commit).
 export function getPlans(locale) {
   const isEN = locale === 'en'
   const prices = isEN
-    ? { monthly: '$6.99', yearly: '$49.99', lifetime: '$99.99' }
-    : { monthly: '14,99 zł', yearly: '99,99 zł', lifetime: '199,99 zł' }
+    ? { monthly: '$6.99', yearly: '$49.99' }
+    : { monthly: '14,99 zł', yearly: '99,99 zł' }
 
   return [
     {
@@ -51,15 +63,6 @@ export function getPlans(locale) {
       productId: 'spokojny_rodzic_premium_yearly',
       popular: true,
       badge: t('paywall.badge.yearly'),
-    },
-    {
-      id: 'lifetime',
-      label: t('paywall.plan.lifetime'),
-      price: prices.lifetime,
-      period: t('paywall.per.lifetime'),
-      productId: 'spokojny_rodzic_premium_lifetime',
-      popular: false,
-      badge: null,
     },
   ]
 }

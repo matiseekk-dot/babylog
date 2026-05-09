@@ -41,6 +41,7 @@ import OnboardingScreen from './components/OnboardingScreen'
 import ToastContainer from './components/Toast'
 import { toast } from './components/Toast'
 import { captureError, addBreadcrumb } from './sentry'
+import { trackPurchaseCompleted, trackFirstEntry } from './utils/analytics'
 import SleepIndicator from './components/SleepIndicator'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import SettingsScreen from './components/SettingsScreen'
@@ -317,6 +318,12 @@ export default function App() {
   useEffect(() => {
     // Detekcja: false → true przejście (zakup właśnie przeszedł)
     if (isPremium && !prevIsPremium && uid) {
+      // v2.11.32 P1-6: track purchase completed. To jest kluczowa metryka
+      // — bottom of funnel. Plan jest unknown bo Firestore pole
+      // `premium_meta.value.product_id` byłoby zsynchronizowane z opóźnieniem.
+      // Dla MVP wystarczy znać że zakup przeszedł; granularność per-plan
+      // mamy z paywall_cta_clicked który łapie wybór planu przed kupnem.
+      trackPurchaseCompleted(purchased ? 'purchased' : 'trial_to_premium')
       const flagKey = 'babylog_premium_onboarding_shown_' + uid
       try {
         if (localStorage.getItem(flagKey) !== '1') {
@@ -326,7 +333,7 @@ export default function App() {
       } catch {}
     }
     setPrevIsPremium(isPremium)
-  }, [isPremium, prevIsPremium, uid])
+  }, [isPremium, prevIsPremium, uid, purchased])
 
   const closePremiumOnboarding = () => setShowPremiumOnboarding(false)
   const navigateToPdfReport = () => {
@@ -334,7 +341,15 @@ export default function App() {
     setShowSettings(true)  // Settings ma sekcję PDF Report
   }
 
-  const openPaywall = () => setShowPaywall(true)
+  // v2.11.32 P1-6: paywall trigger source dla analytics — pokazuje skąd
+  // user przyszedł do paywall. Pomaga ocenić który trigger konwertuje
+  // najlepiej (topbar trial badge vs lock w tabie vs próba dodania 2-go
+  // dziecka).
+  const [paywallTrigger, setPaywallTrigger] = useState('unknown')
+  const openPaywall = (trigger = 'unknown') => {
+    setPaywallTrigger(trigger)
+    setShowPaywall(true)
+  }
   const closePaywall = () => setShowPaywall(false)
 
   // RevenueCat — weryfikacja subskrypcji
@@ -712,7 +727,7 @@ export default function App() {
   // otwiera paywall zamiast zapisać.
   const addProfile = (p) => {
     if (!isPremium && profiles.length >= 1) {
-      openPaywall()
+      openPaywall('profile_limit')
       return
     }
     setProfiles([...profiles, p])
@@ -738,7 +753,7 @@ export default function App() {
     toiletMode: active.toiletMode || 'diapers',
     onDataChange: refresh,
     isPremium,
-    onUpgrade: openPaywall,
+    onUpgrade: () => openPaywall('premium_feature'),
   }
 
   // ── Quick-add callbacks dla QuickAddFab (v2.9.3) ──────────────────────────
@@ -749,10 +764,24 @@ export default function App() {
     ? (lastBreastFeed.type === 'Pierś lewa' ? 'Pierś prawa' : 'Pierś lewa')
     : null
 
+  // v2.11.32 P1-6: track FIRST entry once per uid. localStorage flaga żeby
+  // nie spamować analytics przy każdym kolejnym wpisie — interesuje nas
+  // dystans install→first_entry (aha moment), nie wszystkie 1000 wpisów.
+  const trackFirstEntryOnce = (entryType) => {
+    if (!uid) return
+    const flagKey = 'babylog_first_entry_tracked_' + uid
+    try {
+      if (localStorage.getItem(flagKey) === '1') return
+      localStorage.setItem(flagKey, '1')
+      trackFirstEntry(entryType)
+    } catch {}
+  }
+
   const quickAddFeed = (type, amount) => {
     const entry = { id: genId(), type, amount, time: nowTime(), date: todayDate() }
     setFeedLogsForFab([entry, ...feedLogsForFab])
     refresh?.()
+    trackFirstEntryOnce('feed')
     toast(`${t('toast.entry')}: ${type}`)
   }
 
@@ -760,6 +789,7 @@ export default function App() {
     const entry = { id: genId(), type, time: nowTime(), date: todayDate() }
     setDiaperLogsForFab([entry, ...diaperLogsForFab])
     refresh?.()
+    trackFirstEntryOnce('diaper')
     toast(`${t('toast.entry')}: ${type}`)
   }
 
@@ -781,6 +811,7 @@ export default function App() {
       setSleepLogsForFab([entry, ...sleepLogsForFab])
       setSleepTimerTs(null)
       refresh?.()
+      trackFirstEntryOnce('sleep')
       const sessionH = Math.floor(dur / 3600)
       const sessionM = Math.floor((dur % 3600) / 60)
       const sessionStr = sessionH > 0 ? `${sessionH}h ${sessionM}m` : `${sessionM}m`
@@ -939,7 +970,7 @@ export default function App() {
           isPremium={isPremium}
           isOnTrial={isOnTrial}
           trialDaysLeft={trialDaysLeft}
-          onUpgrade={() => { setShowSettings(false); openPaywall() }}
+          onUpgrade={() => { setShowSettings(false); openPaywall('settings') }}
           user={user}
           onLogout={user ? logout : () => {
             try { localStorage.removeItem('babylog_guest') } catch {}
@@ -967,6 +998,7 @@ export default function App() {
           onActivate={handleActivate}
           onClose={closePaywall}
           checking={rcChecking || purchasing}
+          trigger={paywallTrigger}
         />
         <PlayStoreModal
           open={showPlayStoreModal}
@@ -1013,7 +1045,7 @@ export default function App() {
           ) : isOnTrial ? (
             // Trial aktywny — pokaż ile dni i klik → paywall żeby user mógł kupić
             <button
-              onClick={openPaywall}
+              onClick={() => openPaywall('topbar_trial')}
               style={{
                 background: 'linear-gradient(135deg,#F59E0B,#FB923C)',
                 color: 'var(--surface)', borderRadius: 'var(--radius-round)', border: 'none',
@@ -1026,7 +1058,7 @@ export default function App() {
           ) : (
             // Free — klik → paywall
             <button
-              onClick={openPaywall}
+              onClick={() => openPaywall('topbar_free')}
               style={{
                 background: 'var(--brand-50)', color: 'var(--brand-600)',
                 border: '0.5px solid var(--brand-100)', borderRadius: 'var(--radius-round)',
@@ -1097,7 +1129,7 @@ export default function App() {
             onUpdate={updateProfile}
             onDelete={deleteProfile}
             isPremium={isPremium}
-            onUpgrade={() => { setShowProfiles(false); openPaywall() }}
+            onUpgrade={() => { setShowProfiles(false); openPaywall('profiles') }}
           />
         ) : showMore ? (
           <div style={{paddingBottom:8}}>

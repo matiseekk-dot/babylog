@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { t, useLocale, isEN } from '../i18n'
 import { getPlans } from '../data/premiumPlans'
+import { trackPaywallViewed, trackPaywallCTAClicked } from '../utils/analytics'
 
 /**
  * NOWA OFERTA PREMIUM (2026-04-21 v2 + 2026-04-26 v2.9.2):
@@ -26,38 +27,57 @@ import { getPlans } from '../data/premiumPlans'
  *   - PDF raport dla pediatry (formatowanie, nie sam eksport)
  *   - Notatki z wizyt + pytania do pediatry
  */
+// v2.11.32 — Sprint B P1-2: paywall cleanup zgodnie z audit:
+//   1. Usunięto "Share with partner" — `comingSoon: true` = misleading claim
+//      per Google Play Developer Program Policies §3.4 (features must be
+//      functional at point of purchase). Dodaję z powrotem gdy implementacja
+//      będzie gotowa.
+//   2. Usunięto "Priorytetowe wsparcie 24h" — nieskalowalne (1 founder ≠ 100+
+//      userów), plus to obietnica usługi medycznej która koliduje z disclaimerem
+//      "apka NIE jest wyrobem medycznym". Self-contradiction.
+//   3. Poprawiono "Analityka i normy" — WHO publikuje normy tylko dla growth
+//      (waga/wzrost/BMI/obwód głowy). Nie publikuje norm dla ząbkowania, kaszlu,
+//      milestone'ów. Te są w PTP/AAP referencyjnych tabelach. Tekst poprawiony
+//      żeby nie wprowadzał w błąd.
 function getFeatures() {
   if (isEN()) {
     return [
-      { icon:'👨‍👩‍👧', title:'Share with partner',        desc:'Both parents track together in real time. One child, two accounts.', comingSoon:true },
-      { icon:'📊', title:'Growth charts with WHO percentiles', desc:'See where your child ranks compared to WHO norms.' },
-      { icon:'📈', title:'Analytics & norms',           desc:'Trend charts and comparison with WHO development norms for teeth, cough, milestones.' },
+      { icon:'📄', title:'PDF report for pediatrician', desc:'Formatted summary of temperatures, doses, feedings, sleep — for any date range. Take it to your visit.' },
+      { icon:'📊', title:'Growth charts with WHO percentiles', desc:'See where your child ranks compared to WHO norms (weight, height, head circumference).' },
+      { icon:'📈', title:'Trend analytics',             desc:'Charts and pattern detection for temperature, sleep duration, feeding frequency over weeks/months.' },
+      { icon:'🩺', title:'Doctor notes & questions',    desc:'Visit history, prescriptions, questions to ask next time. Never forget what the doctor said.' },
       { icon:'👶', title:'Unlimited children',          desc:'Twins, siblings — one subscription, no limits.' },
-      { icon:'📄', title:'PDF report for pediatrician', desc:'Formatted summary: temperatures, doses, feedings for any date range.' },
-      { icon:'🩺', title:'Doctor notes & questions',    desc:'Visit history, prescriptions, questions to ask next time.' },
-      { icon:'🎯', title:'Priority support',            desc:'Direct line to me (solo founder). You ask, I answer within 24h.' },
+      { icon:'🔔', title:'Smart medication reminders',  desc:'Notifications when interval between doses has passed (per package leaflet).' },
     ]
   }
   return [
-    { icon:'👨‍👩‍👧', title:'Udostępnij partnerowi',     desc:'Oboje rodziców śledzi razem w czasie rzeczywistym. Jedno dziecko, dwa konta.', comingSoon:true },
-    { icon:'📊', title:'Wykresy wzrostu z percentylami WHO', desc:'Zobacz w którym percentylu jest twoje dziecko wg norm WHO.' },
-    { icon:'📈', title:'Analityka i normy',             desc:'Wykresy trendów i porównanie do norm WHO dla ząbków, kaszlu, milestone\'ów.' },
+    { icon:'📄', title:'Raport PDF dla pediatry',       desc:'Sformatowane podsumowanie: temperatury, dawki, karmienia, sen — za dowolny okres. Zabierz do gabinetu.' },
+    { icon:'📊', title:'Wykresy wzrostu z percentylami WHO', desc:'Zobacz w którym percentylu jest twoje dziecko wg norm WHO (waga, wzrost, obwód głowy).' },
+    { icon:'📈', title:'Analityka trendów',             desc:'Wykresy i wzorce dla temperatury, snu, karmienia w skali tygodni i miesięcy.' },
+    { icon:'🩺', title:'Notatki i pytania do pediatry', desc:'Historia wizyt, recepty, pytania do zadania na następnej wizycie. Nie zapomnisz co lekarz powiedział.' },
     { icon:'👶', title:'Nielimitowane dzieci',          desc:'Bliźnięta, rodzeństwo — jedna subskrypcja, bez limitów.' },
-    { icon:'📄', title:'Raport PDF dla pediatry',       desc:'Sformatowane podsumowanie: temperatury, dawki, karmienia za dowolny okres.' },
-    { icon:'🩺', title:'Notatki i pytania do pediatry', desc:'Historia wizyt, recepty, pytania do zadania na następnej wizycie.' },
-    { icon:'🎯', title:'Priorytetowe wsparcie',         desc:'Bezpośredni kontakt ze mną (solo founder). Pytasz, odpowiadam w 24h.' },
+    { icon:'🔔', title:'Inteligentne przypomnienia o lekach', desc:'Powiadomienia gdy minął odstęp między dawkami (zgodnie z ulotką).' },
   ]
 }
 
 // v2.9.2: getPlans() usunięte — single source of truth w src/data/premiumPlans.js.
 // Ten sam moduł importuje useRevenueCat. Eliminuje rozjazd cen.
 
-export default function PaywallScreen({ onActivate, onClose, checking }) {
+export default function PaywallScreen({ onActivate, onClose, checking, trigger = 'unknown' }) {
   useLocale()
   const FEATURES = getFeatures()
   // Use locale-aware getPlans() — przeliczy się przy zmianie języka dzięki useLocale().
   const PLANS = getPlans(isEN() ? 'en' : 'pl')
   const [selected, setSelected] = useState('yearly')
+
+  // v2.11.32 P1-6: track paywall view raz przy mount. `trigger` przekazany
+  // przez parent (App.jsx) wskazuje skąd user przyszedł:
+  //   'topbar' (klik trial badge), 'premium_feature' (lock w tabie),
+  //   'profile_limit' (próba dodania 2-go dziecka jako free), etc.
+  // Pomaga zrozumieć który trigger conwertuje najlepiej.
+  useEffect(() => {
+    trackPaywallViewed(trigger)
+  }, [trigger])
 
   // Aktualnie wybrany plan — używany do dynamicznego CTA z ceną
   const selectedPlan = PLANS.find(p => p.id === selected) || PLANS[0]
@@ -247,7 +267,12 @@ export default function PaywallScreen({ onActivate, onClose, checking }) {
         borderTop:'0.5px solid var(--border)',
         boxShadow:'0 -2px 10px rgba(0,0,0,0.04)',
       }}>
-        <button onClick={() => onActivate(selected)} disabled={checking} style={{
+        <button onClick={() => {
+          // v2.11.32 P1-6: track CTA click przed wywołaniem activate.
+          // Mierzymy plan + trigger source.
+          trackPaywallCTAClicked(selected, trigger)
+          onActivate(selected)
+        }} disabled={checking} style={{
           width:'100%',padding:'var(--space)',minHeight:54,letterSpacing:-0.2,
           background:checking?'var(--text-3)':'linear-gradient(135deg, var(--brand-600), var(--brand-500))',
           color:'var(--surface)',border:'none',borderRadius:'var(--radius-comfortable)',

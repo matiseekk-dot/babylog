@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { t, useLocale } from '../i18n'
+import { trackOnboardingCompleted } from '../utils/analytics'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 
@@ -60,6 +61,9 @@ export default function OnboardingScreen({ onComplete }) {
   const finish = () => {
     if (!canSubmit) return
     const months = dobToMonths(dob)
+    // v2.11.32 P1-6: funnel event — onboarding complete.
+    // Mierzymy ageMonths + sex (no PII — imię nie idzie do analytics).
+    trackOnboardingCompleted({ ageMonths: months, sex })
     onComplete({
       name: name.trim(),
       months,

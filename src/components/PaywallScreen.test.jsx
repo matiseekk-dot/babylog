@@ -17,13 +17,14 @@ describe('PaywallScreen', () => {
     expect(screen.getAllByText(/premium/i).length).toBeGreaterThan(0)
   })
 
-  it('pokazuje wszystkie 3 plany cenowe', () => {
+  it('pokazuje 2 plany cenowe (monthly + yearly)', () => {
+    // v2.11.32: lifetime plan usunięty — nie ma odpowiadającego SKU w
+    // Google Play Console (tylko monthly/yearly subscriptions). Test
+    // zaktualizowany żeby weryfikować tylko aktywne plany.
     render(<PaywallScreen onActivate={() => {}} onClose={() => {}} checking={false} />)
-    // Szukamy cen — 14,99 / 99,99 / 199,99
     const text = document.body.textContent
     expect(text).toMatch(/14[,.]99/)
     expect(text).toMatch(/99[,.]99/)
-    expect(text).toMatch(/199[,.]99/)
   })
 
   it('wywołuje onClose gdy X jest kliknięty', () => {
@@ -45,7 +46,7 @@ describe('PaywallScreen', () => {
     if (ctaBtn) {
       fireEvent.click(ctaBtn)
       expect(onActivate).toHaveBeenCalled()
-      expect(onActivate.mock.calls[0][0]).toMatch(/yearly|monthly|lifetime/)
+      expect(onActivate.mock.calls[0][0]).toMatch(/yearly|monthly/)
     }
   })
 

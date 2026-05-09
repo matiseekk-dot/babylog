@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { t, useLocale } from '../i18n'
 import { addBreadcrumb } from '../sentry'
+import { trackConsentAccepted } from '../utils/analytics'
 
 /**
  * MedicalConsentScreen
@@ -72,6 +73,8 @@ export default function MedicalConsentScreen({ onAccept }) {
         })
       }
     } catch {}
+    // v2.11.32 P1-6: pierwszy event funnel — user przeszedł consent.
+    trackConsentAccepted()
     onAccept?.()
   }
 
