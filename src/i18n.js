@@ -522,15 +522,8 @@ const TRANSLATIONS = {
     'milechart.typical':           'Typowy wiek',
     'milechart.achieved':          'Osiągnięte',
     'milechart.disclaimer':        'Zakresy referencyjne wg AAP/CDC — to są typowe wieki, nie progi diagnostyczne.',
-    // Empty state hero (first-time users)
-    'empty_hero.title':            'Witaj w Spokojny Rodzic',
-    'empty_hero.subtitle':         'Zacznij od jednej z poniższych funkcji — najważniejszych dla zdrowia dziecka.',
-    'empty_hero.temp.title':       'Zmierz temperaturę',
-    'empty_hero.temp.desc':        'Pomiar, który warto zapisywać regularnie',
-    'empty_hero.meds.title':       'Sprawdź bezpieczną dawkę',
-    'empty_hero.meds.desc':        'Zapisuj podane leki i śledź historię',
-    'empty_hero.feed.title':       'Zapisz karmienie',
-    'empty_hero.feed.desc':        'Jedno tapnięcie — pełna historia dnia',
+    // (v2.12.0 cleanup) Usunięto klucze 'empty_hero.*' — komponent EmptyStateHero
+    // został zastąpiony innym empty state w v2.10.x. Klucze były martwym kodem.
     'dose.modal.log_btn':          '+ Zapisz podanie leku',
     'meds.toast.logged':           '{med} — zapisane',
     'temp.invalid':                'Nieprawidłowa temperatura — wpisz wartość między 30 a 45°C',
@@ -1241,37 +1234,19 @@ const TRANSLATIONS = {
     'who.lower_observe':            'Niższy percentyl — obserwuj trend',
     'who.upper_observe':            'Wyższy percentyl — obserwuj trend',
 
-    // Paywall — testimoniale + features + pricing
-    'paywall.testimonial1.name':    'Ania K.',
-    'paywall.testimonial1.child':   'mama 4-miesięcznej Zosi',
-    'paywall.testimonial1.quote':   'Share z mężem to game changer — oboje widzimy karmienia w czasie rzeczywistym.',
-    'paywall.testimonial2.name':    'Martyna P.',
-    'paywall.testimonial2.child':   'mama bliźniaków',
-    'paywall.testimonial2.quote':   'Wykresy wzrostu z percentylami oszczędzają nam wizytę u pediatry co miesiąc.',
-    'paywall.testimonial3.name':    'Kuba D.',
-    'paywall.testimonial3.child':   'tata 7-miesięcznego Adama',
-    'paywall.testimonial3.quote':   'Pytania do pediatry — żadnych zapomnianych tematów na wizycie.',
-    'paywall.feature1.title':       'Udostępnij partnerowi',
-    'paywall.feature1.desc':        'Oboje rodziców śledzi razem w czasie rzeczywistym. Jedno dziecko, dwa konta.',
-    'paywall.feature2.title':       'Wykresy wzrostu z percentylami WHO',
-    'paywall.feature2.desc':        'Zobacz w którym percentylu jest twoje dziecko wg norm WHO.',
-    'paywall.feature3.title':       'Analityka i normy',
-    'paywall.feature3.desc':        'Wykresy trendów i porównanie do norm WHO dla ząbków, kaszlu, milestone\'ów.',
-    'paywall.feature4.title':       'Nielimitowane dzieci',
-    'paywall.feature4.desc':        'Bliźnięta, rodzeństwo — jedna subskrypcja, bez limitów.',
-    'paywall.feature5.title':       'Raport PDF dla pediatry',
-    'paywall.feature5.desc':        'Sformatowane podsumowanie: temperatury, dawki, karmienia za dowolny okres.',
-    'paywall.feature6.title':       'Notatki i pytania do pediatry',
-    'paywall.feature6.desc':        'Historia wizyt, recepty, pytania do zadania na następnej wizycie.',
-    'paywall.feature7.title':       'Priorytetowe wsparcie',
-    'paywall.feature7.desc':        'Bezpośredni kontakt ze mną (solo founder). Pytasz, odpowiadam w 24h.',
+    // Paywall — pricing + free banner
+    // (v2.12.0 cleanup) Usunięto klucze 'paywall.testimonial1-3.*' (testimoniale)
+    //   i 'paywall.feature1-7.*' (rozszerzona lista features) — były to martwy kod
+    //   po cofniętej rozszerzonej wersji paywallu z v2.10.x. PaywallScreen używa
+    //   skróconych kluczy 'paywall.feat1-6.*' zdefiniowanych wyżej.
+    // (v2.11.32 cleanup) Usunięto 'paywall.price.lifetime' — plan lifetime został
+    //   wycofany (Sprint B, P1-2d) bo nie był skonfigurowany w Play Console.
     'paywall.coming_soon':          'Już wkrótce',
     'paywall.free_banner':          'Tracker karmień, snu, pieluch i temperatury, CSV export i sync chmurowy — zawsze ZA DARMO.',
     'paywall.premium_header':       'Co dostajesz w Premium',
     'paywall.choose_plan':          'Wybierz plan',
     'paywall.price.monthly':        '14,99 zł',
     'paywall.price.yearly':         '99,99 zł',
-    'paywall.price.lifetime':       '199,99 zł',
     'paywall.free.desc':            'Śledzenie karmień, snu, pieluch i temperatury, CSV export i sync chmurowy — zawsze ZA DARMO.',
 
     // PDF Report for pediatrician (Premium feature)
@@ -1820,8 +1795,8 @@ const TRANSLATIONS = {
     'features.item.doctor_notes.detail':"After the visit, save what the doctor said — diagnosis, recommendations, which medications. Next time you don't have to remember, it's all at hand.",
     'features.item.vaccinations.emoji':'💉',
     'features.item.vaccinations.title':'Vaccinations',
-    'features.item.vaccinations.short':'Polish vaccination schedule (PSO)',
-    'features.item.vaccinations.detail':'Built-in Polish vaccination schedule — the app shows which vaccinations are due at each age. Log the date, batch number, side effects.',
+    'features.item.vaccinations.short':'National vaccination schedule',
+    'features.item.vaccinations.detail':'Built-in vaccination schedule for your country — the app shows which vaccinations are due at each age. Log the date, batch number, side effects.',
 
     // Growth
     'features.item.growth_charts.emoji':'📊',
@@ -1926,15 +1901,8 @@ const TRANSLATIONS = {
     'milechart.typical':           'Typical age',
     'milechart.achieved':          'Achieved',
     'milechart.disclaimer':        'AAP/CDC reference ranges — typical ages, not diagnostic thresholds.',
-    // Empty state hero (first-time users)
-    'empty_hero.title':            'Welcome to Calm Parent',
-    'empty_hero.subtitle':         "Start with one of the features below. They matter most for your baby's health.",
-    'empty_hero.temp.title':       'Take temperature',
-    'empty_hero.temp.desc':        'A reading worth logging regularly',
-    'empty_hero.meds.title':       'Check a safe dose',
-    'empty_hero.meds.desc':        'Log given medications and track history',
-    'empty_hero.feed.title':       'Log a feeding',
-    'empty_hero.feed.desc':        "One tap, full day's history",
+    // (v2.12.0 cleanup) Removed 'empty_hero.*' keys — replaced by another empty
+    // state component in v2.10.x. Were dead code.
     'dose.modal.log_btn':          '+ Log medication',
     'meds.toast.logged':           '{med} logged',
     'temp.invalid':                'Invalid temperature. Enter a value between 30 and 45°C',
@@ -2640,37 +2608,18 @@ const TRANSLATIONS = {
     'who.lower_observe':            'Lower percentile — observe the trend',
     'who.upper_observe':            'Higher percentile — observe the trend',
 
-    // Paywall
-    'paywall.testimonial1.name':    'Anna K.',
-    'paywall.testimonial1.child':   'mom of 4-month-old Sophie',
-    'paywall.testimonial1.quote':   'Sharing with my husband is a game changer — we both see feedings in real time.',
-    'paywall.testimonial2.name':    'Martha P.',
-    'paywall.testimonial2.child':   'mom of twins',
-    'paywall.testimonial2.quote':   'WHO percentile charts save us a pediatrician visit every month.',
-    'paywall.testimonial3.name':    'Jacob D.',
-    'paywall.testimonial3.child':   'dad of 7-month-old Adam',
-    'paywall.testimonial3.quote':   'Pediatrician questions — no forgotten topics during visits.',
-    'paywall.feature1.title':       'Share with partner',
-    'paywall.feature1.desc':        'Both parents track together in real time. One child, two accounts.',
-    'paywall.feature2.title':       'Growth charts with WHO percentiles',
-    'paywall.feature2.desc':        'See which WHO percentile your child is in.',
-    'paywall.feature3.title':       'Analytics & norms',
-    'paywall.feature3.desc':        'Trend charts and WHO comparison for teeth, cough, milestones.',
-    'paywall.feature4.title':       'Unlimited children',
-    'paywall.feature4.desc':        'Twins, siblings — one subscription, no limits.',
-    'paywall.feature5.title':       'PDF report for pediatrician',
-    'paywall.feature5.desc':        'Formatted summary: temperatures, doses, feedings for any date range.',
-    'paywall.feature6.title':       'Notes & questions for pediatrician',
-    'paywall.feature6.desc':        'Visit history, prescriptions, questions to ask next time.',
-    'paywall.feature7.title':       'Priority support',
-    'paywall.feature7.desc':        'Direct contact with me (solo founder). Ask anything, I reply within 24h.',
+    // Paywall — pricing + free banner
+    // (v2.12.0 cleanup) Removed 'paywall.testimonial1-3.*' (testimonials) and
+    //   'paywall.feature1-7.*' (extended features list) — dead code from rolled-back
+    //   v2.10.x extended paywall. PaywallScreen uses short keys 'paywall.feat1-6.*'.
+    // (v2.11.32 cleanup) Removed 'paywall.price.lifetime' — lifetime plan was
+    //   rolled back (Sprint B, P1-2d) as it wasn't configured in Play Console.
     'paywall.coming_soon':          'Coming soon',
     'paywall.free_banner':          'Tracking feedings, sleep, diapers and temperature, CSV export and cloud sync — always FREE.',
     'paywall.premium_header':       'What you get with Premium',
     'paywall.choose_plan':          'Choose a plan',
     'paywall.price.monthly':        '$3.99',
     'paywall.price.yearly':         '$24.99',
-    'paywall.price.lifetime':       '$49.99',
     'paywall.free.desc':            'Track feedings, sleep, diapers and temperature, CSV export and cloud sync — always FREE.',
 
     // PDF Report
