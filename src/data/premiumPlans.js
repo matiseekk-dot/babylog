@@ -40,10 +40,15 @@ import { t } from '../i18n'
 // Plus dodać do LIFETIME_PRODUCT_IDS w useRevenueCat.js (już jest tam
 // defensywnie — patrz v2.11.14 commit).
 // v2.11.33 — DE pricing dodane.
+// v2.12.0 — FR pricing dodane (Phase 2).
+// v2.12.0 — ES pricing dodane (Phase 3 — Hiszpania + LATAM).
 // Strategia per kraj:
 //   PL: 99,99 zł/rok (flagship, niska konkurencja, low CAC)
 //   EN-US: $24.99/rok (under Huckleberry $96 → 4× tańszy)
 //   DE: 24,99 €/rok (vs Familie Pieks free, ale my mamy więcej feature)
+//   FR: 24,99 €/rok (paritet z DE — wspólna strefa euro, podobny rynek)
+//   ES: 24,99 €/rok (Hiszpania), Play Console konfiguruje LATAM auto-conversion
+//                    (MX ~399 MXN, AR ~varies, CO ~95k COP — auto FX)
 //
 // IMPORTANT: ceny tutaj są tylko display labels. Real charging robi Google
 // Play który ma per-region pricing skonfigurowane w Play Console. Trzeba
@@ -52,11 +57,17 @@ import { t } from '../i18n'
 //   spokojny_rodzic_premium_yearly:
 //     PL → 99,99 PLN
 //     DE → 24,99 EUR
+//     FR → 24,99 EUR
+//     ES → 24,99 EUR
+//     MX → ~399 MXN (auto Google FX)
+//     AR/CO/CL → auto Google FX
 //     US → 24,99 USD (set in Play Console default)
-//     UK → 19,99 GBP (Phase 3)
+//     UK → 19,99 GBP (Phase 4)
 const PRICES_BY_LOCALE = {
   pl: { monthly: '14,99 zł', yearly: '99,99 zł' },
   de: { monthly: '3,99 €',   yearly: '24,99 €' },
+  fr: { monthly: '3,99 €',   yearly: '24,99 €' },
+  es: { monthly: '3,99 €',   yearly: '24,99 €' },
   en: { monthly: '$3.99',    yearly: '$24.99' },
 }
 
