@@ -6,6 +6,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore'
+import { getFunctions } from 'firebase/functions'
 import { getMessaging, isSupported } from 'firebase/messaging'
 
 const firebaseConfig = {
@@ -88,6 +89,10 @@ export const db = initializeFirestore(app, {
     tabManager: persistentMultipleTabManager(),
   }),
 })
+
+// v2.11.31: Cloud Functions client. Region musi pasować do CF (europe-west3).
+// Używane przez usePremium → initTrial (server-side trial start).
+export const functions = getFunctions(app, 'europe-west3')
 
 // Messaging — lazy init, bo isSupported() jest async i nie każda przeglądarka
 // to wspiera (np. Safari iOS przed 16.4, niektóre wersje TWA).

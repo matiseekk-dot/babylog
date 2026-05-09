@@ -19,7 +19,7 @@
  */
 
 const { onSchedule } = require('firebase-functions/v2/scheduler')
-const { onRequest } = require('firebase-functions/v2/https')
+const { onRequest, onCall, HttpsError } = require('firebase-functions/v2/https')
 const { defineSecret } = require('firebase-functions/params')
 const { setGlobalOptions } = require('firebase-functions/v2')
 const admin = require('firebase-admin')
@@ -476,4 +476,73 @@ exports.purchasePipelineHealth = onRequest({
 
   const ok = checks.secret_configured && checks.firestore_writable
   res.status(200).json({ ok, checks, ts: Date.now() })
+})
+
+// ──────────────────────────────────────────────────────────────────────────
+// initTrial — server-side trial start (P0-1 fix)
+// ──────────────────────────────────────────────────────────────────────────
+//
+// PROBLEM (audit P0-1, 2026-05-06):
+//   Wcześniej (v2.11.20) trial start dla zalogowanych userów był wyliczany
+//   z `auth.currentUser.metadata.creationTime`. To jest dobre anti-abuse
+//   (immutable), ALE dla każdego usera, który ma istniejące Firebase Auth
+//   account z innych projektów lub wcześniejszych testów, `creationTime`
+//   może być dowolnie odległe w przeszłości. Skutek: user pobiera apkę
+//   z Production, klika "Zaloguj przez Google", widzi `trialDaysLeft = 0`
+//   i komunikat "kup Premium" zamiast 14d trialu.
+//
+// FIX:
+//   Server-side init — przy pierwszym logowaniu user wywołuje tę CF.
+//   - Jeśli `users/{uid}/data/trial_start` NIE istnieje → zapisujemy
+//     `{ value: serverTimestamp() }` (idempotentnie).
+//   - Jeśli już istnieje → zwracamy istniejącą wartość bez zmiany.
+//
+// ANTI-ABUSE:
+//   - Tylko zalogowani userzy (request.auth required przez onCall).
+//   - Server jest source of truth — client nie może zmanipulować daty.
+//   - Idempotentne — wielokrotne wywołania nie cofają trialu.
+//   - Firestore rules (v2.11.20) blokują client write na `trial_start` —
+//     tylko Admin SDK (czyli ta CF) może zapisać.
+//
+// CALL FROM CLIENT:
+//   const fn = httpsCallable(functions, 'initTrial')
+//   const { data } = await fn()
+//   // data: { trialStartMs: <number>, alreadyExisted: <boolean> }
+
+exports.initTrial = onCall({
+  region: 'europe-west3',
+  timeoutSeconds: 30,
+  memory: '256MiB',
+}, async (request) => {
+  // Wymaga zalogowanego usera
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in to init trial.')
+  }
+
+  const uid = request.auth.uid
+  const trialRef = admin.firestore()
+    .collection('users').doc(uid)
+    .collection('data').doc('trial_start')
+
+  try {
+    const snap = await trialRef.get()
+    if (snap.exists) {
+      const existingValue = snap.data()?.value
+      // Wartość może być Firestore Timestamp lub number (legacy data z client'a
+      // sprzed v2.11.20). Normalizujemy do milliseconds.
+      const ms = typeof existingValue === 'number'
+        ? existingValue
+        : (existingValue?.toMillis ? existingValue.toMillis() : Date.now())
+      return { trialStartMs: ms, alreadyExisted: true }
+    }
+
+    // Doc nie istnieje — pierwszy raz user się loguje (lub sprzed v2.11.31)
+    const now = Date.now()
+    await trialRef.set({ value: now }, { merge: false })
+    console.log(`[initTrial] created trial_start for uid=${uid} at ${now}`)
+    return { trialStartMs: now, alreadyExisted: false }
+  } catch (err) {
+    console.error('[initTrial] failed:', err)
+    throw new HttpsError('internal', 'Failed to init trial.', err.message)
+  }
 })
