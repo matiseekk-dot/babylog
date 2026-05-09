@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { useMedReminder } from '../hooks/useMedReminder'
 import { useFCM } from '../hooks/useFCM'
-import { t, useLocale } from '../i18n'
+import { t, useLocale, SUPPORTED_LOCALES } from '../i18n'
 import { exportAllToCsv } from '../utils/csvExport'
 import { exportAllDataAsJson, exportAllDataAsCsv } from '../utils/dataExport'
 import PdfReportModal from './PdfReportModal'
@@ -49,7 +49,7 @@ export default function SettingsScreen({
   const [symptomsLogs] = useFirestore(uid, `symptoms_${profile.id}`, [])
   const [coughLogs]    = useFirestore(uid, `cough_${profile.id}`, [])
   const [questions]    = useFirestore(uid, `doctor_questions_${profile.id}`, [])
-  const { locale } = useLocale()
+  const { locale, setLocale } = useLocale()
   const { permission: notifPermission, testNotification, askPermission: askNotifPermission } = useMedReminder(profile.id)
   // FCM: pobiera token i zapisuje do Firestore żeby Cloud Function mogła wysyłać push.
   // Token rejestruje się automatycznie po nadaniu zgody (useEffect w useFCM).
@@ -439,6 +439,53 @@ export default function SettingsScreen({
           }}>
             {t('common.save')}
           </button>
+        </div>
+      </div>
+
+      {/* App language — v2.12.0 przeniesiony z TopBar.
+          Native names dla discoverability: niemiecki user szuka "Deutsch",
+          nie "Niemiecki". Stąd hardcode native — NIE idą przez t(). */}
+      <div style={card}>
+        <div style={cardHeader}>{t('settings.language.title')}</div>
+        <div style={{ padding: '12px 14px' }}>
+          <div style={{ fontSize: 12, color: '#5a5a56', marginBottom: 12, lineHeight: 1.45 }}>
+            {t('settings.language.desc')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
+            {SUPPORTED_LOCALES.map(l => {
+              const meta = {
+                pl: { flag: '🇵🇱', name: 'Polski' },
+                en: { flag: '🇬🇧', name: 'English' },
+                de: { flag: '🇩🇪', name: 'Deutsch' },
+                fr: { flag: '🇫🇷', name: 'Français' },
+                es: { flag: '🇪🇸', name: 'Español' },
+              }[l] || { flag: '🌐', name: l.toUpperCase() }
+              const active = locale === l
+              return (
+                <button
+                  key={l}
+                  onClick={() => setLocale(l)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px',
+                    background: active ? '#E1F5EE' : '#f7f7f5',
+                    border: `2px solid ${active ? '#1D9E75' : 'transparent'}`,
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                    fontSize: 14, fontWeight: active ? 700 : 500,
+                    color: active ? '#0F6E56' : '#1a1a18',
+                    textAlign: 'left',
+                    transition: 'all 0.15s',
+                  }}
+                  aria-pressed={active}
+                >
+                  <span style={{ fontSize: 22, lineHeight: 1 }}>{meta.flag}</span>
+                  <span>{meta.name}</span>
+                  {active && <span style={{ marginLeft: 'auto', color: '#1D9E75', fontSize: 16 }}>✓</span>}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </div>
 

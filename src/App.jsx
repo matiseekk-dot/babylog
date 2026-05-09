@@ -43,7 +43,7 @@ import { toast } from './components/Toast'
 import { captureError, addBreadcrumb } from './sentry'
 import { trackPurchaseCompleted, trackFirstEntry } from './utils/analytics'
 import SleepIndicator from './components/SleepIndicator'
-import LanguageSwitcher from './components/LanguageSwitcher'
+// v2.12.0: LanguageSwitcher przeniesiony do SettingsScreen — patrz topbar comment niżej.
 import SettingsScreen from './components/SettingsScreen'
 import CallDoctorPrep from './components/CallDoctorPrep'
 import GuestMigrationDialog from './components/GuestMigrationDialog'
@@ -1024,10 +1024,12 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* PL/EN language toggle. W EN niektóre polskie built-in content
-              (szczepienia PSO, nazwy leków, dieta BLW) są ukryte —
-              user dodaje własne po angielsku. */}
-          <LanguageSwitcher />
+          {/* v2.12.0: LanguageSwitcher przeniesiony do SettingsScreen.
+              Powód: 5 języków × 28px = 140px zajmowało prawie połowę topbar
+              i wyglądało jak panel deweloperski. Standard branżowy = język
+              w Settings. 95% userów nigdy nie zmienia (auto-detect z
+              navigator.language działa). Patrz: SettingsScreen → sekcja
+              "Język aplikacji" / "Sprache" / "Langue" / "Idioma". */}
           {/* Premium / Trial / Free — zawsze klikalne, prowadzi do paywalla */}
           {purchased ? (
             // Kupione Premium — badge informacyjny, klik prowadzi do Settings żeby zobaczyć status

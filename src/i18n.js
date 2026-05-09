@@ -557,6 +557,8 @@ const TRANSLATIONS = {
     'settings.account.premium':'Premium aktywny',
     'settings.account.free':  'Wersja darmowa',
     'settings.account.guest': 'Używasz bez konta. Zaloguj się, aby zsynchronizować dane.',
+    'settings.language.title':'Język aplikacji',
+    'settings.language.desc': 'Wybierz język interfejsu. Treści medyczne (kalendarz szczepień, dawki leków) zmienią się też zgodnie z wybranym krajem.',
 
     // Crisis detection
     'crisis.watch.title':     'Próg obserwacji',
@@ -1936,6 +1938,8 @@ const TRANSLATIONS = {
     'settings.account.premium':'Premium active',
     'settings.account.free':  'Free version',
     'settings.account.guest': 'Using without account. Sign in to sync your data.',
+    'settings.language.title':'App language',
+    'settings.language.desc': 'Choose interface language. Medical content (vaccination schedule, medication doses) will adapt to your country.',
 
     // Crisis detection
     'crisis.watch.title':     'Observation threshold',
@@ -3330,6 +3334,8 @@ const TRANSLATIONS = {
     'settings.account.premium':   'Premium aktiv',
     'settings.account.free':      'Kostenlose Version',
     'settings.account.guest':     'Sie nutzen die App ohne Konto. Melden Sie sich an, um Daten zu synchronisieren.',
+    'settings.language.title':    'App-Sprache',
+    'settings.language.desc':     'Wählen Sie die Sprache der Benutzeroberfläche. Medizinische Inhalte (Impfkalender, Medikamentendosierungen) passen sich an Ihr Land an.',
 
     // Crisis (DGKJ Fieber-Leitlinie equivalent)
     'crisis.watch.title':         'Beobachtungs-Schwelle',
@@ -4690,6 +4696,8 @@ const TRANSLATIONS = {
     'settings.account.premium':   'Premium actif',
     'settings.account.free':      'Version gratuite',
     'settings.account.guest':     'Vous utilisez l\'application sans compte. Connectez-vous pour synchroniser les données.',
+    'settings.language.title':    'Langue de l\'application',
+    'settings.language.desc':     'Choisissez la langue de l\'interface. Le contenu médical (calendrier vaccinal, doses de médicaments) s\'adapte à votre pays.',
 
     // Crisis (SFP/HAS Fièvre recommandations)
     'crisis.watch.title':         'Seuil de surveillance',
@@ -6051,6 +6059,8 @@ const TRANSLATIONS = {
     'settings.account.premium':   'Premium activo',
     'settings.account.free':      'Versión gratuita',
     'settings.account.guest':     'Estás usando la app sin cuenta. Inicia sesión para sincronizar los datos.',
+    'settings.language.title':    'Idioma de la aplicación',
+    'settings.language.desc':     'Elige el idioma de la interfaz. El contenido médico (calendario de vacunación, dosis de medicamentos) se adapta a tu país.',
 
     // Crisis (AEP/HAS Fiebre recomendaciones)
     'crisis.watch.title':         'Umbral de vigilancia',
