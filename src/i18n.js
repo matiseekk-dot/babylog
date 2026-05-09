@@ -2822,24 +2822,181 @@ const TRANSLATIONS = {
 
 
   },
+
+  // v2.11.33 — Niemcy (DE) Phase 1 launch.
+  // Strategia: DRAFT translations dla najważniejszych UI surfaces (~100 keys).
+  // Dla brakujących keys → fallback do EN (linia 2877: TRANSLATIONS.pl[key]).
+  // Native review przed prawdziwym launch DE w Play Store.
+  //
+  // Brand decision: PL "Spokojny Rodzic" zostaje. DE name TBD — placeholder
+  // "Calm Parent" do trademark check. Sugerowane: "PediNote", "Vorsorge App",
+  // "Babylog Pro DE".
+  //
+  // Pediatryczne content per kraj — w src/data/locale/{de}/* (vaccinations,
+  // medications). Tylko UI strings tu.
+  de: {
+    // App
+    'app.title':          'Calm Parent',
+    'app.subtitle':       'Gesundheit Ihres Kindes unter Kontrolle',
+    'app.tagline':        'Eine App, die Ihnen hilft zu wissen, was zu tun ist, wenn Ihr Kind krank ist.',
+    'app.loading':        'Lädt...',
+
+    // Nav tabs
+    'nav.today':          'Heute',
+    'nav.feed':           'Mahlzeit',
+    'nav.sleep':          'Schlaf',
+    'nav.diaper':         'Windeln',
+    'nav.health':         'Gesundheit',
+    'nav.main_aria':      'Hauptnavigation',
+    'nav.more':           'Mehr',
+    'nav.milestones':     'Meilensteine',
+    'nav.growth':         'Größe und Gewicht',
+    'nav.temp':           'Temperatur',
+    'nav.cough':          'Husten',
+    'nav.meds':           'Medikamente',
+    'nav.vacc':           'Impfungen',
+    'nav.diet':           'Beikost',
+    'nav.diary':          'Tagebuch',
+    'nav.doctor':         'Arztnotizen',
+    'nav.all_modules':    'Alle Module',
+    'nav.select_section': 'Sektion auswählen',
+    'nav.reference':      'Referenz (PTP/AAP)',
+    'nav.seek_help':      'Wann zum Arzt',
+
+    // Topbar
+    'topbar.logout':      'Abmelden',
+    'topbar.premium':     'Premium',
+    'topbar.free':        'Kostenlos',
+    'topbar.trial_days':  'Testen {days}T',
+    'topbar.trial_cta':   'Sie testen — Premium-Pläne ansehen',
+    'topbar.profiles':    'Kinderprofile',
+    'topbar.more':        'Weitere Module',
+    'topbar.settings':    'Einstellungen',
+
+    // Common
+    'common.save':        'Speichern',
+    'common.cancel':      'Abbrechen',
+    'common.close':       'Schließen',
+    'common.back':        'Zurück',
+    'common.delete':      'Löschen',
+    'common.edit':        'Bearbeiten',
+    'common.date':        'Datum',
+    'common.time':        'Uhrzeit',
+    'common.note':        'Notiz',
+    'common.saved':       'Gespeichert',
+    'common.today':       'Heute',
+    'common.deleted':     'Gelöscht',
+    'common.optional_ph': 'optional...',
+
+    // Login screen
+    'login.title':                'Willkommen bei Calm Parent',
+    'login.subtitle':             'Tagebuch für die Gesundheit Ihres Kindes\nfür ruhige Eltern',
+    'login.benefit1':             '☁️ Sichere Synchronisierung mit Ihrem Google-Konto',
+    'login.benefit2':             '🔒 Daten nur auf Ihrem Konto, niemand anderes sieht sie',
+    'login.benefit3':             '📱 Funktioniert auf allen Ihren Geräten',
+    'login.button':               'Mit Google anmelden',
+    'login.loading':              'Anmelden...',
+    'login.use_without_account':  '🚀 Ohne Konto verwenden',
+    'login.guest_note':           'Ohne Anmeldung können Sie nicht zwischen Geräten synchronisieren.',
+    'login.error':                'Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
+    'login.footer':               'Durch Fortfahren akzeptieren Sie unsere Datenschutzrichtlinie.\nIhre Gesundheitsdaten werden nur auf Ihrem Google-Konto gespeichert.',
+
+    // Medical Consent (uniform screen v2.9.0)
+    'consent.title':              'Bevor Sie beginnen',
+    'consent.intro':              'Calm Parent ist ein Tagebuch für die Gesundheit Ihres Kindes. Bevor wir beginnen, müssen wir uns auf einige Dinge einigen.',
+    'consent.p1':                 'Diese App ist KEIN Medizinprodukt. Sie diagnostiziert, behandelt oder ersetzt keinen Arzt.',
+    'consent.p2':                 'Eintragsinformationen sind nur Referenzdaten aus Beipackzetteln (Fachinformation). Berechnungen werden nicht durchgeführt.',
+    'consent.p3':                 'Bei medizinischen Bedenken konsultieren Sie immer einen Kinderarzt.',
+    'consent.p4':                 'In NOTFÄLLEN: rufen Sie 112 an oder fahren Sie zur Notaufnahme.',
+    'consent.emergency_title':    'Notfall',
+    'consent.emergency_text':     'Hohes Fieber bei Säuglingen <3 Monate, Atemnot, Bewusstlosigkeit — 112 anrufen.',
+    'consent.checkbox':           'Ich habe die obigen Informationen gelesen, verstehe, dass Calm Parent keine medizinische Versorgung ersetzt, und akzeptiere die Nutzungsbedingungen.',
+    'consent.accept':             'Verstanden, weiter',
+
+    // Onboarding
+    'onb.setup.title':            'Lass uns Ihr Kind kennenlernen',
+    'onb.setup.subtitle':         'Wir benötigen einige Grunddaten, um die App anzupassen.',
+    'onb.setup.avatar':           'Avatar wählen',
+    'onb.setup.name':             'Name des Kindes',
+    'onb.setup.dob':              'Geburtsdatum',
+    'onb.setup.sex':              'Geschlecht',
+    'onb.setup.sex.M':            '👦 Junge',
+    'onb.setup.sex.F':            '👧 Mädchen',
+    'onb.setup.cta':              'Los geht\'s',
+    'onb.setup.weight_later_hint': '💡 Gewicht können Sie später unter "Wachstum" hinzufügen.',
+    'default.child_name':         'Mein Kind',
+
+    // Paywall
+    'paywall.title':              'Calm Parent Premium',
+    'paywall.subtitle':           'Notizen für den Kinderarzt. Wachstumskurven WHO. Erinnerungen.',
+    'paywall.premium_header':     'Was Sie in Premium erhalten',
+    'paywall.choose_plan':        'Wählen Sie Ihren Plan',
+    'paywall.plan.monthly':       'Monatlich',
+    'paywall.plan.yearly':        'Jährlich',
+    'paywall.per.monthly':        '/ Monat',
+    'paywall.per.yearly':         '/ Jahr',
+    'paywall.badge.popular':      'Beliebt',
+    'paywall.badge.yearly':       'Beste Wahl — sparen Sie 30%',
+    'paywall.cta.try':            'Wählen Sie Premium — {price}{period}',
+    'paywall.cta.loading':        'Verarbeitung...',
+    'paywall.free_banner':        'Grundverfolgung (Mahlzeit, Schlaf, Windeln, Temperatur), Medikamenten-Erinnerungen und CSV-Export bleiben KOSTENLOS für alle.',
+    'paywall.coming_soon':        'Bald',
+    'paywall.footer':             'Stornieren Sie jederzeit. Keine Kartenpflicht im 14-tägigen Test.',
+    'paywall.error':              'Etwas ist schief gelaufen. Bitte erneut versuchen.',
+    'paywall.activated':          'Premium aktiviert!',
+    'paywall.cta':                'Premium aktivieren',
+    'paywall.need_login':         'Bitte melden Sie sich vor dem Kauf bei Google an.',
+    'paywall.activating.title':   'Premium wird aktiviert...',
+    'paywall.activating.body':    'Es dauert ein paar Sekunden. Bitte warten Sie.',
+    'paywall.activation_failed.title':       'Aktivierung fehlgeschlagen',
+    'paywall.activation_failed.body':        'Zahlung erfolgte, aber die Premium-Aktivierung schlug vorübergehend fehl. Ihr Geld ist sicher — die App versucht es beim nächsten Öffnen erneut. Wenn das Problem bestehen bleibt, kontaktieren Sie mich.',
+    'paywall.activation_failed.support_hint': 'Schreiben Sie mir mit der Bestellnummer (in Google Play → Konto → Bestellungen verwalten):',
+
+    // Settings
+    'settings.title':             'Einstellungen',
+    'settings.saved':             'Gespeichert',
+    'settings.child.title':       'Kinderprofil',
+    'settings.account.premium':   'Premium-Konto',
+    'settings.account.free':      'Kostenloses Konto',
+    'settings.trial.title':       'Testen — {days} Tage übrig',
+    'settings.trial.desc':        'Vollständige Premium-Funktionen. Stornieren Sie jederzeit.',
+    'settings.trial.cta':         'Premium-Pläne ansehen',
+    'settings.csvExport.success': 'CSV exportiert',
+    'settings.csvExport.error':   'CSV-Export fehlgeschlagen',
+    'settings.backup.success':    'Backup erstellt ({count} Datensätze)',
+    'settings.backup.error':      'Backup fehlgeschlagen',
+
+    // Toast (kluczowe komunikaty)
+    'toast.entry':                'Eintrag',
+    'toast.temp':                 'Temperatur',
+    'toast.sleep_started':        'Schlaf begonnen',
+    'toast.sleep_ended':          'Schlaf beendet',
+  },
 }
 
 // ─── Detekcja i storage ──────────────────────────────────────────────────────
 
 const LS_KEY = 'babylog_locale'
 
+// v2.11.33: dodano DE jako wspierany locale.
+// SUPPORTED_LOCALES — single source of truth dla LanguageSwitcher i validation.
+// Kolejność = priority: PL (flagship), EN (international default), DE (Phase 1).
+// Phase 2 (US/UK), Phase 3 (ES/Latam), Phase 4 (FR) — dodać tutaj kiedy gotowe.
+export const SUPPORTED_LOCALES = ['pl', 'en', 'de']
+
 function detectLocale() {
   // 1. localStorage
   try {
     const saved = localStorage.getItem(LS_KEY)
-    if (saved === 'pl' || saved === 'en') return saved
+    if (SUPPORTED_LOCALES.includes(saved)) return saved
   } catch {}
   // 2. navigator
   if (typeof navigator !== 'undefined') {
-    const lang = (navigator.language || 'pl').toLowerCase()
+    const lang = (navigator.language || 'en').toLowerCase()
     if (lang.startsWith('pl')) return 'pl'
+    if (lang.startsWith('de')) return 'de'  // niemiecki, austriacki, szwajcarski (de-CH)
   }
-  // 3. fallback — jeśli nie PL to EN
+  // 3. fallback — EN (international default)
   return 'en'
 }
 
@@ -2854,16 +3011,24 @@ export function getLocale() {
  * Czy aktualny locale to EN? — używane do ukrywania polskiego contentu
  * jak szczepienia PSO, polskie nazwy leków, dieta BLW, polskie milestones.
  *
- * W EN użytkownik widzi tylko: informacje referencyjne o lekach + custom dodane rzeczy.
- * Built-in polski content jest ukryty dopóki nie zrobimy anglojęzycznej
- * wersji (US CDC vaccines, US FDA dose guidelines itd.).
+ * UWAGA v2.11.33: gdy dodamy więcej języków (DE, ES, FR), rozważ migrację
+ * `isEN()` → `usePolishContent()` (true tylko dla 'pl'). Aktualnie DE i EN
+ * oba traktowane jako "non-PL" — ukrywają polski content.
  */
 export function isEN() {
   return _currentLocale === 'en'
 }
 
+/**
+ * v2.11.33: czy locale to PL (jedyny z polskim built-in content jak PSO,
+ * BLW, polskie nazwy leków). Używać zamiast `!isEN()` w nowym kodzie.
+ */
+export function isPL() {
+  return _currentLocale === 'pl'
+}
+
 export function setLocale(locale) {
-  if (locale !== 'pl' && locale !== 'en') return
+  if (!SUPPORTED_LOCALES.includes(locale)) return
   _currentLocale = locale
   try { localStorage.setItem(LS_KEY, locale) } catch {}
   _listeners.forEach(fn => fn(locale))
@@ -2871,10 +3036,22 @@ export function setLocale(locale) {
 
 /**
  * t(key) — zwraca przetłumaczony string.
- * Jeśli klucza nie ma, zwraca sam klucz (żeby łatwo wyłapać brakujące).
+ *
+ * Resolution order:
+ *   1. TRANSLATIONS[currentLocale][key]
+ *   2. TRANSLATIONS.en[key] (international fallback — EN is gold standard)
+ *   3. TRANSLATIONS.pl[key] (last resort — original)
+ *   4. key (literal — łatwo wyłapać brakujące)
+ *
+ * Wcześniej fallback był od razu do PL co dla niemieckiego usera oznaczało
+ * losowe polskie stringi. Teraz EN jest fallback tier 1 — dla DE usera
+ * brakujące klucze pokazują się po angielsku, nie po polsku.
  */
 export function t(key, params) {
-  let str = TRANSLATIONS[_currentLocale]?.[key] ?? TRANSLATIONS.pl[key] ?? key
+  let str = TRANSLATIONS[_currentLocale]?.[key]
+    ?? TRANSLATIONS.en?.[key]
+    ?? TRANSLATIONS.pl[key]
+    ?? key
   if (params) {
     Object.keys(params).forEach(p => {
       str = str.replace(new RegExp('\\{' + p + '\\}', 'g'), params[p])

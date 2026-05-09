@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { t, useLocale, isEN } from '../i18n'
+import { t, useLocale, getLocale, isEN } from '../i18n'
 import { getPlans } from '../data/premiumPlans'
 import { trackPaywallViewed, trackPaywallCTAClicked } from '../utils/analytics'
 
@@ -66,8 +66,9 @@ function getFeatures() {
 export default function PaywallScreen({ onActivate, onClose, checking, trigger = 'unknown' }) {
   useLocale()
   const FEATURES = getFeatures()
-  // Use locale-aware getPlans() — przeliczy się przy zmianie języka dzięki useLocale().
-  const PLANS = getPlans(isEN() ? 'en' : 'pl')
+  // v2.11.33: getPlans używa pełnego locale code (pl/en/de zamiast bool).
+  // Re-render przy zmianie języka przez useLocale() powyżej.
+  const PLANS = getPlans(getLocale())
   const [selected, setSelected] = useState('yearly')
 
   // v2.11.32 P1-6: track paywall view raz przy mount. `trigger` przekazany

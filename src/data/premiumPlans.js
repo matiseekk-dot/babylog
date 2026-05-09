@@ -39,11 +39,29 @@ import { t } from '../i18n'
 // Plus zsynchronizować z RC dashboard jako entitlement attached do lifetime.
 // Plus dodać do LIFETIME_PRODUCT_IDS w useRevenueCat.js (już jest tam
 // defensywnie — patrz v2.11.14 commit).
+// v2.11.33 — DE pricing dodane.
+// Strategia per kraj:
+//   PL: 99,99 zł/rok (flagship, niska konkurencja, low CAC)
+//   EN-US: $24.99/rok (under Huckleberry $96 → 4× tańszy)
+//   DE: 24,99 €/rok (vs Familie Pieks free, ale my mamy więcej feature)
+//
+// IMPORTANT: ceny tutaj są tylko display labels. Real charging robi Google
+// Play który ma per-region pricing skonfigurowane w Play Console. Trzeba
+// zsynchronizować Play Console pricing z tymi liczbami (jeden SKU, cena
+// per region):
+//   spokojny_rodzic_premium_yearly:
+//     PL → 99,99 PLN
+//     DE → 24,99 EUR
+//     US → 24,99 USD (set in Play Console default)
+//     UK → 19,99 GBP (Phase 3)
+const PRICES_BY_LOCALE = {
+  pl: { monthly: '14,99 zł', yearly: '99,99 zł' },
+  de: { monthly: '3,99 €',   yearly: '24,99 €' },
+  en: { monthly: '$3.99',    yearly: '$24.99' },
+}
+
 export function getPlans(locale) {
-  const isEN = locale === 'en'
-  const prices = isEN
-    ? { monthly: '$6.99', yearly: '$49.99' }
-    : { monthly: '14,99 zł', yearly: '99,99 zł' }
+  const prices = PRICES_BY_LOCALE[locale] || PRICES_BY_LOCALE.en
 
   return [
     {
