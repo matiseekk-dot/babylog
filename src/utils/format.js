@@ -47,11 +47,13 @@ export function formatDate(date, options = {}) {
 
   if (options.short) {
     if (locale === 'pl' || locale === 'de') return `${day}.${month}`
+    if (locale === 'fr') return `${day}/${month}`
     return `${day}/${month}` // EN default
   }
 
   if (locale === 'pl') return `${day}.${month}.${year}`
   if (locale === 'de') return `${day}.${month}.${year}`
+  if (locale === 'fr') return `${day}/${month}/${year}` // FR: jj/mm/aaaa
   // EN — US format (mm/dd/yyyy). UK będzie rozróżniony w Phase 2 jako 'en-GB'.
   return `${month}/${day}/${year}`
 }
@@ -87,7 +89,7 @@ export function formatNumber(value, options = {}) {
   const fixed = value.toFixed(decimals)
 
   const locale = getLocale()
-  const formatted = (locale === 'pl' || locale === 'de')
+  const formatted = (locale === 'pl' || locale === 'de' || locale === 'fr')
     ? fixed.replace('.', ',')
     : fixed
 
@@ -155,15 +157,15 @@ export function formatTemperature(celsius) {
 export function formatCurrency(amount, currency = null) {
   const locale = getLocale()
   // Default per locale jeśli currency nie podane
-  const cur = currency ?? (locale === 'pl' ? 'PLN' : locale === 'de' ? 'EUR' : 'USD')
+  const cur = currency ?? (locale === 'pl' ? 'PLN' : (locale === 'de' || locale === 'fr') ? 'EUR' : 'USD')
 
   const fixed = amount.toFixed(2)
-  const formatted = (locale === 'pl' || locale === 'de') ? fixed.replace('.', ',') : fixed
+  const formatted = (locale === 'pl' || locale === 'de' || locale === 'fr') ? fixed.replace('.', ',') : fixed
 
   // Symbol position per currency
   switch (cur) {
     case 'PLN': return `${formatted} zł`
-    case 'EUR': return locale === 'de' ? `${formatted} €` : `€${formatted}`
+    case 'EUR': return (locale === 'de' || locale === 'fr') ? `${formatted} €` : `€${formatted}`
     case 'USD': return `$${formatted}`
     case 'GBP': return `£${formatted}`
     default: return `${formatted} ${cur}`
@@ -193,6 +195,12 @@ export function formatRelativeTime(timestamp) {
     if (mins < 60) return `vor ${mins} Min.`
     if (hours < 24) return `vor ${hours} Std.`
     return `vor ${days} Tagen`
+  }
+  if (locale === 'fr') {
+    if (mins < 1) return 'maintenant'
+    if (mins < 60) return `il y a ${mins} min`
+    if (hours < 24) return `il y a ${hours}h`
+    return `il y a ${days} j`
   }
   // EN default
   if (mins < 1) return 'now'
