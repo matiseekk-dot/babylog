@@ -21,11 +21,35 @@ import { getReferenceTables } from '../data/referenceTables'
  * Props:
  *   onClose — fn() — zamknij sekcję (dla overlay mode)
  */
+// v2.12.0: source label per locale — każdy kraj cytuje własne wytyczne.
+const SOURCE_LABELS = {
+  pl: {
+    temp:    'Źródło: KOMPAS GORĄCZKA — Polskie Towarzystwo Pediatryczne (PTP/PTMR).',
+    signs:   'Źródło: PTP/PTMR (KOMPAS GORĄCZKA), Medycyna Praktyczna.',
+  },
+  en: {
+    temp:    'Source: AAP Clinical Practice Guideline (2021), Mayo Clinic.',
+    signs:   'Source: AAP, Mayo Clinic guidelines.',
+  },
+  de: {
+    temp:    'Quelle: DGKJ Fieber-Leitlinie, AWMF S2k-Leitlinie.',
+    signs:   'Quelle: DGKJ/AWMF Leitlinien.',
+  },
+  fr: {
+    temp:    'Source : Recommandations SFP / HAS sur la fièvre.',
+    signs:   'Source : Recommandations SFP / HAS.',
+  },
+  es: {
+    temp:    'Fuente: Recomendaciones AEP / Asociación Española de Pediatría.',
+    signs:   'Fuente: Recomendaciones AEP / Sociedad Española de Pediatría.',
+  },
+}
+
 export default function ReferenceLibrary({ onClose }) {
   useLocale()
   const locale = getLocale()
   const tables = getReferenceTables(locale)
-  const isEn = locale === 'en'
+  const sources = SOURCE_LABELS[locale] || SOURCE_LABELS.en
 
   return (
     <div style={{
@@ -83,9 +107,7 @@ export default function ReferenceLibrary({ onClose }) {
             ))}
           </tbody>
         </table>
-        <SourceNote text={isEn
-          ? 'Source: AAP Clinical Practice Guideline (2021), Mayo Clinic.'
-          : 'Źródło: KOMPAS GORĄCZKA — Polskie Towarzystwo Pediatryczne (PTP/PTMR).'} />
+        <SourceNote text={sources.temp} />
       </Section>
 
       {/* WARNING SIGNS */}
@@ -129,9 +151,7 @@ export default function ReferenceLibrary({ onClose }) {
             </div>
           ))}
         </div>
-        <SourceNote text={isEn
-          ? 'Source: AAP, Mayo Clinic guidelines.'
-          : 'Źródło: PTP/PTMR (KOMPAS GORĄCZKA), Medycyna Praktyczna.'} />
+        <SourceNote text={sources.signs} />
       </Section>
 
       {/* EMERGENCY NUMBER */}

@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { MILESTONES, MILESTONES_EN } from '../data/staticData'
+import { MILESTONES, MILESTONES_EN, MILESTONES_DE, MILESTONES_FR, MILESTONES_ES } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toastWithUndo } from './Toast'
-import { t, useLocale, isPL } from '../i18n'
+import { t, useLocale, getLocale } from '../i18n'
 import MilestonesChart from './MilestonesChart'
 import PremiumTeaser from './PremiumTeaser'
 
@@ -42,11 +42,14 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
 
   const [deleteId, setDeleteId] = useState(null)
 
-  // v2.12.0: built-in milestones per locale.
-  //   PL → MILESTONES (polskie nazwy)
-  //   inne (EN/DE/FR/ES) → MILESTONES_EN (universally understandable English)
-  // Phase 4: dodać MILESTONES_DE/FR/ES jeśli pojawi się popyt.
-  const builtInMilestones = isPL() ? MILESTONES : MILESTONES_EN
+  // v2.12.0: built-in milestones per locale — pełne 5 języków.
+  //   PL → MILESTONES (Uśmiech społeczny, Trzyma główkę...)
+  //   EN → MILESTONES_EN (Social smile, Holds head up...)
+  //   DE → MILESTONES_DE (Soziales Lächeln, Hält den Kopf...)
+  //   FR → MILESTONES_FR (Sourire social, Tient sa tête...)
+  //   ES → MILESTONES_ES (Sonrisa social, Sostiene la cabeza...)
+  const MILESTONES_BY_LOCALE = { pl: MILESTONES, en: MILESTONES_EN, de: MILESTONES_DE, fr: MILESTONES_FR, es: MILESTONES_ES }
+  const builtInMilestones = MILESTONES_BY_LOCALE[getLocale()] || MILESTONES_EN
   const allMilestones = [...builtInMilestones, ...customMilestones]
 
   const handleClick = (m) => {

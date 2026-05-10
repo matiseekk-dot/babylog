@@ -180,17 +180,94 @@ export const EMERGENCY_INFO_EN = {
   ],
 }
 
+// ─── DE: STIKO / DGKJ Fieber-Leitlinie ───────────────────────────────────────
+
+export const TEMPERATURE_REFERENCE_DE = [
+  { ageRange: 'Unter 3 Monaten', threshold: '≥ 38,0°C',     note: 'Jedes Fieber bei Säuglingen <3 Mon. ist eine Schwelle für eine dringende medizinische Untersuchung.' },
+  { ageRange: '3–6 Monate',       threshold: '≥ 38,0°C',     note: 'Schwelle für Kinderarzt-Konsultation; individuelle Beurteilung.' },
+  { ageRange: '6+ Monate',        threshold: '38,5–39,0°C', note: 'Hohes Fieber. DGKJ-Leitlinie empfiehlt Antipyretika zur Verbesserung des Komforts.' },
+  { ageRange: '6+ Monate',        threshold: '≥ 39,0°C',     note: 'Schwelle für Kinderarzt-Konsultation.' },
+  { ageRange: 'Jedes Alter',      threshold: '≥ 40,5°C',     note: 'Schwelle für dringende medizinische Untersuchung, altersunabhängig.' },
+]
+export const WARNING_SIGNS_DE = [
+  { icon: '🩺', title: 'Säugling unter 3 Monaten mit Fieber ≥38°C',           detail: 'Die DGKJ-Leitlinie indiziert eine dringende Krankenhausuntersuchung, unabhängig von anderen Symptomen.' },
+  { icon: '🌡️', title: 'Temperatur ≥40,5°C in jedem Alter',                    detail: 'Schwelle für dringende medizinische Untersuchung laut DGKJ/AWMF.' },
+  { icon: '😴', title: 'Apathie, Schwierigkeit beim Wecken, fehlende Reaktion', detail: 'Warnzeichen laut DGKJ/AWMF-Leitlinien.' },
+  { icon: '🫁', title: 'Atemnot, Pfeifen, Zyanose',                              detail: 'Warnzeichen — dringende medizinische Untersuchung.' },
+  { icon: '🔴', title: 'Krampfanfälle, Nackensteifigkeit, nicht-wegdrückbarer Hautausschlag', detail: 'Mögliche ZNS-Infektion oder Sepsis — Notfallversorgung.' },
+  { icon: '💧', title: 'Dehydratationszeichen: trockene Windeln >6h, keine Tränen, eingefallene Fontanelle', detail: 'Indikation für medizinische Untersuchung, besonders bei Säuglingen.' },
+  { icon: '🤮', title: 'Anhaltendes Erbrechen, Durchfall >24h bei Säuglingen', detail: 'Dehydratationsrisiko — Kinderarzt-Konsultation.' },
+  { icon: '⏱️', title: 'Fieber >72h bei Kindern >6 Monate',                    detail: 'DGKJ-Leitlinie indiziert Kinderarzt-Konsultation.' },
+]
+export const EMERGENCY_INFO_DE = {
+  primary: { number: '112', label: 'Notrufnummer (EU)' },
+  notes: [
+    'Die 112 verbindet Sie mit dem nächsten Disponenten (Rettungsdienst, Feuerwehr, Polizei).',
+    'Für Nicht-Notfälle erreichen Sie den kassenärztlichen Bereitschaftsdienst unter 116 117.',
+  ],
+}
+
+// ─── FR: SFP / HAS recommandations ───────────────────────────────────────────
+
+export const TEMPERATURE_REFERENCE_FR = [
+  { ageRange: 'Moins de 3 mois', threshold: '≥ 38,0°C',     note: 'Toute fièvre chez un nourrisson <3 mois est un seuil d\'évaluation médicale urgente.' },
+  { ageRange: '3–6 mois',         threshold: '≥ 38,0°C',     note: 'Seuil de consultation pédiatrique ; évaluation individuelle.' },
+  { ageRange: '6+ mois',          threshold: '38,5–39,0°C', note: 'Fièvre élevée. Les recommandations SFP/HAS suggèrent des antipyrétiques pour le confort.' },
+  { ageRange: '6+ mois',          threshold: '≥ 39,0°C',     note: 'Seuil de consultation pédiatrique.' },
+  { ageRange: 'Tout âge',         threshold: '≥ 40,5°C',     note: 'Seuil d\'évaluation médicale urgente, quel que soit l\'âge.' },
+]
+export const WARNING_SIGNS_FR = [
+  { icon: '🩺', title: 'Nourrisson de moins de 3 mois avec fièvre ≥38°C',       detail: 'Les recommandations SFP indiquent une consultation hospitalière urgente, indépendamment d\'autres symptômes.' },
+  { icon: '🌡️', title: 'Température ≥40,5°C à tout âge',                       detail: 'Seuil d\'évaluation médicale urgente selon SFP/HAS.' },
+  { icon: '😴', title: 'Apathie, difficulté à réveiller, absence de réaction', detail: 'Signe d\'alerte indiqué dans les recommandations SFP/HAS.' },
+  { icon: '🫁', title: 'Difficulté respiratoire, sifflements, cyanose',         detail: 'Signe d\'alerte — évaluation médicale urgente.' },
+  { icon: '🔴', title: 'Convulsions, raideur de la nuque, éruption qui ne disparaît pas à la pression', detail: 'Possible infection du SNC ou sepsis — urgences.' },
+  { icon: '💧', title: 'Déshydratation : couches sèches >6h, pas de larmes, fontanelle enfoncée', detail: 'Indication d\'évaluation médicale, surtout chez le nourrisson.' },
+  { icon: '🤮', title: 'Vomissements persistants, diarrhée >24h chez un nourrisson', detail: 'Risque de déshydratation — consultation pédiatrique.' },
+  { icon: '⏱️', title: 'Fièvre >72h chez un enfant >6 mois',                    detail: 'Les recommandations SFP indiquent une consultation pédiatrique.' },
+]
+export const EMERGENCY_INFO_FR = {
+  primary: { number: '15 / 112', label: 'SAMU / Numéro d\'urgence (UE)' },
+  notes: [
+    'Le 15 est le SAMU (urgences médicales). Le 112 est le numéro d\'urgence européen (toutes urgences).',
+    'Pour les conseils médicaux non urgents, contactez votre pédiatre ou le 116 117 (permanence de soins).',
+  ],
+}
+
+// ─── ES: AEP recomendaciones ─────────────────────────────────────────────────
+
+export const TEMPERATURE_REFERENCE_ES = [
+  { ageRange: 'Menos de 3 meses', threshold: '≥ 38,0°C',     note: 'Cualquier fiebre en un lactante <3 meses es un umbral de evaluación médica urgente.' },
+  { ageRange: '3–6 meses',         threshold: '≥ 38,0°C',     note: 'Umbral de consulta pediátrica; evaluación individual.' },
+  { ageRange: '6+ meses',          threshold: '38,5–39,0°C', note: 'Fiebre alta. Las recomendaciones de la AEP sugieren antipiréticos para el confort.' },
+  { ageRange: '6+ meses',          threshold: '≥ 39,0°C',     note: 'Umbral de consulta pediátrica.' },
+  { ageRange: 'Cualquier edad',    threshold: '≥ 40,5°C',     note: 'Umbral de evaluación médica urgente, independientemente de la edad.' },
+]
+export const WARNING_SIGNS_ES = [
+  { icon: '🩺', title: 'Lactante menor de 3 meses con fiebre ≥38°C',           detail: 'Las recomendaciones AEP indican consulta hospitalaria urgente, sin importar otros síntomas.' },
+  { icon: '🌡️', title: 'Temperatura ≥40,5°C a cualquier edad',                  detail: 'Umbral de evaluación médica urgente según AEP.' },
+  { icon: '😴', title: 'Apatía, dificultad para despertar, falta de respuesta', detail: 'Señal de alarma indicada en las recomendaciones AEP.' },
+  { icon: '🫁', title: 'Dificultad respiratoria, sibilancias, cianosis',        detail: 'Señal de alarma — evaluación médica urgente.' },
+  { icon: '🔴', title: 'Convulsiones, rigidez de nuca, erupción que no desaparece a la presión', detail: 'Posible infección del SNC o sepsis — urgencias.' },
+  { icon: '💧', title: 'Deshidratación: pañales secos >6h, sin lágrimas, fontanela hundida', detail: 'Indicación de evaluación médica, especialmente en lactantes.' },
+  { icon: '🤮', title: 'Vómitos persistentes, diarrea >24h en lactantes',       detail: 'Riesgo de deshidratación — consulta pediátrica.' },
+  { icon: '⏱️', title: 'Fiebre >72h en niños >6 meses',                          detail: 'Las recomendaciones AEP indican consulta pediátrica.' },
+]
+export const EMERGENCY_INFO_ES = {
+  primary: { number: '112 / 061', label: 'Emergencias (UE) / Urgencias sanitarias' },
+  notes: [
+    'El 112 conecta con el despachador más cercano (sanitarias, bomberos, policía). El 061 es específico para urgencias sanitarias en España.',
+    'Para consultas no urgentes, contacta con tu pediatra o centro de salud.',
+  ],
+}
+
 export function getReferenceTables(locale) {
-  if (locale === 'en') {
-    return {
-      temperature: TEMPERATURE_REFERENCE_EN,
-      warningSigns: WARNING_SIGNS_EN,
-      emergency: EMERGENCY_INFO_EN,
-    }
+  const map = {
+    pl: { temperature: TEMPERATURE_REFERENCE_PL, warningSigns: WARNING_SIGNS_PL, emergency: EMERGENCY_INFO_PL },
+    en: { temperature: TEMPERATURE_REFERENCE_EN, warningSigns: WARNING_SIGNS_EN, emergency: EMERGENCY_INFO_EN },
+    de: { temperature: TEMPERATURE_REFERENCE_DE, warningSigns: WARNING_SIGNS_DE, emergency: EMERGENCY_INFO_DE },
+    fr: { temperature: TEMPERATURE_REFERENCE_FR, warningSigns: WARNING_SIGNS_FR, emergency: EMERGENCY_INFO_FR },
+    es: { temperature: TEMPERATURE_REFERENCE_ES, warningSigns: WARNING_SIGNS_ES, emergency: EMERGENCY_INFO_ES },
   }
-  return {
-    temperature: TEMPERATURE_REFERENCE_PL,
-    warningSigns: WARNING_SIGNS_PL,
-    emergency: EMERGENCY_INFO_PL,
-  }
+  return map[locale] || map.pl
 }
