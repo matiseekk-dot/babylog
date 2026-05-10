@@ -4,7 +4,7 @@ import { DIET_ITEMS, DIET_ITEMS_EN } from '../data/staticData'
 import { genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toastWithUndo } from './Toast'
-import { t, useLocale, isEN } from '../i18n'
+import { t, useLocale, isPL } from '../i18n'
 
 const EMOJI_OPTIONS = ['🥕','🥦','🍠','🎃','🍎','🍐','🍌','🫐','🍓','🍇','🍑','🥑','🧅','🧄','🫛','🌽','🍅','🥝','🍋','🫚','🐔','🐟','🥩','🥚','🧀','🥛','🌾','🍚','🫘','🥜','🍯','🧇','🥞']
 
@@ -17,8 +17,13 @@ export default function DietTab({uid, babyId, ageMonths }) {
   const [deleteId, setDeleteId] = useState(null)
   const [form, setForm] = useState({ name: '', emoji: '🥕', months: String(ageMonths) })
 
-  // W EN ukrywamy polskie built-in produkty — user dodaje custom po angielsku
-  const builtInDiet = isEN() ? DIET_ITEMS_EN : DIET_ITEMS
+  // v2.12.0: built-in produkty per locale.
+  //   PL  → DIET_ITEMS (Marchew, Brokuł, Mango...)
+  //   inne (EN/DE/FR/ES) → DIET_ITEMS_EN (Carrot, Broccoli, Mango...)
+  // EN nazwy są uniwersalne (food names rozumie każdy DE/FR/ES rodzic) i
+  // user może dodać własne produkty w lokalnym języku.
+  // Phase 4: dodać DIET_ITEMS_DE/FR/ES jeśli pojawi się popyt na lokalizację.
+  const builtInDiet = isPL() ? DIET_ITEMS : DIET_ITEMS_EN
   const allItems = [...builtInDiet, ...customItems]
 
   const toggle = (id) => {

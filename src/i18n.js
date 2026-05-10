@@ -2110,8 +2110,8 @@ const TRANSLATIONS = {
     // Vaccinations tab
     'vacc.title':                'Vaccinations',
     'vacc.desc':                 '{scheme} schedule · {done}/{total} done · Custom: {custom}',
-    'vacc.scheme':               'PSO',
-    'vacc.warning':              "This is a reference schedule based on Poland's PSO. Confirm your specific schedule with your doctor.",
+    'vacc.scheme':               'CDC',
+    'vacc.warning':              'This is a reference schedule based on the CDC immunization schedule. Confirm your specific schedule with your doctor.',
     'vacc.important':            'Note:',
     'vacc.scheme_header':        'Vaccinations per PSO',
     'vacc.custom_header':        'Custom / additional vaccinations',

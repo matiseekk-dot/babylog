@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { VACCINATIONS } from '../data/staticData'
+import { getLocaleContent } from '../data/locale'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toastWithUndo } from './Toast'
-import { t, useLocale, isEN } from '../i18n'
+import { t, useLocale } from '../i18n'
 
 export default function VaccinationsTab({uid, babyId, ageMonths }) {
-  useLocale()
+  const { locale } = useLocale()
   const [done, setDone] = useFirestore(uid, `vacc_${babyId}`, {})
   const [customVacc, setCustomVacc] = useFirestore(uid, `vacc_custom_${babyId}`, [])
   const [modal, setModal] = useState(false)
@@ -18,11 +18,27 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
   // Lets them mark done with a CUSTOM date (not just today).
   const [dateModal, setDateModal] = useState(null)
 
-  // W wersji EN: brak built-in listy szczepień — Polska baza (PSO) nie pasuje
-  // do EN userów, a uniwersalny międzynarodowy harmonogram nie istnieje
-  // (US CDC vs UK NHS vs DE STIKO różnią się). EN user dodaje własne wpisy.
-  // Roadmap v1.1: per-kraj harmonogramy.
-  const builtInVaccines = isEN() ? [] : VACCINATIONS
+  // v2.12.0 — content abstraction: każdy locale ma własny harmonogram.
+  //   PL → PSO (Program Szczepień Ochronnych)
+  //   EN → CDC (USA default fallback)
+  //   DE → STIKO (Ständige Impfkommission)
+  //   FR → Calendrier vaccinal (Santé publique France)
+  //   ES → CAV-AEP (Comité Asesor de Vacunas) + LATAM variants (MX/AR/CO)
+  // Patrz: src/data/locale/{lang}/vaccinations.js
+  //
+  // Stable IDs per kraj+index — ważne dla `done` Firestore mapy żeby user
+  // zmieniający locale nie tracił statusu zaznaczonych szczepień.
+  const localeVaccData = getLocaleContent('vaccinations')
+  const builtInVaccines = (localeVaccData?.schedule || []).map((v, i) => {
+    const country = (localeVaccData.country || locale).toLowerCase()
+    return {
+      id: `${country}-vacc-${i}`,
+      name: v.name,
+      // when label: timing string (np. "do 24h po urodzeniu") OR "X. miesiąc"
+      when: v.timing || t('vacc.month_of_life', { month: v.ageMonths }),
+      months: v.ageMonths,
+    }
+  })
   const allVacc = [...builtInVaccines, ...customVacc]
 
   const openDateModal = (vacc) => {

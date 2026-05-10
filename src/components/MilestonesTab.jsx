@@ -4,7 +4,7 @@ import { MILESTONES, MILESTONES_EN } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toastWithUndo } from './Toast'
-import { t, useLocale, isEN } from '../i18n'
+import { t, useLocale, isPL } from '../i18n'
 import MilestonesChart from './MilestonesChart'
 import PremiumTeaser from './PremiumTeaser'
 
@@ -42,7 +42,11 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
 
   const [deleteId, setDeleteId] = useState(null)
 
-  const builtInMilestones = isEN() ? MILESTONES_EN : MILESTONES
+  // v2.12.0: built-in milestones per locale.
+  //   PL → MILESTONES (polskie nazwy)
+  //   inne (EN/DE/FR/ES) → MILESTONES_EN (universally understandable English)
+  // Phase 4: dodać MILESTONES_DE/FR/ES jeśli pojawi się popyt.
+  const builtInMilestones = isPL() ? MILESTONES : MILESTONES_EN
   const allMilestones = [...builtInMilestones, ...customMilestones]
 
   const handleClick = (m) => {

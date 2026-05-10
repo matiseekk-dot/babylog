@@ -58,7 +58,7 @@ import ReferenceLibrary from './components/ReferenceLibrary'
 import WhenToSeekHelpCard from './components/WhenToSeekHelpCard'
 import { useServiceWorker } from './hooks/useServiceWorker'
 
-import { useLocale, t, isEN } from './i18n'
+import { useLocale, t, getLocale } from './i18n'
 import { findPlan } from './data/premiumPlans'
 import { todayDate, nowTime, genId } from './utils/helpers'
 
@@ -389,7 +389,8 @@ export default function App() {
 
     // v2.11.12 — KRYTYCZNY FIX: Google Play oczekuje pełnego SKU
     // (`spokojny_rodzic_premium_yearly`), NIE internal id ('yearly').
-    const plan = findPlan(isEN() ? 'en' : 'pl', planId)
+    // v2.12.0: poprawna obsługa wszystkich 5 locale (poprzednio fallback do 'pl' dla DE/FR/ES).
+    const plan = findPlan(getLocale(), planId)
     const productId = plan?.productId
     if (!productId) {
       console.error('[handleActivate] no productId for planId:', planId)

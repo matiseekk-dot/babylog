@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { t, useLocale, getLocale, isEN } from '../i18n'
+import { t, useLocale, getLocale, isPL } from '../i18n'
 import { getPlans } from '../data/premiumPlans'
 import { trackPaywallViewed, trackPaywallCTAClicked } from '../utils/analytics'
 
@@ -39,8 +39,12 @@ import { trackPaywallViewed, trackPaywallCTAClicked } from '../utils/analytics'
 //      (waga/wzrost/BMI/obwód głowy). Nie publikuje norm dla ząbkowania, kaszlu,
 //      milestone'ów. Te są w PTP/AAP referencyjnych tabelach. Tekst poprawiony
 //      żeby nie wprowadzał w błąd.
+// v2.12.0: feature list per locale.
+//   PL → polskie texty
+//   inne (EN/DE/FR/ES) → English (safe międzynarodowy fallback)
+// TODO: pełny per-language paywall przez i18n keys (Phase 4).
 function getFeatures() {
-  if (isEN()) {
+  if (!isPL()) {
     return [
       { icon:'📄', title:'PDF report for pediatrician', desc:'Formatted summary of temperatures, doses, feedings, sleep — for any date range. Take it to your visit.' },
       { icon:'📊', title:'Growth charts with WHO percentiles', desc:'See where your child ranks compared to WHO norms (weight, height, head circumference).' },

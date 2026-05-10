@@ -7,7 +7,7 @@ import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretMeds } from '../engine/interpretations'
 import { toast, toastWithUndo } from './Toast'
-import { t, useLocale, isEN } from '../i18n'
+import { t, useLocale, isPL } from '../i18n'
 import { useMedReminder } from '../hooks/useMedReminder'
 import HistorySection from './HistorySection'
 
@@ -70,7 +70,12 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   // rodzic czyta je z ulotki lub konsultuje z pediatrą/farmaceutą.
   // Wiek jest używany tylko do ostrzeżenia o minimalnym wieku ibuprofenu (≥6 mies.).
   const ibuAllowedByAge = ageMonths != null && ageMonths >= 6
-  const BUILT_IN_MEDS = isEN() ? BUILT_IN_MEDS_EN : BUILT_IN_MEDS_PL
+  // v2.12.0: built-in medication names per locale.
+  //   PL → BUILT_IN_MEDS_PL (Apap, Ibuprom — polskie marki)
+  //   inne (EN/DE/FR/ES) → BUILT_IN_MEDS_EN (Paracetamol, Ibuprofen — generic names
+  //     które są uniwersalne w UE/CDC). User może dodać lokalne marki przez "Custom":
+  //     Doliprane (FR), Apiretal (ES), ben-u-ron (DE), itd.
+  const BUILT_IN_MEDS = isPL() ? BUILT_IN_MEDS_PL : BUILT_IN_MEDS_EN
   const allMedNames = [...BUILT_IN_MEDS, ...customMeds.map(m=>m.name), t('meds.other')]
 
   const openAdd = (medOverride = null) => {
