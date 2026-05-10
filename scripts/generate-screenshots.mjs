@@ -188,6 +188,15 @@ const SHOTS = [
     await clickByText('Kiedy szukać pomocy|When to seek help|Wann zum Arzt|Quand consulter|Cuándo consultar')(page)
   }},
   { name: '06-feed', action: clickNav(NAV_FEED) },
+  { name: '07-vaccinations', action: async (page) => {
+    await clickNav(NAV_MORE)(page)
+    await sleep(1200)
+    // Klikamy w element listy "Wszystkie moduły" — text bez anchorów żeby
+    // złapać "Szczepienia", "💉 Impfungen", "Vaccinations" itd.
+    // PL Szczepienia · EN Vaccinations · DE Impfungen · FR Vaccinations · ES Vacunas
+    await clickByText('(Szczepienia|Vaccinations|Impfungen|Vacunas)')(page)
+    await sleep(600)
+  }},
 ]
 
 async function screenshotForLocale(browser, locale) {

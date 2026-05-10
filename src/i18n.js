@@ -4852,7 +4852,7 @@ const TRANSLATIONS = {
     // Vaccinations tab
     'vacc.title':                 'Vaccinations',
     'vacc.desc':                  'Calendrier {scheme} · {done}/{total} faits · Personnalisés : {custom}',
-    'vacc.scheme':                'Calendrier vaccinal France',
+    'vacc.scheme':                'vaccinal France',
     'vacc.warning':               'Calendrier indicatif selon Santé publique France. Précisez le calendrier exact avec votre médecin.',
     'vacc.important':             'À noter :',
     'vacc.scheme_header':         'Vaccinations selon le calendrier vaccinal',
@@ -6215,7 +6215,7 @@ const TRANSLATIONS = {
     // Vaccinations tab
     'vacc.title':                 'Vacunas',
     'vacc.desc':                  'Calendario {scheme} · {done}/{total} hechas · Personalizadas: {custom}',
-    'vacc.scheme':                'Calendario AEP',
+    'vacc.scheme':                'AEP',
     'vacc.warning':               'Calendario orientativo según CAV-AEP. Confirma el calendario exacto con tu pediatra.',
     'vacc.important':             'Atención:',
     'vacc.scheme_header':         'Vacunas según el calendario',
