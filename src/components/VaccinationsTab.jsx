@@ -127,6 +127,16 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
         <strong>{t('vacc.important')}</strong> {t('vacc.warning')}
       </div>
 
+      {/* v2.12.0: LATAM fallback banner — pokazuje się gdy user z kraju innego niż
+          ES/MX/AR/CO ma locale=es. Dla nich pokazujemy hiszpański calendar
+          (CAV-AEP) jako default + disclaimer że to nie ich narodowy schemat.
+          Patrz: src/data/locale/es/vaccinations.js — meta-flag _isLatamFallback. */}
+      {locale === 'es' && localeVaccData?._isLatamFallback && (
+        <div className="warn-card" style={{ background: '#FFF8E1', borderColor: '#F5B847' }}>
+          🌎 {t('vacc.latam_fallback')}
+        </div>
+      )}
+
       <div className="card">
         <div className="card-header">{t('vacc.scheme_header')}</div>
         {builtInVaccines.map(v => renderVaccItem(v, false))}
