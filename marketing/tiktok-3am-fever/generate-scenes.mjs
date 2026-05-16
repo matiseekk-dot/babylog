@@ -177,8 +177,8 @@ function scene4() {
 function scene5() {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
     <rect width="${W}" height="${H}" fill="#FFF8F4"/>
-    ${wrapText('Apka mówi co robić.', W/2, 180, 18, 76, 100, '#1F1F1F')}
-    ${wrapText('Bez googlowania.', W/2, 280, 18, 76, 100, C.brand)}
+    ${wrapText('Apka mówi co robić.', W/2, 160, 30, 64, 80, '#1F1F1F')}
+    ${wrapText('Bez googlowania.', W/2, 250, 30, 64, 80, C.brand)}
     <!-- Big alert card -->
     <g transform="translate(80, 440)">
       <rect width="920" height="1320" rx="32" fill="white" stroke="${C.yellow}" stroke-width="6"/>
