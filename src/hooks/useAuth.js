@@ -1,30 +1,46 @@
 import { useState, useEffect } from 'react'
-import { onAuthStateChanged, signInWithRedirect, getRedirectResult, signOut } from 'firebase/auth'
+import {
+  onAuthStateChanged,
+  signInWithRedirect,
+  signInWithCredential,
+  getRedirectResult,
+  GoogleAuthProvider,
+  signOut,
+} from 'firebase/auth'
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import { auth, provider } from '../firebase'
 import { captureError, addBreadcrumb, setUserContext } from '../sentry'
 
 /**
  * useAuth()
- * Zwraca: { user, loading, signIn, signOut }
- * user: null = niezalogowany, obiekt = zalogowany
+ * Zwraca: { user, loading, login, logout }
  *
- * Używa signInWithRedirect zamiast signInWithPopup — popup nie działa
- * w Android WebView (Capacitor). Redirect flow działa w każdym środowisku.
+ * Dwa tryby logowania:
+ *  - Capacitor (Android app): natywny Google Sign-In przez GoogleAuth plugin
+ *    → natywny dialog wyboru konta, zero WebView redirects, zero błędu 400
+ *  - Przeglądarka (PWA): signInWithRedirect (standardowy Firebase flow)
  */
+
+function isCapacitorNative() {
+  return !!(window.Capacitor?.isNativePlatform?.())
+}
+
 export function useAuth() {
   const [user, setUser]       = useState(undefined) // undefined = ładowanie
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Obsłuż powrót po redirect Google OAuth (wywoływane po każdym załadowaniu strony)
-    getRedirectResult(auth).catch(e => {
-      captureError(e, { context: 'auth-redirect-result' })
-    })
+    // Tylko w przeglądarce obsłuż powrót po redirect OAuth
+    if (!isCapacitorNative()) {
+      getRedirectResult(auth).catch(e => {
+        captureError(e, { context: 'auth-redirect-result' })
+      })
+    }
 
     const unsub = onAuthStateChanged(auth, u => {
       setUser(u ?? null)
       setLoading(false)
-      setUserContext(u?.uid)  // Ustaw UID w Sentry dla filtrowania błędów
+      setUserContext(u?.uid)
       addBreadcrumb('auth', u ? 'signed-in' : 'signed-out', { uid: u?.uid })
     })
     return unsub
@@ -32,15 +48,29 @@ export function useAuth() {
 
   const login = async () => {
     try {
-      await signInWithRedirect(auth, provider)
-      // signInWithRedirect nawiguje przeglądarkę/WebView do Google OAuth —
-      // kod poniżej nie wykona się do czasu powrotu (obsługa w getRedirectResult powyżej)
+      if (isCapacitorNative()) {
+        // Natywne logowanie — pojawia się Android dialog wyboru konta Google,
+        // żadnych przekierowań WebView, żadnego błędu 400.
+        const googleUser = await GoogleAuth.signIn()
+        const idToken = googleUser.authentication.idToken
+        const credential = GoogleAuthProvider.credential(idToken)
+        return await signInWithCredential(auth, credential)
+      } else {
+        // Fallback dla PWA w przeglądarce
+        await signInWithRedirect(auth, provider)
+      }
     } catch (e) {
       captureError(e, { context: 'auth-signin' })
       throw e
     }
   }
-  const logout = () => signOut(auth)
+
+  const logout = async () => {
+    if (isCapacitorNative()) {
+      try { await GoogleAuth.signOut() } catch (_) { /* ignoruj */ }
+    }
+    return signOut(auth)
+  }
 
   return { user, loading, login, logout }
 }
