@@ -12,9 +12,9 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
     try {
       await onLogin()
     } catch (e) {
-      if (e.code !== 'auth/popup-closed-by-user') {
-        setError(t('login.error'))
-      }
+      // signInWithRedirect: nawiguje do Google, więc catch odpala tylko przy
+      // błędzie konfiguracji (nie przy "zamknięciu popupu" — popup nie jest używany)
+      setError(t('login.error'))
     } finally {
       setBusy(false)
     }
