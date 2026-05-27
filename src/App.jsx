@@ -179,6 +179,24 @@ export default function App() {
   // Włącz offline persistence
   useEffect(() => { enableOffline() }, [])
 
+  // v2.12.0: Konfiguruj RevenueCat SDK raz gdy uid jest znany.
+  // Wcześniej configure() był wywoływany w handleActivate() przy każdym kliknięciu
+  // "Kup", co jest niezgodne z dokumentacją RC (powinno być jednokrotne przy starcie).
+  useEffect(() => {
+    if (!uid || !window.Capacitor?.isNativePlatform?.()) return
+    ;(async () => {
+      try {
+        const { Purchases } = await import('@revenuecat/purchases-capacitor')
+        const rcKey = import.meta.env.VITE_RC_PUBLIC_KEY
+        if (!rcKey) return
+        await Purchases.configure({ apiKey: rcKey, appUserID: uid })
+        addBreadcrumb('purchase', 'rc-configured', { uid })
+      } catch (e) {
+        console.warn('[RC] configure failed on startup:', e?.message)
+      }
+    })()
+  }, [uid])
+
   // Bug 3 fix: Zamiast AUTOMATYCZNEJ migracji (która nadpisywała dane zalogowanego konta
   // danymi gościa!), teraz pokazujemy DIALOG gdy user zaloguje się i ma dane gościa.
   // User decyduje: "Dodaj do mojego konta" vs "Zostaw tam, nie chcę migracji".
@@ -402,12 +420,9 @@ export default function App() {
       // 0. Capacitor (natywna aplikacja Android) — RevenueCat Purchases SDK
       // getDigitalGoodsService nie istnieje w Capacitor WebView, więc używamy
       // natywnego Play Billing przez @revenuecat/purchases-capacitor.
+      // configure() jest wywoływane RAZ przy starcie (useEffect w App.jsx gdy uid).
       if (window.Capacitor?.isNativePlatform?.()) {
         const { Purchases } = await import('@revenuecat/purchases-capacitor')
-        const rcKey = import.meta.env.VITE_RC_PUBLIC_KEY
-        if (!rcKey) throw new Error('RC key not configured')
-
-        await Purchases.configure({ apiKey: rcKey, appUserID: uid })
 
         const { products } = await Purchases.getProducts({
           productIdentifiers: [productId],
@@ -415,23 +430,45 @@ export default function App() {
 
         if (!products?.length) {
           // Produkt nie znaleziony w Play Store — może apka nie jest z Play lub
-          // produkty nie skonfigurowane. Informuj usera inaczej niż PlayStoreModal.
+          // produkty nie skonfigurowane w RC Dashboard. Informuj usera.
           addBreadcrumb('purchase', 'capacitor-product-not-found', { productId })
           toast(t('paywall.error'), 'error')
           return
         }
 
-        const result = await Purchases.purchaseStoreProduct({ product: products[0] })
-        const rcEntitlement = import.meta.env.VITE_RC_ENTITLEMENT || 'Spokojny Rodzic Pro'
-        addBreadcrumb('purchase', 'capacitor-purchase-complete', {
-          hasEntitlement: !!result.customerInfo?.entitlements?.active?.[rcEntitlement],
-        })
+        let result
+        try {
+          result = await Purchases.purchaseStoreProduct({ product: products[0] })
+        } catch (purchaseErr) {
+          // Użytkownik anulował — PURCHASE_CANCELLED, nie pokazuj error toast
+          const code = purchaseErr?.code || purchaseErr?.userInfo?.readableErrorCode || ''
+          if (
+            code === 'PURCHASE_CANCELLED' ||
+            code === 'userCancelled' ||
+            purchaseErr?.message?.toLowerCase?.().includes('cancel')
+          ) {
+            addBreadcrumb('purchase', 'capacitor-purchase-cancelled', { productId })
+            return // cicho wyjdź
+          }
+          throw purchaseErr // inny błąd — obsłuż w zewnętrznym catch
+        }
 
-        // RC webhook wyśle event do Firebase CF → ustawi premium_purchased=true w Firestore.
-        // Ręczny checkPremium dla natychmiastowej reakcji UI (zanim webhook dotrze).
-        await checkPremium()
-        setShowPaywall(false)
-        toast(t('paywall.activated'))
+        const rcEntitlement = import.meta.env.VITE_RC_ENTITLEMENT || 'Spokojny Rodzic Pro'
+        const hasEntitlement = !!result.customerInfo?.entitlements?.active?.[rcEntitlement]
+        addBreadcrumb('purchase', 'capacitor-purchase-complete', { hasEntitlement, productId })
+
+        if (hasEntitlement) {
+          // RC SDK potwierdził aktywne uprawnienie — natychmiastowy sukces.
+          setShowPaywall(false)
+          toast(t('paywall.activated'))
+        } else {
+          // Rzadki przypadek: SDK nie widzi jeszcze uprawnienia (np. opóźnienie RC).
+          // Fallback: sprawdź przez REST API. Webhook RC dotrze do Firestore w ciągu
+          // kilku sekund i real-time listener zaktualizuje isPremium automatycznie.
+          await checkPremium()
+          setShowPaywall(false)
+          toast(t('paywall.activated'))
+        }
         return
       }
 
