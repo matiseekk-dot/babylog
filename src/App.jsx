@@ -399,6 +399,42 @@ export default function App() {
     }
     setPurchasing(true)
     try {
+      // 0. Capacitor (natywna aplikacja Android) — RevenueCat Purchases SDK
+      // getDigitalGoodsService nie istnieje w Capacitor WebView, więc używamy
+      // natywnego Play Billing przez @revenuecat/purchases-capacitor.
+      if (window.Capacitor?.isNativePlatform?.()) {
+        const { Purchases } = await import('@revenuecat/purchases-capacitor')
+        const rcKey = import.meta.env.VITE_RC_PUBLIC_KEY
+        if (!rcKey) throw new Error('RC key not configured')
+
+        await Purchases.configure({ apiKey: rcKey, appUserID: uid })
+
+        const { products } = await Purchases.getProducts({
+          productIdentifiers: [productId],
+        })
+
+        if (!products?.length) {
+          // Produkt nie znaleziony w Play Store — może apka nie jest z Play lub
+          // produkty nie skonfigurowane. Informuj usera inaczej niż PlayStoreModal.
+          addBreadcrumb('purchase', 'capacitor-product-not-found', { productId })
+          toast(t('paywall.error'), 'error')
+          return
+        }
+
+        const result = await Purchases.purchaseStoreProduct({ product: products[0] })
+        const rcEntitlement = import.meta.env.VITE_RC_ENTITLEMENT || 'Spokojny Rodzic Pro'
+        addBreadcrumb('purchase', 'capacitor-purchase-complete', {
+          hasEntitlement: !!result.customerInfo?.entitlements?.active?.[rcEntitlement],
+        })
+
+        // RC webhook wyśle event do Firebase CF → ustawi premium_purchased=true w Firestore.
+        // Ręczny checkPremium dla natychmiastowej reakcji UI (zanim webhook dotrze).
+        await checkPremium()
+        setShowPaywall(false)
+        toast(t('paywall.activated'))
+        return
+      }
+
       // 1. TWA z Play Billing przez Digital Goods API (standardowe podejście PWABuilder)
       if ('getDigitalGoodsService' in window && window.PaymentRequest) {
         try {
