@@ -14,7 +14,23 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
     } catch (e) {
       // signInWithRedirect: nawiguje do Google, więc catch odpala tylko przy
       // błędzie konfiguracji (nie przy "zamknięciu popupu" — popup nie jest używany)
-      setError(t('login.error'))
+      // DIAGNOSTYKA v47: pokaż prawdziwy kod błędu + wykrytą platformę,
+      // żeby ustalić źródło błędu 400. Usunąć po zdiagnozowaniu.
+      try {
+        const cap = window.Capacitor
+        const diag = [
+          `platform=${cap?.getPlatform?.() ?? 'n/a'}`,
+          `native=${cap?.isNativePlatform?.() ?? 'n/a'}`,
+          `androidBridge=${typeof window.androidBridge}`,
+          `code=${e?.code ?? 'n/a'}`,
+          `msg=${(e?.message ?? String(e)).slice(0, 200)}`,
+        ].join(' | ')
+        // eslint-disable-next-line no-console
+        console.error('[LOGIN-DIAG]', diag, e)
+        setError(diag)
+      } catch (_) {
+        setError(t('login.error'))
+      }
     } finally {
       setBusy(false)
     }
@@ -94,8 +110,19 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
             borderRadius: 'var(--radius-tight)',
             padding: 'var(--space-snug) var(--space)',
             marginBottom: 'var(--space)', textAlign: 'center',
+            wordBreak: 'break-word',
           }}>{error}</div>
         )}
+
+        {/* DIAGNOSTYKA v47 — tymczasowa. Usunąć po zdiagnozowaniu błędu 400. */}
+        <div style={{
+          fontSize: 11, color: 'var(--text-3)', background: 'var(--brand-50)',
+          borderRadius: 'var(--radius-tight)', padding: '4px 8px',
+          marginBottom: 'var(--space)', textAlign: 'center',
+          fontFamily: 'monospace', wordBreak: 'break-word',
+        }}>
+          {`DIAG: platform=${window.Capacitor?.getPlatform?.() ?? 'n/a'} · native=${String(window.Capacitor?.isNativePlatform?.() ?? 'n/a')} · bridge=${typeof window.androidBridge}`}
+        </div>
 
         <button
           onClick={handleLogin}
