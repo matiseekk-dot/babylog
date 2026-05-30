@@ -22,23 +22,30 @@
     <div id="root"></div>
     <!--
       Capacitor v6/v8 bridge compatibility shim.
-      @capacitor/core v8 wykrywa platformę przez window.androidBridge (nowy styl v8).
-      Capacitor v6 native Android ustawia window.Capacitor.androidBridge (stary styl v6).
-      Ten skrypt musi działać PRZED bundlem React — przechwytuje v6 bridge i ustawia
-      window.CapacitorCustomPlatform zanim @capacitor/core v8 nadpisze window.Capacitor.
+
+      Problem: Capacitor v6 native Android wstrzykuje window.androidBridge przez
+      addJavascriptInterface (dostępne PRZED jakimkolwiek JS). Jednak gdy server.url
+      używa addWebMessageListener z pełnym URL jako origin rule (np.
+      "https://host/path/"), WebView może nie wstrzyknąć obiektu androidBridge dla tej
+      strony (addWebMessageListener wymaga formatu "scheme://host" bez ścieżki).
+
+      Fix: wykrywamy androidBridge TUTAJ (przed bundlem React) i ustawiamy
+      window.CapacitorCustomPlatform = { name: 'android' }, który @capacitor/core v8
+      odczytuje przy inicjalizacji modułu i zapisuje w domknięciu.
+      Bez tego shima i bez useLegacyBridge, isNativePlatform() może zwrócić false.
+
+      Ten skrypt MUSI być przed <script type="module">.
     -->
     <script>
       (function() {
         try {
-          if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
-            var p = window.Capacitor.getPlatform();
-            if (p && p !== 'web') {
-              window.CapacitorCustomPlatform = { name: p };
-              // Zachowaj androidBridge na window (v8 style) jeśli dostępny na Capacitor obj
-              if (window.Capacitor.androidBridge) {
-                window.androidBridge = window.Capacitor.androidBridge;
-              }
-            }
+          // Capacitor v6 native Android wstrzykuje window.androidBridge przez
+          // addJavascriptInterface() PRZED załadowaniem jakichkolwiek skryptów strony.
+          // @capacitor/core v8 sprawdza window.androidBridge przy inicjalizacji modułu.
+          // Ustawienie CapacitorCustomPlatform tutaj gwarantuje że isNativePlatform()
+          // działa nawet gdy addWebMessageListener nie wstrzyknie obiektu dla tego origin.
+          if (typeof window.androidBridge !== 'undefined') {
+            window.CapacitorCustomPlatform = { name: 'android' };
           }
         } catch(e) {}
       })();
