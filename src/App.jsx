@@ -187,8 +187,7 @@ export default function App() {
     ;(async () => {
       try {
         const { Purchases } = await import('@revenuecat/purchases-capacitor')
-        const rcKey = import.meta.env.VITE_RC_PUBLIC_KEY
-        if (!rcKey) return
+        const rcKey = import.meta.env.VITE_RC_PUBLIC_KEY || 'goog_CePHovfsjHOiYaoKwnFhtcDFnwq'
         await Purchases.configure({ apiKey: rcKey, appUserID: uid })
         addBreadcrumb('purchase', 'rc-configured', { uid })
       } catch (e) {

@@ -45,8 +45,26 @@ export function useFCM(userId) {
     }
 
     try {
+      // v2.12.1: jawna rejestracja firebase-messaging-sw.js z właściwym scope.
+      // Bez tego Firebase SDK szuka SW pod /firebase-messaging-sw.js (root domeny),
+      // ale plik jest pod /babylog/firebase-messaging-sw.js.
+      // Jawna rejestracja + przekazanie serviceWorkerRegistration do getToken()
+      // rozwiązuje problem braku tokena FCM w Capacitor WebView.
+      let swReg
+      try {
+        swReg = await navigator.serviceWorker.register(
+          '/babylog/firebase-messaging-sw.js',
+          { scope: '/babylog/' }
+        )
+      } catch (swErr) {
+        addBreadcrumb('fcm', 'messaging-sw-register-failed', { error: swErr?.message })
+        // Fallback: spróbuj z istniejącą rejestracją main SW
+        swReg = await navigator.serviceWorker.getRegistration('/babylog/')
+      }
+
       const token = await getToken(messaging, {
         vapidKey: VAPID_KEY,
+        ...(swReg ? { serviceWorkerRegistration: swReg } : {}),
       })
 
       if (!token) {

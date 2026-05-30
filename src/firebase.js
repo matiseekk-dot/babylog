@@ -52,7 +52,9 @@ const app = initializeApp(firebaseConfig)
 // "Monitor" — nie blokuje, tylko loguje. Sprawdzamy że ~99%+ requestów
 // jest verified, dopiero wtedy włączamy "Enforce".
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || ''
+// Fallback hardcoded (to publiczny klucz, bezpieczny w kodzie).
+// GitHub Secrets są ważniejsze gdy ustawione, ale bez nich też działa.
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LfXd8ssAAAAABh-txdhZbM-G2MxVZcBYku4CRn1'
 
 export let appCheck = null
 if (RECAPTCHA_SITE_KEY && typeof window !== 'undefined') {

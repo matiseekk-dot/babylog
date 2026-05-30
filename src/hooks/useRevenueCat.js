@@ -26,7 +26,9 @@ const RC_API = 'https://api.revenuecat.com/v1'
 // API key z .env — Vite wstrzykuje import.meta.env.VITE_*
 // W dev używa test key, w produkcji PRODUCTION key z Play Store billing
 // Format w .env: VITE_RC_PUBLIC_KEY=goog_xxxxxxx
-const RC_KEY = import.meta.env.VITE_RC_PUBLIC_KEY || ''
+// Fallback hardcoded — publiczny klucz SDK, bezpieczny w kodzie.
+// GitHub Secrets mają pierwszeństwo gdy ustawione.
+const RC_KEY = import.meta.env.VITE_RC_PUBLIC_KEY || 'goog_CePHovfsjHOiYaoKwnFhtcDFnwq'
 const ENTITLEMENT = import.meta.env.VITE_RC_ENTITLEMENT || 'Spokojny Rodzic Pro'
 
 // v2.10.3: Whitelist znanych product identifiers które są LIFETIME (one-time
