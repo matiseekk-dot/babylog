@@ -20,6 +20,29 @@
   </head>
   <body>
     <div id="root"></div>
+    <!--
+      Capacitor v6/v8 bridge compatibility shim.
+      @capacitor/core v8 wykrywa platformę przez window.androidBridge (nowy styl v8).
+      Capacitor v6 native Android ustawia window.Capacitor.androidBridge (stary styl v6).
+      Ten skrypt musi działać PRZED bundlem React — przechwytuje v6 bridge i ustawia
+      window.CapacitorCustomPlatform zanim @capacitor/core v8 nadpisze window.Capacitor.
+    -->
+    <script>
+      (function() {
+        try {
+          if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
+            var p = window.Capacitor.getPlatform();
+            if (p && p !== 'web') {
+              window.CapacitorCustomPlatform = { name: p };
+              // Zachowaj androidBridge na window (v8 style) jeśli dostępny na Capacitor obj
+              if (window.Capacitor.androidBridge) {
+                window.androidBridge = window.Capacitor.androidBridge;
+              }
+            }
+          }
+        } catch(e) {}
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
     <!-- v2.10.6: SW registration moved to src/hooks/useServiceWorker.js (single source
          of truth — adds Sentry breadcrumbs + captureError on failure). Removing the
