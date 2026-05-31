@@ -64,7 +64,7 @@ import { t } from '../i18n'
 //     US → 24,99 USD (set in Play Console default)
 //     UK → 19,99 GBP (Phase 4)
 const PRICES_BY_LOCALE = {
-  pl: { monthly: '14,99 zł', yearly: '99,99 zł' },
+  pl: { monthly: '14,99 zł', yearly: '119 zł' },
   de: { monthly: '3,99 €',   yearly: '24,99 €' },
   fr: { monthly: '3,99 €',   yearly: '24,99 €' },
   es: { monthly: '3,99 €',   yearly: '24,99 €' },
