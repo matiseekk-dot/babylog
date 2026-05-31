@@ -780,7 +780,7 @@ export default function SettingsScreen({
           borderRadius: 6, padding: '6px 8px', marginTop: 8,
           fontFamily: 'monospace', wordBreak: 'break-word', lineHeight: 1.4,
         }}>
-          {`DIAG push: native=${String(window.Capacitor?.isNativePlatform?.() ?? 'n/a')} · avail=${String(window.Capacitor?.isPluginAvailable?.('PushNotifications') ?? 'n/a')} · webPerm=${typeof Notification !== 'undefined' ? Notification.permission : 'n/a'} · token=${fcmToken ? fcmToken.slice(0, 10) + '…' : 'brak'}`}
+          {`DIAG push [BUILD=v50]: native=${String(window.Capacitor?.isNativePlatform?.() ?? 'n/a')} · avail=${String(window.Capacitor?.isPluginAvailable?.('PushNotifications') ?? 'n/a')} · webPerm=${typeof Notification !== 'undefined' ? Notification.permission : 'n/a'} · token=${fcmToken ? fcmToken.slice(0, 10) + '…' : 'brak'}`}
           {pushDebug ? ` · ${pushDebug}` : ''}
           {pushDiag ? ` || ${pushDiag}` : ''}
         </div>
