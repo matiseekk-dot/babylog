@@ -55,7 +55,9 @@ export default function SettingsScreen({
   const { permission: notifPermission, testNotification, askPermission: askNotifPermission } = useMedReminder(profile.id)
   // FCM: pobiera token i zapisuje do Firestore żeby Cloud Function mogła wysyłać push.
   // Token rejestruje się automatycznie po nadaniu zgody (useEffect w useFCM).
-  const { refreshToken: refreshFcmToken } = useFCM(uid)
+  const { refreshToken: refreshFcmToken, fcmToken } = useFCM(uid)
+  // DIAGNOSTYKA push v48 — tymczasowa. Usunąć po zdiagnozowaniu powiadomień.
+  const [pushDiag, setPushDiag] = useState('')
   const [pdfModal, setPdfModal] = useState(false)
   const [showFeatures, setShowFeatures] = useState(false)
   const [name, setName] = useState(profile.name)
@@ -672,7 +674,30 @@ export default function SettingsScreen({
               // wtyczka push sama prosi o zgodę Androida (POST_NOTIFICATIONS) i
               // rejestruje token FCM. refreshFcmToken zwraca 'granted'/'denied'/null.
               if (window.Capacitor?.isNativePlatform?.()) {
+                // DIAGNOSTYKA v48 — krok po kroku, pokaże gdzie się wykłada.
+                const steps = []
+                steps.push(`native=${window.Capacitor?.isNativePlatform?.()}`)
+                steps.push(`avail=${window.Capacitor?.isPluginAvailable?.('PushNotifications')}`)
+                try {
+                  const mod = await import('@capacitor/push-notifications')
+                  const PN = mod.PushNotifications
+                  steps.push('import=ok')
+                  let perm = await PN.checkPermissions()
+                  steps.push(`check=${perm?.receive}`)
+                  if (perm?.receive === 'prompt' || perm?.receive === 'prompt-with-rationale') {
+                    perm = await PN.requestPermissions()
+                    steps.push(`req=${perm?.receive}`)
+                  }
+                  if (perm?.receive === 'granted') {
+                    await PN.register()
+                    steps.push('register=ok')
+                  }
+                } catch (e) {
+                  steps.push(`ERR=${(e?.message ?? String(e)).slice(0, 120)}`)
+                }
                 const r = await refreshFcmToken()
+                steps.push(`refresh=${r}`)
+                setPushDiag(steps.join(' · '))
                 if (r === 'granted') {
                   toast(t('settings.notifications.enabled'), 'success')
                 } else if (r === 'denied') {
@@ -724,15 +749,15 @@ export default function SettingsScreen({
                 await refreshFcmToken()
                 const fn = httpsCallable(functions, 'sendTestPush')
                 const { data } = await fn()
+                setPushDiag(`test: tokens=${data?.tokenCount ?? '?'} sent=${data?.sent ?? '?'} fail=${data?.failed ?? '?'}`)
                 if (data?.sent > 0) {
                   toast(t('settings.notifications.test_sent'), 'success')
-                } else if (!data?.tokenCount) {
-                  // Brak tokenów — zgoda nie nadana albo token jeszcze się nie zapisał
-                  toast(t('settings.notifications.test_blocked'), 'error')
                 } else {
+                  // tokenCount=0 → brak zgody / token się nie zapisał; sent=0 fail>0 → token nieaktualny
                   toast(t('settings.notifications.test_blocked'), 'error')
                 }
               } catch (e) {
+                setPushDiag(`test ERR=${(e?.message ?? String(e)).slice(0, 120)}`)
                 toast(t('settings.notifications.test_blocked'), 'error')
               }
               return
@@ -761,6 +786,16 @@ export default function SettingsScreen({
 
         <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 8, lineHeight: 1.4 }}>
           {t('settings.notifications.disclaimer')}
+        </div>
+
+        {/* DIAGNOSTYKA push v48 — tymczasowa. Usunąć po zdiagnozowaniu. */}
+        <div style={{
+          fontSize: 10, color: '#444', background: '#eef3f8',
+          borderRadius: 6, padding: '6px 8px', marginTop: 8,
+          fontFamily: 'monospace', wordBreak: 'break-word', lineHeight: 1.4,
+        }}>
+          {`DIAG push: native=${String(window.Capacitor?.isNativePlatform?.() ?? 'n/a')} · avail=${String(window.Capacitor?.isPluginAvailable?.('PushNotifications') ?? 'n/a')} · token=${fcmToken ? fcmToken.slice(0, 10) + '…' : 'brak'}`}
+          {pushDiag ? ` || ${pushDiag}` : ''}
         </div>
       </div>
 
