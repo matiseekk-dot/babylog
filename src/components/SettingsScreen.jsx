@@ -665,6 +665,19 @@ export default function SettingsScreen({
           <button
             type="button"
             onClick={async () => {
+              // v2.12.2: w aplikacji natywnej (Capacitor) NIE używamy webowego
+              // Notification.requestPermission (WebView go nie wspiera) — natywna
+              // wtyczka push sama prosi o zgodę Androida (POST_NOTIFICATIONS) i
+              // rejestruje token FCM. refreshFcmToken zwraca 'granted'/'denied'/null.
+              if (window.Capacitor?.isNativePlatform?.()) {
+                const r = await refreshFcmToken()
+                if (r === 'granted') {
+                  toast(t('settings.notifications.enabled'), 'success')
+                } else if (r === 'denied') {
+                  toast(t('settings.notifications.denied'), 'error')
+                }
+                return
+              }
               const result = await askNotifPermission()
               if (result === 'granted') {
                 // Po nadaniu zgody — od razu zarejestruj FCM token w Firestore

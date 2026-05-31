@@ -2,32 +2,87 @@ import { useState, useEffect, useCallback } from 'react'
 import { getToken, onMessage } from 'firebase/messaging'
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db, getMessagingIfSupported, VAPID_KEY } from '../firebase'
-import { addBreadcrumb } from '../sentry'
+import { addBreadcrumb, captureError } from '../sentry'
 
 /**
  * useFCM — Firebase Cloud Messaging hook.
  *
- * Odpowiada za:
- * - Pobieranie FCM tokena (po nadaniu zgody na powiadomienia)
- * - Zapis tokena do Firestore pod userId, żeby Cloud Function mogła wysyłać push
- * - Odbiór foreground messages (gdy apka otwarta) i pokazywanie notyfikacji
+ * DWA TRYBY (v2.12.2):
+ *  - Capacitor (Android app): NATYWNY push przez @capacitor/push-notifications.
+ *    WebView NIE obsługuje webowego Web Push (brak push service), więc webowy
+ *    getToken() nigdy nie zwracał tokena w aplikacji. Natywna wtyczka pobiera
+ *    token FCM bezpośrednio z systemu Android i zwraca go przez listener
+ *    'registration'. Wymaga wtyczki w projekcie natywnym + nowego AAB.
+ *  - Przeglądarka (PWA): webowy Firebase Messaging (getToken + VAPID + SW).
  *
- * Token jest unikalny per-urządzenie. Jeden user może mieć kilka tokenów
- * (telefon, tablet, laptop), więc używamy subkolekcji users/{uid}/tokens/{token}.
- *
- * Token może wygasnąć / zmienić się — Firebase czasem rotuje. Dlatego przy
- * każdym mount (gdy permission jest granted), odświeżamy.
+ * W obu trybach token zapisujemy do users/{uid}/tokens/{token}, a Cloud
+ * Function `sendPush` wysyła do tych tokenów przez Firebase Admin SDK —
+ * natywny i webowy token FCM działają z Admin SDK tak samo.
  */
+
+function isCapacitorNative() {
+  return !!(window.Capacitor?.isNativePlatform?.())
+}
+
+// Lazy import wtyczki natywnej — tylko gdy faktycznie jesteśmy w aplikacji.
+// Dzięki temu webowy bundle nie ładuje tego kodu w przeglądarce (code-split).
+async function getPushPlugin() {
+  const mod = await import('@capacitor/push-notifications')
+  return mod.PushNotifications
+}
+
+// Wspólny zapis tokena do Firestore (idempotentny — ID dokumentu = token).
+async function saveTokenToFirestore(userId, token, isNative) {
+  const tokenRef = doc(db, 'users', userId, 'tokens', token)
+  await setDoc(tokenRef, {
+    token,
+    platform: navigator.userAgent,
+    native: !!isNative,
+    createdAt: serverTimestamp(),
+    lastSeenAt: serverTimestamp(),
+  }, { merge: true })
+}
+
 export function useFCM(userId) {
   const [fcmToken, setFcmToken] = useState(null)
   const [isReady, setIsReady] = useState(false)
 
-  // Pobiera token i zapisuje do Firestore. Wywoływane po nadaniu zgody.
+  // ─── Pobranie tokena + zapis do Firestore. Wywoływane po nadaniu zgody. ───
   const refreshToken = useCallback(async () => {
     if (!userId) return null
+
+    // ── ŚCIEŻKA NATYWNA (Capacitor Android) ──
+    if (isCapacitorNative()) {
+      try {
+        const PushNotifications = await getPushPlugin()
+
+        // Android 13+ wymaga zgody runtime (POST_NOTIFICATIONS).
+        let perm = await PushNotifications.checkPermissions()
+        if (perm.receive === 'prompt' || perm.receive === 'prompt-with-rationale') {
+          perm = await PushNotifications.requestPermissions()
+        }
+        if (perm.receive !== 'granted') {
+          addBreadcrumb('fcm', 'native-permission-not-granted', { state: perm.receive })
+          return perm.receive === 'denied' ? 'denied' : null
+        }
+
+        // register() uruchamia pobranie tokena → przychodzi przez listener
+        // 'registration' (ustawiony w useEffect niżej), który zapisuje go
+        // do Firestore. Tu zwracamy 'granted' dla UX (toast w Ustawieniach).
+        await PushNotifications.register()
+        addBreadcrumb('fcm', 'native-register-called')
+        return 'granted'
+      } catch (err) {
+        console.error('[useFCM] native register failed:', err)
+        addBreadcrumb('fcm', 'native-register-failed', { error: err?.message })
+        captureError(err, { context: 'fcm-native-register' })
+        return null
+      }
+    }
+
+    // ── ŚCIEŻKA WEBOWA (PWA w przeglądarce) ──
     if (typeof Notification === 'undefined') return null
 
-    // v2.10.5: explicit handling dla denied. Wcześniej cichy null.
     if (Notification.permission === 'denied') {
       addBreadcrumb('fcm', 'permission-denied', { userId })
       console.warn('[useFCM] Notification.permission = "denied" — user musi ręcznie odblokować w ustawieniach systemu')
@@ -46,10 +101,6 @@ export function useFCM(userId) {
 
     try {
       // v2.12.1: jawna rejestracja firebase-messaging-sw.js z właściwym scope.
-      // Bez tego Firebase SDK szuka SW pod /firebase-messaging-sw.js (root domeny),
-      // ale plik jest pod /babylog/firebase-messaging-sw.js.
-      // Jawna rejestracja + przekazanie serviceWorkerRegistration do getToken()
-      // rozwiązuje problem braku tokena FCM w Capacitor WebView.
       let swReg
       try {
         swReg = await navigator.serviceWorker.register(
@@ -58,7 +109,6 @@ export function useFCM(userId) {
         )
       } catch (swErr) {
         addBreadcrumb('fcm', 'messaging-sw-register-failed', { error: swErr?.message })
-        // Fallback: spróbuj z istniejącą rejestracją main SW
         swReg = await navigator.serviceWorker.getRegistration('/babylog/')
       }
 
@@ -72,15 +122,7 @@ export function useFCM(userId) {
         return null
       }
 
-      // Zapis do Firestore pod ID = sam token (idempotentne)
-      const tokenRef = doc(db, 'users', userId, 'tokens', token)
-      await setDoc(tokenRef, {
-        token,
-        platform: navigator.userAgent,
-        createdAt: serverTimestamp(),
-        lastSeenAt: serverTimestamp(),
-      }, { merge: true })
-
+      await saveTokenToFirestore(userId, token, false)
       setFcmToken(token)
       addBreadcrumb('fcm', 'token-registered', { tokenPrefix: token.substring(0, 12) })
       return token
@@ -91,7 +133,7 @@ export function useFCM(userId) {
     }
   }, [userId])
 
-  // Wyrejestrowanie tokena (przy logout / disable notifications)
+  // ─── Wyrejestrowanie tokena (logout / disable notifications) ───
   const unregisterToken = useCallback(async () => {
     if (!userId || !fcmToken) return
     try {
@@ -103,9 +145,77 @@ export function useFCM(userId) {
     }
   }, [userId, fcmToken])
 
-  // Foreground message handler — gdy apka jest otwarta, push przychodzi
-  // przez onMessage (nie przez SW). Trzeba ręcznie pokazać notyfikację.
+  // ─── NATYWNE listenery (Capacitor): token + odbiór push w foreground ───
+  // Token z natywnego pluginu przychodzi asynchronicznie przez 'registration'.
   useEffect(() => {
+    if (!isCapacitorNative() || !userId) {
+      return
+    }
+
+    let regListener = null
+    let errListener = null
+    let recvListener = null
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const PushNotifications = await getPushPlugin()
+
+        regListener = await PushNotifications.addListener('registration', async (token) => {
+          try {
+            await saveTokenToFirestore(userId, token.value, true)
+            setFcmToken(token.value)
+            addBreadcrumb('fcm', 'native-token-registered', {
+              tokenPrefix: (token.value || '').substring(0, 12),
+            })
+          } catch (e) {
+            console.error('[useFCM] native token save failed:', e)
+            captureError(e, { context: 'fcm-native-save' })
+          }
+        })
+
+        errListener = await PushNotifications.addListener('registrationError', (err) => {
+          console.error('[useFCM] native registrationError:', err)
+          addBreadcrumb('fcm', 'native-registration-error', { error: err?.error })
+        })
+
+        // Foreground: gdy apka otwarta, push przychodzi tutaj. System Android
+        // nie pokazuje go sam w foreground — ale w tle (background) wyświetla
+        // automatycznie przez MessagingService. Tu tylko breadcrumb.
+        recvListener = await PushNotifications.addListener('pushNotificationReceived', (notif) => {
+          addBreadcrumb('fcm', 'native-foreground-received', { title: notif?.title })
+        })
+
+        if (cancelled) return
+
+        // Jeśli zgoda już nadana — odśwież token po cichu (bez promptu).
+        const perm = await PushNotifications.checkPermissions()
+        if (perm.receive === 'granted') {
+          await PushNotifications.register()
+        }
+
+        setIsReady(true)
+      } catch (e) {
+        console.error('[useFCM] native push init failed:', e)
+        captureError(e, { context: 'fcm-native-init' })
+        setIsReady(true)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      regListener?.remove?.()
+      errListener?.remove?.()
+      recvListener?.remove?.()
+    }
+  }, [userId])
+
+  // ─── WEBOWY foreground handler (PWA) — pomijany na natywnym ───
+  useEffect(() => {
+    if (isCapacitorNative()) {
+      return
+    }
+
     let unsubscribe = null
 
     ;(async () => {
@@ -118,8 +228,6 @@ export function useFCM(userId) {
       unsubscribe = onMessage(messaging, async (payload) => {
         const { notification, data } = payload
         if (!notification) return
-
-        // Pokazujemy notyfikację przez SW registration (TWA wymaga)
         try {
           const reg = await navigator.serviceWorker?.getRegistration()
           if (reg) {
@@ -146,8 +254,10 @@ export function useFCM(userId) {
     }
   }, [])
 
-  // Auto-refresh token gdy permission jest granted
+  // ─── Auto-refresh (webowy) gdy permission już granted ───
+  // Natywny auto-refresh jest w listener-effect powyżej (po sprawdzeniu zgody).
   useEffect(() => {
+    if (isCapacitorNative()) return
     if (!isReady || !userId) return
     if (typeof Notification === 'undefined') return
     if (Notification.permission === 'granted') {
