@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { useMedReminder } from '../hooks/useMedReminder'
 import { useFCM } from '../hooks/useFCM'
+import { httpsCallable } from 'firebase/functions'
+import { functions } from '../firebase'
 import { t, useLocale, SUPPORTED_LOCALES } from '../i18n'
 import { exportAllToCsv } from '../utils/csvExport'
 import { exportAllDataAsJson, exportAllDataAsCsv } from '../utils/dataExport'
@@ -712,6 +714,29 @@ export default function SettingsScreen({
         <button
           type="button"
           onClick={async () => {
+            // v2.12.2: w aplikacji natywnej webowy testNotification (service
+            // worker) NIE działa w Android WebView. Wysyłamy prawdziwy push FCM
+            // przez Cloud Function sendTestPush do tokenów tego usera — to testuje
+            // cały realny pipeline (token → FCM → telefon).
+            if (window.Capacitor?.isNativePlatform?.()) {
+              try {
+                // Upewnij się, że token jest zarejestrowany (zgoda + register).
+                await refreshFcmToken()
+                const fn = httpsCallable(functions, 'sendTestPush')
+                const { data } = await fn()
+                if (data?.sent > 0) {
+                  toast(t('settings.notifications.test_sent'), 'success')
+                } else if (!data?.tokenCount) {
+                  // Brak tokenów — zgoda nie nadana albo token jeszcze się nie zapisał
+                  toast(t('settings.notifications.test_blocked'), 'error')
+                } else {
+                  toast(t('settings.notifications.test_blocked'), 'error')
+                }
+              } catch (e) {
+                toast(t('settings.notifications.test_blocked'), 'error')
+              }
+              return
+            }
             const ok = await testNotification()
             toast(
               ok ? t('settings.notifications.test_sent') : t('settings.notifications.test_blocked'),

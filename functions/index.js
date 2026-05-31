@@ -246,6 +246,84 @@ function computeFireAt(date, time, intervalMin) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────
+// sendTestPush (v2.12.2) — natywny test powiadomień push
+// ──────────────────────────────────────────────────────────────────────────
+//
+// PROBLEM: w aplikacji natywnej (Capacitor Android) webowy przycisk "Wyślij
+// testowe" używał service workera (showNotification), który w Android WebView
+// nie działa. User nie miał jak sprawdzić, czy powiadomienia push w ogóle
+// dochodzą po wgraniu v48 (natywny @capacitor/push-notifications).
+//
+// FIX: callable CF która wysyła PRAWDZIWY push FCM do wszystkich tokenów
+// zalogowanego usera — tą samą drogą co scheduleNotifications. Jeśli na
+// telefonie pojawi się powiadomienie, cały pipeline (token → FCM → device)
+// działa. Czyści też nieaktualne tokeny (jak scheduleNotifications).
+//
+// CALL FROM CLIENT (tylko na natywnym):
+//   const fn = httpsCallable(functions, 'sendTestPush')
+//   const { data } = await fn()  // { sent, failed, tokenCount }
+
+exports.sendTestPush = onCall({
+  region: 'europe-west3',
+  timeoutSeconds: 30,
+  memory: '256MiB',
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in to send a test push.')
+  }
+  const uid = request.auth.uid
+
+  // Pobierz tokeny usera
+  const tokensSnap = await db.collection('users').doc(uid).collection('tokens').get()
+  const tokens = []
+  tokensSnap.forEach(d => {
+    const tk = d.data()?.token || d.id
+    if (tk) tokens.push(tk)
+  })
+
+  if (tokens.length === 0) {
+    // Brak tokenów = apka nie zarejestrowała push (brak zgody / nie natywna / nie wgrana v48)
+    return { sent: 0, failed: 0, tokenCount: 0 }
+  }
+
+  const message = {
+    notification: {
+      title: 'Spokojny Rodzic — test',
+      body: 'Powiadomienia działają! To jest testowe powiadomienie.',
+    },
+    data: { tag: 'test-push', url: '/babylog/' },
+    tokens,
+  }
+
+  let sent = 0
+  let failed = 0
+  try {
+    const response = await messaging.sendEachForMulticast(message)
+    sent = response.successCount
+    failed = response.failureCount
+    console.log(`[sendTestPush] uid=${uid} success=${sent} fail=${failed}`)
+
+    // Cleanup nieaktualnych tokenów (jak scheduleNotifications)
+    if (response.failureCount > 0) {
+      for (let j = 0; j < response.responses.length; j++) {
+        const r = response.responses[j]
+        if (!r.success && (
+          r.error?.code === 'messaging/invalid-registration-token' ||
+          r.error?.code === 'messaging/registration-token-not-registered'
+        )) {
+          await db.collection('users').doc(uid).collection('tokens').doc(tokens[j]).delete().catch(() => {})
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[sendTestPush] failed:', err)
+    throw new HttpsError('internal', 'Failed to send test push.', err.message)
+  }
+
+  return { sent, failed, tokenCount: tokens.length }
+})
+
+// ──────────────────────────────────────────────────────────────────────────
 // revenueCatWebhook (v2.10.0)
 // ──────────────────────────────────────────────────────────────────────────
 //
