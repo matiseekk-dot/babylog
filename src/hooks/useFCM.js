@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getToken, onMessage } from 'firebase/messaging'
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
+import { PushNotifications } from '@capacitor/push-notifications'
 import { db, getMessagingIfSupported, VAPID_KEY } from '../firebase'
 import { addBreadcrumb, captureError } from '../sentry'
 
@@ -24,12 +25,12 @@ function isCapacitorNative() {
   return !!(window.Capacitor?.isNativePlatform?.())
 }
 
-// Lazy import wtyczki natywnej — tylko gdy faktycznie jesteśmy w aplikacji.
-// Dzięki temu webowy bundle nie ładuje tego kodu w przeglądarce (code-split).
-async function getPushPlugin() {
-  const mod = await import('@capacitor/push-notifications')
-  return mod.PushNotifications
-}
+// v2.12.3: STATYCZNY import wtyczki (był dynamic import → na natywnym WebView
+// osobny chunk NIGDY się nie pobierał, import() wisiał → import=TIMEOUT i cały
+// przepływ push padał). Teraz PushNotifications jest częścią głównej paczki,
+// która już ładuje się poprawnie. W przeglądarce moduł tylko rejestruje proxy
+// (registerPlugin) i nic nie robi — wszystkie wywołania i tak są za
+// isCapacitorNative(), więc PWA nie rusza natywnego kodu.
 
 // Zwraca {ok,v} po sukcesie, {ok:false,err} po błędzie, {ok:false,timeout:true}
 // po przekroczeniu czasu. KRYTYCZNE dla natywnego mostu Capacitor: niektóre
@@ -104,11 +105,8 @@ export function useFCM(userId) {
     // przepływ ("proszę o zgodę…" bez końca). Listenery podpinamy DOPIERO tutaj,
     // po geście usera (w mount effekcie most bywa niegotowy i blokuje kolejkę).
     if (isCapacitorNative()) {
-      const imp = await withTimeout(getPushPlugin(), 6000)
-      if (imp.timeout) { setPushDebug('import=TIMEOUT'); return null }
-      if (!imp.ok) { setPushDebug(`import ERR=${(imp.err?.message ?? String(imp.err)).slice(0, 80)}`); return null }
-      const PushNotifications = imp.v
-
+      // PushNotifications jest importowany statycznie (patrz nagłówek) — żadnego
+      // dynamic import(), który wcześniej wisiał na natywnym WebView.
       const listenersOk = await ensureNativeListeners(PushNotifications)
       if (!listenersOk) return null
 
