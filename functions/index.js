@@ -183,6 +183,17 @@ async function processUser(uid, tokens) {
           tag: `med-${log.id}`,
           url: '/babylog/?tab=meds',
         },
+        // v2.12.4: wymuszamy wyświetlenie na pasku (jak w sendTestPush).
+        android: {
+          priority: 'high',
+          notification: {
+            sound: 'default',
+            defaultSound: true,
+            priority: 'max',
+            visibility: 'public',
+            notificationCount: 1,
+          },
+        },
         tokens: tokens,
       }
 
@@ -292,6 +303,19 @@ exports.sendTestPush = onCall({
       body: 'Powiadomienia działają! To jest testowe powiadomienie.',
     },
     data: { tag: 'test-push', url: '/babylog/' },
+    // v2.12.4: wymuszamy wyświetlenie na pasku Androida. Bez tego bloku push
+    // bywał "cichy" (sent=1, ale nic na pasku). priority:high + notification
+    // priority/visibility/sound → system pokazuje heads-up + dźwięk.
+    android: {
+      priority: 'high',
+      notification: {
+        sound: 'default',
+        defaultSound: true,
+        priority: 'max',
+        visibility: 'public',
+        notificationCount: 1,
+      },
+    },
     tokens,
   }
 
