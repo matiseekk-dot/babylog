@@ -55,7 +55,7 @@ export default function SettingsScreen({
   const { permission: notifPermission, testNotification, askPermission: askNotifPermission } = useMedReminder(profile.id)
   // FCM: pobiera token i zapisuje do Firestore żeby Cloud Function mogła wysyłać push.
   // Token rejestruje się automatycznie po nadaniu zgody (useEffect w useFCM).
-  const { refreshToken: refreshFcmToken, fcmToken } = useFCM(uid)
+  const { refreshToken: refreshFcmToken, fcmToken, pushDebug } = useFCM(uid)
   // DIAGNOSTYKA push v48 — tymczasowa. Usunąć po zdiagnozowaniu powiadomień.
   const [pushDiag, setPushDiag] = useState('')
   const [pdfModal, setPdfModal] = useState(false)
@@ -795,6 +795,7 @@ export default function SettingsScreen({
           fontFamily: 'monospace', wordBreak: 'break-word', lineHeight: 1.4,
         }}>
           {`DIAG push: native=${String(window.Capacitor?.isNativePlatform?.() ?? 'n/a')} · avail=${String(window.Capacitor?.isPluginAvailable?.('PushNotifications') ?? 'n/a')} · token=${fcmToken ? fcmToken.slice(0, 10) + '…' : 'brak'}`}
+          {pushDebug ? ` · ${pushDebug}` : ''}
           {pushDiag ? ` || ${pushDiag}` : ''}
         </div>
       </div>

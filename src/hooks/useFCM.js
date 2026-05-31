@@ -46,6 +46,9 @@ async function saveTokenToFirestore(userId, token, isNative) {
 export function useFCM(userId) {
   const [fcmToken, setFcmToken] = useState(null)
   const [isReady, setIsReady] = useState(false)
+  // DIAGNOSTYKA push v48 — surowy ślad natywnego przepływu rejestracji tokena.
+  // Pokazywany w DIAG w SettingsScreen. Usunąć po zdiagnozowaniu.
+  const [pushDebug, setPushDebug] = useState('')
 
   // ─── Pobranie tokena + zapis do Firestore. Wywoływane po nadaniu zgody. ───
   const refreshToken = useCallback(async () => {
@@ -62,6 +65,7 @@ export function useFCM(userId) {
           perm = await PushNotifications.requestPermissions()
         }
         if (perm.receive !== 'granted') {
+          setPushDebug(`perm=${perm.receive}`)
           addBreadcrumb('fcm', 'native-permission-not-granted', { state: perm.receive })
           return perm.receive === 'denied' ? 'denied' : null
         }
@@ -69,10 +73,12 @@ export function useFCM(userId) {
         // register() uruchamia pobranie tokena → przychodzi przez listener
         // 'registration' (ustawiony w useEffect niżej), który zapisuje go
         // do Firestore. Tu zwracamy 'granted' dla UX (toast w Ustawieniach).
+        setPushDebug(`perm=granted · register()…`)
         await PushNotifications.register()
         addBreadcrumb('fcm', 'native-register-called')
         return 'granted'
       } catch (err) {
+        setPushDebug(`register ERR=${(err?.message ?? String(err)).slice(0, 100)}`)
         console.error('[useFCM] native register failed:', err)
         addBreadcrumb('fcm', 'native-register-failed', { error: err?.message })
         captureError(err, { context: 'fcm-native-register' })
@@ -165,16 +171,20 @@ export function useFCM(userId) {
           try {
             await saveTokenToFirestore(userId, token.value, true)
             setFcmToken(token.value)
+            setPushDebug(`reg ok=${(token.value || '').slice(0, 8)} saved`)
             addBreadcrumb('fcm', 'native-token-registered', {
               tokenPrefix: (token.value || '').substring(0, 12),
             })
           } catch (e) {
+            setPushDebug(`save ERR=${(e?.message ?? String(e)).slice(0, 100)}`)
             console.error('[useFCM] native token save failed:', e)
             captureError(e, { context: 'fcm-native-save' })
           }
         })
 
         errListener = await PushNotifications.addListener('registrationError', (err) => {
+          const msg = err?.error ?? err?.message ?? JSON.stringify(err)
+          setPushDebug(`regErr=${String(msg).slice(0, 120)}`)
           console.error('[useFCM] native registrationError:', err)
           addBreadcrumb('fcm', 'native-registration-error', { error: err?.error })
         })
@@ -270,5 +280,6 @@ export function useFCM(userId) {
     isReady,
     refreshToken,
     unregisterToken,
+    pushDebug,
   }
 }
