@@ -677,59 +677,16 @@ export default function SettingsScreen({
               // wtyczka push sama prosi o zgodę Androida (POST_NOTIFICATIONS) i
               // rejestruje token FCM. refreshFcmToken zwraca 'granted'/'denied'/null.
               if (window.Capacitor?.isNativePlatform?.()) {
-                // DIAGNOSTYKA v48 — inkrementalna + timeouty. Pisze po KAŻDYM kroku,
-                // więc gdy któryś natywny await wisi (most v6↔v8), zobaczymy DOKŁADNIE
-                // gdzie się zatrzymał (ostatni widoczny krok) zamiast ciszy.
-                let log = ''
-                const put = (s) => { log = log ? `${log} · ${s}` : s; setPushDiag(log) }
-                // race z timeoutem: zwraca {ok,v} albo {timeout:true}
-                const T = (p, ms) => Promise.race([
-                  Promise.resolve(p).then((v) => ({ ok: true, v })).catch((e) => ({ ok: false, err: e })),
-                  new Promise((res) => setTimeout(() => res({ ok: false, timeout: true }), ms)),
-                ])
-                put(`native=${window.Capacitor?.isNativePlatform?.()}`)
-                put(`avail=${window.Capacitor?.isPluginAvailable?.('PushNotifications')}`)
-
-                const imp = await T(import('@capacitor/push-notifications'), 6000)
-                if (imp.timeout) { put('import=TIMEOUT'); return }
-                if (!imp.ok) { put(`import ERR=${(imp.err?.message ?? String(imp.err)).slice(0, 80)}`); return }
-                const PN = imp.v.PushNotifications
-                put('import=ok')
-
-                // Podpinamy listener tokena INLINE (mount-owy może wisieć).
-                const la = await T(PN.addListener('registration', (tk) => {
-                  put(`TOKEN=${(tk?.value ?? '').slice(0, 14)}…`)
-                }), 4000)
-                if (la.timeout) { put('addListener=TIMEOUT'); return }
-                if (!la.ok) { put(`addListener ERR=${(la.err?.message ?? String(la.err)).slice(0, 80)}`); return }
-                put('listener=ok')
-                const le = await T(PN.addListener('registrationError', (er) => {
-                  put(`regErr=${String(er?.error ?? JSON.stringify(er)).slice(0, 100)}`)
-                }), 4000)
-                if (le.ok && !le.timeout) put('errListener=ok')
-
-                const chk = await T(PN.checkPermissions(), 5000)
-                if (chk.timeout) { put('check=TIMEOUT'); return }
-                if (!chk.ok) { put(`check ERR=${(chk.err?.message ?? String(chk.err)).slice(0, 80)}`); return }
-                let receive = chk.v?.receive
-                put(`check=${receive}`)
-
-                if (receive === 'prompt' || receive === 'prompt-with-rationale') {
-                  const req = await T(PN.requestPermissions(), 60000)
-                  if (req.timeout) { put('request=TIMEOUT'); return }
-                  if (!req.ok) { put(`request ERR=${(req.err?.message ?? String(req.err)).slice(0, 80)}`); return }
-                  receive = req.v?.receive
-                  put(`req=${receive}`)
-                }
-
-                if (receive === 'granted') {
-                  const reg = await T(PN.register(), 10000)
-                  if (reg.timeout) { put('register=TIMEOUT'); return }
-                  if (!reg.ok) { put(`register ERR=${(reg.err?.message ?? String(reg.err)).slice(0, 80)}`); return }
-                  put('register=ok (czekam na TOKEN…)')
+                // Natywnie: refreshFcmToken podpina listener (po geście most jest
+                // gotowy), prosi o zgodę, wywołuje register() i ZAPISUJE token do
+                // Firestore. Token przychodzi asynchronicznie → DIAG pokaże
+                // 'reg ok=… saved', a stan token= zaktualizuje się sam.
+                setPushDiag('proszę o zgodę i rejestruję token…')
+                const r = await refreshFcmToken()
+                if (r === 'granted') {
                   toast(t('settings.notifications.enabled'), 'success')
-                } else if (receive === 'denied') {
-                  put('→ zgoda ODRZUCONA, włącz w ustawieniach telefonu')
+                } else if (r === 'denied') {
+                  setPushDiag('zgoda ODRZUCONA — włącz w ustawieniach telefonu (Aplikacje → Spokojny Rodzic → Powiadomienia)')
                   toast(t('settings.notifications.denied'), 'error')
                 }
                 return

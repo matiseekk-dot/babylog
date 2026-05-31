@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getToken, onMessage } from 'firebase/messaging'
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
 import { db, getMessagingIfSupported, VAPID_KEY } from '../firebase'
@@ -49,6 +49,34 @@ export function useFCM(userId) {
   // DIAGNOSTYKA push v48 — surowy ślad natywnego przepływu rejestracji tokena.
   // Pokazywany w DIAG w SettingsScreen. Usunąć po zdiagnozowaniu.
   const [pushDebug, setPushDebug] = useState('')
+  // Czy natywne listenery push są już podpięte (idempotencja — mount effect
+  // bywa zbyt wczesny, gdy most natywny jeszcze nie gotowy → addListener wisi).
+  const nativeListenersRef = useRef(false)
+
+  // Podpina natywne listenery TYLKO RAZ. registration → zapis tokena do
+  // Firestore + setFcmToken (to sprawia, że Cloud Function ma dokąd słać push).
+  const ensureNativeListeners = useCallback(async (PushNotifications) => {
+    if (nativeListenersRef.current) return
+    await PushNotifications.addListener('registration', async (token) => {
+      try {
+        await saveTokenToFirestore(userId, token.value, true)
+        setFcmToken(token.value)
+        setPushDebug(`reg ok=${(token.value || '').slice(0, 8)} saved`)
+        addBreadcrumb('fcm', 'native-token-registered', {
+          tokenPrefix: (token.value || '').substring(0, 12),
+        })
+      } catch (e) {
+        setPushDebug(`save ERR=${(e?.message ?? String(e)).slice(0, 100)}`)
+        captureError(e, { context: 'fcm-native-save' })
+      }
+    })
+    await PushNotifications.addListener('registrationError', (err) => {
+      const msg = err?.error ?? err?.message ?? JSON.stringify(err)
+      setPushDebug(`regErr=${String(msg).slice(0, 120)}`)
+      addBreadcrumb('fcm', 'native-registration-error', { error: err?.error })
+    })
+    nativeListenersRef.current = true
+  }, [userId])
 
   // ─── Pobranie tokena + zapis do Firestore. Wywoływane po nadaniu zgody. ───
   const refreshToken = useCallback(async () => {
@@ -58,6 +86,10 @@ export function useFCM(userId) {
     if (isCapacitorNative()) {
       try {
         const PushNotifications = await getPushPlugin()
+
+        // Podpinamy listener tokena TUTAJ (po geście usera most natywny jest
+        // gotowy — w mount effekcie bywa zbyt wcześnie i addListener wisi).
+        await ensureNativeListeners(PushNotifications)
 
         // Android 13+ wymaga zgody runtime (POST_NOTIFICATIONS).
         let perm = await PushNotifications.checkPermissions()
@@ -71,8 +103,8 @@ export function useFCM(userId) {
         }
 
         // register() uruchamia pobranie tokena → przychodzi przez listener
-        // 'registration' (ustawiony w useEffect niżej), który zapisuje go
-        // do Firestore. Tu zwracamy 'granted' dla UX (toast w Ustawieniach).
+        // 'registration' (ensureNativeListeners wyżej), który zapisuje go do
+        // Firestore. Tu zwracamy 'granted' dla UX (toast w Ustawieniach).
         setPushDebug(`perm=granted · register()…`)
         await PushNotifications.register()
         addBreadcrumb('fcm', 'native-register-called')
@@ -158,8 +190,6 @@ export function useFCM(userId) {
       return
     }
 
-    let regListener = null
-    let errListener = null
     let recvListener = null
     let cancelled = false
 
@@ -167,27 +197,9 @@ export function useFCM(userId) {
       try {
         const PushNotifications = await getPushPlugin()
 
-        regListener = await PushNotifications.addListener('registration', async (token) => {
-          try {
-            await saveTokenToFirestore(userId, token.value, true)
-            setFcmToken(token.value)
-            setPushDebug(`reg ok=${(token.value || '').slice(0, 8)} saved`)
-            addBreadcrumb('fcm', 'native-token-registered', {
-              tokenPrefix: (token.value || '').substring(0, 12),
-            })
-          } catch (e) {
-            setPushDebug(`save ERR=${(e?.message ?? String(e)).slice(0, 100)}`)
-            console.error('[useFCM] native token save failed:', e)
-            captureError(e, { context: 'fcm-native-save' })
-          }
-        })
-
-        errListener = await PushNotifications.addListener('registrationError', (err) => {
-          const msg = err?.error ?? err?.message ?? JSON.stringify(err)
-          setPushDebug(`regErr=${String(msg).slice(0, 120)}`)
-          console.error('[useFCM] native registrationError:', err)
-          addBreadcrumb('fcm', 'native-registration-error', { error: err?.error })
-        })
+        // registration + registrationError — wspólne, idempotentne (ten sam ref
+        // co refreshToken, żeby nie podpinać dwa razy).
+        await ensureNativeListeners(PushNotifications)
 
         // Foreground: gdy apka otwarta, push przychodzi tutaj. System Android
         // nie pokazuje go sam w foreground — ale w tle (background) wyświetla
@@ -200,15 +212,12 @@ export function useFCM(userId) {
 
         // Jeśli zgoda już nadana — odśwież token po cichu (bez promptu).
         const perm = await PushNotifications.checkPermissions()
-        setPushDebug(`mount perm=${perm?.receive}`)
         if (perm.receive === 'granted') {
-          setPushDebug(`mount perm=granted · register()…`)
           await PushNotifications.register()
         }
 
         setIsReady(true)
       } catch (e) {
-        setPushDebug(`mount ERR=${(e?.message ?? String(e)).slice(0, 100)}`)
         console.error('[useFCM] native push init failed:', e)
         captureError(e, { context: 'fcm-native-init' })
         setIsReady(true)
@@ -217,11 +226,9 @@ export function useFCM(userId) {
 
     return () => {
       cancelled = true
-      regListener?.remove?.()
-      errListener?.remove?.()
       recvListener?.remove?.()
     }
-  }, [userId])
+  }, [userId, ensureNativeListeners])
 
   // ─── WEBOWY foreground handler (PWA) — pomijany na natywnym ───
   useEffect(() => {
