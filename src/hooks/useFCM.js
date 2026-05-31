@@ -200,12 +200,15 @@ export function useFCM(userId) {
 
         // Jeśli zgoda już nadana — odśwież token po cichu (bez promptu).
         const perm = await PushNotifications.checkPermissions()
+        setPushDebug(`mount perm=${perm?.receive}`)
         if (perm.receive === 'granted') {
+          setPushDebug(`mount perm=granted · register()…`)
           await PushNotifications.register()
         }
 
         setIsReady(true)
       } catch (e) {
+        setPushDebug(`mount ERR=${(e?.message ?? String(e)).slice(0, 100)}`)
         console.error('[useFCM] native push init failed:', e)
         captureError(e, { context: 'fcm-native-init' })
         setIsReady(true)

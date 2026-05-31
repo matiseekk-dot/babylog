@@ -664,8 +664,11 @@ export default function SettingsScreen({
           {t('settings.notifications.title')}
         </div>
 
-        {notifPermission !== 'granted' && (
-          /* "Włącz powiadomienia" — pokazujemy gdy nie ma jeszcze zgody */
+        {(notifPermission !== 'granted' || window.Capacitor?.isNativePlatform?.()) && (
+          /* "Włącz powiadomienia" — gdy brak zgody webowej. NA NATYWNYM zawsze
+             widoczny: webowy Notification.permission w WebView potrafi zwracać
+             'granted' mimo braku natywnej zgody Androida, co ukrywałoby przycisk
+             i blokowało wywołanie natywnego requestPermissions() → token=brak. */
           <button
             type="button"
             onClick={async () => {
@@ -794,7 +797,7 @@ export default function SettingsScreen({
           borderRadius: 6, padding: '6px 8px', marginTop: 8,
           fontFamily: 'monospace', wordBreak: 'break-word', lineHeight: 1.4,
         }}>
-          {`DIAG push: native=${String(window.Capacitor?.isNativePlatform?.() ?? 'n/a')} · avail=${String(window.Capacitor?.isPluginAvailable?.('PushNotifications') ?? 'n/a')} · token=${fcmToken ? fcmToken.slice(0, 10) + '…' : 'brak'}`}
+          {`DIAG push: native=${String(window.Capacitor?.isNativePlatform?.() ?? 'n/a')} · avail=${String(window.Capacitor?.isPluginAvailable?.('PushNotifications') ?? 'n/a')} · webPerm=${typeof Notification !== 'undefined' ? Notification.permission : 'n/a'} · token=${fcmToken ? fcmToken.slice(0, 10) + '…' : 'brak'}`}
           {pushDebug ? ` · ${pushDebug}` : ''}
           {pushDiag ? ` || ${pushDiag}` : ''}
         </div>
