@@ -55,9 +55,7 @@ export default function SettingsScreen({
   const { permission: notifPermission, testNotification, askPermission: askNotifPermission } = useMedReminder(profile.id)
   // FCM: pobiera token i zapisuje do Firestore żeby Cloud Function mogła wysyłać push.
   // Token rejestruje się automatycznie po nadaniu zgody (useEffect w useFCM).
-  const { refreshToken: refreshFcmToken, fcmToken, pushDebug } = useFCM(uid)
-  // DIAGNOSTYKA push v48 — tymczasowa. Usunąć po zdiagnozowaniu powiadomień.
-  const [pushDiag, setPushDiag] = useState('')
+  const { refreshToken: refreshFcmToken } = useFCM(uid)
   const [pdfModal, setPdfModal] = useState(false)
   const [showFeatures, setShowFeatures] = useState(false)
   const [name, setName] = useState(profile.name)
@@ -681,12 +679,10 @@ export default function SettingsScreen({
                 // gotowy), prosi o zgodę, wywołuje register() i ZAPISUJE token do
                 // Firestore. Token przychodzi asynchronicznie → DIAG pokaże
                 // 'reg ok=… saved', a stan token= zaktualizuje się sam.
-                setPushDiag('proszę o zgodę i rejestruję token…')
                 const r = await refreshFcmToken()
                 if (r === 'granted') {
                   toast(t('settings.notifications.enabled'), 'success')
                 } else if (r === 'denied') {
-                  setPushDiag('zgoda ODRZUCONA — włącz w ustawieniach telefonu (Aplikacje → Spokojny Rodzic → Powiadomienia)')
                   toast(t('settings.notifications.denied'), 'error')
                 }
                 return
@@ -735,15 +731,13 @@ export default function SettingsScreen({
                 await refreshFcmToken()
                 const fn = httpsCallable(functions, 'sendTestPush')
                 const { data } = await fn()
-                setPushDiag(`test: tokens=${data?.tokenCount ?? '?'} sent=${data?.sent ?? '?'} fail=${data?.failed ?? '?'}`)
                 if (data?.sent > 0) {
                   toast(t('settings.notifications.test_sent'), 'success')
                 } else {
                   // tokenCount=0 → brak zgody / token się nie zapisał; sent=0 fail>0 → token nieaktualny
                   toast(t('settings.notifications.test_blocked'), 'error')
                 }
-              } catch (e) {
-                setPushDiag(`test ERR=${(e?.message ?? String(e)).slice(0, 120)}`)
+              } catch {
                 toast(t('settings.notifications.test_blocked'), 'error')
               }
               return
@@ -772,17 +766,6 @@ export default function SettingsScreen({
 
         <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 8, lineHeight: 1.4 }}>
           {t('settings.notifications.disclaimer')}
-        </div>
-
-        {/* DIAGNOSTYKA push v48 — tymczasowa. Usunąć po zdiagnozowaniu. */}
-        <div style={{
-          fontSize: 10, color: '#444', background: '#eef3f8',
-          borderRadius: 6, padding: '6px 8px', marginTop: 8,
-          fontFamily: 'monospace', wordBreak: 'break-word', lineHeight: 1.4,
-        }}>
-          {`DIAG push [BUILD=v52]: native=${String(window.Capacitor?.isNativePlatform?.() ?? 'n/a')} · avail=${String(window.Capacitor?.isPluginAvailable?.('PushNotifications') ?? 'n/a')} · webPerm=${typeof Notification !== 'undefined' ? Notification.permission : 'n/a'} · token=${fcmToken ? fcmToken.slice(0, 10) + '…' : 'brak'}`}
-          {pushDebug ? ` · ${pushDebug}` : ''}
-          {pushDiag ? ` || ${pushDiag}` : ''}
         </div>
       </div>
 

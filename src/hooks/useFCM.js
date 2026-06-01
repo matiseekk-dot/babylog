@@ -58,9 +58,6 @@ async function saveTokenToFirestore(userId, token, isNative) {
 export function useFCM(userId) {
   const [fcmToken, setFcmToken] = useState(null)
   const [isReady, setIsReady] = useState(false)
-  // DIAGNOSTYKA push v48 — surowy ślad natywnego przepływu rejestracji tokena.
-  // Pokazywany w DIAG w SettingsScreen. Usunąć po zdiagnozowaniu.
-  const [pushDebug, setPushDebug] = useState('')
   // Czy natywne listenery push są już podpięte (idempotencja — mount effect
   // bywa zbyt wczesny, gdy most natywny jeszcze nie gotowy → addListener wisi).
   const nativeListenersRef = useRef(false)
@@ -75,30 +72,24 @@ export function useFCM(userId) {
       try {
         await saveTokenToFirestore(userId, token.value, true)
         setFcmToken(token.value)
-        setPushDebug(`reg ok=${(token.value || '').slice(0, 8)} saved`)
         addBreadcrumb('fcm', 'native-token-registered', {
           tokenPrefix: (token.value || '').substring(0, 12),
         })
       } catch (e) {
-        setPushDebug(`save ERR=${(e?.message ?? String(e)).slice(0, 100)}`)
         captureError(e, { context: 'fcm-native-save' })
       }
     }), 5000)
-    if (la.timeout) { setPushDebug('addListener=TIMEOUT'); return false }
-    if (!la.ok) { setPushDebug(`addListener ERR=${(la.err?.message ?? String(la.err)).slice(0, 80)}`); return false }
+    if (la.timeout || !la.ok) return false
     await withTimeout(PushNotifications.addListener('registrationError', (err) => {
-      const msg = err?.error ?? err?.message ?? JSON.stringify(err)
-      setPushDebug(`regErr=${String(msg).slice(0, 120)}`)
       addBreadcrumb('fcm', 'native-registration-error', { error: err?.error })
     }), 5000)
-    // v2.12.4: push odebrany gdy apka jest NA WIERZCHU. Android NIE kładzie
-    // wtedy powiadomienia na pasku (oddaje je aplikacji), więc bez tego listenera
-    // "wyślij testowe" przy otwartej apce wyglądał jak brak efektu. Tu pokazujemy
-    // potwierdzenie w DIAG, żeby było widać że push DOTARŁ.
+    // Push odebrany gdy apka jest NA WIERZCHU — Android NIE kładzie go wtedy na
+    // pasku (oddaje aplikacji). Listener zostaje dla Sentry/breadcrumb; gdy
+    // apka jest w tle/zamknięta system pokazuje powiadomienie na pasku sam.
     await withTimeout(PushNotifications.addListener('pushNotificationReceived', (notif) => {
-      const t = notif?.title ?? notif?.notification?.title ?? '(bez tytułu)'
-      setPushDebug(`ODEBRANO (apka otwarta): ${String(t).slice(0, 60)}`)
-      addBreadcrumb('fcm', 'native-push-received-foreground', { title: t })
+      addBreadcrumb('fcm', 'native-push-received-foreground', {
+        title: notif?.title ?? notif?.notification?.title,
+      })
     }), 5000)
     nativeListenersRef.current = true
     return true
@@ -120,28 +111,23 @@ export function useFCM(userId) {
       if (!listenersOk) return null
 
       const chk = await withTimeout(PushNotifications.checkPermissions(), 5000)
-      if (chk.timeout) { setPushDebug('check=TIMEOUT'); return null }
-      if (!chk.ok) { setPushDebug(`check ERR=${(chk.err?.message ?? String(chk.err)).slice(0, 80)}`); return null }
+      if (chk.timeout || !chk.ok) return null
       let receive = chk.v?.receive
 
       if (receive === 'prompt' || receive === 'prompt-with-rationale') {
         const req = await withTimeout(PushNotifications.requestPermissions(), 60000)
-        if (req.timeout) { setPushDebug('request=TIMEOUT'); return null }
-        if (!req.ok) { setPushDebug(`request ERR=${(req.err?.message ?? String(req.err)).slice(0, 80)}`); return null }
+        if (req.timeout || !req.ok) return null
         receive = req.v?.receive
       }
 
       if (receive !== 'granted') {
-        setPushDebug(`perm=${receive}`)
         addBreadcrumb('fcm', 'native-permission-not-granted', { state: receive })
         return receive === 'denied' ? 'denied' : null
       }
 
       // register() → token przychodzi asynchronicznie przez listener 'registration'.
-      setPushDebug('perm=granted · register()…')
       const reg = await withTimeout(PushNotifications.register(), 10000)
-      if (reg.timeout) { setPushDebug('register=TIMEOUT'); return null }
-      if (!reg.ok) { setPushDebug(`register ERR=${(reg.err?.message ?? String(reg.err)).slice(0, 80)}`); return null }
+      if (reg.timeout || !reg.ok) return null
       addBreadcrumb('fcm', 'native-register-called')
       return 'granted'
     }
@@ -283,6 +269,5 @@ export function useFCM(userId) {
     isReady,
     refreshToken,
     unregisterToken,
-    pushDebug,
   }
 }
