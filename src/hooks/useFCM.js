@@ -91,6 +91,15 @@ export function useFCM(userId) {
       setPushDebug(`regErr=${String(msg).slice(0, 120)}`)
       addBreadcrumb('fcm', 'native-registration-error', { error: err?.error })
     }), 5000)
+    // v2.12.4: push odebrany gdy apka jest NA WIERZCHU. Android NIE kładzie
+    // wtedy powiadomienia na pasku (oddaje je aplikacji), więc bez tego listenera
+    // "wyślij testowe" przy otwartej apce wyglądał jak brak efektu. Tu pokazujemy
+    // potwierdzenie w DIAG, żeby było widać że push DOTARŁ.
+    await withTimeout(PushNotifications.addListener('pushNotificationReceived', (notif) => {
+      const t = notif?.title ?? notif?.notification?.title ?? '(bez tytułu)'
+      setPushDebug(`ODEBRANO (apka otwarta): ${String(t).slice(0, 60)}`)
+      addBreadcrumb('fcm', 'native-push-received-foreground', { title: t })
+    }), 5000)
     nativeListenersRef.current = true
     return true
   }, [userId])
