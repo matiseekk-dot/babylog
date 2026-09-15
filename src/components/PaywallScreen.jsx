@@ -239,6 +239,14 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
             <div style={{textAlign:'right'}}>
               <div style={{fontSize:17,fontWeight:800,color:'var(--text)'}}>{plan.price}</div>
               <div style={{fontSize:11,color:'var(--text-3)'}}>{plan.period}</div>
+              {/* v2.14.0 — cena/miesiąc dla yearly ("≈ 8,33 zł/mc"). Pokazuje
+                  user'owi że yearly to niski koszt miesięczny — anchor bias
+                  ("mniej niż kawa"). Wyliczone display-only w premiumPlans.js. */}
+              {plan.perMonth && (
+                <div style={{fontSize:10,color:'var(--brand-600)',fontWeight:600,marginTop:2}}>
+                  {t('paywall.per_month_note', { price: plan.perMonth })}
+                </div>
+              )}
             </div>
             {plan.popular && (
               <div style={{
@@ -296,7 +304,29 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
           )}
           {ctaLabel}
         </button>
-        <div style={{textAlign:'center',fontSize:11,color:'var(--text-3)',marginTop:'var(--space-snug)',lineHeight:1.4}}>
+        {/* v2.14.0 — trust marks: 14d trial | anuluj kiedy chcesz | bez ukrytych opłat.
+            Redukują lęk zakupu ("czy nie zostanę oszukany"), major conversion booster
+            wg książek SaaS. Ikony zielone — sygnał zaufania. */}
+        <div style={{
+          display:'flex', justifyContent:'center', alignItems:'center',
+          gap:'var(--space-snug)', marginTop:'var(--space-snug)',
+          flexWrap:'wrap',
+        }}>
+          {[
+            t('paywall.trust.trial'),
+            t('paywall.trust.cancel'),
+            t('paywall.trust.no_hidden'),
+          ].map((label, i) => (
+            <div key={i} style={{
+              display:'flex', alignItems:'center', gap:4,
+              fontSize:11, color:'var(--text-2)', fontWeight:600,
+            }}>
+              <span style={{color:'var(--brand-500)', fontSize:12, fontWeight:800}}>✓</span>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{textAlign:'center',fontSize:10,color:'var(--text-3)',marginTop:'var(--space-tight)',lineHeight:1.4}}>
           {t('paywall.footer')}
         </div>
       </div>

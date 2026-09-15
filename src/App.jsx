@@ -49,6 +49,7 @@ import CallDoctorPrep from './components/CallDoctorPrep'
 import GuestMigrationDialog from './components/GuestMigrationDialog'
 import PlayStoreModal from './components/PlayStoreModal'
 import PremiumOnboardingModal from './components/PremiumOnboardingModal'
+import TrialEndingModal from './components/TrialEndingModal'
 // v2.10.6 — MDR EXIT REFACTOR: replaced active crisis UI with passive reference content.
 // Removed: ChildStatusBar / ChildStatusCard / CallDoctorCard / useCrisisDetection.
 // Added:   TodaySummaryCard (passive reference link), ReferenceLibrary (static AAP/PTP tables),
@@ -356,6 +357,49 @@ export default function App() {
   const navigateToPdfReport = () => {
     setShowPremiumOnboarding(false)
     setShowSettings(true)  // Settings ma sekcję PDF Report
+  }
+
+  // v2.14.0 — Trial ending urgency modal. Pokazuje się w progach 3/1/0 dni,
+  // raz na dzień. Cel: napełnić usera do decyzji zakupu ZANIM Premium
+  // features przestaną działać (redukcja "surprise downgrade" ⇒ lepsze
+  // samopoczucie ⇒ lepsza konwersja + mniej refundów).
+  //
+  // Guards:
+  //   - Tylko dla trialActive (isOnTrial=true) — nie pokazuj po zakupie ani
+  //     po wygaśnięciu (post-trial to inny problem, wymaga innej strategii).
+  //   - Tylko dla progów [3,1,0] dni pozostałych — nie spamuj codziennie.
+  //   - Raz na dzień per user (uid albo 'guest') — localStorage klucz zawiera
+  //     YYYY-MM-DD, więc następnego dnia (nawet gdy user wciąż w progu 1 dnia)
+  //     pojawi się znowu.
+  //   - Guest mode: pokazujemy, choć guest nie kupi bez konta — modal motywuje
+  //     do zalogowania (kliknięcie CTA → paywall → need_login toast → login).
+  const [showTrialEnding, setShowTrialEnding] = useState(false)
+  const trialUserKey = uid || 'guest'
+  useEffect(() => {
+    if (!isOnTrial) return
+    if (![0, 1, 3].includes(trialDaysLeft)) return
+
+    const today = new Date().toISOString().slice(0, 10)  // YYYY-MM-DD (UTC)
+    const flagKey = `babylog_trial_ending_shown_${trialUserKey}_${today}`
+    try {
+      if (localStorage.getItem(flagKey) === '1') return
+    } catch {
+      // localStorage niedostępny (private tab, cleared) — pokaż mimo to,
+      // gorzej pokazać drugi raz niż wcale nie pokazać.
+    }
+    setShowTrialEnding(true)
+  }, [trialUserKey, isOnTrial, trialDaysLeft])
+
+  const dismissTrialEnding = () => {
+    setShowTrialEnding(false)
+    const today = new Date().toISOString().slice(0, 10)
+    try {
+      localStorage.setItem(`babylog_trial_ending_shown_${trialUserKey}_${today}`, '1')
+    } catch {}
+  }
+  const upgradeFromTrialEnding = () => {
+    dismissTrialEnding()
+    openPaywall('trial_ending')
   }
 
   // v2.11.32 P1-6: paywall trigger source dla analytics — pokazuje skąd
@@ -1414,6 +1458,12 @@ export default function App() {
         open={showPremiumOnboarding}
         onClose={closePremiumOnboarding}
         onNavigateToReport={navigateToPdfReport}
+      />
+      <TrialEndingModal
+        open={showTrialEnding}
+        daysLeft={trialDaysLeft}
+        onUpgrade={upgradeFromTrialEnding}
+        onLater={dismissTrialEnding}
       />
     </div>
   )
