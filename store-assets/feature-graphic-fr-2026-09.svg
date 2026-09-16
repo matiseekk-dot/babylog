@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <!--
+    Feature Graphic 2026-09 — spójny z brandem terakota (v50 ikony apki).
+    Usunięto: "Bezpłatnie" (misleading vs Premium), "Kalkulator leków" (MDR ban).
+    Dodano: neutralne funkcje + trust anchor (14 jours Premium gratuits).
+    Template: 1024x500 wymagane przez Play Console.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#F5CFC4"/>
+      <stop offset="50%" stop-color="#F0BBA9"/>
+      <stop offset="100%" stop-color="#D77460"/>
+    </linearGradient>
+    <linearGradient id="phoneScreen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff"/>
+      <stop offset="100%" stop-color="#F7F5F2"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#8B3E2A" flood-opacity="0.28"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#8B3E2A" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Background gradient terakota -->
+  <rect width="1024" height="500" fill="url(#bg)"/>
+
+  <!-- Decorative circles (subtle) -->
+  <circle cx="900" cy="60"  r="80" fill="#fff" opacity="0.10"/>
+  <circle cx="80"  cy="440" r="60" fill="#fff" opacity="0.12"/>
+  <circle cx="180" cy="70"  r="30" fill="#fff" opacity="0.14"/>
+
+  <!-- LEFT: brand + tagline + benefits -->
+  <g transform="translate(60, 100)">
+    <!-- Brand -->
+    <text x="0" y="0" font-family="-apple-system, system-ui, Segoe UI, Roboto, sans-serif"
+          font-size="60" font-weight="800" fill="#fff" letter-spacing="-1.5">
+      Calm Parent
+    </text>
+
+    <!-- Tagline -->
+    <text x="0" y="46" font-family="-apple-system, system-ui, sans-serif"
+          font-size="24" font-weight="600" fill="#fff" opacity="0.95">
+      Carnet de santé bébé
+    </text>
+
+    <!-- Hook -->
+    <text x="0" y="86" font-family="-apple-system, system-ui, sans-serif"
+          font-size="17" font-weight="400" fill="#fff" opacity="0.85" font-style="italic">
+      Sachez quoi faire quand votre bébé est malade à 3h du matin.
+    </text>
+
+    <!-- Benefits list -->
+    <g transform="translate(0, 130)">
+      <!-- Benefit 1 -->
+      <g>
+        <circle cx="14" cy="14" r="14" fill="#fff"/>
+        <path d="M 7,14 L 12,19 L 21,10" stroke="#0F6E56" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="40" y="20" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="600" fill="#fff">
+          Température, biberons, sommeil, médicaments
+        </text>
+      </g>
+      <!-- Benefit 2 -->
+      <g transform="translate(0, 46)">
+        <circle cx="14" cy="14" r="14" fill="#fff"/>
+        <path d="M 7,14 L 12,19 L 21,10" stroke="#0F6E56" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="40" y="20" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="600" fill="#fff">
+          Recommandations AAP intégrées
+        </text>
+      </g>
+      <!-- Benefit 3 -->
+      <g transform="translate(0, 92)">
+        <circle cx="14" cy="14" r="14" fill="#fff"/>
+        <path d="M 7,14 L 12,19 L 21,10" stroke="#0F6E56" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="40" y="20" font-family="-apple-system, system-ui, sans-serif" font-size="18" font-weight="600" fill="#fff">
+          14 jours Premium gratuits
+        </text>
+      </g>
+    </g>
+  </g>
+
+  <!-- RIGHT: schematic phone mockup with dashboard -->
+  <g transform="translate(720, 60)" filter="url(#shadow)">
+    <!-- Phone body -->
+    <rect x="0" y="0" width="240" height="400" rx="32" ry="32" fill="#1a1a18"/>
+    <!-- Screen -->
+    <rect x="10" y="12" width="220" height="376" rx="22" ry="22" fill="url(#phoneScreen)"/>
+    <!-- Notch -->
+    <rect x="90" y="14" width="60" height="8" rx="4" fill="#1a1a18"/>
+
+    <!-- Screen content: brand header -->
+    <text x="26" y="60" font-family="-apple-system, sans-serif" font-size="13" font-weight="800" fill="#1a1a18">Calm Parent</text>
+    <text x="26" y="76" font-family="sans-serif" font-size="10" fill="#7a7a74">Aujourd'hui · Mardi</text>
+
+    <!-- KPI grid 2x2 -->
+    <g transform="translate(26, 90)">
+      <rect x="0"  y="0" width="88" height="52" rx="10" fill="#E1F5EE"/>
+      <text x="10" y="20" font-size="14" fill="#0F6E56" font-weight="800">5</text>
+      <text x="10" y="38" font-size="9" fill="#0F6E56">biberons</text>
+
+      <rect x="94" y="0" width="88" height="52" rx="10" fill="#E8E3F5"/>
+      <text x="104" y="20" font-size="14" fill="#5B4FB0" font-weight="800">2h 45m</text>
+      <text x="104" y="38" font-size="9" fill="#5B4FB0">sommeil</text>
+
+      <rect x="0"  y="58" width="88" height="52" rx="10" fill="#DFEAF9"/>
+      <text x="10" y="78" font-size="14" fill="#185FA5" font-weight="800">4</text>
+      <text x="10" y="96" font-size="9" fill="#185FA5">couches</text>
+
+      <rect x="94" y="58" width="88" height="52" rx="10" fill="#FBE1D8"/>
+      <text x="104" y="78" font-size="14" fill="#B84E2E" font-weight="800">37,6°</text>
+      <text x="104" y="96" font-size="9" fill="#B84E2E">temp</text>
+    </g>
+
+    <!-- Timeline entries -->
+    <g transform="translate(26, 220)">
+      <text x="0" y="0" font-size="10" font-weight="700" fill="#5a5a56">Entrées</text>
+      <g transform="translate(0, 14)">
+        <rect x="0" y="0" width="188" height="26" rx="6" fill="#F0EEEA"/>
+        <text x="10" y="17" font-size="10" fill="#1a1a18">🌙 Sommeil · 1h 30min</text>
+        <text x="150" y="17" font-size="9" fill="#7a7a74">20:30</text>
+      </g>
+      <g transform="translate(0, 44)">
+        <rect x="0" y="0" width="188" height="26" rx="6" fill="#F0EEEA"/>
+        <text x="10" y="17" font-size="10" fill="#1a1a18">🍼 Sein droit · 15ml</text>
+        <text x="150" y="17" font-size="9" fill="#7a7a74">19:00</text>
+      </g>
+      <g transform="translate(0, 74)">
+        <rect x="0" y="0" width="188" height="26" rx="6" fill="#F0EEEA"/>
+        <text x="10" y="17" font-size="10" fill="#1a1a18">🌡 37,6°C</text>
+        <text x="150" y="17" font-size="9" fill="#B84E2E">17:30</text>
+      </g>
+    </g>
+  </g>
+</svg>
