@@ -1,0 +1,33 @@
+rules_version = '2';
+
+// Reguły Firebase Storage dla Spokojny Rodzic (v2.14.0)
+//
+// Polityka:
+//   1. Photo avatary dziecka: users/{uid}/avatars/{profileId}
+//      - Read/write tylko dla właściciela (uid match)
+//      - Max 2 MB (żeby uniknąć abuse z uploadem dużych plików)
+//      - Tylko obrazy (contentType image/*)
+//   2. Wszystko poza avatars/ jest zablokowane
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Photo avatary — jeden plik per profileId (nadpisywalny)
+    match /users/{userId}/avatars/{profileId} {
+      allow read: if request.auth != null
+        && request.auth.uid == userId;
+
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 2 * 1024 * 1024  // 2 MB max
+        && request.resource.contentType.matches('image/.*');
+
+      allow delete: if request.auth != null
+        && request.auth.uid == userId;
+    }
+
+    // Wszystko inne — zablokowane
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

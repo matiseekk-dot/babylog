@@ -50,6 +50,9 @@ import GuestMigrationDialog from './components/GuestMigrationDialog'
 import PlayStoreModal from './components/PlayStoreModal'
 import PremiumOnboardingModal from './components/PremiumOnboardingModal'
 import TrialEndingModal from './components/TrialEndingModal'
+import TrialStartedModal from './components/TrialStartedModal'
+import PhotoAvatarPicker from './components/PhotoAvatarPicker'
+import AvatarDisplay from './components/AvatarDisplay'
 // v2.10.6 — MDR EXIT REFACTOR: replaced active crisis UI with passive reference content.
 // Removed: ChildStatusBar / ChildStatusCard / CallDoctorCard / useCrisisDetection.
 // Added:   TodaySummaryCard (passive reference link), ReferenceLibrary (static AAP/PTP tables),
@@ -357,6 +360,49 @@ export default function App() {
   const navigateToPdfReport = () => {
     setShowPremiumOnboarding(false)
     setShowSettings(true)  // Settings ma sekcję PDF Report
+  }
+
+  // v2.14.0 — Trial STARTED modal (Pakiet B paywall / onboarding paywall).
+  // Cel: user od razu widzi "masz 14 dni Premium ODBLOKOWANE" po onboardingu.
+  // Nie sprzedażowy — brak CTA "Kup". Zwiększa engagement + perceived value.
+  //
+  // Trigger: świeży trial (trial_start w ciągu ostatnich 60s) + isOnTrial + not-shown-yet.
+  // Flag: babylog_trial_started_shown_{uid|guest} — pokazuje raz per user.
+  const [showTrialStarted, setShowTrialStarted] = useState(false)
+  const trialStartedKey = uid || 'guest'
+  useEffect(() => {
+    if (!isOnTrial) return
+    if (!trialDaysLeft || trialDaysLeft < 13) return  // pokazuj tylko dla świeżego trialu (>=13/14 dni)
+    const flagKey = `babylog_trial_started_shown_${trialStartedKey}`
+    try {
+      if (localStorage.getItem(flagKey) === '1') return
+    } catch {}
+    setShowTrialStarted(true)
+  }, [trialStartedKey, isOnTrial, trialDaysLeft])
+
+  const dismissTrialStarted = () => {
+    setShowTrialStarted(false)
+    try {
+      localStorage.setItem(`babylog_trial_started_shown_${trialStartedKey}`, '1')
+    } catch {}
+  }
+
+  // v2.14.0 — Photo avatar picker state
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false)
+  const openPhotoPicker = () => {
+    if (!isPremium) {
+      openPaywall('photo_avatar')
+      return
+    }
+    setShowPhotoPicker(true)
+  }
+  const handleAvatarSaved = (url) => {
+    updateProfile(active.id, { avatarPhoto: url })
+    setShowPhotoPicker(false)
+  }
+  const handleAvatarDeleted = () => {
+    updateProfile(active.id, { avatarPhoto: null })
+    setShowPhotoPicker(false)
   }
 
   // v2.14.0 — Trial ending urgency modal. Pokazuje się w progach 3/1/0 dni,
@@ -1088,6 +1134,7 @@ export default function App() {
           isOnTrial={isOnTrial}
           trialDaysLeft={trialDaysLeft}
           onUpgrade={() => { setShowSettings(false); openPaywall('settings') }}
+          onEditPhoto={() => { setShowSettings(false); openPhotoPicker() }}
           user={user}
           onLogout={user ? logout : () => {
             try { localStorage.removeItem('babylog_guest') } catch {}
@@ -1202,11 +1249,9 @@ export default function App() {
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
             </svg>
           </button>
-          {/* Baby chip */}
+          {/* Baby chip — avatar może być emoji (legacy) albo photo (Premium v2.14.0) */}
           <button className="baby-chip" onClick={() => { setShowProfiles(s=>!s); setShowMore(false) }}>
-            <div className="baby-chip-avatar" style={{background:active.avatarColor,color:'var(--green-dark)',fontSize:13}}>
-              {active.avatar}
-            </div>
+            <AvatarDisplay profile={active} size={24} style={{background:active.avatarColor,color:'var(--green-dark)'}} />
             {active.name === 'Moje dziecko' ? t('default.child_name') : active.name}
           </button>
         </div>
@@ -1464,6 +1509,19 @@ export default function App() {
         daysLeft={trialDaysLeft}
         onUpgrade={upgradeFromTrialEnding}
         onLater={dismissTrialEnding}
+      />
+      <TrialStartedModal
+        open={showTrialStarted}
+        onClose={dismissTrialStarted}
+      />
+      <PhotoAvatarPicker
+        open={showPhotoPicker}
+        uid={uid}
+        profileId={active.id}
+        currentUrl={active.avatarPhoto}
+        onClose={() => setShowPhotoPicker(false)}
+        onSaved={handleAvatarSaved}
+        onDeleted={handleAvatarDeleted}
       />
     </div>
   )

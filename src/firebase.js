@@ -7,6 +7,7 @@ import {
   persistentMultipleTabManager,
 } from 'firebase/firestore'
 import { getFunctions } from 'firebase/functions'
+import { getStorage } from 'firebase/storage'
 import { getAnalytics, isSupported as isAnalyticsSupported } from 'firebase/analytics'
 import { getMessaging, isSupported } from 'firebase/messaging'
 
@@ -96,6 +97,12 @@ export const db = initializeFirestore(app, {
 // v2.11.31: Cloud Functions client. Region musi pasować do CF (europe-west3).
 // Używane przez usePremium → initTrial (server-side trial start).
 export const functions = getFunctions(app, 'europe-west3')
+
+// v2.14.0 — Firebase Storage dla photo avatarów dziecka (Premium feature).
+// Bucket domyślny z firebaseConfig. Reguły w storage.rules ograniczają
+// dostęp do users/{uid}/avatars/ (tylko właściciel może pisać/czytać).
+// Fallback dla guesta: base64 w localStorage (bez cross-device sync).
+export const storage = getStorage(app)
 
 // v2.11.32: Firebase Analytics — funnel events do mierzenia conversion.
 // Lazy init bo getAnalytics() wymaga browser environment + analytics support

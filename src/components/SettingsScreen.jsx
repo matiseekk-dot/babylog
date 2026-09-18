@@ -38,7 +38,7 @@ const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 export default function SettingsScreen({
   profile, onUpdate, onDelete,
   isPremium, isOnTrial, trialDaysLeft,
-  onUpgrade, user, onLogout, onClose, uid,
+  onUpgrade, onEditPhoto, user, onLogout, onClose, uid,
 }) {
   // Pobierz dane dziecka żeby móc wygenerować PDF
   const [tempLogs]  = useFirestore(uid, `temp_${profile.id}`,  [])
@@ -236,7 +236,7 @@ export default function SettingsScreen({
           <div style={{ fontSize: 12, color: '#5a5a56', fontWeight: 500, marginBottom: 8 }}>
             {t('onb.setup.avatar')}
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
             {AVATARS.map(a => (
               <button key={a} onClick={() => setAvatar(a)} style={{
                 width: 44, height: 44, fontSize: 22, borderRadius: '50%', cursor: 'pointer',
@@ -245,6 +245,33 @@ export default function SettingsScreen({
               }}>{a}</button>
             ))}
           </div>
+          {/* v2.14.0 — opcja zdjęcia dziecka (Premium) */}
+          {onEditPhoto && (
+            <button
+              onClick={onEditPhoto}
+              style={{
+                width: '100%', padding: '10px 14px', marginBottom: 14,
+                background: profile.avatarPhoto ? '#E1F5EE' : '#F7F5F2',
+                border: `1px dashed ${profile.avatarPhoto ? '#9FE1CB' : '#D0CDC5'}`,
+                borderRadius: 10, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 10,
+                fontSize: 13, fontWeight: 600, color: '#1a1a18',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>📷</span>
+              <span style={{ flex: 1, textAlign: 'left' }}>
+                {profile.avatarPhoto ? t('avatar.picker.title') : t('avatar.premium.label')}
+              </span>
+              {!isPremium && (
+                <span style={{
+                  fontSize: 10, fontWeight: 700, background: '#E1F5EE',
+                  color: '#0F6E56', padding: '3px 9px', borderRadius: 20,
+                }}>
+                  🔒 {t('avatar.premium.hint')}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Fields */}
           <div className="form-group">
