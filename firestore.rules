@@ -1,56 +1,67 @@
 rules_version = '2';
 
-// Reguły Firestore dla Spokojny Rodzic (v2.11.20)
+// Reguły Firestore dla Spokojny Rodzic (v2.15.0)
 //
 // Polityka:
 //
-//   1. User ma read/write dla swoich danych pod users/{uid}/data/...
-//      Z wyjątkiem POL CHRONIONYCH (poniżej) — te są read-only z client-side
-//      (Admin SDK z Cloud Functions może wszystko, omija rules).
+//   1. Dane dziecka: users/{uid}/data/{docId}, kontrakt useFirestore = {value}.
+//      Dostęp ma właściciel oraz partnerzy wspólnego konta — partner to ktoś,
+//      dla kogo istnieje users/{uid}/partners/{partnerUid}.
 //
-//   2. POLA CHRONIONE — tylko Admin SDK (Cloud Functions) może je zapisywać.
-//      Client widzi je (read), ale nie może zmienić.
-//      - premium_purchased  (status Premium subskrypcji — set przez RC webhook)
-//      - premium_meta       (metadane subskrypcji od RevenueCat)
-//      - trial_start        (legacy — od v2.11.20 trial start = auth creationTime)
-//      - rc_event_*         (idempotency stamps webhook eventów)
+//   2. POLA CHRONIONE — zapisuje wyłącznie Admin SDK (Cloud Functions):
+//      premium_purchased, premium_meta, trial_start, linked_owner, rc_event_*.
 //
-//   3. KONTRAKT useFirestore — dokumenty zwykłe mają tylko klucz `value`.
-//      To zapobiega user'owi dopisywaniu dziwnych pól które break'owałyby
-//      logikę aplikacji.
+//   3. partners/* i partner_invites/* zapisują wyłącznie Cloud Functions
+//      (createPartnerInvite / acceptPartnerInvite / removePartnerLink).
 //
-//   4. v2.11.20: Wildcard match jest TERAZ jedynym match'em dla data/*. Wcześniej
-//      mieliśmy specific match'e dla każdego chronionego pola, ale w Firestore
-//      Security Rules **OR semantics** — jeśli wildcard ALLOW write, specific
-//      DENY jest IGNOROWANE. Czyli user mógł pisać do premium_purchased.
-//      Teraz wildcard EXPLICIT exclude'uje protected docId'y w warunku write.
+//   4. Każda podkolekcja ma własny, jawny match. Wcześniej ogólny
+//      match /users/{userId}/{subcol}/{document=**} pasował też do "data"
+//      i przy OR-semantyce reguł przepuszczał zapis do premium_purchased.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Wszystkie dokumenty pod /users/{userId}/data/{docId}
-    match /users/{userId}/data/{docId} {
-      // READ: tylko własne (uid match), wszystkie dokumenty
-      allow read: if request.auth != null
-        && request.auth.uid == userId;
+    function signedIn() {
+      return request.auth != null;
+    }
 
-      // WRITE: tylko własne + nie protected + tylko klucz `value`
-      allow write: if request.auth != null
-        && request.auth.uid == userId
-        // Protected fields (Admin SDK only)
-        && docId != 'premium_purchased'
-        && docId != 'premium_meta'
-        && docId != 'trial_start'
-        && !docId.matches('rc_event_.*')
-        // Kontrakt useFirestore: tylko {value: <data>}
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isPartner(userId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(userId)/partners/$(request.auth.uid));
+    }
+
+    function canAccess(userId) {
+      return isOwner(userId) || isPartner(userId);
+    }
+
+    function isProtectedDoc(docId) {
+      return docId == 'premium_purchased'
+        || docId == 'premium_meta'
+        || docId == 'trial_start'
+        || docId == 'linked_owner'
+        || docId.matches('rc_event_.*');
+    }
+
+    match /users/{userId}/data/{docId} {
+      allow read: if canAccess(userId);
+      allow write: if canAccess(userId)
+        && !isProtectedDoc(docId)
         && request.resource.data.keys().hasOnly(['value']);
     }
 
-    // Subkolekcje (tokens FCM, profiles, etc.)
-    // Pełny dostęp dla własnego uid.
-    match /users/{userId}/{subcol}/{document=**} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == userId;
+    // Tokeny FCM — tylko własne urządzenia.
+    match /users/{userId}/tokens/{tokenId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Lista partnerów — właściciel widzi wszystkich, partner tylko siebie.
+    match /users/{userId}/partners/{partnerUid} {
+      allow read: if isOwner(userId)
+        || (signedIn() && request.auth.uid == partnerUid);
     }
   }
 }

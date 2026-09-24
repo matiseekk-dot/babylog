@@ -9,6 +9,7 @@ import { exportAllToCsv } from '../utils/csvExport'
 import { exportAllDataAsJson, exportAllDataAsCsv } from '../utils/dataExport'
 import PdfReportModal from './PdfReportModal'
 import FeaturesScreen from './FeaturesScreen'
+import PartnerSharingSection from './PartnerSharingSection'
 import { toast } from './Toast'
 
 // Wersja aplikacji — podbijana przy release. Pokazana w stopce Settings.
@@ -38,7 +39,7 @@ const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 export default function SettingsScreen({
   profile, onUpdate, onDelete,
   isPremium, isOnTrial, trialDaysLeft,
-  onUpgrade, onEditPhoto, user, onLogout, onClose, uid,
+  onUpgrade, onEditPhoto, user, onLogout, onClose, uid, authUid, linkedOwner,
 }) {
   // Pobierz dane dziecka żeby móc wygenerować PDF
   const [tempLogs]  = useFirestore(uid, `temp_${profile.id}`,  [])
@@ -55,7 +56,8 @@ export default function SettingsScreen({
   const { permission: notifPermission, testNotification, askPermission: askNotifPermission } = useMedReminder(profile.id)
   // FCM: pobiera token i zapisuje do Firestore żeby Cloud Function mogła wysyłać push.
   // Token rejestruje się automatycznie po nadaniu zgody (useEffect w useFCM).
-  const { refreshToken: refreshFcmToken } = useFCM(uid)
+  // Tokeny push zawsze pod własnym kontem — u partnera `uid` to dane właściciela.
+  const { refreshToken: refreshFcmToken } = useFCM(authUid)
   const [pdfModal, setPdfModal] = useState(false)
   const [showFeatures, setShowFeatures] = useState(false)
   const [name, setName] = useState(profile.name)
@@ -605,6 +607,16 @@ export default function SettingsScreen({
           </button>
         </div>
       </div>
+
+      <PartnerSharingSection
+        authUid={authUid}
+        linkedOwner={linkedOwner}
+        isPremium={isPremium}
+        onUpgrade={onUpgrade}
+        cardStyle={card}
+        headerStyle={cardHeader}
+        dangerBtnStyle={dangerBtn}
+      />
 
       {/* Account */}
       <div style={card}>

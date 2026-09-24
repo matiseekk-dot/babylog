@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline } from './hooks/useFirestore'
+import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline, setAccountUid } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
 import MedicalConsentScreen, { needsConsent } from './components/MedicalConsentScreen'
@@ -178,7 +178,15 @@ export default function App() {
     try { return localStorage.getItem('babylog_guest') === '1' } catch { return false }
   })
   const uid = user?.uid ?? null
+  setAccountUid(uid)
   const { locale } = useLocale()  // re-render on language change
+
+  // Wspólne konto: partner czyta i zapisuje dane dziecka właściciela.
+  // linked_owner zapisuje tylko Cloud Function (acceptPartnerInvite),
+  // a reguły Firestore wpuszczają partnera tylko gdy właściciel go dodał.
+  const [linkedOwner] = useFirestore(uid, 'linked_owner', null)
+  const ownerUid = uid && linkedOwner?.ownerUid ? linkedOwner.ownerUid : null
+  const dataUid = ownerUid || uid
 
   // Włącz offline persistence
   useEffect(() => { enableOffline() }, [])
@@ -254,15 +262,15 @@ export default function App() {
     }
   }, [uid])
 
-  const [profiles, setProfiles] = useFirestore(uid, 'profiles', [DEFAULT_PROFILE])
-  const [activeId, setActiveId] = useFirestore(uid, 'activeProfile', 'default')
+  const [profiles, setProfiles] = useFirestore(dataUid, 'profiles', [DEFAULT_PROFILE])
+  const [activeId, setActiveId] = useFirestore(dataUid, 'activeProfile', 'default')
   const [tab, setTab] = useState('today')
   const [showProfiles, setShowProfiles] = useState(false)
   const [showMore, setShowMore] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showPrep, setShowPrep] = useState(false)
-  const [onboardingDone, setOnboardingDone] = useFirestore(uid, 'onboarding_done', false)
+  const [onboardingDone, setOnboardingDone] = useFirestore(dataUid, 'onboarding_done', false)
 
   // KRYTYCZNE — stabilna logika resolwowania aktywnego profilu.
   //
@@ -320,18 +328,18 @@ export default function App() {
       toiletMode: rawActive.toiletMode ?? 'diapers',
     }),
   }
-  const [sleepTimerTs, setSleepTimerTs] = useFirestore(uid, `sleep_timer_${active.id}`, null)
+  const [sleepTimerTs, setSleepTimerTs] = useFirestore(dataUid, `sleep_timer_${active.id}`, null)
 
   // v2.9.3: quick-add stores dla FAB. Drobny duplicate listener względem
   // FeedTab/SleepTab/DiaperTab gdy te są aktywne (Firestore real-time
   // sync je deduplikuje na poziomie danych — oba zobaczą tę samą zawartość).
   // Sleep używa już tego samego klucza co `sleep_timer_${active.id}` — to OK.
-  const [feedLogsForFab,   setFeedLogsForFab]   = useFirestore(uid, `feed_${active.id}`,   [])
-  const [sleepLogsForFab,  setSleepLogsForFab]  = useFirestore(uid, `sleep_${active.id}`,  [])
-  const [diaperLogsForFab, setDiaperLogsForFab] = useFirestore(uid, `diaper_${active.id}`, [])
+  const [feedLogsForFab,   setFeedLogsForFab]   = useFirestore(dataUid, `feed_${active.id}`,   [])
+  const [sleepLogsForFab,  setSleepLogsForFab]  = useFirestore(dataUid, `sleep_${active.id}`,  [])
+  const [diaperLogsForFab, setDiaperLogsForFab] = useFirestore(dataUid, `diaper_${active.id}`, [])
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
-  const { isPremium, isOnTrial, trialDaysLeft, purchased, activate, deactivate } = usePremium(uid)
+  const { isPremium, isOnTrial, trialDaysLeft, purchased, premiumViaPartner, activate, deactivate } = usePremium(uid, ownerUid)
 
   // Premium onboarding — pokazuje modal raz po pierwszym odblokowaniu Premium
   const [showPremiumOnboarding, setShowPremiumOnboarding] = useState(false)
@@ -344,7 +352,10 @@ export default function App() {
       // `premium_meta.value.product_id` byłoby zsynchronizowane z opóźnieniem.
       // Dla MVP wystarczy znać że zakup przeszedł; granularność per-plan
       // mamy z paywall_cta_clicked który łapie wybór planu przed kupnem.
-      trackPurchaseCompleted(purchased ? 'purchased' : 'trial_to_premium')
+      // Premium odziedziczone po połączeniu z partnerem to nie zakup.
+      if (!premiumViaPartner) {
+        trackPurchaseCompleted(purchased ? 'purchased' : 'trial_to_premium')
+      }
       const flagKey = 'babylog_premium_onboarding_shown_' + uid
       try {
         if (localStorage.getItem(flagKey) !== '1') {
@@ -354,7 +365,7 @@ export default function App() {
       } catch {}
     }
     setPrevIsPremium(isPremium)
-  }, [isPremium, prevIsPremium, uid, purchased])
+  }, [isPremium, prevIsPremium, uid, purchased, premiumViaPartner])
 
   const closePremiumOnboarding = () => setShowPremiumOnboarding(false)
   const navigateToPdfReport = () => {
@@ -513,8 +524,11 @@ export default function App() {
       if (window.Capacitor?.isNativePlatform?.()) {
         const { Purchases } = await import('@revenuecat/purchases-capacitor')
 
+        // getProducts domyślnie zwraca tylko subskrypcje — plan dożywotni to
+        // produkt jednorazowy i bez `type` byłby "nie znaleziony".
         const { products } = await Purchases.getProducts({
           productIdentifiers: [productId],
+          type: plan.oneTime ? 'NON_SUBSCRIPTION' : 'SUBSCRIPTION',
         })
 
         if (!products?.length) {
@@ -908,7 +922,7 @@ export default function App() {
   const navActive     = (id) => id === 'more' ? MORE_TABS.some(t => t.id === tab) : tab === id
 
   const sharedProps = {
-    uid,
+    uid: dataUid,
     babyId: active.id,
     ageMonths: active.months,
     weightKg: active.weight,
@@ -1010,7 +1024,7 @@ export default function App() {
         // "tu nic nie ma" z Today timeline empty state. Reszta empty
         // signaling: ChildStatusCard (status system) + OnboardingTipsBanner
         // (edu tipy, jednorazowo) + Today timeline empty state (lokalne).
-        <TodayTab uid={uid} babyId={active.id} onNavigate={navigate} />
+        <TodayTab uid={dataUid} babyId={active.id} onNavigate={navigate} />
       )
       case 'feed':       return (
         <DailyTab visibleTabs={active.visibleTabs} {...sharedProps}
@@ -1046,7 +1060,7 @@ export default function App() {
       case 'temp':       return <TempTab      {...sharedProps} sectionAlerts={visibleSection('temp')}   onNavigate={navigate} />
       case 'meds':       return <MedsTab      {...sharedProps} sectionAlerts={visibleSection('meds')}   onNavigate={navigate} />
       case 'symptoms':   return <SymptomsTab  {...sharedProps} />
-      default:           return <TodayTab     uid={uid} babyId={active.id} onNavigate={navigate} />
+      default:           return <TodayTab     uid={dataUid} babyId={active.id} onNavigate={navigate} />
     }
   }
 
@@ -1113,7 +1127,7 @@ export default function App() {
       <div className="app" style={{ overflowY: 'auto' }}>
         <CallDoctorPrep
           profile={active}
-          uid={uid}
+          uid={dataUid}
           onClose={() => setShowPrep(false)}
         />
         <ToastContainer />
@@ -1127,7 +1141,9 @@ export default function App() {
       <div className="app" style={{ overflowY: 'auto' }}>
         <SettingsScreen
           profile={active}
-          uid={uid}
+          uid={dataUid}
+          authUid={uid}
+          linkedOwner={ownerUid ? linkedOwner : null}
           onUpdate={updateProfile}
           onDelete={deleteProfile}
           isPremium={isPremium}

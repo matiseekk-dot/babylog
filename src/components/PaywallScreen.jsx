@@ -51,6 +51,7 @@ function getFeatures() {
       { icon:'📈', title:'Trend analytics',             desc:'Charts and pattern detection for temperature, sleep duration, feeding frequency over weeks/months.' },
       { icon:'🩺', title:'Doctor notes & questions',    desc:'Visit history, prescriptions, questions to ask next time. Never forget what the doctor said.' },
       { icon:'👶', title:'Unlimited children',          desc:'Twins, siblings — one subscription, no limits.' },
+      { icon:'👨‍👩‍👧', title:'Shared account for both parents', desc:'Your partner sees and adds the same entries on their own phone. Invite with a code.' },
       { icon:'🔔', title:'Smart medication reminders',  desc:'Notifications when interval between doses has passed (per package leaflet).' },
     ]
   }
@@ -60,6 +61,7 @@ function getFeatures() {
     { icon:'📈', title:'Analityka trendów',             desc:'Wykresy i wzorce dla temperatury, snu, karmienia w skali tygodni i miesięcy.' },
     { icon:'🩺', title:'Notatki i pytania do pediatry', desc:'Historia wizyt, recepty, pytania do zadania na następnej wizycie. Nie zapomnisz co lekarz powiedział.' },
     { icon:'👶', title:'Nielimitowane dzieci',          desc:'Bliźnięta, rodzeństwo — jedna subskrypcja, bez limitów.' },
+    { icon:'👨‍👩‍👧', title:'Wspólne konto dla obojga rodziców', desc:'Partner widzi i uzupełnia te same wpisy na swoim telefonie. Zaproszenie kodem.' },
     { icon:'🔔', title:'Inteligentne przypomnienia o lekach', desc:'Powiadomienia gdy minął odstęp między dawkami (zgodnie z ulotką).' },
   ]
 }
@@ -88,10 +90,12 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
   const selectedPlan = PLANS.find(p => p.id === selected) || PLANS[0]
   const ctaLabel = checking
     ? t('paywall.cta.loading')
-    : t('paywall.cta.try', {
-        price: selectedPlan.price,
-        period: selectedPlan.period,
-      })
+    : selectedPlan.oneTime
+      ? t('paywall.cta.lifetime', { price: selectedPlan.price })
+      : t('paywall.cta.try', {
+          price: selectedPlan.price,
+          period: selectedPlan.period,
+        })
 
   const freeBanner = t('paywall.free_banner')
 

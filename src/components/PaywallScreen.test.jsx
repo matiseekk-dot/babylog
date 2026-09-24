@@ -17,14 +17,21 @@ describe('PaywallScreen', () => {
     expect(screen.getAllByText(/premium/i).length).toBeGreaterThan(0)
   })
 
-  it('pokazuje 2 plany cenowe (monthly + yearly)', () => {
-    // v2.11.32: lifetime plan usunięty — nie ma odpowiadającego SKU w
-    // Google Play Console (tylko monthly/yearly subscriptions). Test
-    // zaktualizowany żeby weryfikować tylko aktywne plany.
+  it('pokazuje 3 plany cenowe (monthly + yearly + lifetime)', () => {
     render(<PaywallScreen onActivate={() => {}} onClose={() => {}} checking={false} />)
     const text = document.body.textContent
-    expect(text).toMatch(/14[,.]99/)
-    expect(text).toMatch(/99[,.]99/)
+    expect(text).toMatch(/14[,.]99 zł/)
+    expect(text).toMatch(/119 zł/)
+    expect(text).toMatch(/249 zł/)
+  })
+
+  it('wybór planu dożywotniego zmienia CTA i przekazuje planId lifetime', () => {
+    const onActivate = vi.fn()
+    render(<PaywallScreen onActivate={onActivate} onClose={() => {}} checking={false} />)
+    fireEvent.click(screen.getByText('Dożywotni'))
+    const cta = screen.getByText(/Kup za 249 zł/)
+    fireEvent.click(cta)
+    expect(onActivate).toHaveBeenCalledWith('lifetime')
   })
 
   it('wywołuje onClose gdy X jest kliknięty', () => {

@@ -93,15 +93,33 @@ exports.scheduleNotifications = onSchedule(
 
     console.log(`[scheduleNotifications] Found ${Object.keys(userTokens).length} users with tokens`)
 
-    // 2. Iteracja po userach
+    // 2. Wspólne konto: partner trzyma tokeny pod swoim uid, a leki dziecka są
+    // u właściciela. Grupujemy tokeny po uid z danymi, żeby każdy lek dał
+    // jedno powiadomienie na każde urządzenie obojga rodziców. Link liczy się
+    // tylko gdy potwierdza go też strona właściciela (partners/{uid}).
+    const groups = {}      // dataUid → tokens
+    const tokenOwner = {}  // token → uid, pod którym leży (do sprzątania)
     for (const [uid, tokens] of Object.entries(userTokens)) {
+      let dataUid = uid
+      try {
+        const ownerUid = await getLinkedOwnerUid(uid)
+        if (ownerUid && (await partnersOf(ownerUid).doc(uid).get()).exists) dataUid = ownerUid
+      } catch (err) {
+        console.error(`[scheduleNotifications] link check failed for ${uid}:`, err)
+      }
+      tokens.forEach(tk => { tokenOwner[tk] = uid })
+      groups[dataUid] = (groups[dataUid] || []).concat(tokens)
+    }
+
+    // 3. Iteracja po grupach
+    for (const [dataUid, tokens] of Object.entries(groups)) {
       try {
         processed++
-        const sentNotifications = await processUser(uid, tokens)
+        const sentNotifications = await processUser(dataUid, tokens, tokenOwner)
         pushed += sentNotifications
       } catch (err) {
         errors++
-        console.error(`[scheduleNotifications] Error for user ${uid}:`, err)
+        console.error(`[scheduleNotifications] Error for user ${dataUid}:`, err)
       }
     }
 
@@ -116,11 +134,12 @@ exports.scheduleNotifications = onSchedule(
 /**
  * Sprawdza pending leki dla jednego usera i wysyła push jeśli któryś dojrzał.
  *
- * @param {string} uid - user ID
- * @param {string[]} tokens - lista FCM tokenów (urządzenia usera)
+ * @param {string} uid - user ID (właściciel danych dziecka)
+ * @param {string[]} tokens - lista FCM tokenów (urządzenia usera i partnerów)
+ * @param {Object<string,string>} tokenOwner - token → uid, pod którym token leży
  * @returns {number} liczba wysłanych notyfikacji
  */
-async function processUser(uid, tokens) {
+async function processUser(uid, tokens, tokenOwner = {}) {
   let sent = 0
 
   // Apka zapisuje wszystkie dane pod users/{uid}/data/{klucz}
@@ -214,7 +233,8 @@ async function processUser(uid, tokens) {
               r.error?.code === 'messaging/registration-token-not-registered'
             )) {
               const badToken = tokens[j]
-              await db.collection('users').doc(uid).collection('tokens').doc(badToken).delete()
+              const holder = tokenOwner[badToken] || uid
+              await db.collection('users').doc(holder).collection('tokens').doc(badToken).delete()
               console.log(`[processUser] removed invalid token for uid=${uid}`)
             }
           }
@@ -365,6 +385,7 @@ exports.sendTestPush = onCall({
 //
 // Eventy obsługiwane (z https://www.revenuecat.com/docs/webhooks):
 //   - INITIAL_PURCHASE  → premium_purchased = true
+//   - NON_RENEWING_PURCHASE → premium_purchased = true (plan dożywotni)
 //   - RENEWAL           → premium_purchased = true (re-affirm)
 //   - CANCELLATION      → no-op (subskrypcja jest aktywna do końca okresu)
 //   - EXPIRATION        → premium_purchased = false
@@ -444,6 +465,8 @@ exports.revenueCatWebhook = onRequest({
   let action = null  // 'grant' | 'revoke' | null
   switch (eventType) {
     case 'INITIAL_PURCHASE':
+    // Zakup jednorazowy (plan dożywotni) — RC nie wysyła dla niego INITIAL_PURCHASE.
+    case 'NON_RENEWING_PURCHASE':
     case 'RENEWAL':
     case 'PRODUCT_CHANGE':
     case 'SUBSCRIPTION_EXTENDED':
@@ -647,4 +670,169 @@ exports.initTrial = onCall({
     console.error('[initTrial] failed:', err)
     throw new HttpsError('internal', 'Failed to init trial.', err.message)
   }
+})
+
+// ──────────────────────────────────────────────────────────────────────────
+// Wspólne konto dla rodziców (v2.15.0, Premium)
+// ──────────────────────────────────────────────────────────────────────────
+//
+// Właściciel danych + do MAX_PARTNERS partnerów. Partner czyta i zapisuje dane
+// dziecka pod users/{ownerUid}/data/* — reguły Firestore wpuszczają go, gdy
+// istnieje users/{ownerUid}/partners/{partnerUid}. U partnera dokument
+// users/{partnerUid}/data/linked_owner mówi apce, czyje dane pokazać.
+// Oba dokumenty zapisują wyłącznie te funkcje (Admin SDK).
+//
+// Rozłączenie ustawia linked_owner na { value: null } zamiast kasować dokument:
+// useFirestore celowo nie nadpisuje stanu, gdy dokument znika, więc usunięcie
+// zostawiłoby partnera w cache nadal "połączonego".
+//
+// Komunikaty HttpsError to kody błędów tłumaczone po stronie apki
+// (partner.error.<kod> w i18n.js).
+
+const crypto = require('crypto')
+
+const MAX_PARTNERS = 3
+const INVITE_TTL_MS = 48 * 60 * 60 * 1000
+const INVITE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'  // bez 0/O/1/I
+const TRIAL_MS = 14 * 24 * 60 * 60 * 1000
+
+function userData(uid) {
+  return db.collection('users').doc(uid).collection('data')
+}
+
+function partnersOf(uid) {
+  return db.collection('users').doc(uid).collection('partners')
+}
+
+async function getLinkedOwnerUid(uid) {
+  const snap = await userData(uid).doc('linked_owner').get()
+  return snap.exists ? (snap.data()?.value?.ownerUid || null) : null
+}
+
+async function hasPremium(uid) {
+  const [purchased, trial] = await Promise.all([
+    userData(uid).doc('premium_purchased').get(),
+    userData(uid).doc('trial_start').get(),
+  ])
+  if (purchased.exists && purchased.data()?.value === true) return true
+  const start = trial.exists ? trial.data()?.value : null
+  return typeof start === 'number' && Date.now() < start + TRIAL_MS
+}
+
+function displayName(auth) {
+  return auth.token?.name || auth.token?.email || null
+}
+
+function randomInviteCode() {
+  let code = ''
+  for (let i = 0; i < 6; i++) code += INVITE_ALPHABET[crypto.randomInt(INVITE_ALPHABET.length)]
+  return code
+}
+
+const partnerFnOptions = { region: 'europe-west3', timeoutSeconds: 30, memory: '256MiB' }
+
+exports.createPartnerInvite = onCall(partnerFnOptions, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'not-signed-in')
+  const uid = request.auth.uid
+
+  if (await getLinkedOwnerUid(uid)) throw new HttpsError('failed-precondition', 'is-partner')
+  if (!(await hasPremium(uid))) throw new HttpsError('permission-denied', 'not-premium')
+  const partners = await partnersOf(uid).get()
+  if (partners.size >= MAX_PARTNERS) throw new HttpsError('failed-precondition', 'too-many-partners')
+
+  const now = Date.now()
+  const invite = {
+    ownerUid: uid,
+    ownerName: displayName(request.auth),
+    createdAt: now,
+    expiresAt: now + INVITE_TTL_MS,
+  }
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = randomInviteCode()
+    try {
+      await db.collection('partner_invites').doc(code).create(invite)
+      return { code, expiresAt: invite.expiresAt }
+    } catch (err) {
+      if (err.code !== 6) throw err  // 6 = ALREADY_EXISTS → losuj ponownie
+    }
+  }
+  throw new HttpsError('internal', 'code-collision')
+})
+
+exports.acceptPartnerInvite = onCall(partnerFnOptions, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'not-signed-in')
+  const uid = request.auth.uid
+  const code = String(request.data?.code || '').trim().toUpperCase()
+  if (!/^[A-Z0-9]{6}$/.test(code)) throw new HttpsError('invalid-argument', 'invite-not-found')
+
+  const inviteRef = db.collection('partner_invites').doc(code)
+  const ownerName = await db.runTransaction(async (tx) => {
+    const inviteSnap = await tx.get(inviteRef)
+    if (!inviteSnap.exists) throw new HttpsError('not-found', 'invite-not-found')
+    const invite = inviteSnap.data()
+    if (invite.expiresAt < Date.now()) throw new HttpsError('failed-precondition', 'invite-expired')
+    if (invite.ownerUid === uid) throw new HttpsError('failed-precondition', 'own-invite')
+    const ownerUid = invite.ownerUid
+
+    const [myLink, myPartners, ownerLink, ownerPartners] = await Promise.all([
+      tx.get(userData(uid).doc('linked_owner')),
+      tx.get(partnersOf(uid).limit(1)),
+      tx.get(userData(ownerUid).doc('linked_owner')),
+      tx.get(partnersOf(ownerUid)),
+    ])
+    if (myLink.exists && myLink.data()?.value?.ownerUid) {
+      throw new HttpsError('failed-precondition', 'already-linked')
+    }
+    if (!myPartners.empty) throw new HttpsError('failed-precondition', 'has-partners')
+    // Właściciel sam został w międzyczasie partnerem kogoś innego — kod nieważny.
+    if (ownerLink.exists && ownerLink.data()?.value?.ownerUid) {
+      throw new HttpsError('not-found', 'invite-not-found')
+    }
+    if (ownerPartners.size >= MAX_PARTNERS) {
+      throw new HttpsError('failed-precondition', 'too-many-partners')
+    }
+
+    const now = Date.now()
+    tx.set(partnersOf(ownerUid).doc(uid), {
+      name: displayName(request.auth),
+      email: request.auth.token?.email || null,
+      linkedAt: now,
+    })
+    tx.set(userData(uid).doc('linked_owner'), {
+      value: { ownerUid, ownerName: invite.ownerName || null, linkedAt: now },
+    })
+    tx.delete(inviteRef)
+    return invite.ownerName || null
+  })
+
+  console.log(`[acceptPartnerInvite] uid=${uid} linked via code`)
+  return { ownerName }
+})
+
+exports.removePartnerLink = onCall(partnerFnOptions, async (request) => {
+  if (!request.auth) throw new HttpsError('unauthenticated', 'not-signed-in')
+  const uid = request.auth.uid
+  const partnerUid = request.data?.partnerUid
+  const batch = db.batch()
+
+  if (partnerUid) {
+    // Właściciel usuwa partnera
+    if (typeof partnerUid !== 'string' || !/^[\w-]{1,128}$/.test(partnerUid)) {
+      throw new HttpsError('invalid-argument', 'bad-partner')
+    }
+    const partnerRef = partnersOf(uid).doc(partnerUid)
+    if (!(await partnerRef.get()).exists) return { ok: true }
+    batch.delete(partnerRef)
+    if ((await getLinkedOwnerUid(partnerUid)) === uid) {
+      batch.set(userData(partnerUid).doc('linked_owner'), { value: null })
+    }
+  } else {
+    // Partner opuszcza wspólne konto
+    const ownerUid = await getLinkedOwnerUid(uid)
+    if (ownerUid) batch.delete(partnersOf(ownerUid).doc(uid))
+    batch.set(userData(uid).doc('linked_owner'), { value: null })
+  }
+
+  await batch.commit()
+  return { ok: true }
 })

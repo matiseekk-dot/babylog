@@ -49,7 +49,7 @@ const TRIAL_DAYS = 14
  *     z serwerem). Guest mode jest limited (no purchase, no sync), więc
  *     abuse impact niski. Po zalogowaniu apka przechodzi na server-side trial.
  */
-export function usePremium(uid) {
+export function usePremium(uid, ownerUid = null) {
   // Guest fallback — używamy useFirestore tylko dla guesta
   // (uid=null → useFirestore zwraca z localStorage, bez Firestore)
   const [guestTrialStart, setGuestTrialStart] = useFirestore(null, 'trial_start_guest', null)
@@ -112,16 +112,27 @@ export function usePremium(uid) {
     trialStart = guestTrialStart
   }
 
+  // Wspólne konto: partner dziedziczy Premium/trial właściciela danych.
+  // Przy ownerUid=null wartości są ignorowane.
+  const [ownerPurchased] = useFirestore(ownerUid, 'premium_purchased', false)
+  const [ownerTrialStart] = useFirestore(ownerUid, 'trial_start', null)
+
   // Wylicz czy Premium jest aktywny
   const now = Date.now()
-  const trialEndMs = trialStart ? trialStart + TRIAL_DAYS * 24 * 60 * 60 * 1000 : 0
-  const trialActive = trialStart && now < trialEndMs
-  const isPremium = purchased || trialActive
-
-  // Dni trialu pozostałe
-  const trialDaysLeft = trialActive
-    ? Math.ceil((trialEndMs - now) / (24 * 60 * 60 * 1000))
+  const DAY_MS = 24 * 60 * 60 * 1000
+  const trialEndMs = trialStart ? trialStart + TRIAL_DAYS * DAY_MS : 0
+  const trialActive = !!trialStart && now < trialEndMs
+  const ownerTrialEndMs = ownerUid && typeof ownerTrialStart === 'number'
+    ? ownerTrialStart + TRIAL_DAYS * DAY_MS
     : 0
+  const ownerTrialActive = now < ownerTrialEndMs
+  const ownerHasPurchased = !!ownerUid && ownerPurchased === true
+  const effectivePurchased = purchased === true || ownerHasPurchased
+  const isPremium = effectivePurchased || trialActive || ownerTrialActive
+
+  // Dni trialu pozostałe (dłuższy z dwóch, gdy partner też ma własny trial)
+  const trialEnd = Math.max(trialActive ? trialEndMs : 0, ownerTrialActive ? ownerTrialEndMs : 0)
+  const trialDaysLeft = trialEnd ? Math.ceil((trialEnd - now) / DAY_MS) : 0
 
   // Backwards compat (deprecated, do usunięcia w przyszłości)
   const activate = () => {
@@ -137,9 +148,10 @@ export function usePremium(uid) {
 
   return {
     isPremium,
-    isOnTrial: trialActive && !purchased,
+    isOnTrial: (trialActive || ownerTrialActive) && !effectivePurchased,
     trialDaysLeft,
-    purchased,
+    purchased: effectivePurchased,
+    premiumViaPartner: ownerHasPurchased && purchased !== true,
     activate,
     deactivate,
   }

@@ -27,18 +27,10 @@ import { t } from '../i18n'
  *   badge     — opcjonalny label nad planem ("Najlepsza oferta")
  */
 
-// v2.11.32 — Sprint B P1-2d: usunięto plan `lifetime`. Nie jest aktywny w
-// Google Play Console (tylko monthly/yearly subscriptions skonfigurowane).
-// Klik "Lifetime" przez user'a powodował błąd "SKU not found" → modal failure
-// → confidence killer na nowo zdobytych userach.
-//
-// Aby przywrócić lifetime: utworzyć "in-app product" (NIE subscription, lifetime
-// to one-time non-consumable) w Play Console:
-//   Monetize → Products → In-app products → Create
-//   ID: spokojny_rodzic_premium_lifetime
-// Plus zsynchronizować z RC dashboard jako entitlement attached do lifetime.
-// Plus dodać do LIFETIME_PRODUCT_IDS w useRevenueCat.js (już jest tam
-// defensywnie — patrz v2.11.14 commit).
+// Plan `lifetime` wymaga produktu jednorazowego (in-app product, NIE subskrypcji)
+// w Play Console o ID spokojny_rodzic_premium_lifetime, podpiętego w RevenueCat
+// pod entitlement "Spokojny Rodzic Pro". Bez tego klik daje "SKU not found".
+// ID jest też na liście LIFETIME_PRODUCT_IDS w useRevenueCat.js.
 // v2.11.33 — DE pricing dodane.
 // v2.12.0 — FR pricing dodane (Phase 2).
 // v2.12.0 — ES pricing dodane (Phase 3 — Hiszpania + LATAM).
@@ -75,12 +67,16 @@ import { t } from '../i18n'
 //   PL:      (14,99 × 12 − 119)   / (14,99 × 12) = 33,85% → 34%
 //   DE/FR/ES: (3,99 × 12 − 24,99) / (3,99 × 12)  = 47,80% → 48%
 //   EN:       (3.99 × 12 − 24.99) / (3.99 × 12)  = 47,80% → 48%
+// Dożywotnia ≈ 2× roczna: rodzic korzysta intensywnie ~2 lata, więc to mniej
+// więcej tyle, ile zapłaciłby na subskrypcji. Taniej (np. 149 zł) zjadałoby
+// sprzedaż rocznej. Ceny display-only — realne ustawia się w Play Console
+// dla produktu jednorazowego spokojny_rodzic_premium_lifetime.
 const PRICES_BY_LOCALE = {
-  pl: { monthly: '14,99 zł', yearly: '119 zł',   yearlyPerMonth: '9,92 zł' },
-  de: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €'  },
-  fr: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €'  },
-  es: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €'  },
-  en: { monthly: '$3.99',    yearly: '$24.99',   yearlyPerMonth: '$2.08'   },
+  pl: { monthly: '14,99 zł', yearly: '119 zł',   yearlyPerMonth: '9,92 zł', lifetime: '249 zł'  },
+  de: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €',  lifetime: '49,99 €' },
+  fr: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €',  lifetime: '49,99 €' },
+  es: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €',  lifetime: '49,99 €' },
+  en: { monthly: '$3.99',    yearly: '$24.99',   yearlyPerMonth: '$2.08',   lifetime: '$49.99'  },
 }
 
 export function getPlans(locale) {
@@ -109,6 +105,19 @@ export function getPlans(locale) {
       // pokazania "≈ 9,92 zł/mc" pod ceną roczną. Nie wpływa na charge —
       // płatność zawsze pobierana jako yearly.
       perMonth: prices.yearlyPerMonth,
+    },
+    {
+      id: 'lifetime',
+      label: t('paywall.plan.lifetime'),
+      price: prices.lifetime,
+      period: t('paywall.per.lifetime'),
+      productId: 'spokojny_rodzic_premium_lifetime',
+      popular: false,
+      badge: t('paywall.badge.lifetime'),
+      perMonth: null,
+      // Produkt jednorazowy (nie subskrypcja) — RevenueCat getProducts
+      // domyślnie szuka tylko subskrypcji, więc trzeba podać typ.
+      oneTime: true,
     },
   ]
 }

@@ -27,6 +27,7 @@ export default function TrialStartedModal({ open, onClose }) {
     { icon: '📊', key: 'growth_charts' },
     { icon: '📄', key: 'pdf_report' },
     { icon: '👶', key: 'multi_child' },
+    { icon: '👨‍👩‍👧', key: 'partner' },
     { icon: '🔔', key: 'med_reminders' },
     { icon: '🩺', key: 'doctor_notes' },
   ]

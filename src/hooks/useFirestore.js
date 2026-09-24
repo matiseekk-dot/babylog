@@ -12,21 +12,31 @@ const LS_PREFIX = 'babylog_'
 // Guest data ma własny prefix — NIGDY nie miesza się z kontem zalogowanym
 const GUEST_PREFIX = 'babylog_guest_'
 
+// Uid zalogowanego użytkownika (ustawiany z App). Gdy hook dostaje inny uid —
+// dane właściciela wspólnego konta — cache idzie pod osobny prefiks, żeby
+// po rozłączeniu dane partnera nie zostały pod kluczami własnego konta.
+let accountUid = null
+export function setAccountUid(uid) { accountUid = uid || null }
+
+function lsPrefix(uid) {
+  if (!uid) return GUEST_PREFIX
+  if (accountUid && uid !== accountUid) return `babylog_shared_${uid}_`
+  return LS_PREFIX
+}
+
 /**
  * Load from localStorage — wybiera właściwy prefix zależnie od stanu zalogowania.
  */
 function lsLoad(uid, key, fallback) {
   try {
-    const prefix = uid ? LS_PREFIX : GUEST_PREFIX
-    const v = localStorage.getItem(prefix + key)
+    const v = localStorage.getItem(lsPrefix(uid) + key)
     return v !== null ? JSON.parse(v) : fallback
   } catch { return fallback }
 }
 
 function lsSave(uid, key, val) {
   try {
-    const prefix = uid ? LS_PREFIX : GUEST_PREFIX
-    localStorage.setItem(prefix + key, JSON.stringify(val))
+    localStorage.setItem(lsPrefix(uid) + key, JSON.stringify(val))
   } catch { /* quota exceeded — ignore */ }
 }
 
