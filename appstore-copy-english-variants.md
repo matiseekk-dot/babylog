@@ -28,81 +28,16 @@
 
 **Dla WSZYSTKICH English variants — użyj DOKŁADNIE tych samych assets co en-US.** Google Play automatycznie konwertuje cenę na lokalną walutę (£, A$, C$, ₹, itd.).
 
-### Nazwa aplikacji (29/30)
-```
-Calm Parent: Health & Sleep
-```
-
-### Krótki opis (72/80)
-```
-Baby health tracker: temperature, feedings, sleep, medications. Ad-free.
-```
-
-### Pełny opis
-```
-When your baby has a fever at 3 AM, you don't want to search through random forums.
-
-Calm Parent helps you know what to do — based on your child's data and guidelines from the American Academy of Pediatrics and WHO growth standards.
-
-📱 WHAT YOU LOG
-• Body temperature with trend chart
-• Breastfeeding and bottle feedings
-• Sleep, naps, wake times
-• Administered medications (time, dose, history)
-• Diapers — wet, dirty
-• Developmental milestones
-• Vaccination schedule
-• Solid food introduction
-• Teething progress
-
-💎 PREMIUM — 14 DAYS FREE
-• Growth analysis with WHO percentile charts
-• PDF report for your pediatrician (any date range)
-• Unlimited child profiles
-• Doctor visit notes and questions
-• Smart medication reminders
-• Full access to pediatric guidelines
-
-Free trial requires no credit card. After 14 days you keep using the basic version.
-
-✅ ALWAYS FREE
-• Core logging of temperature, feedings, sleep, meds
-• Critical safety alerts (fever in babies under 3 months, temperature ≥40.5°C / 105°F, dehydration crisis)
-• Cross-device sync via Google account
-• CSV data export (GDPR — right to your data)
-• Complete pediatric guidelines library to read
-• Emergency numbers always accessible
-
-🩺 BASED ON OFFICIAL SOURCES
-Temperature thresholds and warning signs come from:
-• American Academy of Pediatrics
-• Polish Society of Pediatrics (KOMPAS FEVER)
-• WHO growth standards
-
-Guidelines updated alongside official recommendations — not forum advice.
-
-⚠️ IMPORTANT
-Calm Parent is NOT a medical device. It does NOT calculate medication doses (always check the leaflet, pharmacist, or pediatrician). It does NOT diagnose and does NOT replace a doctor — it helps you observe your child and have data ready for the visit.
-
-In life-threatening situations, call your local emergency number.
-
-💰 PRICING
-Premium: $3.99 / month or $24.99 / year (less than $0.07 per day).
-Cancel anytime. No commitment.
-
-📞 CONTACT
-Write to me: matiseekk@gmail.com
-I build this app alone. Every review helps enormously.
-
-Less stress. More calm.
-```
+### Nazwa, krótki i pełny opis
+Skopiuj z sekcji **🇬🇧 EN** w [appstore-copy.md](appstore-copy.md) — jedno źródło tekstu dla en-US i wszystkich wariantów.
+Cennik w tym opisie jest bez waluty, więc pasuje do każdego kraju.
 
 ### Feature graphic (1024×500)
 ```
 store-assets/feature-graphic-en-2026-09-v2.png
 ```
 
-### Screenshots (6 sztuk, 1080×2160)
+### Screenshots (7 sztuk, 1080×2160)
 ```
 store-assets/screenshots-2026-09/en/01-today.png
 store-assets/screenshots-2026-09/en/02-temperature.png
@@ -110,6 +45,7 @@ store-assets/screenshots-2026-09/en/03-meds.png
 store-assets/screenshots-2026-09/en/04-reference-library.png
 store-assets/screenshots-2026-09/en/05-when-to-seek-help.png
 store-assets/screenshots-2026-09/en/06-feed.png
+store-assets/screenshots-2026-09/en/07-shared-account.png   ← przeciągnij na 2. miejsce
 ```
 
 ---
@@ -125,13 +61,12 @@ store-assets/screenshots-2026-09/en/06-feed.png
 **4.** Language selector → przełącz na **English (United Kingdom)**
 
 **5.** Wklej po kolei:
-   - **Nazwa aplikacji**: `Calm Parent: Health & Sleep`
-   - **Krótki opis**: `Baby health tracker: temperature, feedings, sleep, medications. Ad-free.`
-   - **Pełny opis**: (skopiuj z sekcji „Pełny opis" powyżej)
+   - **Nazwa aplikacji**: `Calm Parent: Baby Development`
+   - **Krótki opis** i **Pełny opis**: sekcja 🇬🇧 EN w appstore-copy.md
 
 **6.** Graphics → **Feature graphic** → wgraj `store-assets/feature-graphic-en-2026-09-v2.png`
 
-**7.** Graphics → **Phone screenshots** → wgraj 6 plików z `store-assets/screenshots-2026-09/en/` (kolejność 01→06)
+**7.** Graphics → **Phone screenshots** → wgraj 7 plików z `store-assets/screenshots-2026-09/en/` (07-shared-account jako drugi)
 
 **8.** (Opcjonalnie) Graphics → **7-inch tablet screenshots** → wgraj te same 6 plików EN
 

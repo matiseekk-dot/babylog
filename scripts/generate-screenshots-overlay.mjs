@@ -321,22 +321,30 @@ async function captureAndComposite(browser, locale) {
       continue
     }
     const finalFile = path.join(localeDir, `${shot.name}.png`)
-    const phone = await sharp(tmpFile).resize(PHONE_W, PHONE_H, { fit: 'contain', background: '#fff' }).png().toBuffer()
-    const svg = Buffer.from(makeOverlaySvg(overlay.hook, overlay.benefit))
-    await sharp({
-      create: { width: CANVAS_W, height: CANVAS_H, channels: 4, background: '#F7F5F2' }
-    })
-      .composite([
-        { input: phone, top: TOP_BAND, left: PHONE_X },
-        { input: svg,   top: 0, left: 0 },
-      ])
-      .png({ compressionLevel: 9 })
-      .toFile(finalFile)
+    await composeShot(tmpFile, finalFile, overlay.hook, overlay.benefit)
     console.log(`  [${locale}] ${shot.name}.png  →  ${path.relative(ROOT, finalFile)}`)
   }
 
   await page.close()
 }
+
+// Raw screenshot (VIEWPORT × 2.5) → finalny PNG 1080×2160 z bandami tekstu.
+// Używane też przez generate-screenshot-shared-account.mjs.
+export async function composeShot(rawFile, finalFile, hook, benefit) {
+  const phone = await sharp(rawFile).resize(PHONE_W, PHONE_H, { fit: 'contain', background: '#fff' }).png().toBuffer()
+  const svg = Buffer.from(makeOverlaySvg(hook, benefit))
+  await sharp({
+    create: { width: CANVAS_W, height: CANVAS_H, channels: 4, background: '#F7F5F2' }
+  })
+    .composite([
+      { input: phone, top: TOP_BAND, left: PHONE_X },
+      { input: svg,   top: 0, left: 0 },
+    ])
+    .png({ compressionLevel: 9 })
+    .toFile(finalFile)
+}
+
+export { VIEWPORT, OUT_DIR, TMP_DIR, CHROME_PATH, buildState }
 
 const ALL_LOCALES = ['pl', 'en', 'de', 'fr', 'es']
 
@@ -363,4 +371,7 @@ async function main() {
   console.log(`\n✅ Done. ${locales.length * SHOTS.length} screenshots → ${OUT_DIR}`)
 }
 
-main().catch(err => { console.error('FAILED:', err); process.exit(1) })
+// Uruchamiaj main() tylko przy bezpośrednim wywołaniu, nie przy imporcie.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(err => { console.error('FAILED:', err); process.exit(1) })
+}

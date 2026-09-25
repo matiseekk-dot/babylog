@@ -1,32 +1,45 @@
-# Spokojny Rodzic — Play Store Copy (5 języków, 2026-09-17)
+# Spokojny Rodzic — Play Store Copy (5 języków, v2.15.0 — 2026-09-25)
 
 Wszystkie teksty zoptymalizowane pod ASO:
 - Tytuł: 30 zn max
 - Krótki opis: 80 zn max (Google indeksuje najsilniej)
 - Pełny opis: 4000 zn max (Google Play limit)
 - Bez akronimów w kluczowych miejscach (pełne nazwy autorytetów = trust)
-- Bez słów z exclusion list: monitoruj, śledź, tracker, kalkulator dawek
+- Bez słów z exclusion list: monitoruj, śledź, kalkulator dawek
 - MDR-safe framing: NIE diagnoza, NIE zastępuje lekarza
+
+**Zmiany v2.15.0:** wspólne konto (jedno Premium dla obojga rodziców, do 3 zaproszonych osób)
+w krótkim opisie i jako druga sekcja pełnego opisu; plan dożywotni w cenach; zdjęcie dziecka
+na liście Premium; „Bez reklam" przeniesione z krótkiego opisu do sekcji „Zawsze za darmo".
+Nowy screenshot: `store-assets/screenshots-2026-09/{lang}/07-shared-account.png`.
+
+Nazwy aplikacji bez zmian (ustawione 2026-09-17).
 
 ---
 
 ## 🇵🇱 PL
 
-### Nazwa (30/30)
+### Nazwa (30/30) — bez zmian
 ```
 Spokojny Rodzic Rozwój Dziecka
 ```
 
-### Krótki opis (78/80)
+### Krótki opis
 ```
-Dziennik zdrowia niemowlaka: temperatura, karmienie, sen, leki. Bez reklam.
+Dziennik niemowlaka dla obojga rodziców: temperatura, karmienie, sen, leki
 ```
 
-### Pełny opis (≈2400/4000)
+### Pełny opis
 ```
 Kiedy dziecko gorączkuje o 3 w nocy, nie chcesz szukać odpowiedzi na forum.
 
 Spokojny Rodzic pomaga Ci wiedzieć co robić — na podstawie danych Twojego dziecka i wytycznych Polskiego Towarzystwa Pediatrycznego oraz American Academy of Pediatrics.
+
+👨‍👩‍👧 JEDNO PREMIUM DLA OBOJGA RODZICÓW
+Zaproś partnera jednym kodem. Oboje widzicie i uzupełniacie te same wpisy — każde na swoim telefonie, na bieżąco. Wiesz, kiedy było ostatnie karmienie i o której podano lek, nawet gdy nie ma Cię w domu.
+• Płaci jedna osoba — Premium działa u obojga
+• Możesz zaprosić do 3 osób: partnera, babcię, nianię
+• Przypomnienia o lekach przychodzą na oba telefony
 
 📱 CO ZAPISUJESZ W APCE
 • Temperaturę ciała z wykresem trendu
@@ -40,9 +53,11 @@ Spokojny Rodzic pomaga Ci wiedzieć co robić — na podstawie danych Twojego dz
 • Ząbkowanie
 
 💎 PREMIUM — 14 DNI ZA DARMO
+• Wspólne konto dla obojga rodziców
 • Analiza wzrostu z siatkami centylowymi WHO
 • Raport PDF dla pediatry (za dowolny okres)
 • Nielimitowana liczba profili dzieci
+• Zdjęcie dziecka w profilu
 • Historia notatek i pytań do lekarza
 • Inteligentne przypomnienia o lekach
 • Pełen dostęp do wytycznych PTP i AAP
@@ -56,6 +71,7 @@ Trial nie wymaga karty. Po 14 dniach dalej używasz podstawowej wersji.
 • Eksport danych do CSV (RODO — prawo do danych)
 • Kompletna biblioteka wytycznych pediatrycznych do przeczytania
 • Numer alarmowy 112 zawsze pod ręką
+• Bez reklam
 
 🩺 BAZUJE NA OFICJALNYCH ŹRÓDŁACH
 Progi temperatury i objawy alarmowe pochodzą z:
@@ -71,8 +87,8 @@ Spokojny Rodzic NIE jest wyrobem medycznym. NIE wylicza dawek leków (dawkę zaw
 W zagrożeniu życia dzwoń 112.
 
 💰 CENA
-Wersja Premium: 14,99 zł / miesiąc lub 119 zł / rok (jak kawa raz w miesiącu).
-Anuluj kiedy chcesz. Bez zobowiązań.
+Premium: 14,99 zł / miesiąc, 119 zł / rok albo 249 zł jednorazowo — na zawsze, bez subskrypcji.
+Subskrypcję anulujesz kiedy chcesz. Bez zobowiązań.
 
 📞 KONTAKT
 Napisz do mnie: matiseekk@gmail.com
@@ -83,23 +99,31 @@ Mniej stresu. Więcej spokoju.
 
 ---
 
-## 🇬🇧 EN
+## 🇬🇧 EN (en-US + wszystkie English variants)
 
-### Nazwa (29/30)
-```
-Calm Parent: Health & Sleep
-```
+Cennik bez waluty — ten sam tekst pasuje do en-GB, en-AU, en-CA, en-IN itd.
 
-### Krótki opis (72/80)
+### Nazwa (29/30) — bez zmian
 ```
-Baby health tracker: temperature, feedings, sleep, medications. Ad-free.
+Calm Parent: Baby Development
 ```
 
-### Pełny opis (≈2350/4000)
+### Krótki opis
+```
+Baby tracker for both parents: temperature, feedings, sleep, medications
+```
+
+### Pełny opis
 ```
 When your baby has a fever at 3 AM, you don't want to search through random forums.
 
 Calm Parent helps you know what to do — based on your child's data and guidelines from the American Academy of Pediatrics and WHO growth standards.
+
+👨‍👩‍👧 ONE PREMIUM FOR BOTH PARENTS
+Invite your partner with a single code. You both see and add the same entries — each on your own phone, in real time. You know when the last feeding was and when the medicine was given, even when you're not at home.
+• Only one of you pays — Premium works for both
+• Invite up to 3 people: partner, grandparent, nanny
+• Medication reminders reach both phones
 
 📱 WHAT YOU LOG
 • Body temperature with trend chart
@@ -113,9 +137,11 @@ Calm Parent helps you know what to do — based on your child's data and guideli
 • Teething progress
 
 💎 PREMIUM — 14 DAYS FREE
+• Shared account for both parents
 • Growth analysis with WHO percentile charts
 • PDF report for your pediatrician (any date range)
 • Unlimited child profiles
+• Your child's photo in their profile
 • Doctor visit notes and questions
 • Smart medication reminders
 • Full access to pediatric guidelines
@@ -129,6 +155,7 @@ Free trial requires no credit card. After 14 days you keep using the basic versi
 • CSV data export (GDPR — right to your data)
 • Complete pediatric guidelines library to read
 • Emergency numbers always accessible
+• No ads
 
 🩺 BASED ON OFFICIAL SOURCES
 Temperature thresholds and warning signs come from:
@@ -144,8 +171,8 @@ Calm Parent is NOT a medical device. It does NOT calculate medication doses (alw
 In life-threatening situations, call your local emergency number.
 
 💰 PRICING
-Premium: $3.99 / month or $24.99 / year (less than $0.07 per day).
-Cancel anytime. No commitment.
+Premium: monthly or yearly subscription, or a one-time lifetime purchase with no subscription. Prices are shown in your local currency.
+Cancel your subscription anytime. No commitment.
 
 📞 CONTACT
 Write to me: matiseekk@gmail.com
@@ -158,21 +185,27 @@ Less stress. More calm.
 
 ## 🇩🇪 DE
 
-### Nazwa (29/30)
+### Nazwa (29/30) — bez zmian
 ```
 Calm Parent: Baby-Entwicklung
 ```
 
-### Krótki opis (70/80)
+### Krótki opis
 ```
-Baby-Tagebuch: Temperatur, Mahlzeiten, Schlaf, Medikamente. Werbefrei.
+Baby-Tagebuch für beide Eltern: Temperatur, Mahlzeiten, Schlaf, Medikamente
 ```
 
-### Pełny opis (≈2400/4000)
+### Pełny opis
 ```
 Wenn Ihr Baby um 3 Uhr nachts fiebert, wollen Sie nicht in Foren nach Antworten suchen.
 
 Calm Parent hilft Ihnen zu wissen, was zu tun ist — basierend auf den Daten Ihres Kindes und den Richtlinien der American Academy of Pediatrics sowie den WHO-Wachstumsstandards.
+
+👨‍👩‍👧 EIN PREMIUM FÜR BEIDE ELTERN
+Laden Sie Ihren Partner mit einem Code ein. Sie sehen und ergänzen beide dieselben Einträge — jeder auf dem eigenen Handy, in Echtzeit. Sie wissen, wann die letzte Mahlzeit war und wann das Medikament gegeben wurde, auch wenn Sie nicht zu Hause sind.
+• Nur einer zahlt — Premium gilt für beide
+• Bis zu 3 Personen einladen: Partner, Großeltern, Babysitter
+• Medikamentenerinnerungen kommen auf beiden Handys an
 
 📱 WAS SIE FESTHALTEN
 • Körpertemperatur mit Trendkurve
@@ -186,9 +219,11 @@ Calm Parent hilft Ihnen zu wissen, was zu tun ist — basierend auf den Daten Ih
 • Zahnentwicklung
 
 💎 PREMIUM — 14 TAGE GRATIS
+• Gemeinsames Konto für beide Eltern
 • Wachstumsanalyse mit WHO-Perzentilkurven
 • PDF-Bericht für Ihren Kinderarzt (beliebiger Zeitraum)
 • Unbegrenzte Kinderprofile
+• Foto Ihres Kindes im Profil
 • Notizen und Fragen zu Arztbesuchen
 • Intelligente Medikamentenerinnerungen
 • Voller Zugriff auf pädiatrische Richtlinien
@@ -202,6 +237,7 @@ Die Testphase erfordert keine Kreditkarte. Nach 14 Tagen nutzen Sie weiterhin di
 • CSV-Datenexport (DSGVO — Recht auf Ihre Daten)
 • Vollständige Bibliothek pädiatrischer Richtlinien zum Nachlesen
 • Notrufnummer 112 immer griffbereit
+• Werbefrei
 
 🩺 BASIERT AUF OFFIZIELLEN QUELLEN
 Temperaturschwellen und Warnzeichen stammen aus:
@@ -217,8 +253,8 @@ Calm Parent ist KEIN Medizinprodukt. Die App berechnet KEINE Medikamentendosen (
 Im Notfall rufen Sie 112 an.
 
 💰 PREIS
-Premium: 3,99 € / Monat oder 24,99 € / Jahr.
-Jederzeit kündbar. Keine Verpflichtung.
+Premium: 3,99 € / Monat, 24,99 € / Jahr oder einmalig 49,99 € — für immer, ohne Abo.
+Abo jederzeit kündbar. Keine Verpflichtung.
 
 📞 KONTAKT
 Schreiben Sie mir: matiseekk@gmail.com
@@ -231,21 +267,27 @@ Weniger Stress. Mehr Ruhe.
 
 ## 🇫🇷 FR
 
-### Nazwa (23/30)
+### Nazwa (23/30) — bez zmian
 ```
 Calm Parent: Éveil Bébé
 ```
 
-### Krótki opis (74/80)
+### Krótki opis
 ```
-Carnet bébé: température, biberons, sommeil, médicaments. Sans publicité.
+Carnet bébé pour les deux parents : température, biberons, sommeil, soins
 ```
 
-### Pełny opis (≈2450/4000)
+### Pełny opis
 ```
 Quand votre bébé a de la fièvre à 3 heures du matin, vous ne voulez pas chercher des réponses sur des forums.
 
 Calm Parent vous aide à savoir quoi faire — basé sur les données de votre enfant et les recommandations de l'American Academy of Pediatrics ainsi que les normes de croissance OMS.
+
+👨‍👩‍👧 UN PREMIUM POUR LES DEUX PARENTS
+Invitez votre partenaire avec un simple code. Vous voyez et complétez tous les deux les mêmes entrées — chacun sur son téléphone, en temps réel. Vous savez quand a eu lieu le dernier biberon et à quelle heure le médicament a été donné, même quand vous n'êtes pas à la maison.
+• Un seul paie — Premium pour vous deux
+• Jusqu'à 3 personnes invitées : partenaire, grands-parents, nounou
+• Les rappels de médicaments arrivent sur les deux téléphones
 
 📱 CE QUE VOUS ENREGISTREZ
 • Température corporelle avec courbe de tendance
@@ -259,9 +301,11 @@ Calm Parent vous aide à savoir quoi faire — basé sur les données de votre e
 • Éruption dentaire
 
 💎 PREMIUM — 14 JOURS GRATUITS
+• Compte partagé pour les deux parents
 • Analyse de croissance avec courbes de percentiles OMS
 • Rapport PDF pour votre pédiatre (période au choix)
 • Profils enfants illimités
+• Photo de votre enfant dans son profil
 • Notes et questions pour les visites médicales
 • Rappels intelligents de médicaments
 • Accès complet aux recommandations pédiatriques
@@ -275,6 +319,7 @@ L'essai ne nécessite pas de carte bancaire. Après 14 jours, vous continuez à 
 • Export des données au format CSV (RGPD — droit à vos données)
 • Bibliothèque complète de recommandations pédiatriques à consulter
 • Numéros d'urgence toujours accessibles
+• Sans publicité
 
 🩺 BASÉ SUR DES SOURCES OFFICIELLES
 Les seuils de température et signes d'alerte proviennent de :
@@ -290,8 +335,8 @@ Calm Parent N'EST PAS un dispositif médical. L'application NE calcule PAS les d
 En cas d'urgence vitale, appelez le 112 (ou 15).
 
 💰 TARIF
-Premium : 3,99 € / mois ou 24,99 € / an (moins de 0,07 € par jour).
-Annulable à tout moment. Sans engagement.
+Premium : 3,99 € / mois, 24,99 € / an ou 49,99 € en une fois — à vie, sans abonnement.
+Abonnement annulable à tout moment. Sans engagement.
 
 📞 CONTACT
 Écrivez-moi : matiseekk@gmail.com
@@ -304,21 +349,27 @@ Moins de stress. Plus de sérénité.
 
 ## 🇪🇸 ES
 
-### Nazwa (30/30)
+### Nazwa (28/30) — bez zmian
 ```
 Calm Parent: Desarrollo Bebé
 ```
 
-### Krótki opis (67/80)
+### Krótki opis
 ```
-Diario bebé: temperatura, tomas, sueño, medicamentos. Sin anuncios.
+Diario del bebé para ambos padres: temperatura, tomas, sueño, medicamentos
 ```
 
-### Pełny opis (≈2350/4000)
+### Pełny opis
 ```
 Cuando tu bebé tiene fiebre a las 3 de la mañana, no quieres buscar respuestas en foros aleatorios.
 
 Calm Parent te ayuda a saber qué hacer — basado en los datos de tu hijo y las directrices de la American Academy of Pediatrics y los estándares de crecimiento de la OMS.
+
+👨‍👩‍👧 UN PREMIUM PARA AMBOS PADRES
+Invita a tu pareja con un solo código. Ambos veis y completáis los mismos registros — cada uno en su móvil, en tiempo real. Sabes cuándo fue la última toma y a qué hora se dio el medicamento, incluso cuando no estás en casa.
+• Solo paga uno — Premium para los dos
+• Invita hasta 3 personas: pareja, abuelos, niñera
+• Los recordatorios de medicamentos llegan a ambos móviles
 
 📱 LO QUE REGISTRAS
 • Temperatura corporal con gráfico de tendencia
@@ -332,9 +383,11 @@ Calm Parent te ayuda a saber qué hacer — basado en los datos de tu hijo y las
 • Dentición
 
 💎 PREMIUM — 14 DÍAS GRATIS
+• Cuenta compartida para ambos padres
 • Análisis de crecimiento con curvas de percentiles OMS
 • Informe PDF para tu pediatra (rango de fechas a elegir)
 • Perfiles de niños ilimitados
+• Foto de tu hijo en su perfil
 • Notas y preguntas para las visitas médicas
 • Recordatorios inteligentes de medicamentos
 • Acceso completo a las guías pediátricas
@@ -348,6 +401,7 @@ La prueba no requiere tarjeta. Después de 14 días sigues usando la versión b�
 • Exportación de datos en CSV (RGPD — derecho a tus datos)
 • Biblioteca completa de guías pediátricas para leer
 • Números de emergencia siempre disponibles
+• Sin anuncios
 
 🩺 BASADO EN FUENTES OFICIALES
 Los umbrales de temperatura y signos de alerta provienen de:
@@ -363,8 +417,8 @@ Calm Parent NO es un dispositivo médico. La aplicación NO calcula dosis de med
 En caso de emergencia vital, llama al 112.
 
 💰 PRECIO
-Premium: 3,99 € / mes o 24,99 € / año.
-Cancela cuando quieras. Sin compromiso.
+Premium: 3,99 € / mes, 24,99 € / año o 49,99 € en un solo pago — para siempre, sin suscripción.
+Cancela la suscripción cuando quieras. Sin compromiso.
 
 📞 CONTACTO
 Escríbeme: matiseekk@gmail.com
@@ -377,16 +431,18 @@ Menos estrés. Más calma.
 
 ## Instrukcje wgrania w Play Console
 
-1. **Store presence** → **Main store listing**
-2. **Górny language selector** → wybierz język (PL / EN-US / DE-DE / FR-FR / ES-ES)
-3. Wklej trzy pola:
-   - **Nazwa aplikacji** (tytuł)
-   - **Krótki opis**
-   - **Pełny opis**
-4. **Zapisz jako wersję roboczą** → **Wyślij do sprawdzenia**
-5. Powtórz dla każdego z 5 języków (jedna zbiorcza recenzja Google)
+1. **Obecność w sklepie** → **Główna strona aplikacji**
+2. **Górny wybór języka** → wybierz język (PL / EN-US / DE-DE / FR-FR / ES-ES)
+3. Wklej **Krótki opis** i **Pełny opis** (nazwa zostaje)
+4. **Zrzuty ekranu telefonu** → dodaj `store-assets/screenshots-2026-09/{lang}/07-shared-account.png`
+   i przeciągnij go na **2. miejsce** (pierwsze 3 screeny widać w wynikach wyszukiwania)
+5. Powtórz dla każdego z 5 języków; dla English variants (en-GB, en-AU, en-CA, en-IN…) wklej tekst EN i screen `en/07`
+6. **Zapisz** → **Wyślij do sprawdzenia** (jedna zbiorcza recenzja Google)
 
 Google akceptuje zwykle w 1-3 dni robocze. Zmiany opisu **nie wymagają** nowej wersji AAB.
+
+Ceny w opisach DE/FR/ES zakładają 49,99 € za plan dożywotni w strefie euro (Play Console →
+Produkty w aplikacji → spokojny_rodzic_premium_lifetime).
 
 ---
 
@@ -396,8 +452,10 @@ Google akceptuje zwykle w 1-3 dni robocze. Zmiany opisu **nie wymagają** nowej 
 |---|---|
 | „Kalkulator dawek" | Funkcja usunięta w v2.7.1 z powodu MDR — mówienie o niej to misleading claim |
 | „Bezpłatnie" / „Free forever" | Mylące bo apka ma Premium/trial. Google i tak pokazuje „Zawiera zakupy w aplikacji" |
-| „Monitoruj" / „Śledź" / „Tracker" | Zimne, techniczne konotacje (patrz appstore-copy exclusion list) |
+| „Monitoruj" / „Śledź" | Zimne, techniczne konotacje (EN „tracker" zostaje — top keyword w EN) |
+| „Kto podał lek" | Wpisy nie zapisują autora — obiecujemy tylko „o której podano lek" |
 | „Sztuczna inteligencja" | Apka nie używa AI (deterministyczne progi z wytycznych) — kłamstwo |
 | „#1 aplikacja dla mam" | Superlatywy zabronione przez Google Play policies |
 | „Zatwierdzone przez lekarzy" | Bez formalnego endorsement to fałszywy claim |
 | Fikcyjne recenzje / testimoniale | UOKiK risk + Google Play „Misleading Claims" |
+| Ceny w walucie w opisie EN | Ten sam tekst idzie do en-GB/en-AU/en-IN — $ byłby mylący poza USA |
