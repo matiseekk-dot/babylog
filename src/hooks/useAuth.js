@@ -10,6 +10,7 @@ import {
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import { auth, provider } from '../firebase'
 import { captureError, addBreadcrumb, setUserContext } from '../sentry'
+import { trackLoginFailed } from '../utils/analytics'
 
 /**
  * useAuth()
@@ -81,6 +82,7 @@ export function useAuth() {
       }
     } catch (e) {
       captureError(e, { context: 'auth-signin' })
+      trackLoginFailed(String(e?.code || e?.message || 'unknown').slice(0, 80))
       throw e
     }
   }

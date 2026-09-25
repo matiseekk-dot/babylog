@@ -113,6 +113,9 @@ let analyticsChecked = false
 export async function getAnalyticsIfSupported() {
   if (analyticsChecked) return analyticsInstance
   analyticsChecked = true
+  // v2.16.1: dev server (npm run dev, skrypty screenshotów) nie zaśmieca
+  // statystyk — wcześniej każdy przebieg liczył się jako nowy użytkownik.
+  if (import.meta.env.DEV) return null
   try {
     const supported = await isAnalyticsSupported()
     if (!supported) {

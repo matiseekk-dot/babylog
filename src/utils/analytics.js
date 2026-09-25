@@ -81,6 +81,22 @@ export async function track(eventName, params = {}) {
 /** User zaakceptował medical consent. Pierwszy krok lifecycle. */
 export const trackConsentAccepted = () => track('consent_accepted')
 
+// v2.16.1: kroki między zgodą a onboardingiem — połowa użytkowników odpadała
+// między consent_accepted a onboarding_completed, nie wiadomo było na którym
+// ekranie (logowanie czy formularz dziecka).
+
+/** @param {string} method — 'google' | 'guest' */
+export const trackLoginChoice = (method) => track('login_choice', { method })
+
+/** @param {string} reason — kod błędu (anulowanie dialogu też tu trafia) */
+export const trackLoginFailed = (reason) => track('login_failed', { reason })
+
+/** Formularz dziecka się wyświetlił (raz na wejście na ekran). */
+export const trackOnboardingViewed = () => track('onboarding_viewed')
+
+/** Serwerowy trial konta Google właśnie wystartował (initTrial: nowy). */
+export const trackTrialStarted = () => track('trial_started')
+
 /**
  * Onboarding zakończony — user wpisał name + DOB.
  * @param {object} params — { ageMonths, sex }
@@ -95,6 +111,25 @@ export const trackOnboardingCompleted = (params) =>
  */
 export const trackFirstEntry = (entryType) =>
   track('first_entry_added', { entry_type: entryType })
+
+// v2.16.1: flaga per urządzenie (wcześniej per uid i tylko dla zalogowanych
+// z przycisku "+", więc goście i wpisy z zakładek w ogóle się nie liczyli).
+const FIRST_ENTRY_FLAG = 'babylog_first_entry_tracked'
+
+/** Czy na tym urządzeniu padł już jakiś wpis (też stara flaga per uid). */
+export function hasFirstEntryFlag() {
+  try {
+    return Object.keys(localStorage).some(k => k.startsWith(FIRST_ENTRY_FLAG))
+  } catch { return false }
+}
+
+/** first_entry_added raz na urządzenie. Zwraca true, gdy to był pierwszy wpis. */
+export function trackFirstEntryOnce(entryType) {
+  if (hasFirstEntryFlag()) return false
+  try { localStorage.setItem(FIRST_ENTRY_FLAG, '1') } catch {}
+  trackFirstEntry(entryType)
+  return true
+}
 
 /**
  * Paywall się otworzył.
@@ -112,10 +147,11 @@ export const trackPaywallCTAClicked = (plan, trigger) =>
   track('paywall_cta_clicked', { plan, trigger })
 
 /**
- * Premium aktywowane — RC webhook wystrzelił INITIAL_PURCHASE → Firestore
- * premium_purchased = true → ten event triggeruje się gdy klient widzi
- * przejście (false → true).
- * @param {string} plan — 'monthly' | 'yearly' | 'unknown'
+ * Zakup potwierdzony — po zakupie w tej sesji (pendingActivation) webhook RC
+ * zapisał premium_purchased i apka to zobaczyła.
+ * v2.16.1: wcześniej event leciał przy każdym przejściu isPremium false → true,
+ * czyli też przy starcie triala i przy doładowaniu danych po uruchomieniu.
+ * @param {string} plan — SKU produktu
  */
 export const trackPurchaseCompleted = (plan, extra = {}) =>
   track('purchase_completed', { plan, ...extra })

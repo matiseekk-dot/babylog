@@ -6,6 +6,29 @@ import { t, useLocale } from '../i18n'
 // zrozumiałe vs abstrakcyjne SVG).
 import { Moon, Square, Thermometer } from 'lucide-react'
 
+// ── Diaper options w zależności od toiletMode ─────────────────────────────
+// Eksportowane — FirstEntryCard pokazuje te same szybkie wpisy.
+export function getDiaperOptions(toiletMode) {
+  if (toiletMode === 'toilet') {
+    return [
+      { key: 'Siku', emoji: '💧', labelKey: 'diaper.toilet_pee' },
+      { key: 'Kupa', emoji: '💩', labelKey: 'diaper.toilet_poo' },
+    ]
+  }
+  if (toiletMode === 'potty') {
+    return [
+      { key: 'Mokra',       emoji: '💧', labelKey: 'diaper.wet' },
+      { key: 'Nocnik-siku', emoji: '🚽', labelKey: 'diaper.potty_pee' },
+      { key: 'Nocnik-kupa', emoji: '🚽', labelKey: 'diaper.potty_poo' },
+    ]
+  }
+  return [
+    { key: 'Mokra',   emoji: '💧', labelKey: 'diaper.wet' },
+    { key: 'Brudna',  emoji: '💩', labelKey: 'diaper.dirty' },
+    { key: 'Obydwie', emoji: '🔄', labelKey: 'diaper.both' },
+  ]
+}
+
 /**
  * QuickAddFab — floating button do szybkiego logowania.
  *
@@ -112,27 +135,7 @@ export default function QuickAddFab({
     setTimeout(() => { fn?.() }, 50)
   }
 
-  // ── Diaper options w zależności od toiletMode ─────────────────────────────
-  const diaperOptions = (() => {
-    if (toiletMode === 'toilet') {
-      return [
-        { key: 'Siku', emoji: '💧', labelKey: 'diaper.toilet_pee' },
-        { key: 'Kupa', emoji: '💩', labelKey: 'diaper.toilet_poo' },
-      ]
-    }
-    if (toiletMode === 'potty') {
-      return [
-        { key: 'Mokra',       emoji: '💧', labelKey: 'diaper.wet' },
-        { key: 'Nocnik-siku', emoji: '🚽', labelKey: 'diaper.potty_pee' },
-        { key: 'Nocnik-kupa', emoji: '🚽', labelKey: 'diaper.potty_poo' },
-      ]
-    }
-    return [
-      { key: 'Mokra',   emoji: '💧', labelKey: 'diaper.wet' },
-      { key: 'Brudna',  emoji: '💩', labelKey: 'diaper.dirty' },
-      { key: 'Obydwie', emoji: '🔄', labelKey: 'diaper.both' },
-    ]
-  })()
+  const diaperOptions = getDiaperOptions(toiletMode)
 
   return (
     <>
@@ -342,7 +345,7 @@ function SheetSection({ title, children }) {
   )
 }
 
-function ActionTile({ Icon, emoji, labelKey, accent, bg, onClick, highlighted }) {
+export function ActionTile({ Icon, emoji, labelKey, accent, bg, onClick, highlighted }) {
   return (
     <button
       type="button"

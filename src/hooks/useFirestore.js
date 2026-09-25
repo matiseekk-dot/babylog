@@ -18,6 +18,14 @@ const GUEST_PREFIX = 'babylog_guest_'
 let accountUid = null
 export function setAccountUid(uid) { accountUid = uid || null }
 
+// v2.16.1: powiadomienie o nowym wpisie (lista wpisów urosła po akcji usera).
+// Jedno miejsce zamiast wywołań w każdej zakładce — App podpina tu analytics
+// "pierwszego wpisu". Snapshoty z Firestore (np. wpis partnera) nie przechodzą
+// przez set(), więc nie są liczone. *_custom_ to definicje, *_timer_ to stan.
+const ENTRY_LIST_KEY = /^(feed|sleep|diaper|temp|meds|growth|cough|symptoms|teething|milestones|vacc|diet)_(?!custom_|timer_)/
+let entryAddedListener = null
+export function setEntryAddedListener(fn) { entryAddedListener = fn }
+
 function lsPrefix(uid) {
   if (!uid) return GUEST_PREFIX
   if (accountUid && uid !== accountUid) return `babylog_shared_${uid}_`
@@ -72,9 +80,26 @@ function lsKeys() {
  */
 const FIRESTORE_DEBOUNCE_MS = 500
 
+// v2.16.1: kilka instancji hooka z tym samym kluczem (np. App dla przycisku +
+// i TodayTab) trzyma osobne stany. Zalogowanych synchronizował dopiero snapshot
+// Firestore po debounce, a gościa nic — wpis z "+" nie pojawiał się na Dziś
+// do zmiany zakładki. set() rozsyła teraz nową wartość do pozostałych instancji.
+const siblingSetters = new Map()  // klucz localStorage → Set(setState)
+
 export function useFirestore(uid, key, fallback) {
   const [state, setState] = useState(() => lsLoad(uid, key, fallback))
   const firstSnap = useRef(true)
+
+  useEffect(() => {
+    const lsKey = lsPrefix(uid) + key
+    if (!siblingSetters.has(lsKey)) siblingSetters.set(lsKey, new Set())
+    const setters = siblingSetters.get(lsKey)
+    setters.add(setState)
+    return () => {
+      setters.delete(setState)
+      if (setters.size === 0) siblingSetters.delete(lsKey)
+    }
+  }, [uid, key])
   const prevUid = useRef(uid)
   const prevKey = useRef(key)
   // v2.10.0: debounce timer + pending value dla setDoc
@@ -136,6 +161,11 @@ export function useFirestore(uid, key, fallback) {
     // LocalStorage zapisz natychmiast — instant feedback w UI
     lsSave(uid, key, next)
     setState(next)
+    siblingSetters.get(lsPrefix(uid) + key)?.forEach(s => { if (s !== setState) s(next) })
+    if (entryAddedListener && ENTRY_LIST_KEY.test(key)
+        && Array.isArray(next) && Array.isArray(state) && next.length > state.length) {
+      entryAddedListener(key.slice(0, key.indexOf('_')))
+    }
     if (uid) {
       // v2.10.0: debounce setDoc. Jeśli user spamuje set(), ostatnia
       // wartość wygrywa po 500ms ciszy. To zmniejsza koszt Firestore

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline, setAccountUid } from './hooks/useFirestore'
+import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline, setAccountUid, setEntryAddedListener } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
 import MedicalConsentScreen, { needsConsent } from './components/MedicalConsentScreen'
@@ -42,9 +42,10 @@ import ToastContainer from './components/Toast'
 import { toast } from './components/Toast'
 import { captureError, addBreadcrumb } from './sentry'
 import {
-  trackPurchaseCompleted, trackFirstEntry,
+  trackPurchaseCompleted, trackFirstEntryOnce, hasFirstEntryFlag, trackLoginChoice,
   trackPartnerCardClicked, trackPartnerCardDismissed, setAnalyticsUserProperty,
 } from './utils/analytics'
+import FirstEntryCard from './components/FirstEntryCard'
 import { usePartners } from './hooks/usePartners'
 import { shouldShowPartnerInvite } from './utils/partner'
 import PartnerInviteCard from './components/PartnerInviteCard'
@@ -351,9 +352,34 @@ export default function App() {
   const [feedLogsForFab,   setFeedLogsForFab]   = useFirestore(dataUid, `feed_${active.id}`,   [])
   const [sleepLogsForFab,  setSleepLogsForFab]  = useFirestore(dataUid, `sleep_${active.id}`,  [])
   const [diaperLogsForFab, setDiaperLogsForFab] = useFirestore(dataUid, `diaper_${active.id}`, [])
+  const [tempLogs] = useFirestore(dataUid, `temp_${active.id}`, [])
+
+  // v2.16.1 — pierwszy wpis (aktywacja). Nowy użytkownik widzi FirstEntryCard
+  // zamiast "Pustego dnia"; okno o trialu i porady czekają, aż coś zapisze.
+  // Listener w useFirestore łapie wpisy z każdej zakładki, też u gościa.
+  const [hasFirstEntry, setHasFirstEntry] = useState(hasFirstEntryFlag)
+  useEffect(() => {
+    setEntryAddedListener((entryType) => {
+      trackFirstEntryOnce(entryType)
+      setHasFirstEntry(true)
+    })
+    return () => setEntryAddedListener(null)
+  }, [])
+  const hasAnyEntry = hasFirstEntry || !!sleepTimerTs
+    || feedLogsForFab.length > 0 || sleepLogsForFab.length > 0
+    || diaperLogsForFab.length > 0 || tempLogs.length > 0
+  const FIRST_ENTRY_CARD_KEY = 'babylog_first_entry_card_dismissed'
+  const [firstEntryCardDismissed, setFirstEntryCardDismissed] = useState(() => {
+    try { return localStorage.getItem(FIRST_ENTRY_CARD_KEY) === '1' } catch { return false }
+  })
+  const dismissFirstEntryCard = () => {
+    setFirstEntryCardDismissed(true)
+    try { localStorage.setItem(FIRST_ENTRY_CARD_KEY, '1') } catch {}
+  }
+  const firstStepsDone = hasAnyEntry || firstEntryCardDismissed
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
-  const { isPremium, isOnTrial, trialDaysLeft, purchased, premiumViaPartner, activate, deactivate } = usePremium(uid, ownerUid)
+  const { isPremium, isOnTrial, trialDaysLeft, purchased, activate, deactivate } = usePremium(uid, ownerUid)
 
   // Premium onboarding — pokazuje modal raz po pierwszym odblokowaniu Premium
   const [showPremiumOnboarding, setShowPremiumOnboarding] = useState(false)
@@ -361,17 +387,8 @@ export default function App() {
   useEffect(() => {
     // Detekcja: false → true przejście (zakup właśnie przeszedł)
     if (isPremium && !prevIsPremium && uid) {
-      // v2.11.32 P1-6: track purchase completed. To jest kluczowa metryka
-      // — bottom of funnel. Plan jest unknown bo Firestore pole
-      // `premium_meta.value.product_id` byłoby zsynchronizowane z opóźnieniem.
-      // Dla MVP wystarczy znać że zakup przeszedł; granularność per-plan
-      // mamy z paywall_cta_clicked który łapie wybór planu przed kupnem.
-      // Premium odziedziczone po połączeniu z partnerem to nie zakup.
-      if (!premiumViaPartner) {
-        trackPurchaseCompleted(purchased ? 'purchased' : 'trial_to_premium', {
-          has_partner: partners?.length ? 1 : 0,
-        })
-      }
+      // v2.16.1: purchase_completed przeniesiony do efektu pendingActivation —
+      // tu przejście false → true łapało też start triala i doładowanie danych.
       const flagKey = 'babylog_premium_onboarding_shown_' + uid
       try {
         if (localStorage.getItem(flagKey) !== '1') {
@@ -381,7 +398,7 @@ export default function App() {
       } catch {}
     }
     setPrevIsPremium(isPremium)
-  }, [isPremium, prevIsPremium, uid, purchased, premiumViaPartner, partners])
+  }, [isPremium, prevIsPremium, uid])
 
   const closePremiumOnboarding = () => setShowPremiumOnboarding(false)
   const navigateToPdfReport = () => {
@@ -401,6 +418,8 @@ export default function App() {
     // Podczas ładowania auth uid jest null i liczy się trial gościa — bez tego
     // modal wyskakiwał po każdym starcie u osób, które były wcześniej gościem.
     if (authLoading) return
+    // v2.16.1: nie zasłaniaj startu — najpierw pierwszy wpis (FirstEntryCard).
+    if (!firstStepsDone) return
     if (!isOnTrial) return
     if (!trialDaysLeft || trialDaysLeft < 13) return  // pokazuj tylko dla świeżego trialu (>=13/14 dni)
     const flagKey = `babylog_trial_started_shown_${trialStartedKey}`
@@ -408,7 +427,7 @@ export default function App() {
       if (localStorage.getItem(flagKey) === '1') return
     } catch {}
     setShowTrialStarted(true)
-  }, [authLoading, trialStartedKey, isOnTrial, trialDaysLeft])
+  }, [authLoading, firstStepsDone, trialStartedKey, isOnTrial, trialDaysLeft])
 
   const dismissTrialStarted = () => {
     setShowTrialStarted(false)
@@ -807,6 +826,9 @@ export default function App() {
     if (!pendingActivation || pendingActivation.status !== 'waiting') return
     if (isPremium) {
       addBreadcrumb('purchase', 'activation-completed', { productId: pendingActivation.productId })
+      trackPurchaseCompleted(pendingActivation.productId || 'unknown', {
+        has_partner: partners?.length ? 1 : 0,
+      })
       toast(t('paywall.activated'))
       setPendingActivation(null)
       // Clear z localStorage queue
@@ -816,7 +838,7 @@ export default function App() {
         localStorage.setItem('babylog_pending_activations', JSON.stringify(filtered))
       } catch {}
     }
-  }, [isPremium, pendingActivation])
+  }, [isPremium, pendingActivation, partners])
 
   // v2.11.13 — Timeout pending activation po 60s. Jeśli webhook RC nie dotarł
   // do Firestore w tym czasie, pokazujemy modal z error + instrukcja kontaktu
@@ -1000,24 +1022,12 @@ export default function App() {
     ? (lastBreastFeed.type === 'Pierś lewa' ? 'Pierś prawa' : 'Pierś lewa')
     : null
 
-  // v2.11.32 P1-6: track FIRST entry once per uid. localStorage flaga żeby
-  // nie spamować analytics przy każdym kolejnym wpisie — interesuje nas
-  // dystans install→first_entry (aha moment), nie wszystkie 1000 wpisów.
-  const trackFirstEntryOnce = (entryType) => {
-    if (!uid) return
-    const flagKey = 'babylog_first_entry_tracked_' + uid
-    try {
-      if (localStorage.getItem(flagKey) === '1') return
-      localStorage.setItem(flagKey, '1')
-      trackFirstEntry(entryType)
-    } catch {}
-  }
-
+  // Pierwszy wpis (first_entry_added) liczy listener w useFirestore — patrz
+  // setEntryAddedListener wyżej. Tu tylko start snu, który nie tworzy wpisu.
   const quickAddFeed = (type, amount) => {
     const entry = { id: genId(), type, amount, time: nowTime(), date: todayDate() }
     setFeedLogsForFab([entry, ...feedLogsForFab])
     refresh?.()
-    trackFirstEntryOnce('feed')
     toast(`${t('toast.entry')}: ${type}`)
   }
 
@@ -1025,7 +1035,6 @@ export default function App() {
     const entry = { id: genId(), type, time: nowTime(), date: todayDate() }
     setDiaperLogsForFab([entry, ...diaperLogsForFab])
     refresh?.()
-    trackFirstEntryOnce('diaper')
     toast(`${t('toast.entry')}: ${type}`)
   }
 
@@ -1047,13 +1056,14 @@ export default function App() {
       setSleepLogsForFab([entry, ...sleepLogsForFab])
       setSleepTimerTs(null)
       refresh?.()
-      trackFirstEntryOnce('sleep')
       const sessionH = Math.floor(dur / 3600)
       const sessionM = Math.floor((dur % 3600) / 60)
       const sessionStr = sessionH > 0 ? `${sessionH}h ${sessionM}m` : `${sessionM}m`
       toast(`${t('toast.sleep_ended')}: ${sessionStr}`)
     } else {
       setSleepTimerTs(Date.now())
+      trackFirstEntryOnce('sleep_start')
+      setHasFirstEntry(true)
       toast(t('toast.sleep_started'))
     }
   }
@@ -1147,8 +1157,9 @@ export default function App() {
     return (
       <div className="app">
         <LoginScreen
-          onLogin={login}
+          onLogin={() => { trackLoginChoice('google'); return login() }}
           onSkip={() => {
+            trackLoginChoice('guest')
             try { localStorage.setItem('babylog_guest', '1') } catch {}
             setGuestMode(true)
           }}
@@ -1348,6 +1359,16 @@ export default function App() {
             PTP/AAP. Apka pokazuje user'owi (a) jego własne dane w tabach,
             (b) statyczne tabele dostępne pod More → "Wytyczne PTP/AAP".
             Apka nie ocenia, nie alertuje, nie diagnozuje. */}
+        {!showProfiles && !showMore && tab === 'today' && !firstStepsDone && (
+          <FirstEntryCard
+            onQuickFeed={quickAddFeed}
+            onQuickDiaper={quickAddDiaper}
+            onQuickSleepStart={quickToggleSleep}
+            toiletMode={active.toiletMode || 'diapers'}
+            onDismiss={dismissFirstEntryCard}
+          />
+        )}
+
         {!showProfiles && !showMore && tab === 'today' && (
           <TodaySummaryCard onNavigate={navigate} />
         )}
@@ -1364,7 +1385,7 @@ export default function App() {
         {/* ONBOARDING TIPS — 3 edu tipy, dismissable, jednorazowy.
             Pokazuje się tylko jeśli localStorage flaga nie ustawiona.
             Po dismiss nie wraca. v2.9.2: zastępuje 3 slidy z onboardingu. */}
-        {!showProfiles && !showMore && (
+        {!showProfiles && !showMore && firstStepsDone && (
           <OnboardingTipsBanner />
         )}
 

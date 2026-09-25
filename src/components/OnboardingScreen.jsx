@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { t, useLocale } from '../i18n'
-import { trackOnboardingCompleted } from '../utils/analytics'
+import { trackOnboardingCompleted, trackOnboardingViewed } from '../utils/analytics'
 import PartnerJoinForm from './PartnerJoinForm'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
@@ -48,6 +48,8 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
 
   const [mode, setMode] = useState(() => (hasJoinIntent() ? 'join' : 'profile'))
   const [joined, setJoined] = useState(false)
+
+  useEffect(() => { trackOnboardingViewed() }, [])
 
   // Zamiar "dołącz kodem" dotyczy tylko powrotu z logowania. Czyścimy dopiero
   // gdy użytkownik jest zalogowany — gość, który anulował logowanie, po

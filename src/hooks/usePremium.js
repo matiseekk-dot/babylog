@@ -3,6 +3,7 @@ import { httpsCallable } from 'firebase/functions'
 import { functions } from '../firebase'
 import { useFirestore } from './useFirestore'
 import { addBreadcrumb, captureError } from '../sentry'
+import { trackTrialStarted } from '../utils/analytics'
 
 const TRIAL_DAYS = 14
 
@@ -83,6 +84,7 @@ export function usePremium(uid, ownerUid = null) {
           alreadyExisted: result.data?.alreadyExisted,
           trialStartMs: result.data?.trialStartMs,
         })
+        if (result.data?.alreadyExisted === false) trackTrialStarted()
       } catch (err) {
         // Network down / CF not deployed / permission denied — kontynuujemy
         // z lokalnym cache (authTrialStart). Niekrytyczne — przy następnym
