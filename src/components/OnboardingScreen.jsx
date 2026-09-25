@@ -1,8 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { t, useLocale } from '../i18n'
 import { trackOnboardingCompleted } from '../utils/analytics'
+import PartnerJoinForm from './PartnerJoinForm'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
+
+// Gość klika "Zaloguj się" w trybie kodu → po powrocie z logowania ekran
+// ma od razu otworzyć się na polu kodu, a nie na tworzeniu profilu.
+// Czytane w inicjalizatorze, czyszczone dopiero w efekcie po montażu —
+// inicjalizator może się wykonać dwa razy (StrictMode), a wtedy drugie
+// wywołanie nie widziałoby już flagi.
+const JOIN_INTENT_KEY = 'babylog_onb_join'
+
+function hasJoinIntent() {
+  try { return sessionStorage.getItem(JOIN_INTENT_KEY) === '1' } catch { return false }
+}
 
 /**
  * OnboardingScreen
@@ -19,13 +31,36 @@ const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
  *   - Step 2 (waga) opcjonalny [→ usunięty całkowicie w 2.9.2]
  *   - Data urodzenia (input type="date") zamiast lat+miesięcy
  *
+ * v2.16.0: "Mam kod od partnera" — zaproszony rodzic dołącza do wspólnego
+ *   konta od razu, bez tworzenia profilu dziecka, którego i tak by nie używał.
+ *   Po dołączeniu App przełącza dane na konto właściciela (onboarding_done
+ *   właściciela = true), więc ten ekran sam znika.
+ *
  * Props:
  *   onComplete(profileData) — wywoływane z {
  *     name, months, weight (zawsze null po 2.9.2), avatar, sex, toiletMode
  *   }
+ *   canJoinPartner    — zalogowany przez Google (wspólne konto tego wymaga)
+ *   onLoginForPartner — fn(): gość chce dołączyć → logowanie Google
  */
-export default function OnboardingScreen({ onComplete }) {
+export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginForPartner }) {
   useLocale()
+
+  const [mode, setMode] = useState(() => (hasJoinIntent() ? 'join' : 'profile'))
+  const [joined, setJoined] = useState(false)
+
+  // Zamiar "dołącz kodem" dotyczy tylko powrotu z logowania. Czyścimy dopiero
+  // gdy użytkownik jest zalogowany — gość, który anulował logowanie, po
+  // powrocie nadal trafia na pole kodu.
+  useEffect(() => {
+    if (!canJoinPartner) return
+    try { sessionStorage.removeItem(JOIN_INTENT_KEY) } catch {}
+  }, [canJoinPartner])
+
+  const loginForPartner = () => {
+    try { sessionStorage.setItem(JOIN_INTENT_KEY, '1') } catch {}
+    onLoginForPartner()
+  }
 
   const [name, setName] = useState('')
   const [dob, setDob] = useState('')   // YYYY-MM-DD
@@ -74,6 +109,43 @@ export default function OnboardingScreen({ onComplete }) {
     })
   }
 
+  const hint = { fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, marginBottom: 'var(--space)' }
+
+  const joinPanel = (
+    <div>
+      {joined ? (
+        <div style={{ ...hint, textAlign: 'center', padding: 'var(--space-comfortable) 0' }}>
+          ⏳ {t('onb.partner.loading')}
+        </div>
+      ) : canJoinPartner ? (
+        <>
+          <div style={hint}>{t('onb.partner.desc')}</div>
+          <PartnerJoinForm source="onboarding" onJoined={() => setJoined(true)} />
+        </>
+      ) : (
+        <>
+          <div style={hint}>{t('onb.partner.login_desc')}</div>
+          <button type="button" onClick={loginForPartner} style={{
+            width: '100%', padding: 'var(--space)', minHeight: 48,
+            background: '#0F6E56', color: '#fff', border: 'none', borderRadius: 'var(--radius)',
+            fontSize: 15, fontWeight: 700, cursor: 'pointer',
+          }}>
+            {t('onb.partner.login')}
+          </button>
+        </>
+      )}
+      {!joined && (
+        <button type="button" onClick={() => setMode('profile')} style={{
+          display: 'block', margin: 'var(--space-comfortable) auto 0',
+          background: 'none', border: 'none', color: 'var(--text-2)',
+          fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 'var(--space-snug)',
+        }}>
+          {t('onb.partner.back')}
+        </button>
+      )}
+    </div>
+  )
+
   return (
     // v2.11.29: outer-scroll architecture (jak consent v2.11.26).
     //
@@ -98,12 +170,12 @@ export default function OnboardingScreen({ onComplete }) {
         textAlign:'center',
         paddingTop: 'max(var(--space-spacious), calc(env(safe-area-inset-top) + var(--space-comfortable)))',
       }}>
-        <div style={{fontSize:44,marginBottom:'var(--space-snug)'}}>{avatar}</div>
+        <div style={{fontSize:44,marginBottom:'var(--space-snug)'}}>{mode === 'join' ? '👨‍👩‍👧' : avatar}</div>
         <div style={{fontSize:22,fontWeight:800,color:'var(--surface)',letterSpacing:-0.5,lineHeight:1.2}}>
-          {t('onb.setup.title')}
+          {t(mode === 'join' ? 'onb.partner.title' : 'onb.setup.title')}
         </div>
         <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',marginTop:'var(--space-snug)',lineHeight:1.4}}>
-          {t('onb.setup.subtitle')}
+          {t(mode === 'join' ? 'onb.partner.subtitle' : 'onb.setup.subtitle')}
         </div>
       </div>
 
@@ -111,7 +183,24 @@ export default function OnboardingScreen({ onComplete }) {
       <div style={{
         padding:'var(--space-comfortable) var(--space-comfortable) 0',
       }}>
+        {mode === 'join' ? joinPanel : (
         <div style={{ display:'flex', flexDirection:'column', gap:'var(--space)' }}>
+          {/* v2.16.0: wejście dla zaproszonego rodzica — kompaktowe, żeby
+              nie przeszkadzało reszcie, która po prostu tworzy profil. */}
+          <button type="button" onClick={() => setMode('join')} style={{
+            width:'100%', display:'flex', alignItems:'center', gap:'var(--space-snug)',
+            padding:'var(--space-snug) var(--space)', textAlign:'left',
+            background:'#E1F5EE', border:'1px solid #0F6E5633', borderRadius:'var(--radius)',
+            cursor:'pointer',
+          }}>
+            <span style={{fontSize:20}}>👨‍👩‍👧</span>
+            <span style={{flex:1}}>
+              <span style={{display:'block',fontSize:13,fontWeight:700,color:'#0F6E56'}}>{t('onb.partner.cta')}</span>
+              <span style={{display:'block',fontSize:12,color:'var(--text-2)',marginTop:2}}>{t('onb.partner.prompt')}</span>
+            </span>
+            <span style={{fontSize:18,color:'#0F6E56'}}>›</span>
+          </button>
+
           {/* Avatar */}
           <div>
             <div style={{fontSize:13,color:'var(--text-2)',fontWeight:500,marginBottom:'var(--space-snug)'}}>
@@ -223,9 +312,11 @@ export default function OnboardingScreen({ onComplete }) {
             💡 {t('onb.setup.weight_later_hint')}
           </div>
         </div>
+        )}
       </div>
 
       {/* Bottom — v2.11.29 sticky footer, button zawsze widoczny */}
+      {mode === 'profile' && (
       <div style={{
         position:'sticky', bottom:0,
         padding:'var(--space) var(--space-comfortable)',
@@ -256,6 +347,7 @@ export default function OnboardingScreen({ onComplete }) {
           {t('app.tagline')}
         </p>
       </div>
+      )}
     </div>
   )
 }

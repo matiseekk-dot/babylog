@@ -117,8 +117,8 @@ export const trackPaywallCTAClicked = (plan, trigger) =>
  * przejście (false → true).
  * @param {string} plan — 'monthly' | 'yearly' | 'unknown'
  */
-export const trackPurchaseCompleted = (plan) =>
-  track('purchase_completed', { plan })
+export const trackPurchaseCompleted = (plan, extra = {}) =>
+  track('purchase_completed', { plan, ...extra })
 
 /**
  * Bonus: failed activation — przy każdym RC reject.
@@ -134,3 +134,41 @@ export const trackPurchaseFailed = (params) =>
  */
 export const trackTabViewed = (tabId) =>
   track('tab_viewed', { tab: tabId })
+
+// ─── Wspólne konto (v2.16) ───────────────────────────────────────────────────
+// Lejek: karta na Dziś → zaproszenie → wysłanie kodu → dołączenie partnera.
+// purchase_completed dostaje has_partner, a właściwość użytkownika
+// shared_account pozwala porównać konwersję kont z partnerem i bez.
+
+/** Właściciel wygenerował kod zaproszenia. */
+export const trackPartnerInviteCreated = () => track('partner_invite_created')
+
+/** @param {string} method — 'share' | 'clipboard' */
+export const trackPartnerInviteShared = (method) =>
+  track('partner_invite_shared', { method })
+
+/** @param {string} source — 'onboarding' | 'settings' */
+export const trackPartnerJoined = (source) => track('partner_joined', { source })
+
+/** @param {string} source — 'onboarding' | 'settings'; reason — kod błędu CF */
+export const trackPartnerJoinFailed = (source, reason) =>
+  track('partner_join_failed', { source, reason })
+
+export const trackPartnerCardShown = () => track('partner_card_shown')
+export const trackPartnerCardClicked = () => track('partner_card_clicked')
+export const trackPartnerCardDismissed = () => track('partner_card_dismissed')
+
+/**
+ * Właściwość użytkownika (segment w Analytics), np. shared_account:
+ * 'owner' | 'partner' | 'none'.
+ */
+export async function setAnalyticsUserProperty(name, value) {
+  try {
+    const analytics = await ensureAnalytics()
+    if (!analytics) return
+    const { setUserProperties } = await import('firebase/analytics')
+    setUserProperties(analytics, { [name]: value })
+  } catch (err) {
+    console.warn('[analytics] user property failed:', name, err?.message || err)
+  }
+}

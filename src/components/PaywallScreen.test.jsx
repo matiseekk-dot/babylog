@@ -25,6 +25,11 @@ describe('PaywallScreen', () => {
     expect(text).toMatch(/249 zł/)
   })
 
+  it('pokazuje cenę rocznego na osobę dla obojga rodziców', () => {
+    render(<PaywallScreen onActivate={() => {}} onClose={() => {}} checking={false} />)
+    expect(document.body.textContent).toMatch(/obojga rodziców.*4,96 zł/)
+  })
+
   it('wybór planu dożywotniego zmienia CTA i przekazuje planId lifetime', () => {
     const onActivate = vi.fn()
     render(<PaywallScreen onActivate={onActivate} onClose={() => {}} checking={false} />)

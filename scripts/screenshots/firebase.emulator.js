@@ -13,7 +13,7 @@ import {
 import {
   getFirestore, connectFirestoreEmulator, doc, setDoc,
 } from 'firebase/firestore'
-import { getFunctions } from 'firebase/functions'
+import { getFunctions, httpsCallable } from 'firebase/functions'
 import { getStorage } from 'firebase/storage'
 
 const app = initializeApp({
@@ -42,6 +42,7 @@ export async function getAnalyticsIfSupported() { return null }
 export async function getMessagingIfSupported() { return null }
 
 window.__emu = {
+  callFn: (name, data) => httpsCallable(functions, name)(data),
   async signIn(sub, name) {
     // Bez e-maila — karta Konto pokaże wtedy samo imię.
     const cred = GoogleAuthProvider.credential(JSON.stringify({ sub, name }))

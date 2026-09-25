@@ -71,12 +71,15 @@ import { t } from '../i18n'
 // więcej tyle, ile zapłaciłby na subskrypcji. Taniej (np. 149 zł) zjadałoby
 // sprzedaż rocznej. Ceny display-only — realne ustawia się w Play Console
 // dla produktu jednorazowego spokojny_rodzic_premium_lifetime.
+// v2.16.0 — yearlyPerPerson: roczny na miesiąc na jednego z dwojga rodziców
+// (wspólne konto), baner nad planami w paywallu:
+//   PL: 119 / 12 / 2 = 4,958 → "4,96 zł";  EUR/USD: 24,99 / 12 / 2 = 1,041 → "1,04"
 const PRICES_BY_LOCALE = {
-  pl: { monthly: '14,99 zł', yearly: '119 zł',   yearlyPerMonth: '9,92 zł', lifetime: '249 zł'  },
-  de: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €',  lifetime: '49,99 €' },
-  fr: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €',  lifetime: '49,99 €' },
-  es: { monthly: '3,99 €',   yearly: '24,99 €',  yearlyPerMonth: '2,08 €',  lifetime: '49,99 €' },
-  en: { monthly: '$3.99',    yearly: '$24.99',   yearlyPerMonth: '$2.08',   lifetime: '$49.99'  },
+  pl: { monthly: '14,99 zł', yearly: '119 zł',  yearlyPerMonth: '9,92 zł', yearlyPerPerson: '4,96 zł', lifetime: '249 zł'  },
+  de: { monthly: '3,99 €',   yearly: '24,99 €', yearlyPerMonth: '2,08 €',  yearlyPerPerson: '1,04 €',  lifetime: '49,99 €' },
+  fr: { monthly: '3,99 €',   yearly: '24,99 €', yearlyPerMonth: '2,08 €',  yearlyPerPerson: '1,04 €',  lifetime: '49,99 €' },
+  es: { monthly: '3,99 €',   yearly: '24,99 €', yearlyPerMonth: '2,08 €',  yearlyPerPerson: '1,04 €',  lifetime: '49,99 €' },
+  en: { monthly: '$3.99',    yearly: '$24.99',  yearlyPerMonth: '$2.08',   yearlyPerPerson: '$1.04',   lifetime: '$49.99'  },
 }
 
 export function getPlans(locale) {
@@ -105,6 +108,7 @@ export function getPlans(locale) {
       // pokazania "≈ 9,92 zł/mc" pod ceną roczną. Nie wpływa na charge —
       // płatność zawsze pobierana jako yearly.
       perMonth: prices.yearlyPerMonth,
+      perPersonMonth: prices.yearlyPerPerson,
     },
     {
       id: 'lifetime',

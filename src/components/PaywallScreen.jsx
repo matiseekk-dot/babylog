@@ -88,6 +88,7 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
 
   // Aktualnie wybrany plan — używany do dynamicznego CTA z ceną
   const selectedPlan = PLANS.find(p => p.id === selected) || PLANS[0]
+  const yearlyPlan = PLANS.find(p => p.id === 'yearly')
   const ctaLabel = checking
     ? t('paywall.cta.loading')
     : selectedPlan.oneTime
@@ -225,6 +226,19 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
         }}>
           {t('paywall.choose_plan')}
         </div>
+        {/* v2.16.0 — każdy plan obejmuje wspólne konto, więc rodzice płacą
+            raz za dwoje. Cena "na osobę" liczona z planu rocznego. */}
+        {yearlyPlan?.perPersonMonth && (
+          <div style={{
+            display:'flex', alignItems:'flex-start', gap:'var(--space-snug)',
+            padding:'var(--space-snug) var(--space)', marginBottom:'var(--space-tight)',
+            background:'#E1F5EE', borderRadius:'var(--radius-tight)',
+            fontSize:12, color:'#0F6E56', fontWeight:600, lineHeight:1.45,
+          }}>
+            <span style={{fontSize:16,flexShrink:0,marginTop:-2}}>👨‍👩‍👧</span>
+            <span>{t('paywall.for_both', { price: yearlyPlan.perPersonMonth })}</span>
+          </div>
+        )}
         {PLANS.map(plan => (
           <div key={plan.id} onClick={() => setSelected(plan.id)} style={{
             padding:'var(--space)',cursor:'pointer',borderRadius:'var(--radius)',position:'relative',

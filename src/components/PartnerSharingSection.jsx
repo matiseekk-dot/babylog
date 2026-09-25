@@ -1,91 +1,65 @@
-import React, { useEffect, useState } from 'react'
-import { collection, onSnapshot } from 'firebase/firestore'
-import { httpsCallable } from 'firebase/functions'
-import { db, functions } from '../firebase'
+import React, { useState } from 'react'
 import { t, useLocale } from '../i18n'
 import { toast } from './Toast'
-import { captureError } from '../sentry'
+import PartnerJoinForm from './PartnerJoinForm'
+import { callPartnerFn, partnerErrorText } from '../utils/partner'
+import { trackPartnerInviteCreated, trackPartnerInviteShared } from '../utils/analytics'
 
 /**
  * Wspólne konto dla rodziców (Premium).
  *
  * Właściciel generuje 6-znakowy kod (Cloud Function createPartnerInvite),
- * partner wpisuje go u siebie (acceptPartnerInvite). Od tego momentu apka
- * partnera czyta i zapisuje dane dziecka właściciela — patrz dataUid w App.jsx.
+ * partner wpisuje go u siebie (acceptPartnerInvite) — tutaj albo na ekranie
+ * onboardingu. Od tego momentu apka partnera czyta i zapisuje dane dziecka
+ * właściciela — patrz dataUid w App.jsx.
  * Wszystkie zmiany powiązań robią Cloud Functions; klient tylko czyta.
+ *
+ * partners — lista z usePartners() w App.jsx (null gdy się ładuje).
  */
 
-const KNOWN_ERRORS = [
-  'not-premium', 'too-many-partners', 'is-partner', 'invite-not-found',
-  'invite-expired', 'own-invite', 'already-linked', 'has-partners',
-]
-
-function errorText(err) {
-  const code = err?.message
-  return KNOWN_ERRORS.includes(code) ? t(`partner.error.${code}`) : t('partner.error.generic')
-}
-
-async function callFn(name, data = {}) {
-  const res = await httpsCallable(functions, name)(data)
-  return res.data
-}
-
 export default function PartnerSharingSection({
-  authUid, linkedOwner, isPremium, onUpgrade, cardStyle, headerStyle, dangerBtnStyle,
+  authUid, linkedOwner, partners, isPremium, onUpgrade, cardStyle, headerStyle, dangerBtnStyle,
 }) {
   useLocale()
-  const [partners, setPartners] = useState([])
   const [invite, setInvite] = useState(null)
-  const [joinCode, setJoinCode] = useState('')
   const [busy, setBusy] = useState(false)
-
-  useEffect(() => {
-    if (!authUid || linkedOwner) return
-    return onSnapshot(
-      collection(db, 'users', authUid, 'partners'),
-      snap => setPartners(snap.docs.map(d => ({ uid: d.id, ...d.data() }))),
-      err => captureError(err, { context: 'partners-list' }),
-    )
-  }, [authUid, linkedOwner])
+  const partnerList = partners || []
 
   const run = async (fn) => {
     setBusy(true)
     try { await fn() }
-    catch (e) { toast(errorText(e), 'error') }
+    catch (e) { toast(partnerErrorText(e), 'error') }
     finally { setBusy(false) }
   }
 
   const createInvite = () => {
     if (!isPremium) { onUpgrade(); return }
-    run(async () => setInvite(await callFn('createPartnerInvite')))
+    run(async () => {
+      setInvite(await callPartnerFn('createPartnerInvite'))
+      trackPartnerInviteCreated()
+    })
   }
 
   const shareInvite = async () => {
     const text = t('partner.share_text', { code: invite.code })
     if (navigator.share) {
-      try { await navigator.share({ text }) } catch { /* anulowane przez usera */ }
+      try {
+        await navigator.share({ text })
+        trackPartnerInviteShared('share')
+      } catch { /* anulowane przez usera */ }
       return
     }
     try {
       await navigator.clipboard.writeText(invite.code)
+      trackPartnerInviteShared('clipboard')
       toast(t('partner.copied'))
     } catch { /* brak dostępu do schowka — kod i tak jest na ekranie */ }
-  }
-
-  const join = () => {
-    const code = joinCode.trim().toUpperCase()
-    if (code.length !== 6) { toast(t('partner.error.invite-not-found'), 'error'); return }
-    run(async () => {
-      await callFn('acceptPartnerInvite', { code })
-      setJoinCode('')
-      toast(t('partner.joined'))
-    })
   }
 
   const unlink = (partnerUid) => {
     const msg = t(partnerUid ? 'partner.remove_confirm' : 'partner.leave_confirm')
     if (!window.confirm(msg)) return
-    run(() => callFn('removePartnerLink', partnerUid ? { partnerUid } : {}))
+    run(() => callPartnerFn('removePartnerLink', partnerUid ? { partnerUid } : {}))
   }
 
   const btn = {
@@ -116,9 +90,9 @@ export default function PartnerSharingSection({
       <>
         <div style={hint}>{t('partner.desc')}</div>
 
-        {partners.length > 0 && (
+        {partnerList.length > 0 && (
           <div style={{ marginBottom: 12 }}>
-            {partners.map(p => (
+            {partnerList.map(p => (
               <div key={p.uid} style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '8px 0', borderBottom: '0.5px solid rgba(0,0,0,0.06)',
@@ -162,36 +136,23 @@ export default function PartnerSharingSection({
           </button>
         )}
 
-        {partners.length === 0 && (
+        {partnerList.length === 0 && (
           <>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#3a3a36', margin: '4px 0 6px' }}>
               {t('partner.join_title')}
             </div>
             <div style={hint}>{t('partner.join_desc')}</div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                className="form-input"
-                value={joinCode}
-                onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
-                placeholder="ABC123"
-                autoCapitalize="characters"
-                style={{ flex: 1, letterSpacing: 3, fontFamily: 'monospace', fontSize: 16 }}
-              />
-              <button onClick={join} disabled={busy || joinCode.length !== 6} style={{
-                ...btn, width: 'auto', padding: '0 16px',
-                opacity: busy || joinCode.length !== 6 ? 0.5 : 1,
-              }}>
-                {t('partner.join')}
-              </button>
-            </div>
+            <PartnerJoinForm source="settings" onJoined={() => toast(t('partner.joined'))} />
           </>
         )}
       </>
     )
   }
 
+  // id + scrollMarginTop: karta "Zaproś partnera" z ekranu Dziś przewija tutaj
+  // (nagłówek Ustawień jest sticky, więc zostawiamy nad kartą margines).
   return (
-    <div style={cardStyle}>
+    <div id="settings-partner" style={{ ...cardStyle, scrollMarginTop: 72 }}>
       <div style={headerStyle}>{t('partner.title')}</div>
       <div style={{ padding: '12px 14px' }}>{body}</div>
     </div>

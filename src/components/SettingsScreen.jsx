@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { useMedReminder } from '../hooks/useMedReminder'
 import { useFCM } from '../hooks/useFCM'
@@ -35,12 +35,21 @@ const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
  *   isPremium, trialDaysLeft, onUpgrade
  *   user, onLogout
  *   onClose
+ *   authUid, linkedOwner, partners — wspólne konto (patrz PartnerSharingSection)
+ *   focusSection — 'partner': po otwarciu przewiń do sekcji Wspólne konto
  */
 export default function SettingsScreen({
   profile, onUpdate, onDelete,
   isPremium, isOnTrial, trialDaysLeft,
   onUpgrade, onEditPhoto, user, onLogout, onClose, uid, authUid, linkedOwner,
+  partners, focusSection,
 }) {
+  useEffect(() => {
+    if (focusSection === 'partner') {
+      document.getElementById('settings-partner')?.scrollIntoView({ block: 'start' })
+    }
+  }, [focusSection])
+
   // Pobierz dane dziecka żeby móc wygenerować PDF
   const [tempLogs]  = useFirestore(uid, `temp_${profile.id}`,  [])
   const [medLogs]   = useFirestore(uid, `meds_${profile.id}`,  [])
@@ -611,6 +620,7 @@ export default function SettingsScreen({
       <PartnerSharingSection
         authUid={authUid}
         linkedOwner={linkedOwner}
+        partners={partners}
         isPremium={isPremium}
         onUpgrade={onUpgrade}
         cardStyle={card}

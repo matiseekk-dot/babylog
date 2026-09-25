@@ -16,8 +16,10 @@ import { t, useLocale } from '../i18n'
  *   daysLeft   — 0, 1 lub inny (wybiera właściwy tytuł)
  *   onUpgrade  — fn(): user chce kupić (parent otwiera paywall z trigger='trial_ending')
  *   onLater    — fn(): user zamyka; parent zapisuje shown-flag na dziś
+ *   partners   — partnerzy wspólnego konta właściciela (v2.16.0). Ich Premium
+ *                pochodzi z trialu właściciela, więc po jego końcu też go tracą.
  */
-export default function TrialEndingModal({ open, daysLeft, onUpgrade, onLater }) {
+export default function TrialEndingModal({ open, daysLeft, onUpgrade, onLater, partners = [] }) {
   useLocale()
   if (!open) return null
 
@@ -27,6 +29,13 @@ export default function TrialEndingModal({ open, daysLeft, onUpgrade, onLater })
       : daysLeft === 1
       ? t('paywall.trial_ending.title_tomorrow')
       : t('paywall.trial_ending.title_days', { days: daysLeft })
+
+  const partnerNames = partners.map(p => p.name).filter(Boolean).join(', ')
+  const partnerNote = partners.length === 0
+    ? null
+    : partnerNames
+      ? t('paywall.trial_ending.partner', { names: partnerNames })
+      : t('paywall.trial_ending.partner_generic')
 
   return (
     <div
@@ -65,6 +74,16 @@ export default function TrialEndingModal({ open, daysLeft, onUpgrade, onLater })
         }}>
           {t('paywall.trial_ending.body')}
         </p>
+
+        {partnerNote && (
+          <p style={{
+            fontSize: 13, textAlign: 'center', color: '#0F6E56', fontWeight: 600,
+            background: '#E1F5EE', borderRadius: 10, padding: '10px 12px',
+            margin: '-8px 0 20px', lineHeight: 1.45,
+          }}>
+            👨‍👩‍👧 {partnerNote}
+          </p>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button

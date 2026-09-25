@@ -41,7 +41,13 @@ import OnboardingScreen from './components/OnboardingScreen'
 import ToastContainer from './components/Toast'
 import { toast } from './components/Toast'
 import { captureError, addBreadcrumb } from './sentry'
-import { trackPurchaseCompleted, trackFirstEntry } from './utils/analytics'
+import {
+  trackPurchaseCompleted, trackFirstEntry,
+  trackPartnerCardClicked, trackPartnerCardDismissed, setAnalyticsUserProperty,
+} from './utils/analytics'
+import { usePartners } from './hooks/usePartners'
+import { shouldShowPartnerInvite } from './utils/partner'
+import PartnerInviteCard from './components/PartnerInviteCard'
 import SleepIndicator from './components/SleepIndicator'
 // v2.12.0: LanguageSwitcher przeniesiony do SettingsScreen — patrz topbar comment niżej.
 import SettingsScreen from './components/SettingsScreen'
@@ -187,6 +193,14 @@ export default function App() {
   const [linkedOwner] = useFirestore(uid, 'linked_owner', null)
   const ownerUid = uid && linkedOwner?.ownerUid ? linkedOwner.ownerUid : null
   const dataUid = ownerUid || uid
+  // Partnerzy właściciela (null = ładuje się). Partner sam nie ma partnerów.
+  const partners = usePartners(uid, !ownerUid)
+
+  // Segment w Analytics — czy konta z partnerem częściej kupują Premium.
+  const sharedAccountRole = ownerUid ? 'partner' : partners?.length ? 'owner' : partners ? 'none' : null
+  useEffect(() => {
+    if (uid && sharedAccountRole) setAnalyticsUserProperty('shared_account', sharedAccountRole)
+  }, [uid, sharedAccountRole])
 
   // Włącz offline persistence
   useEffect(() => { enableOffline() }, [])
@@ -354,7 +368,9 @@ export default function App() {
       // mamy z paywall_cta_clicked który łapie wybór planu przed kupnem.
       // Premium odziedziczone po połączeniu z partnerem to nie zakup.
       if (!premiumViaPartner) {
-        trackPurchaseCompleted(purchased ? 'purchased' : 'trial_to_premium')
+        trackPurchaseCompleted(purchased ? 'purchased' : 'trial_to_premium', {
+          has_partner: partners?.length ? 1 : 0,
+        })
       }
       const flagKey = 'babylog_premium_onboarding_shown_' + uid
       try {
@@ -365,7 +381,7 @@ export default function App() {
       } catch {}
     }
     setPrevIsPremium(isPremium)
-  }, [isPremium, prevIsPremium, uid, purchased, premiumViaPartner])
+  }, [isPremium, prevIsPremium, uid, purchased, premiumViaPartner, partners])
 
   const closePremiumOnboarding = () => setShowPremiumOnboarding(false)
   const navigateToPdfReport = () => {
@@ -382,6 +398,9 @@ export default function App() {
   const [showTrialStarted, setShowTrialStarted] = useState(false)
   const trialStartedKey = uid || 'guest'
   useEffect(() => {
+    // Podczas ładowania auth uid jest null i liczy się trial gościa — bez tego
+    // modal wyskakiwał po każdym starcie u osób, które były wcześniej gościem.
+    if (authLoading) return
     if (!isOnTrial) return
     if (!trialDaysLeft || trialDaysLeft < 13) return  // pokazuj tylko dla świeżego trialu (>=13/14 dni)
     const flagKey = `babylog_trial_started_shown_${trialStartedKey}`
@@ -389,7 +408,7 @@ export default function App() {
       if (localStorage.getItem(flagKey) === '1') return
     } catch {}
     setShowTrialStarted(true)
-  }, [trialStartedKey, isOnTrial, trialDaysLeft])
+  }, [authLoading, trialStartedKey, isOnTrial, trialDaysLeft])
 
   const dismissTrialStarted = () => {
     setShowTrialStarted(false)
@@ -433,6 +452,7 @@ export default function App() {
   const [showTrialEnding, setShowTrialEnding] = useState(false)
   const trialUserKey = uid || 'guest'
   useEffect(() => {
+    if (authLoading) return  // jak wyżej — nie oceniaj trialu gościa w trakcie logowania
     if (!isOnTrial) return
     if (![0, 1, 3].includes(trialDaysLeft)) return
 
@@ -445,7 +465,7 @@ export default function App() {
       // gorzej pokazać drugi raz niż wcale nie pokazać.
     }
     setShowTrialEnding(true)
-  }, [trialUserKey, isOnTrial, trialDaysLeft])
+  }, [authLoading, trialUserKey, isOnTrial, trialDaysLeft])
 
   const dismissTrialEnding = () => {
     setShowTrialEnding(false)
@@ -457,6 +477,45 @@ export default function App() {
   const upgradeFromTrialEnding = () => {
     dismissTrialEnding()
     openPaywall('trial_ending')
+  }
+
+  // v2.16.0 — karta "Zaproś drugiego rodzica" na ekranie Dziś.
+  // Warunki w shouldShowPartnerInvite (utils/partner.js); zamknięcie na stałe per konto.
+  const partnerCardKey = `babylog_partner_card_dismissed_${uid}`
+  const readPartnerCardDismissed = () => {
+    try { return localStorage.getItem(partnerCardKey) === '1' } catch { return false }
+  }
+  const [partnerCardDismissed, setPartnerCardDismissed] = useState(readPartnerCardDismissed)
+  useEffect(() => { setPartnerCardDismissed(readPartnerCardDismissed()) }, [partnerCardKey])
+  const showPartnerCard = shouldShowPartnerInvite({
+    uid,
+    isPartner: !!ownerUid,
+    isPremium,
+    isOnTrial,
+    trialDaysLeft,
+    partnersCount: partners ? partners.length : null,
+    dismissed: partnerCardDismissed,
+  })
+  const dismissPartnerCard = () => {
+    trackPartnerCardDismissed()
+    setPartnerCardDismissed(true)
+    try { localStorage.setItem(partnerCardKey, '1') } catch {}
+  }
+
+  // Ustawienia otwarte z karty przewijają się do sekcji Wspólne konto.
+  const [settingsFocus, setSettingsFocus] = useState(null)
+  useEffect(() => { if (!showSettings) setSettingsFocus(null) }, [showSettings])
+  const openPartnerSettings = () => {
+    trackPartnerCardClicked()
+    setSettingsFocus('partner')
+    setShowSettings(true)
+  }
+
+  // Gość w onboardingu chce dołączyć kodem — wspólne konto wymaga Google.
+  const loginForPartner = () => {
+    try { localStorage.removeItem('babylog_guest') } catch {}
+    setGuestMode(false)
+    login()
   }
 
   // v2.11.32 P1-6: paywall trigger source dla analytics — pokazuje skąd
@@ -1116,7 +1175,10 @@ export default function App() {
             setProfiles(updated)
           }
           setOnboardingDone(true)
-        }} />
+        }}
+          canJoinPartner={!!uid}
+          onLoginForPartner={loginForPartner}
+        />
       </div>
     )
   }
@@ -1144,6 +1206,8 @@ export default function App() {
           uid={dataUid}
           authUid={uid}
           linkedOwner={ownerUid ? linkedOwner : null}
+          partners={partners}
+          focusSection={settingsFocus}
           onUpdate={updateProfile}
           onDelete={deleteProfile}
           isPremium={isPremium}
@@ -1286,6 +1350,10 @@ export default function App() {
             Apka nie ocenia, nie alertuje, nie diagnozuje. */}
         {!showProfiles && !showMore && tab === 'today' && (
           <TodaySummaryCard onNavigate={navigate} />
+        )}
+
+        {!showProfiles && !showMore && tab === 'today' && showPartnerCard && (
+          <PartnerInviteCard onInvite={openPartnerSettings} onDismiss={dismissPartnerCard} />
         )}
 
         {/* AUTO-HIDE BANNER — one-time prompt po 3 latach dziecka */}
@@ -1525,6 +1593,7 @@ export default function App() {
         daysLeft={trialDaysLeft}
         onUpgrade={upgradeFromTrialEnding}
         onLater={dismissTrialEnding}
+        partners={partners || []}
       />
       <TrialStartedModal
         open={showTrialStarted}
