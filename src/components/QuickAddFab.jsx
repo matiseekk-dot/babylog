@@ -61,9 +61,13 @@ export default function QuickAddFab({
   sleepInProgress,
   toiletMode = 'diapers',
   bottomOffset = 80,
+  openSignal = 0,
 }) {
   useLocale()
   const [open, setOpen] = useState(false)
+
+  // v2.16.5: "Więcej" w widżecie na ekranie głównym otwiera to menu (App.jsx).
+  useEffect(() => { if (openSignal) setOpen(true) }, [openSignal])
   const longPressTimerRef = useRef(null)
   const longPressFiredRef = useRef(false)
   const pointerDownTimeRef = useRef(0)

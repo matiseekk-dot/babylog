@@ -48,6 +48,8 @@ import {
   shouldAskFeedReminder, snoozeFeedReminderPrompt,
 } from './utils/feedReminder'
 import { DEFAULT_SUMMARY_HOUR } from './utils/dailySummary'
+import { Spokojny, hasNativeExtras, QUICK_ACTIONS } from './native/spokojny'
+import { markFirstEntryTime, markReviewRequested, shouldRequestReview } from './utils/review'
 import { captureError, addBreadcrumb } from './sentry'
 import {
   track, trackPurchaseCompleted, trackFirstEntryOnce, hasFirstEntryFlag, trackLoginChoice,
@@ -430,13 +432,19 @@ export default function App() {
   // Handler karmienia (przypomnienie) zmienia się co render — listener
   // podpinamy raz, więc woła najświeższą wersję przez ref.
   const feedAddedRef = useRef(null)
+  const reviewCheckRef = useRef(null)
   useEffect(() => {
+    // Istniejący użytkownicy: licznik dni do prośby o ocenę startuje od tej wersji.
+    if (hasFirstEntryFlag()) markFirstEntryTime()
     setEntryAddedListener((entryType, info) => {
       trackFirstEntryOnce(entryType)
+      markFirstEntryTime()
       setHasFirstEntry(true)
       if (entryType === 'feed' && info?.added?.[0]) {
         feedAddedRef.current?.(info.added[0], info.key.slice('feed_'.length))
       }
+      // Chwilę po wpisie — dobry moment na prośbę o ocenę (natywne v55+).
+      setTimeout(() => reviewCheckRef.current?.(), 2000)
     })
     return () => setEntryAddedListener(null)
   }, [])
@@ -1310,6 +1318,94 @@ export default function App() {
     }
   }
 
+  // ── v2.16.5: natywne dodatki v55 — widżet, skróty ikony, ocena w sklepie ──
+  // Szybka akcja (widżet / skrót) otwiera apkę; wpis zapisujemy tymi samymi
+  // handlerami co przycisk "+". Czekamy, aż apka wstanie (onboarding, dane
+  // z cache), i wołamy najświeższy handler przez ref — bez starego stanu.
+  const [pendingQuickAction, setPendingQuickAction] = useState(null)
+  const [fabOpenSignal, setFabOpenSignal] = useState(0)
+  const quickActionRef = useRef(null)
+  quickActionRef.current = (action) => {
+    setShowSettings(false); setShowPaywall(false); setShowMore(false); setShowProfiles(false)
+    setTab('today')
+    if (action === 'feed_left') quickAddFeed('Pierś lewa', '15')
+    else if (action === 'feed_right') quickAddFeed('Pierś prawa', '15')
+    else if (action === 'bottle') quickAddFeed('Butelka', '120')
+    else if (action === 'sleep') quickToggleSleep()
+    else if (action === 'menu') setFabOpenSignal(n => n + 1)
+    track('quick_action', { action })
+  }
+
+  useEffect(() => {
+    if (!hasNativeExtras()) return
+    let handle = null
+    let cancelled = false
+    const pull = async () => {
+      try {
+        const { action } = await Spokojny.getPendingAction()
+        if (!cancelled && QUICK_ACTIONS.includes(action)) setPendingQuickAction(action)
+      } catch {}
+    }
+    // Krótkie opóźnienie: na starcie most natywny bywa niegotowy (patrz useFCM).
+    const timer = setTimeout(() => {
+      pull()
+      Spokojny.addListener('quickAction', pull).then(h => { handle = h }).catch(() => {})
+    }, 800)
+    return () => { cancelled = true; clearTimeout(timer); handle?.remove?.() }
+  }, [])
+
+  // Tylko dev server: symulacja akcji z widżetu w przeglądarce (bez telefonu).
+  if (import.meta.env.DEV) {
+    window.__quickAction = setPendingQuickAction
+    window.__widgetTitle = () => widgetTitle
+  }
+
+  useEffect(() => {
+    if (!pendingQuickAction || authLoading || !consentAccepted) return
+    if (!user && !guestMode) return
+    if (!onboardingDone) { setPendingQuickAction(null); return }  // najpierw profil dziecka
+    const timer = setTimeout(() => {
+      quickActionRef.current?.(pendingQuickAction)
+      setPendingQuickAction(null)
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [pendingQuickAction, authLoading, consentAccepted, user, guestMode, onboardingDone])
+
+  // Prośba o ocenę — po wpisie (listener useFirestore), gdy nic innego nie jest otwarte.
+  reviewCheckRef.current = async () => {
+    if (!hasNativeExtras() || feedReminderPrompt || showTrialStarted || showTrialEnding) return
+    const entryCount = feedLogsForFab.length + sleepLogsForFab.length + diaperLogsForFab.length + tempLogs.length
+    if (!shouldRequestReview({ entryCount })) return
+    markReviewRequested()
+    track('review_requested', { entries: entryCount })
+    try { await Spokojny.requestReview() } catch {}
+  }
+
+  // Tekst widżetu: imię dziecka + ostatnie karmienie, etykiety w języku apki.
+  const lastFeedTs = feedLogsForFab.reduce((max, e) => Math.max(max, entryTimestamp(e, 0)), 0)
+  const widgetTitle = (() => {
+    const name = active.name || t('widget.title')
+    if (!lastFeedTs) return name
+    const dayDiff = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(lastFeedTs).setHours(0, 0, 0, 0)) / 86400000)
+    if (dayDiff > 1) return name
+    const time = `${dayDiff === 1 ? `${t('widget.yesterday')} ` : ''}${formatClock(lastFeedTs)}`
+    return `${name} · ${t('widget.last_feed', { time })}`
+  })()
+  useEffect(() => {
+    if (!hasNativeExtras()) return
+    const timer = setTimeout(() => {
+      Spokojny.updateWidget({
+        title: widgetTitle,
+        label_feed_left: `🤱\n${t('widget.feed_left')}`,
+        label_feed_right: `🤱\n${t('widget.feed_right')}`,
+        label_bottle: `🍼\n${t('widget.bottle')}`,
+        label_sleep: `😴\n${t('widget.sleep')}`,
+        label_menu: `＋\n${t('widget.more')}`,
+      }).catch(() => {})
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [widgetTitle, locale])
+
   const currentMoreTab = MORE_TABS.find(t => t.id === tab)
 
   // ── Medical consent gate (shown once before first use) ───────────────────
@@ -1689,6 +1785,7 @@ export default function App() {
           sleepInProgress={!!sleepTimerTs}
           toiletMode={active.toiletMode || 'diapers'}
           bottomOffset={80}
+          openSignal={fabOpenSignal}
         />
       )}
 
