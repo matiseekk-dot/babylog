@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { t, useLocale } from '../i18n'
 import { FEED_REMINDER_OPTIONS, formatHours } from '../utils/feedReminder'
+import { DEFAULT_SUMMARY_HOUR, formatHourLabel } from '../utils/dailySummary'
 import { track } from '../utils/analytics'
 
 /**
@@ -11,12 +12,19 @@ import { track } from '../utils/analytics'
  * przypomnieć o sobie (retencja D1 ~7%). Tu prośba o zgodę pada w momencie,
  * gdy przypomnienie jest realnie przydatne.
  *
+ * v2.16.4: + pole "Wieczorem także podsumowanie dnia" (domyślnie odznaczone)
+ *   — ta sama zgoda na powiadomienia obsługuje oba.
+ *
  * Props:
  *   isGuest      — gość nie dostanie push (brak konta) → zamiast wyboru logowanie
- *   onChoose(min) / onLater() / onNever() / onLogin()
+ *   showSummaryOption — false, gdy podsumowanie już jest włączone
+ *   onChoose(min, withSummary) / onLater() / onNever() / onLogin()
  */
-export default function FeedReminderPrompt({ isGuest, onChoose, onLater, onNever, onLogin }) {
+export default function FeedReminderPrompt({
+  isGuest, showSummaryOption = true, onChoose, onLater, onNever, onLogin,
+}) {
   useLocale()
+  const [withSummary, setWithSummary] = useState(false)
 
   useEffect(() => { track('feed_reminder_prompt_shown', { guest: isGuest ? 1 : 0 }) }, [isGuest])
 
@@ -58,13 +66,30 @@ export default function FeedReminderPrompt({ isGuest, onChoose, onLater, onNever
             {t('onb.partner.login')}
           </button>
         ) : (
-          <div style={{ display: 'flex', gap: 8 }}>
-            {FEED_REMINDER_OPTIONS.map(min => (
-              <button key={min} type="button" onClick={() => onChoose(min)} style={chip}>
-                {t('feed_reminder.in', { h: formatHours(min) })}
-              </button>
-            ))}
-          </div>
+          <>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {FEED_REMINDER_OPTIONS.map(min => (
+                <button key={min} type="button" onClick={() => onChoose(min, withSummary)} style={chip}>
+                  {t('feed_reminder.in', { h: formatHours(min) })}
+                </button>
+              ))}
+            </div>
+            {showSummaryOption && (
+              <label style={{
+                display: 'flex', alignItems: 'center', gap: 10, marginTop: 12,
+                padding: '10px 12px', background: 'var(--bg)', borderRadius: 12,
+                fontSize: 13, color: 'var(--text)', cursor: 'pointer',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={withSummary}
+                  onChange={e => setWithSummary(e.target.checked)}
+                  style={{ width: 18, height: 18, accentColor: '#0F6E56', flexShrink: 0 }}
+                />
+                <span>{t('daily_summary.prompt_checkbox', { time: formatHourLabel(DEFAULT_SUMMARY_HOUR) })}</span>
+              </label>
+            )}
+          </>
         )}
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 12 }}>

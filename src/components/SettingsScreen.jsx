@@ -4,6 +4,7 @@ import { useMedReminder } from '../hooks/useMedReminder'
 import {
   FEED_REMINDER_OPTIONS, formatHours, getFeedReminderPref, setFeedReminderPref,
 } from '../utils/feedReminder'
+import { DAILY_SUMMARY_HOURS, formatHourLabel } from '../utils/dailySummary'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '../firebase'
 import { t, useLocale, SUPPORTED_LOCALES } from '../i18n'
@@ -86,6 +87,22 @@ export default function SettingsScreen({
     }
     setFeedReminderPref(minutes)
     setFeedReminderPrefState(minutes)
+    toast(t('settings.saved'))
+  }
+
+  // v2.16.4 — wieczorne podsumowanie dnia (osobiste, pod własnym uid)
+  const [dailySummary, setDailySummary] = useFirestore(authUid, 'daily_summary', null)
+  const changeDailySummary = async (value) => {
+    if (value === 'off') {
+      setDailySummary(null)
+      return
+    }
+    const perm = await enableNotifications?.()
+    if (perm !== 'granted') {
+      toast(t('feed_reminder.no_permission'), 'error')
+      return
+    }
+    setDailySummary({ hour: Number(value) })
     toast(t('settings.saved'))
   }
   const [pdfModal, setPdfModal] = useState(false)
@@ -861,6 +878,27 @@ export default function SettingsScreen({
             </select>
             <div style={{ fontSize: 11, color: '#5a5a56', marginTop: 6, lineHeight: 1.4 }}>
               {t('feed_reminder.settings_hint')}
+            </div>
+
+            <label htmlFor="daily-summary-select" style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a18', margin: '14px 0 6px' }}>
+              🌙 {t('daily_summary.settings_label')}
+            </label>
+            <select
+              id="daily-summary-select"
+              className="form-input"
+              value={dailySummary?.hour ? String(dailySummary.hour) : 'off'}
+              onChange={e => changeDailySummary(e.target.value)}
+              style={{ fontSize: 14 }}
+            >
+              <option value="off">{t('feed_reminder.settings_off')}</option>
+              {DAILY_SUMMARY_HOURS.map(h => (
+                <option key={h} value={String(h)}>
+                  {t('daily_summary.settings_at', { time: formatHourLabel(h) })}
+                </option>
+              ))}
+            </select>
+            <div style={{ fontSize: 11, color: '#5a5a56', marginTop: 6, lineHeight: 1.4 }}>
+              {t('daily_summary.settings_hint')}
             </div>
           </div>
         )}

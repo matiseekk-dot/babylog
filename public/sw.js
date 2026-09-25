@@ -160,7 +160,11 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(
     clients.matchAll({ type: 'window' }).then(list => {
       const existing = list.find(c => c.url.includes('/babylog/') && 'focus' in c)
-      if (existing) return existing.focus()
+      if (existing) {
+        // v2.16.4: otwarta apka przełącza zakładkę (App.jsx → OPEN_URL)
+        existing.postMessage({ type: 'OPEN_URL', url })
+        return existing.focus()
+      }
       return clients.openWindow(url)
     })
   )
@@ -245,7 +249,7 @@ async function checkMedReminders({ logs = [], locale = 'pl', strings = {} }) {
       tag,
       renotify: false,
       vibrate: [200, 100, 200],
-      data: { url: '/babylog/' },
+      data: { url: '/babylog/?tab=meds' },  // v2.16.4: dotknięcie → Leki
     })
 
     await markShown(tag)

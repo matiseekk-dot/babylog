@@ -42,10 +42,12 @@ import ToastContainer from './components/Toast'
 import { toast, toastWithUndo } from './components/Toast'
 import FeedReminderPrompt from './components/FeedReminderPrompt'
 import { useFCM } from './hooks/useFCM'
+import { PushNotifications } from '@capacitor/push-notifications'
 import {
   buildFeedReminder, entryTimestamp, formatClock, getFeedReminderPref, setFeedReminderPref,
   shouldAskFeedReminder, snoozeFeedReminderPrompt,
 } from './utils/feedReminder'
+import { DEFAULT_SUMMARY_HOUR } from './utils/dailySummary'
 import { captureError, addBreadcrumb } from './sentry'
 import {
   track, trackPurchaseCompleted, trackFirstEntryOnce, hasFirstEntryFlag, trackLoginChoice,
@@ -171,6 +173,9 @@ const MORE_TABS = [
 // v2.10.6 — FREE_STATUS / EMPTY_STATUS removed. ChildStatusCard (their consumer)
 // is gone per MDR EXIT REFACTOR — apka nie pokazuje już globalnego statusu zdrowia.
 
+// Listener dotknięcia push (natywnie) — raz na życie aplikacji.
+let pushTapListenerAdded = false
+
 export default function App() {
   const { user, loading: authLoading, login, logout } = useAuth()
   // Rejestracja SW od razu przy starcie — niezbędne dla notyfikacji o lekach.
@@ -209,19 +214,31 @@ export default function App() {
   const { refreshToken: refreshFcmToken } = useFCM(uid)
 
   // v2.16.3: strefa czasowa dla Cloud Function — godziny wpisów (np. leków)
-  // są lokalne, a serwer działa w UTC. Zapisuje tylko właściciel danych,
-  // najwyżej raz na uruchomienie (dwa urządzenia w różnych strefach nie
-  // nadpisują się wtedy w kółko).
-  const [savedTimeZone, setSavedTimeZone] = useFirestore(ownerUid ? null : uid, 'timezone', null)
-  const timeZoneSavedRef = useRef(false)
+  // są lokalne, a serwer działa w UTC. v2.16.4: + język (treść push).
+  // Każdy zalogowany zapisuje własne users/{uid}/data/{timezone,app_locale}
+  // (nie "locale": cache useFirestore to localStorage babylog_<klucz>, a
+  // babylog_locale to już wybrany język apki w i18n.js):
+  // push o dziecku bierze ustawienia właściciela danych, podsumowanie dnia —
+  // odbiorcy. Każda wartość zapisywana najwyżej raz na zmianę na tym
+  // urządzeniu, więc dwa telefony w różnych strefach nie nadpisują się w kółko.
+  const [savedTimeZone, setSavedTimeZone] = useFirestore(uid, 'timezone', null)
+  const [savedLocale, setSavedLocale] = useFirestore(uid, 'app_locale', null)
+  const writtenPrefsRef = useRef({})
   useEffect(() => {
-    if (!uid || ownerUid || timeZoneSavedRef.current) return
+    if (!uid) return
     let tz = null
     try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone } catch {}
-    if (!tz) return
-    timeZoneSavedRef.current = true
-    if (savedTimeZone !== tz) setSavedTimeZone(tz)
-  }, [uid, ownerUid, savedTimeZone])
+    if (writtenPrefsRef.current.uid !== uid) writtenPrefsRef.current = { uid }  // inne konto
+    const written = writtenPrefsRef.current
+    if (tz && written.timezone !== tz) {
+      written.timezone = tz
+      if (savedTimeZone !== tz) setSavedTimeZone(tz)
+    }
+    if (locale && written.locale !== locale) {
+      written.locale = locale
+      if (savedLocale !== locale) setSavedLocale(locale)
+    }
+  }, [uid, locale, savedTimeZone, savedLocale])
 
   // Segment w Analytics — czy konta z partnerem częściej kupują Premium.
   const sharedAccountRole = ownerUid ? 'partner' : partners?.length ? 'owner' : partners ? 'none' : null
@@ -231,6 +248,9 @@ export default function App() {
 
   // Włącz offline persistence
   useEffect(() => { enableOffline() }, [])
+
+  // Handler dotknięcia push (definiowany niżej, przy navigate).
+  const pushOpenRef = useRef(null)
 
   // Ceny z Google Play (null → paywall pokazuje ceny statyczne z premiumPlans).
   const [storePrices, setStorePrices] = useState(loadCachedStorePrices)
@@ -246,6 +266,17 @@ export default function App() {
         const rcKey = import.meta.env.VITE_RC_PUBLIC_KEY || 'goog_CePHovfsjHOiYaoKwnFhtcDFnwq'
         await Purchases.configure({ apiKey: rcKey, appUserID: uid })
         addBreadcrumb('purchase', 'rc-configured', { uid })
+        // v2.16.4: dotknięcie push → zakładka. Podpinamy DOPIERO tutaj: most
+        // natywny już działa (configure przeszło), a wtyczka trzyma zdarzenie
+        // z zimnego startu do pierwszego listenera. Na starcie aplikacji
+        // wywołania wtyczki push potrafiły zawiesić most (patrz useFCM).
+        if (!pushTapListenerAdded) {
+          pushTapListenerAdded = true
+          PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+            addBreadcrumb('fcm', 'push-tapped', { url: action?.notification?.data?.url })
+            pushOpenRef.current?.(action?.notification?.data?.url)
+          }).catch(() => { pushTapListenerAdded = false })
+        }
         // v2.16.2: ceny z Google Play dla paywalla (waluta kraju konta Google).
         // Błąd tutaj nie jest błędem konfiguracji — zostają ceny z cache/statyczne.
         fetchStorePrices(Purchases)
@@ -389,6 +420,8 @@ export default function App() {
   const [tempLogs] = useFirestore(dataUid, `temp_${active.id}`, [])
   // Oczekujące przypomnienie o karmieniu (czyta i wysyła Cloud Function).
   const [feedReminder, setFeedReminder] = useFirestore(dataUid, `reminder_feed_${active.id}`, null)
+  // Wieczorne podsumowanie dnia — ustawienie osobiste (własny uid, nie dataUid).
+  const [dailySummary, setDailySummary] = useFirestore(uid, 'daily_summary', null)
 
   // v2.16.1 — pierwszy wpis (aktywacja). Nowy użytkownik widzi FirstEntryCard
   // zamiast "Pustego dnia"; okno o trialu i porady czekają, aż coś zapisze.
@@ -619,7 +652,7 @@ export default function App() {
     if (shouldAskFeedReminder(feedTs)) setFeedReminderPrompt({ feedTs })
   }
 
-  const chooseFeedReminder = async (intervalMin) => {
+  const chooseFeedReminder = async (intervalMin, withSummary = false) => {
     const { feedTs } = feedReminderPrompt
     setFeedReminderPrompt(null)
     const perm = await enableNotifications()
@@ -629,8 +662,9 @@ export default function App() {
       toast(t('feed_reminder.no_permission'), 'error')
       return
     }
-    track('feed_reminder_enabled', { interval: intervalMin })
+    track('feed_reminder_enabled', { interval: intervalMin, with_summary: withSummary ? 1 : 0 })
     setFeedReminderPref(intervalMin)
+    if (withSummary) setDailySummary({ hour: DEFAULT_SUMMARY_HOUR })
     scheduleFeedReminder(feedTs, intervalMin)
   }
   const laterFeedReminder = () => {
@@ -1090,6 +1124,37 @@ export default function App() {
       selectTab(targetTab)
     }
   }
+
+  // v2.16.4: dotknięcie powiadomienia otwiera właściwą zakładkę. Push niesie
+  // url '/babylog/?tab=meds|feed|today' (functions/index.js). Leki i temp
+  // są segmentami zakładki Zdrowie (HealthTab czyta segment z localStorage).
+  const openFromPushUrl = (url) => {
+    let target = null
+    try { target = new URL(url, window.location.origin).searchParams.get('tab') } catch {}
+    if (target === 'meds' || target === 'temp') {
+      try { localStorage.setItem('babylog_health_segment', target) } catch {}
+      setShowSettings(false); setShowPaywall(false)
+      navigate('health')
+    } else if (target === 'feed' || target === 'today') {
+      setShowSettings(false); setShowPaywall(false)
+      navigate(target)
+    }
+  }
+  pushOpenRef.current = openFromPushUrl
+
+  // Przeglądarka: SW otwiera nowe okno z ?tab=… albo wysyła OPEN_URL do
+  // otwartego. Natywnie — listener w efekcie RevenueCat (po starcie mostu).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('tab')) {
+      pushOpenRef.current?.(window.location.href)
+      try { window.history.replaceState(null, '', window.location.pathname) } catch {}
+    }
+    const onSwMessage = (e) => {
+      if (e.data?.type === 'OPEN_URL') pushOpenRef.current?.(e.data.url)
+    }
+    navigator.serviceWorker?.addEventListener('message', onSwMessage)
+    return () => navigator.serviceWorker?.removeEventListener('message', onSwMessage)
+  }, [])
 
   // v2.11.8: gate addProfile by Premium — paywall obiecuje "Unlimited children"
   // jako Premium feature. Wcześniej free user mógł dodać ile chce profili.
@@ -1738,6 +1803,7 @@ export default function App() {
       {feedReminderPrompt && (
         <FeedReminderPrompt
           isGuest={!uid}
+          showSummaryOption={!dailySummary?.hour}
           onChoose={chooseFeedReminder}
           onLater={laterFeedReminder}
           onNever={neverFeedReminder}

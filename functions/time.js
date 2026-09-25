@@ -51,4 +51,19 @@ function localToTimestamp(date, time, tz = DEFAULT_TIME_ZONE) {
   return ts
 }
 
-module.exports = { DEFAULT_TIME_ZONE, isValidTimeZone, localToTimestamp }
+/**
+ * Data i godzina lokalna w strefie rodzica dla danej chwili — np. czy
+ * u rodzica jest już 20:00 i jaki to dzień (podsumowanie dnia).
+ * @returns {{ date: string, hour: number }} date: YYYY-MM-DD
+ */
+function localDateHour(ts, tz = DEFAULT_TIME_ZONE) {
+  const zone = isValidTimeZone(tz) ? tz : DEFAULT_TIME_ZONE
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: zone, hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit',
+  }).formatToParts(new Date(ts))
+  const get = type => parts.find(p => p.type === type).value
+  return { date: `${get('year')}-${get('month')}-${get('day')}`, hour: Number(get('hour')) }
+}
+
+module.exports = { DEFAULT_TIME_ZONE, isValidTimeZone, localToTimestamp, localDateHour }

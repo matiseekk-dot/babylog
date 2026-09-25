@@ -24,7 +24,8 @@ const { defineSecret } = require('firebase-functions/params')
 const { setGlobalOptions } = require('firebase-functions/v2')
 const admin = require('firebase-admin')
 const medIntervalsData = require('./medIntervals.json')
-const { DEFAULT_TIME_ZONE, isValidTimeZone, localToTimestamp } = require('./time')
+const { DEFAULT_TIME_ZONE, isValidTimeZone, localToTimestamp, localDateHour } = require('./time')
+const { DEFAULT_LOCALE, normalizeLocale, medPushText, dailySummaryText } = require('./messages')
 
 admin.initializeApp()
 setGlobalOptions({ region: 'europe-west3' }) // Frankfurt — najbliżej Polski
@@ -100,6 +101,7 @@ exports.scheduleNotifications = onSchedule(
     // tylko gdy potwierdza go też strona właściciela (partners/{uid}).
     const groups = {}      // dataUid → tokens
     const tokenOwner = {}  // token → uid, pod którym leży (do sprzątania)
+    const dataUidOf = {}   // uid → dataUid (podsumowanie dnia liczy z danych dziecka)
     for (const [uid, tokens] of Object.entries(userTokens)) {
       let dataUid = uid
       try {
@@ -109,6 +111,7 @@ exports.scheduleNotifications = onSchedule(
         console.error(`[scheduleNotifications] link check failed for ${uid}:`, err)
       }
       tokens.forEach(tk => { tokenOwner[tk] = uid })
+      dataUidOf[uid] = dataUid
       groups[dataUid] = (groups[dataUid] || []).concat(tokens)
     }
 
@@ -121,6 +124,17 @@ exports.scheduleNotifications = onSchedule(
       } catch (err) {
         errors++
         console.error(`[scheduleNotifications] Error for user ${dataUid}:`, err)
+      }
+    }
+
+    // 4. Podsumowanie dnia — ustawienie osobiste, więc per użytkownik i tylko
+    // na jego urządzenia (nie do partnera), z danych dziecka (dataUid).
+    for (const [uid, tokens] of Object.entries(userTokens)) {
+      try {
+        pushed += await processDailySummary(uid, dataUidOf[uid] || uid, tokens, tokenOwner)
+      } catch (err) {
+        errors++
+        console.error(`[scheduleNotifications] daily summary failed for ${uid}:`, err)
       }
     }
 
@@ -157,6 +171,7 @@ async function processUser(uid, tokens, tokenOwner = {}) {
   if (!Array.isArray(profiles) || profiles.length === 0) return 0
 
   const timeZone = await getUserTimeZone(dataCollection)
+  const locale = await getUserLocale(dataCollection)
 
   for (const profile of profiles) {
     const profileId = profile.id
@@ -198,8 +213,8 @@ async function processUser(uid, tokens, tokenOwner = {}) {
       // dawkę", co jest medical advice. Nowa fraza neutralnie informuje że
       // minął bezpieczny odstęp; decyzja o podaniu kolejnej dawki jest
       // explicit przekazana userowi w body.
-      const title = `Minął odstęp od ostatniej dawki ${log.med}`
-      const body = `Podałeś/-aś o ${log.time}. Sprawdź czy potrzebna kolejna dawka (zgodnie z ulotką).`
+      // v2.16.4: w języku apki (functions/messages.js), wcześniej zawsze PL.
+      const { title, body } = medPushText(locale, log.med, log.time)
 
       try {
         sent += await sendToTokens(uid, tokens, tokenOwner, {
@@ -248,6 +263,69 @@ async function getUserTimeZone(dataCollection) {
   } catch {
     return DEFAULT_TIME_ZONE
   }
+}
+
+/** Język apki (App.jsx zapisuje data/app_locale), domyślnie polski. */
+async function getUserLocale(dataCollection) {
+  try {
+    return normalizeLocale((await dataCollection.doc('app_locale').get()).data()?.value)
+  } catch {
+    return DEFAULT_LOCALE
+  }
+}
+
+/**
+ * Wieczorne podsumowanie dnia (v2.16.4).
+ *
+ * Ustawienie users/{uid}/data/daily_summary = { value: { hour } } (osobiste —
+ * partner ma własne). O tej godzinie w strefie użytkownika wysyłamy liczbę
+ * karmień, łączny sen i pieluchy z dzisiaj dla każdego dziecka z danych
+ * dataUid. Raz dziennie — data wysyłki w daily_summary_sent. Pusty dzień:
+ * nic nie wysyłamy (bez poganiania).
+ */
+async function processDailySummary(uid, dataUid, tokens, tokenOwner) {
+  const own = db.collection('users').doc(uid).collection('data')
+  const hour = (await own.doc('daily_summary').get()).data()?.value?.hour
+  if (!Number.isInteger(hour)) return 0
+
+  const timeZone = await getUserTimeZone(own)
+  const { date, hour: nowHour } = localDateHour(Date.now(), timeZone)
+  if (nowHour !== hour) return 0
+
+  const sentRef = own.doc('daily_summary_sent')
+  if ((await sentRef.get()).data()?.value === date) return 0
+
+  const data = db.collection('users').doc(dataUid).collection('data')
+  const profiles = (await data.doc('profiles').get()).data()?.value
+  if (!Array.isArray(profiles) || profiles.length === 0) return 0
+
+  const todays = async key => {
+    const list = (await data.doc(key).get()).data()?.value
+    return Array.isArray(list) ? list.filter(e => e?.date === date) : []
+  }
+  const kids = []
+  for (const p of profiles.slice(0, 5)) {
+    if (!p?.id) continue
+    const [feeds, sleeps, diapers] = await Promise.all([
+      todays(`feed_${p.id}`), todays(`sleep_${p.id}`), todays(`diaper_${p.id}`),
+    ])
+    kids.push({
+      name: String(p.name || '').slice(0, 40),
+      feeds: feeds.length,
+      sleepMin: sleeps.reduce((sum, s) => sum + (Number(s.durationMin) || 0), 0),
+      diapers: diapers.length,
+      toiletMode: p.toiletMode,
+    })
+  }
+
+  // Oznacz dzień także przy pustym — inaczej liczylibyśmy co 5 min przez godzinę.
+  await sentRef.set({ value: date })
+  const text = dailySummaryText(await getUserLocale(own), kids)
+  if (!text) return 0
+
+  return await sendToTokens(uid, tokens, tokenOwner, {
+    ...text, tag: `summary-${date}`, url: '/babylog/?tab=today',
+  }, 'daily-summary')
 }
 
 /**

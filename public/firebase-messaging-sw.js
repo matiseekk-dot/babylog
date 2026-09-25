@@ -45,7 +45,11 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then((list) => {
       const existing = list.find(c => c.url.includes('/babylog/') && 'focus' in c)
-      if (existing) return existing.focus()
+      if (existing) {
+        // v2.16.4: otwarta apka przełącza zakładkę (App.jsx → OPEN_URL)
+        existing.postMessage({ type: 'OPEN_URL', url })
+        return existing.focus()
+      }
       return clients.openWindow(url)
     })
   )

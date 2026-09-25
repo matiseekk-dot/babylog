@@ -1,7 +1,31 @@
 // Uruchom: node functions/time.test.js (bez zależności — node:test).
 const test = require('node:test')
 const assert = require('node:assert')
-const { localToTimestamp, isValidTimeZone } = require('./time')
+const { localToTimestamp, isValidTimeZone, localDateHour } = require('./time')
+const { medPushText, dailySummaryText } = require('./messages')
+
+test('localDateHour: dzień i godzina u rodzica', () => {
+  // 22:30 UTC 25.09 = 00:30 26.09 w Warszawie (CEST)
+  assert.deepStrictEqual(localDateHour(Date.UTC(2026, 8, 25, 22, 30), 'Europe/Warsaw'), { date: '2026-09-26', hour: 0 })
+  assert.deepStrictEqual(localDateHour(Date.UTC(2026, 8, 25, 18, 5), 'Europe/Warsaw'), { date: '2026-09-25', hour: 20 })
+  assert.deepStrictEqual(localDateHour(Date.UTC(2026, 8, 26, 0, 5), 'America/New_York'), { date: '2026-09-25', hour: 20 })
+})
+
+test('push o lekach w języku apki, nieznany → polski', () => {
+  assert.match(medPushText('de', 'Paracetamol', '14:00').body, /Beipackzettel/)
+  assert.match(medPushText('xx', 'Ibuprofen', '09:00').title, /^Minął odstęp/)
+})
+
+test('podsumowanie dnia: jedno dziecko, kilkoro, pusty dzień', () => {
+  const one = dailySummaryText('pl', [{ name: 'Zosia', feeds: 8, sleepMin: 680, diapers: 6 }])
+  assert.deepStrictEqual(one, { title: 'Podsumowanie dnia — Zosia', body: 'Karmienia: 8 · Sen: 11 h 20 min · Pieluchy: 6' })
+  const two = dailySummaryText('en', [
+    { name: 'Emma', feeds: 5, sleepMin: 0, diapers: 0 },
+    { name: 'Leo', feeds: 0, sleepMin: 45, diapers: 3, toiletMode: 'potty' },
+  ])
+  assert.strictEqual(two.body, 'Emma: Feedings: 5\nLeo: Sleep: 45 min · Toilet: 3')
+  assert.strictEqual(dailySummaryText('pl', [{ name: 'Zosia', feeds: 0, sleepMin: 0, diapers: 0 }]), null)
+})
 
 test('Warszawa latem: 14:00 lokalnie = 12:00 UTC', () => {
   assert.strictEqual(localToTimestamp('2026-09-25', '14:00', 'Europe/Warsaw'), Date.UTC(2026, 8, 25, 12, 0))
