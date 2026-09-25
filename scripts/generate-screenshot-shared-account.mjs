@@ -40,7 +40,9 @@ const PEOPLE = {
   es: { owner: 'Pablo',  partner: 'María' },
 }
 
-const INVITE_CODE = 'K7M4PX'
+// Zawiera "0", którego INVITE_ALPHABET w functions/index.js nie używa — taki kod
+// nigdy nie powstanie naprawdę, więc wpisanie go ze screena nikogo nie połączy.
+const INVITE_CODE = 'K7M0PX'
 const GUEST_PREFIX = 'babylog_guest_'
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
