@@ -71,6 +71,7 @@ import { useServiceWorker } from './hooks/useServiceWorker'
 
 import { useLocale, t, getLocale } from './i18n'
 import { findPlan } from './data/premiumPlans'
+import { fetchStorePrices, loadCachedStorePrices } from './data/storePrices'
 import { todayDate, nowTime, genId } from './utils/helpers'
 
 const DEFAULT_PROFILE = {
@@ -206,6 +207,9 @@ export default function App() {
   // Włącz offline persistence
   useEffect(() => { enableOffline() }, [])
 
+  // Ceny z Google Play (null → paywall pokazuje ceny statyczne z premiumPlans).
+  const [storePrices, setStorePrices] = useState(loadCachedStorePrices)
+
   // v2.12.0: Konfiguruj RevenueCat SDK raz gdy uid jest znany.
   // Wcześniej configure() był wywoływany w handleActivate() przy każdym kliknięciu
   // "Kup", co jest niezgodne z dokumentacją RC (powinno być jednokrotne przy starcie).
@@ -217,6 +221,11 @@ export default function App() {
         const rcKey = import.meta.env.VITE_RC_PUBLIC_KEY || 'goog_CePHovfsjHOiYaoKwnFhtcDFnwq'
         await Purchases.configure({ apiKey: rcKey, appUserID: uid })
         addBreadcrumb('purchase', 'rc-configured', { uid })
+        // v2.16.2: ceny z Google Play dla paywalla (waluta kraju konta Google).
+        // Błąd tutaj nie jest błędem konfiguracji — zostają ceny z cache/statyczne.
+        fetchStorePrices(Purchases)
+          .then(prices => { if (prices) setStorePrices(prices) })
+          .catch(e => addBreadcrumb('purchase', 'store-prices-failed', { msg: e?.message }))
       } catch (e) {
         console.warn('[RC] configure failed on startup:', e?.message)
       }
@@ -1254,6 +1263,7 @@ export default function App() {
           onClose={closePaywall}
           checking={rcChecking || purchasing}
           trigger={paywallTrigger}
+          storePrices={storePrices}
         />
         <PlayStoreModal
           open={showPlayStoreModal}

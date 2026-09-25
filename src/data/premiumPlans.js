@@ -82,10 +82,50 @@ const PRICES_BY_LOCALE = {
   en: { monthly: '$3.99',    yearly: '$24.99',  yearlyPerMonth: '$2.08',   yearlyPerPerson: '$1.04',   lifetime: '$49.99'  },
 }
 
-export function getPlans(locale) {
+const LOCALE_TAGS = { pl: 'pl-PL', de: 'de-DE', fr: 'fr-FR', es: 'es-ES', en: 'en-US' }
+
+function formatMoney(amount, currencyCode, locale) {
+  try {
+    return new Intl.NumberFormat(LOCALE_TAGS[locale] || 'en-US', {
+      style: 'currency', currency: currencyCode,
+    }).format(amount)
+  } catch { return null }
+}
+
+/**
+ * v2.16.2 — ceny z Google Play (RevenueCat getProducts, patrz storePrices.js)
+ * zamiast display-only z PRICES_BY_LOCALE: paywall pokazuje dokładnie to,
+ * co pobierze Google, w walucie kraju konta (np. £ w UK, CHF w Szwajcarii).
+ * Tylko gdy są wszystkie trzy produkty w jednej walucie — inaczej plany
+ * mieszałyby waluty i zostajemy przy cenach statycznych.
+ */
+function applyStorePrices(plans, store, locale) {
+  const found = plans.map(p => store[p.productId])
+  if (found.some(s => !s?.priceString) || new Set(found.map(s => s.currencyCode)).size !== 1) {
+    return plans
+  }
+  const monthly = store[plans.find(p => p.id === 'monthly').productId]
+  return plans.map(plan => {
+    const s = store[plan.productId]
+    const next = { ...plan, price: s.priceString }
+    if (plan.id === 'yearly') {
+      next.perMonth = formatMoney(s.price / 12, s.currencyCode, locale) || plan.perMonth
+      next.perPersonMonth = formatMoney(s.price / 24, s.currencyCode, locale) || plan.perPersonMonth
+      const pct = Math.round((1 - s.price / (monthly.price * 12)) * 100)
+      next.badge = pct > 0 ? t('paywall.badge.save', { pct }) : null
+    }
+    return next
+  })
+}
+
+/**
+ * @param locale      — kod języka apki (pl/en/de/fr/es)
+ * @param storePrices — opcjonalnie { [productId]: { priceString, price, currencyCode } }
+ */
+export function getPlans(locale, storePrices = null) {
   const prices = PRICES_BY_LOCALE[locale] || PRICES_BY_LOCALE.en
 
-  return [
+  const plans = [
     {
       id: 'monthly',
       label: t('paywall.plan.monthly'),
@@ -124,6 +164,7 @@ export function getPlans(locale) {
       oneTime: true,
     },
   ]
+  return storePrices ? applyStorePrices(plans, storePrices, locale) : plans
 }
 
 /**

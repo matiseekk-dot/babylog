@@ -69,12 +69,13 @@ function getFeatures() {
 // v2.9.2: getPlans() usunięte — single source of truth w src/data/premiumPlans.js.
 // Ten sam moduł importuje useRevenueCat. Eliminuje rozjazd cen.
 
-export default function PaywallScreen({ onActivate, onClose, checking, trigger = 'unknown' }) {
+export default function PaywallScreen({ onActivate, onClose, checking, trigger = 'unknown', storePrices = null }) {
   useLocale()
   const FEATURES = getFeatures()
   // v2.11.33: getPlans używa pełnego locale code (pl/en/de zamiast bool).
   // Re-render przy zmianie języka przez useLocale() powyżej.
-  const PLANS = getPlans(getLocale())
+  // v2.16.2: storePrices = ceny z Google Play (App.jsx), gdy dostępne.
+  const PLANS = getPlans(getLocale(), storePrices)
   const [selected, setSelected] = useState('yearly')
 
   // v2.11.32 P1-6: track paywall view raz przy mount. `trigger` przekazany

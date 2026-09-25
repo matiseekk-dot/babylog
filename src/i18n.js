@@ -254,6 +254,7 @@ const TRANSLATIONS = {
     'paywall.per.yearly':    '/ rok',
     'paywall.per.lifetime':  'jednorazowo',
     'paywall.badge.yearly':  'Oszczędzasz 34%',
+    'paywall.badge.save': "Oszczędzasz {pct}%",  // v2.16.2 — % z cen Google Play
     'paywall.badge.popular': 'Najpopularniejszy',
     // v2.14.0 — pod ceną roczną: "≈ 8,33 zł/mc"
     'paywall.per_month_note': '≈ {price}/mc',
@@ -1729,6 +1730,7 @@ const TRANSLATIONS = {
     'paywall.per.yearly':    '/ year',
     'paywall.per.lifetime':  'one-time',
     'paywall.badge.yearly':  'Save 48%',
+    'paywall.badge.save': "Save {pct}%",  // v2.16.2 — % z cen Google Play
     'paywall.badge.popular': 'Most popular',
     'paywall.per_month_note': '≈ {price}/mo',
     'paywall.trust.trial': '14-day free trial',
@@ -3208,6 +3210,7 @@ const TRANSLATIONS = {
     'paywall.per.yearly':         '/ Jahr',
     'paywall.per.lifetime':       'einmalig',
     'paywall.badge.yearly':       'Sie sparen 48%',
+    'paywall.badge.save': "Sie sparen {pct}%",  // v2.16.2 — % z cen Google Play
     'paywall.per_month_note':     '≈ {price}/Monat',
     'paywall.trust.trial':        '14 Tage kostenlos',
     'paywall.trust.cancel':       'Jederzeit kündbar',
@@ -4659,6 +4662,7 @@ const TRANSLATIONS = {
     'paywall.per.yearly':         '/ an',
     'paywall.per.lifetime':       'paiement unique',
     'paywall.badge.yearly':       'Économisez 48%',
+    'paywall.badge.save': "Économisez {pct}%",  // v2.16.2 — % z cen Google Play
     'paywall.per_month_note':     '≈ {price}/mois',
     'paywall.trust.trial':        '14 jours gratuits',
     'paywall.trust.cancel':       'Annulable à tout moment',
@@ -6111,6 +6115,7 @@ const TRANSLATIONS = {
     'paywall.per.yearly':         '/ año',
     'paywall.per.lifetime':       'pago único',
     'paywall.badge.yearly':       'Ahorras 48%',
+    'paywall.badge.save': "Ahorras {pct}%",  // v2.16.2 — % z cen Google Play
     'paywall.per_month_note':     '≈ {price}/mes',
     'paywall.trust.trial':        '14 días gratis',
     'paywall.trust.cancel':       'Cancela cuando quieras',
