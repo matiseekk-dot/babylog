@@ -39,10 +39,16 @@ import PaywallScreen from './components/PaywallScreen'
 import DoctorNotesTab from './components/DoctorNotesTab'
 import OnboardingScreen from './components/OnboardingScreen'
 import ToastContainer from './components/Toast'
-import { toast } from './components/Toast'
+import { toast, toastWithUndo } from './components/Toast'
+import FeedReminderPrompt from './components/FeedReminderPrompt'
+import { useFCM } from './hooks/useFCM'
+import {
+  buildFeedReminder, entryTimestamp, formatClock, getFeedReminderPref, setFeedReminderPref,
+  shouldAskFeedReminder, snoozeFeedReminderPrompt,
+} from './utils/feedReminder'
 import { captureError, addBreadcrumb } from './sentry'
 import {
-  trackPurchaseCompleted, trackFirstEntryOnce, hasFirstEntryFlag, trackLoginChoice,
+  track, trackPurchaseCompleted, trackFirstEntryOnce, hasFirstEntryFlag, trackLoginChoice,
   trackPartnerCardClicked, trackPartnerCardDismissed, setAnalyticsUserProperty,
 } from './utils/analytics'
 import FirstEntryCard from './components/FirstEntryCard'
@@ -197,6 +203,25 @@ export default function App() {
   const dataUid = ownerUid || uid
   // Partnerzy właściciela (null = ładuje się). Partner sam nie ma partnerów.
   const partners = usePartners(uid, !ownerUid)
+
+  // Token push tego urządzenia — jedna instancja dla całej apki (Ustawienia
+  // i pytanie o przypomnienie o karmieniu korzystają z tej samej).
+  const { refreshToken: refreshFcmToken } = useFCM(uid)
+
+  // v2.16.3: strefa czasowa dla Cloud Function — godziny wpisów (np. leków)
+  // są lokalne, a serwer działa w UTC. Zapisuje tylko właściciel danych,
+  // najwyżej raz na uruchomienie (dwa urządzenia w różnych strefach nie
+  // nadpisują się wtedy w kółko).
+  const [savedTimeZone, setSavedTimeZone] = useFirestore(ownerUid ? null : uid, 'timezone', null)
+  const timeZoneSavedRef = useRef(false)
+  useEffect(() => {
+    if (!uid || ownerUid || timeZoneSavedRef.current) return
+    let tz = null
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone } catch {}
+    if (!tz) return
+    timeZoneSavedRef.current = true
+    if (savedTimeZone !== tz) setSavedTimeZone(tz)
+  }, [uid, ownerUid, savedTimeZone])
 
   // Segment w Analytics — czy konta z partnerem częściej kupują Premium.
   const sharedAccountRole = ownerUid ? 'partner' : partners?.length ? 'owner' : partners ? 'none' : null
@@ -362,18 +387,28 @@ export default function App() {
   const [sleepLogsForFab,  setSleepLogsForFab]  = useFirestore(dataUid, `sleep_${active.id}`,  [])
   const [diaperLogsForFab, setDiaperLogsForFab] = useFirestore(dataUid, `diaper_${active.id}`, [])
   const [tempLogs] = useFirestore(dataUid, `temp_${active.id}`, [])
+  // Oczekujące przypomnienie o karmieniu (czyta i wysyła Cloud Function).
+  const [feedReminder, setFeedReminder] = useFirestore(dataUid, `reminder_feed_${active.id}`, null)
 
   // v2.16.1 — pierwszy wpis (aktywacja). Nowy użytkownik widzi FirstEntryCard
   // zamiast "Pustego dnia"; okno o trialu i porady czekają, aż coś zapisze.
   // Listener w useFirestore łapie wpisy z każdej zakładki, też u gościa.
   const [hasFirstEntry, setHasFirstEntry] = useState(hasFirstEntryFlag)
+  // Handler karmienia (przypomnienie) zmienia się co render — listener
+  // podpinamy raz, więc woła najświeższą wersję przez ref.
+  const feedAddedRef = useRef(null)
   useEffect(() => {
-    setEntryAddedListener((entryType) => {
+    setEntryAddedListener((entryType, info) => {
       trackFirstEntryOnce(entryType)
       setHasFirstEntry(true)
+      if (entryType === 'feed' && info?.added?.[0]) {
+        feedAddedRef.current?.(info.added[0], info.key.slice('feed_'.length))
+      }
     })
     return () => setEntryAddedListener(null)
   }, [])
+  // v2.16.3 — "Przypomnieć o następnym karmieniu?" (FeedReminderPrompt)
+  const [feedReminderPrompt, setFeedReminderPrompt] = useState(null)  // { feedTs } | null
   const hasAnyEntry = hasFirstEntry || !!sleepTimerTs
     || feedLogsForFab.length > 0 || sleepLogsForFab.length > 0
     || diaperLogsForFab.length > 0 || tempLogs.length > 0
@@ -429,6 +464,7 @@ export default function App() {
     if (authLoading) return
     // v2.16.1: nie zasłaniaj startu — najpierw pierwszy wpis (FirstEntryCard).
     if (!firstStepsDone) return
+    if (feedReminderPrompt) return  // najpierw pytanie o przypomnienie, potem to okno
     if (!isOnTrial) return
     if (!trialDaysLeft || trialDaysLeft < 13) return  // pokazuj tylko dla świeżego trialu (>=13/14 dni)
     const flagKey = `babylog_trial_started_shown_${trialStartedKey}`
@@ -436,7 +472,7 @@ export default function App() {
       if (localStorage.getItem(flagKey) === '1') return
     } catch {}
     setShowTrialStarted(true)
-  }, [authLoading, firstStepsDone, trialStartedKey, isOnTrial, trialDaysLeft])
+  }, [authLoading, firstStepsDone, feedReminderPrompt, trialStartedKey, isOnTrial, trialDaysLeft])
 
   const dismissTrialStarted = () => {
     setShowTrialStarted(false)
@@ -540,10 +576,77 @@ export default function App() {
   }
 
   // Gość w onboardingu chce dołączyć kodem — wspólne konto wymaga Google.
+  // To samo przy przypomnieniu o karmieniu (push wymaga konta).
   const loginForPartner = () => {
     try { localStorage.removeItem('babylog_guest') } catch {}
     setGuestMode(false)
     login()
+  }
+
+  // ── v2.16.3: przypomnienie o karmieniu + zgoda na powiadomienia ──────────
+  // Zgoda na push: natywnie wtyczka sama pyta Androida i rejestruje token
+  // (refreshFcmToken), w przeglądarce najpierw Notification.requestPermission.
+  const enableNotifications = async () => {
+    if (window.Capacitor?.isNativePlatform?.()) return await refreshFcmToken()
+    if (typeof Notification === 'undefined') return null
+    const perm = Notification.permission === 'granted'
+      ? 'granted'
+      : await Notification.requestPermission()
+    if (perm === 'granted') await refreshFcmToken()
+    return perm
+  }
+
+  const scheduleFeedReminder = (feedTs, intervalMin) => {
+    const reminder = buildFeedReminder({ feedTs, intervalMin, childName: active.name })
+    if (!reminder) return
+    const previous = feedReminder
+    setFeedReminder(reminder)
+    toastWithUndo(
+      t('feed_reminder.scheduled', { time: formatClock(reminder.fireAt) }),
+      () => setFeedReminder(previous?.notified === false ? previous : null),
+      'info',
+    )
+  }
+
+  feedAddedRef.current = (entry, profileId) => {
+    if (profileId !== active.id) return
+    const feedTs = entryTimestamp(entry)
+    const pref = getFeedReminderPref()
+    if (typeof pref === 'number') {
+      if (uid) scheduleFeedReminder(feedTs, pref)
+      return
+    }
+    if (shouldAskFeedReminder(feedTs)) setFeedReminderPrompt({ feedTs })
+  }
+
+  const chooseFeedReminder = async (intervalMin) => {
+    const { feedTs } = feedReminderPrompt
+    setFeedReminderPrompt(null)
+    const perm = await enableNotifications()
+    if (perm !== 'granted') {
+      track('feed_reminder_permission_denied', { result: String(perm) })
+      setFeedReminderPref('off')
+      toast(t('feed_reminder.no_permission'), 'error')
+      return
+    }
+    track('feed_reminder_enabled', { interval: intervalMin })
+    setFeedReminderPref(intervalMin)
+    scheduleFeedReminder(feedTs, intervalMin)
+  }
+  const laterFeedReminder = () => {
+    track('feed_reminder_declined', { mode: 'later' })
+    snoozeFeedReminderPrompt()
+    setFeedReminderPrompt(null)
+  }
+  const neverFeedReminder = () => {
+    track('feed_reminder_declined', { mode: 'never' })
+    setFeedReminderPref('off')
+    setFeedReminderPrompt(null)
+  }
+  const loginForFeedReminder = () => {
+    snoozeFeedReminderPrompt()
+    setFeedReminderPrompt(null)
+    loginForPartner()
   }
 
   // v2.11.32 P1-6: paywall trigger source dla analytics — pokazuje skąd
@@ -1228,6 +1331,8 @@ export default function App() {
           linkedOwner={ownerUid ? linkedOwner : null}
           partners={partners}
           focusSection={settingsFocus}
+          refreshFcmToken={refreshFcmToken}
+          enableNotifications={enableNotifications}
           onUpdate={updateProfile}
           onDelete={deleteProfile}
           isPremium={isPremium}
@@ -1630,6 +1735,15 @@ export default function App() {
         open={showTrialStarted}
         onClose={dismissTrialStarted}
       />
+      {feedReminderPrompt && (
+        <FeedReminderPrompt
+          isGuest={!uid}
+          onChoose={chooseFeedReminder}
+          onLater={laterFeedReminder}
+          onNever={neverFeedReminder}
+          onLogin={loginForFeedReminder}
+        />
+      )}
       <PhotoAvatarPicker
         open={showPhotoPicker}
         uid={uid}

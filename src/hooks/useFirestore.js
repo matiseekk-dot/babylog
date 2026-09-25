@@ -19,6 +19,7 @@ let accountUid = null
 export function setAccountUid(uid) { accountUid = uid || null }
 
 // v2.16.1: powiadomienie o nowym wpisie (lista wpisów urosła po akcji usera).
+// Listener dostaje (typ, { key, added }) — added to nowe wpisy (po id).
 // Jedno miejsce zamiast wywołań w każdej zakładce — App podpina tu analytics
 // "pierwszego wpisu". Snapshoty z Firestore (np. wpis partnera) nie przechodzą
 // przez set(), więc nie są liczone. *_custom_ to definicje, *_timer_ to stan.
@@ -164,7 +165,9 @@ export function useFirestore(uid, key, fallback) {
     siblingSetters.get(lsPrefix(uid) + key)?.forEach(s => { if (s !== setState) s(next) })
     if (entryAddedListener && ENTRY_LIST_KEY.test(key)
         && Array.isArray(next) && Array.isArray(state) && next.length > state.length) {
-      entryAddedListener(key.slice(0, key.indexOf('_')))
+      const prevIds = new Set(state.map(e => e?.id))
+      const added = next.filter(e => e && !prevIds.has(e.id))
+      entryAddedListener(key.slice(0, key.indexOf('_')), { key, added })
     }
     if (uid) {
       // v2.10.0: debounce setDoc. Jeśli user spamuje set(), ostatnia

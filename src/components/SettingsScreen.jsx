@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { useMedReminder } from '../hooks/useMedReminder'
-import { useFCM } from '../hooks/useFCM'
+import {
+  FEED_REMINDER_OPTIONS, formatHours, getFeedReminderPref, setFeedReminderPref,
+} from '../utils/feedReminder'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '../firebase'
 import { t, useLocale, SUPPORTED_LOCALES } from '../i18n'
@@ -42,7 +44,7 @@ export default function SettingsScreen({
   profile, onUpdate, onDelete,
   isPremium, isOnTrial, trialDaysLeft,
   onUpgrade, onEditPhoto, user, onLogout, onClose, uid, authUid, linkedOwner,
-  partners, focusSection,
+  partners, focusSection, refreshFcmToken, enableNotifications,
 }) {
   useEffect(() => {
     if (focusSection === 'partner') {
@@ -63,10 +65,29 @@ export default function SettingsScreen({
   const [questions]    = useFirestore(uid, `doctor_questions_${profile.id}`, [])
   const { locale, setLocale } = useLocale()
   const { permission: notifPermission, testNotification, askPermission: askNotifPermission } = useMedReminder(profile.id)
-  // FCM: pobiera token i zapisuje do Firestore żeby Cloud Function mogła wysyłać push.
-  // Token rejestruje się automatycznie po nadaniu zgody (useEffect w useFCM).
-  // Tokeny push zawsze pod własnym kontem — u partnera `uid` to dane właściciela.
-  const { refreshToken: refreshFcmToken } = useFCM(authUid)
+  // FCM: token push rejestruje instancja useFCM w App.jsx (pod authUid — u
+  // partnera `uid` to dane właściciela), tutaj tylko wywołujemy refreshFcmToken.
+  // v2.16.3: jedna instancja, bo pytanie o przypomnienie o karmieniu też prosi
+  // o zgodę — dwie instancje dublowały natywne listenery.
+  const [feedReminderPref, setFeedReminderPrefState] = useState(getFeedReminderPref)
+  const [, setFeedReminder] = useFirestore(uid, `reminder_feed_${profile.id}`, null)
+  const changeFeedReminder = async (value) => {
+    if (value === 'off') {
+      setFeedReminderPref('off')
+      setFeedReminderPrefState('off')
+      setFeedReminder(null)  // anuluj oczekujące przypomnienie
+      return
+    }
+    const minutes = Number(value)
+    const perm = await enableNotifications?.()
+    if (perm !== 'granted') {
+      toast(t('feed_reminder.no_permission'), 'error')
+      return
+    }
+    setFeedReminderPref(minutes)
+    setFeedReminderPrefState(minutes)
+    toast(t('settings.saved'))
+  }
   const [pdfModal, setPdfModal] = useState(false)
   const [showFeatures, setShowFeatures] = useState(false)
   const [name, setName] = useState(profile.name)
@@ -816,6 +837,33 @@ export default function SettingsScreen({
         <div style={{ fontSize: 10, color: '#9a9a94', marginTop: 8, lineHeight: 1.4 }}>
           {t('settings.notifications.disclaimer')}
         </div>
+
+        {/* v2.16.3 — przypomnienie o karmieniu (push przez Cloud Function, więc
+            tylko z kontem Google). */}
+        {authUid && (
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>
+            <label htmlFor="feed-reminder-select" style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a18', marginBottom: 6 }}>
+              ⏰ {t('feed_reminder.settings_label')}
+            </label>
+            <select
+              id="feed-reminder-select"
+              className="form-input"
+              value={typeof feedReminderPref === 'number' ? String(feedReminderPref) : 'off'}
+              onChange={e => changeFeedReminder(e.target.value)}
+              style={{ fontSize: 14 }}
+            >
+              <option value="off">{t('feed_reminder.settings_off')}</option>
+              {FEED_REMINDER_OPTIONS.map(min => (
+                <option key={min} value={String(min)}>
+                  {t('feed_reminder.settings_every', { h: formatHours(min) })}
+                </option>
+              ))}
+            </select>
+            <div style={{ fontSize: 11, color: '#5a5a56', marginTop: 6, lineHeight: 1.4 }}>
+              {t('feed_reminder.settings_hint')}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Legal — wymagane przez Play Console review.

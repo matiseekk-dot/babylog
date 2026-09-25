@@ -17,6 +17,8 @@ export default defineConfig({
   test: {
     environment: 'happy-dom',
     setupFiles: ['./src/test-setup.js'],
+    // functions/ ma własne testy (node --test functions/*.test.js)
+    exclude: ['**/node_modules/**', '**/dist/**', 'functions/**'],
   },
   build: {
     assetsDir: 'assets',

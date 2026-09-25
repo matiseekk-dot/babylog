@@ -24,6 +24,7 @@ const { defineSecret } = require('firebase-functions/params')
 const { setGlobalOptions } = require('firebase-functions/v2')
 const admin = require('firebase-admin')
 const medIntervalsData = require('./medIntervals.json')
+const { DEFAULT_TIME_ZONE, isValidTimeZone, localToTimestamp } = require('./time')
 
 admin.initializeApp()
 setGlobalOptions({ region: 'europe-west3' }) // Frankfurt — najbliżej Polski
@@ -155,9 +156,13 @@ async function processUser(uid, tokens, tokenOwner = {}) {
   const profiles = profilesDoc.data()?.value || []
   if (!Array.isArray(profiles) || profiles.length === 0) return 0
 
+  const timeZone = await getUserTimeZone(dataCollection)
+
   for (const profile of profiles) {
     const profileId = profile.id
     if (!profileId) continue
+
+    sent += await processFeedReminder(dataCollection, profileId, uid, tokens, tokenOwner)
 
     // Pobranie wpisów leków dla tego profilu
     const medsDoc = await dataCollection.doc(`meds_${profileId}`).get()
@@ -178,8 +183,8 @@ async function processUser(uid, tokens, tokenOwner = {}) {
       const interval = getMedInterval(log.med)
       if (!interval) continue
 
-      // Wyliczenie kiedy lek przestaje działać
-      const fireAt = computeFireAt(log.date, log.time, interval)
+      // Wyliczenie kiedy lek przestaje działać (godzina w strefie rodzica)
+      const fireAt = computeFireAt(log.date, log.time, interval, timeZone)
       if (fireAt === null) continue
 
       const now = Date.now()
@@ -196,49 +201,10 @@ async function processUser(uid, tokens, tokenOwner = {}) {
       const title = `Minął odstęp od ostatniej dawki ${log.med}`
       const body = `Podałeś/-aś o ${log.time}. Sprawdź czy potrzebna kolejna dawka (zgodnie z ulotką).`
 
-      const message = {
-        notification: { title, body },
-        data: {
-          tag: `med-${log.id}`,
-          url: '/babylog/?tab=meds',
-        },
-        // v2.12.4: wymuszamy wyświetlenie na pasku (jak w sendTestPush).
-        android: {
-          priority: 'high',
-          notification: {
-            sound: 'default',
-            defaultSound: true,
-            priority: 'max',
-            visibility: 'public',
-            notificationCount: 1,
-          },
-        },
-        tokens: tokens,
-      }
-
       try {
-        const response = await messaging.sendEachForMulticast(message)
-        sent += response.successCount
-        console.log(
-          `[processUser] uid=${uid} med=${log.med} ` +
-          `success=${response.successCount} fail=${response.failureCount}`
-        )
-
-        // Cleanup nieprawidłowych tokenów (np. user odinstalował apkę)
-        if (response.failureCount > 0) {
-          for (let j = 0; j < response.responses.length; j++) {
-            const r = response.responses[j]
-            if (!r.success && (
-              r.error?.code === 'messaging/invalid-registration-token' ||
-              r.error?.code === 'messaging/registration-token-not-registered'
-            )) {
-              const badToken = tokens[j]
-              const holder = tokenOwner[badToken] || uid
-              await db.collection('users').doc(holder).collection('tokens').doc(badToken).delete()
-              console.log(`[processUser] removed invalid token for uid=${uid}`)
-            }
-          }
-        }
+        sent += await sendToTokens(uid, tokens, tokenOwner, {
+          title, body, tag: `med-${log.id}`, url: '/babylog/?tab=meds',
+        }, `med=${log.med}`)
 
         // Mark as notified — modyfikujemy lokalnie i zapiszemy raz na końcu
         updatedMeds[i] = { ...log, notified: true, notifiedAt: Date.now() }
@@ -260,19 +226,103 @@ async function processUser(uid, tokens, tokenOwner = {}) {
 /**
  * Wyliczenie timestamp kiedy lek przestaje działać.
  *
+ * v2.16.3: godzina liczona w strefie rodzica (wcześniej w UTC serwera —
+ * push przychodził 2 h za późno latem w Polsce). Patrz functions/time.js.
+ *
  * @param {string} date - YYYY-MM-DD
  * @param {string} time - HH:MM
  * @param {number} intervalMin - czas działania w minutach
+ * @param {string} timeZone - strefa IANA z users/{uid}/data/timezone
  * @returns {number|null} unix timestamp ms, lub null jeśli format błędny
  */
-function computeFireAt(date, time, intervalMin) {
-  if (!date || !time) return null
+function computeFireAt(date, time, intervalMin, timeZone = DEFAULT_TIME_ZONE) {
+  const ts = localToTimestamp(date, time, timeZone)
+  return ts === null ? null : ts + intervalMin * 60 * 1000
+}
+
+/** Strefa czasowa zapisywana przez apkę (App.jsx), domyślnie Europe/Warsaw. */
+async function getUserTimeZone(dataCollection) {
   try {
-    const dt = new Date(`${date}T${time}:00`)
-    if (isNaN(dt.getTime())) return null
-    return dt.getTime() + intervalMin * 60 * 1000
+    const tz = (await dataCollection.doc('timezone').get()).data()?.value
+    return isValidTimeZone(tz) ? tz : DEFAULT_TIME_ZONE
   } catch {
-    return null
+    return DEFAULT_TIME_ZONE
+  }
+}
+
+/**
+ * Push do wszystkich urządzeń (rodzic + partnerzy) + sprzątanie martwych tokenów.
+ * @returns {number} liczba dostarczonych
+ */
+async function sendToTokens(uid, tokens, tokenOwner, { title, body, tag, url }, label = '') {
+  const response = await messaging.sendEachForMulticast({
+    notification: { title, body },
+    data: { tag, url },
+    // v2.12.4: wymuszamy wyświetlenie na pasku (jak w sendTestPush).
+    android: {
+      priority: 'high',
+      notification: {
+        sound: 'default',
+        defaultSound: true,
+        priority: 'max',
+        visibility: 'public',
+        notificationCount: 1,
+      },
+    },
+    tokens,
+  })
+  console.log(
+    `[processUser] uid=${uid} ${label} ` +
+    `success=${response.successCount} fail=${response.failureCount}`
+  )
+
+  // Cleanup nieprawidłowych tokenów (np. user odinstalował apkę)
+  if (response.failureCount > 0) {
+    for (let j = 0; j < response.responses.length; j++) {
+      const r = response.responses[j]
+      if (!r.success && (
+        r.error?.code === 'messaging/invalid-registration-token' ||
+        r.error?.code === 'messaging/registration-token-not-registered'
+      )) {
+        const badToken = tokens[j]
+        const holder = tokenOwner[badToken] || uid
+        await db.collection('users').doc(holder).collection('tokens').doc(badToken).delete()
+        console.log(`[processUser] removed invalid token for uid=${uid}`)
+      }
+    }
+  }
+  return response.successCount
+}
+
+/**
+ * Przypomnienie o karmieniu (v2.16.3).
+ *
+ * Apka po wpisie karmienia zapisuje users/{uid}/data/reminder_feed_{profileId}
+ * = { value: { fireAt, title, body, notified } } — fireAt jako timestamp
+ * (bez stref), tytuł i treść już w języku apki. Jedno przypomnienie na
+ * dziecko; kolejne karmienie je nadpisuje. Wysyłamy w oknie 60 min po fireAt.
+ */
+async function processFeedReminder(dataCollection, profileId, uid, tokens, tokenOwner) {
+  const ref = dataCollection.doc(`reminder_feed_${profileId}`)
+  const reminder = (await ref.get()).data()?.value
+  if (!reminder || reminder.notified || typeof reminder.fireAt !== 'number') return 0
+
+  const minutesAfter = (Date.now() - reminder.fireAt) / 60000
+  if (minutesAfter < 0 || minutesAfter > 60) return 0
+
+  const text = v => String(v || '').slice(0, 200)
+  try {
+    const sent = await sendToTokens(uid, tokens, tokenOwner, {
+      title: text(reminder.title) || 'Spokojny Rodzic',
+      body: text(reminder.body),
+      tag: `feed-${profileId}`,
+      url: '/babylog/?tab=feed',
+    }, 'feed-reminder')
+    await ref.set({ value: { ...reminder, notified: true, notifiedAt: Date.now() } })
+    return sent
+  } catch (err) {
+    console.error('[processFeedReminder] send failed:', err)
+    return 0
   }
 }
 

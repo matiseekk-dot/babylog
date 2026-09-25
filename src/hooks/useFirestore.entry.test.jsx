@@ -21,13 +21,13 @@ describe('setEntryAddedListener', () => {
   beforeEach(() => {
     localStorage.clear()
     added = []
-    setEntryAddedListener(type => added.push(type))
+    setEntryAddedListener((type, info) => added.push({ type, ...info }))
   })
 
-  it('zgłasza nowy wpis w liście wpisów (gość)', () => {
-    const { result } = renderHook(() => useFirestore(null, 'feed_p1', []))
-    act(() => result.current[1]([{ id: 1 }]))
-    expect(added).toEqual(['feed'])
+  it('zgłasza nowy wpis w liście wpisów (gość) razem z samym wpisem', () => {
+    const { result } = renderHook(() => useFirestore(null, 'feed_p1', [{ id: 1 }]))
+    act(() => result.current[1]([{ id: 2, time: '14:30' }, { id: 1 }]))
+    expect(added).toEqual([{ type: 'feed', key: 'feed_p1', added: [{ id: 2, time: '14:30' }] }])
   })
 
   it('nie zgłasza edycji ani usunięcia', () => {

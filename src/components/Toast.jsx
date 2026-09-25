@@ -6,8 +6,8 @@ export function toast(message, type = 'success') {
   _showToast?.({ message, type, id: Date.now() })
 }
 
-export function toastWithUndo(message, onUndo) {
-  _showToast?.({ message, type: 'warn', id: Date.now(), undo: onUndo })
+export function toastWithUndo(message, onUndo, type = 'warn') {
+  _showToast?.({ message, type, id: Date.now(), undo: onUndo })
 }
 
 const STYLES = {
