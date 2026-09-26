@@ -75,6 +75,7 @@ export function buildFeedReminder({ feedTs, intervalMin, childName, now = Date.n
   if (fireAt < now + 60 * 1000) return null
   return {
     fireAt,
+    feedTs,
     intervalMin,
     title: t('feed_reminder.push_title'),
     body: t('feed_reminder.push_body', { name: childName || '', time: formatClock(feedTs) }).replace(/^\s*—\s*/, ''),

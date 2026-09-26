@@ -13,6 +13,8 @@ w krótkim opisie i jako druga sekcja pełnego opisu; plan dożywotni w cenach; 
 na liście Premium; „Bez reklam" przeniesione z krótkiego opisu do sekcji „Zawsze za darmo".
 Nowy screenshot: `store-assets/screenshots-2026-09/{lang}/07-shared-account.png`.
 
+**v55 (2.16.5):** sekcja „Przypomnienia i widżet” — wklej DOPIERO gdy v55 jest na produkcji (widżet jest tylko w v55).
+
 Nazwy aplikacji bez zmian (ustawione 2026-09-17).
 
 ---
@@ -40,6 +42,11 @@ Zaproś partnera jednym kodem. Oboje widzicie i uzupełniacie te same wpisy — 
 • Płaci jedna osoba — Premium działa u obojga
 • Możesz zaprosić do 3 osób: partnera, babcię, nianię
 • Przypomnienia o lekach przychodzą na oba telefony
+
+⏰ PRZYPOMNIENIA I WIDŻET
+• Przypomnienie o następnym karmieniu — na oba telefony
+• Wieczorne podsumowanie dnia: karmienia, sen, pieluchy
+• Widżet na ekran główny: karmienie, butelka lub sen jednym dotknięciem
 
 📱 CO ZAPISUJESZ W APCE
 • Temperaturę ciała z wykresem trendu
@@ -125,6 +132,11 @@ Invite your partner with a single code. You both see and add the same entries �
 • Invite up to 3 people: partner, grandparent, nanny
 • Medication reminders reach both phones
 
+⏰ REMINDERS & WIDGET
+• Next-feeding reminder — on both phones
+• Evening summary of the day: feedings, sleep, diapers
+• Home screen widget: log a feeding, bottle or sleep with one tap
+
 📱 WHAT YOU LOG
 • Body temperature with trend chart
 • Breastfeeding and bottle feedings
@@ -206,6 +218,11 @@ Laden Sie Ihren Partner mit einem Code ein. Sie sehen und ergänzen beide diesel
 • Nur einer zahlt — Premium gilt für beide
 • Bis zu 3 Personen einladen: Partner, Großeltern, Babysitter
 • Medikamentenerinnerungen kommen auf beiden Handys an
+
+⏰ ERINNERUNGEN & WIDGET
+• Erinnerung an die nächste Mahlzeit — auf beiden Handys
+• Abendliche Tageszusammenfassung: Mahlzeiten, Schlaf, Windeln
+• Widget für den Startbildschirm: Mahlzeit, Flasche oder Schlaf mit einem Tipp
 
 📱 WAS SIE FESTHALTEN
 • Körpertemperatur mit Trendkurve
@@ -289,6 +306,11 @@ Invitez votre partenaire avec un simple code. Vous voyez et complétez tous les 
 • Jusqu'à 3 personnes invitées : partenaire, grands-parents, nounou
 • Les rappels de médicaments arrivent sur les deux téléphones
 
+⏰ RAPPELS ET WIDGET
+• Rappel du prochain repas — sur les deux téléphones
+• Résumé de la journée le soir : repas, sommeil, couches
+• Widget pour l'écran d'accueil : repas, biberon ou sommeil en un appui
+
 📱 CE QUE VOUS ENREGISTREZ
 • Température corporelle avec courbe de tendance
 • Allaitement et biberons
@@ -370,6 +392,11 @@ Invita a tu pareja con un solo código. Ambos veis y completáis los mismos regi
 • Solo paga uno — Premium para los dos
 • Invita hasta 3 personas: pareja, abuelos, niñera
 • Los recordatorios de medicamentos llegan a ambos móviles
+
+⏰ RECORDATORIOS Y WIDGET
+• Recordatorio de la próxima toma — en ambos móviles
+• Resumen del día por la noche: tomas, sueño, pañales
+• Widget para la pantalla de inicio: toma, biberón o sueño con un toque
 
 📱 LO QUE REGISTRAS
 • Temperatura corporal con gráfico de tendencia

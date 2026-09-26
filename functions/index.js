@@ -187,8 +187,7 @@ async function processUser(uid, tokens, tokenOwner = {}) {
 
     // Przetworzenie ostatnich 10 wpisów (starsze i tak wygasły dawno)
     const recent = meds.slice(0, 10)
-    const updatedMeds = [...meds]
-    let medsModified = false
+    const notifiedIds = new Set()
 
     for (let i = 0; i < recent.length; i++) {
       const log = recent[i]
@@ -222,16 +221,27 @@ async function processUser(uid, tokens, tokenOwner = {}) {
         }, `med=${log.med}`)
 
         // Mark as notified — modyfikujemy lokalnie i zapiszemy raz na końcu
-        updatedMeds[i] = { ...log, notified: true, notifiedAt: Date.now() }
-        medsModified = true
+        notifiedIds.add(log.id)
       } catch (err) {
         console.error(`[processUser] sendEachForMulticast failed:`, err)
       }
     }
 
-    // Jeśli oznaczyliśmy coś jako notified, zapisz z powrotem cały array
-    if (medsModified) {
-      await dataCollection.doc(`meds_${profileId}`).set({ value: updatedMeds }, { merge: true })
+    // v2.16.5: oznaczenie notified w transakcji na AKTUALNEJ liście. Wcześniej
+    // zapisywaliśmy listę odczytaną przed wysyłką — lek dodany przez rodzica
+    // w tym ułamku sekundy znikał.
+    if (notifiedIds.size > 0) {
+      const medsRef = dataCollection.doc(`meds_${profileId}`)
+      await db.runTransaction(async tx => {
+        const current = (await tx.get(medsRef)).data()?.value
+        if (!Array.isArray(current)) return
+        const now = Date.now()
+        tx.set(medsRef, {
+          value: current.map(e => (notifiedIds.has(e?.id) && !e.notified
+            ? { ...e, notified: true, notifiedAt: now }
+            : e)),
+        })
+      })
     }
   }
 
@@ -318,14 +328,16 @@ async function processDailySummary(uid, dataUid, tokens, tokenOwner) {
     })
   }
 
-  // Oznacz dzień także przy pustym — inaczej liczylibyśmy co 5 min przez godzinę.
-  await sentRef.set({ value: date })
   const text = dailySummaryText(await getUserLocale(own), kids)
-  if (!text) return 0
-
-  return await sendToTokens(uid, tokens, tokenOwner, {
-    ...text, tag: `summary-${date}`, url: '/babylog/?tab=today',
-  }, 'daily-summary')
+  const sent = text
+    ? await sendToTokens(uid, tokens, tokenOwner, {
+        ...text, tag: `summary-${date}`, url: '/babylog/?tab=today',
+      }, 'daily-summary')
+    : 0
+  // Oznacz dzień po wysyłce (błąd sieci → spróbujemy za 5 min w tej samej
+  // godzinie) i przy pustym dniu — inaczej liczylibyśmy co 5 min przez godzinę.
+  await sentRef.set({ value: date })
+  return sent
 }
 
 /**
@@ -396,7 +408,14 @@ async function processFeedReminder(dataCollection, profileId, uid, tokens, token
       tag: `feed-${profileId}`,
       url: '/babylog/?tab=feed',
     }, 'feed-reminder')
-    await ref.set({ value: { ...reminder, notified: true, notifiedAt: Date.now() } })
+    // W transakcji: jeśli rodzic właśnie zapisał nowe karmienie (nowe fireAt),
+    // nie nadpisujemy go starym przypomnieniem oznaczonym jako wysłane.
+    await db.runTransaction(async tx => {
+      const current = (await tx.get(ref)).data()?.value
+      if (current && current.fireAt === reminder.fireAt && !current.notified) {
+        tx.set(ref, { value: { ...current, notified: true, notifiedAt: Date.now() } })
+      }
+    })
     return sent
   } catch (err) {
     console.error('[processFeedReminder] send failed:', err)
@@ -964,3 +983,9 @@ exports.removePartnerLink = onCall(partnerFnOptions, async (request) => {
   await batch.commit()
   return { ok: true }
 })
+
+// Tylko testy integracyjne na emulatorze (functions/emulator.test.js) —
+// w Cloud Functions ta zmienna nie jest ustawiona, więc nic się nie eksportuje.
+if (process.env.BABYLOG_FUNCTIONS_TEST === '1') {
+  module.exports.__test = { processUser, processDailySummary, processFeedReminder, messaging }
+}

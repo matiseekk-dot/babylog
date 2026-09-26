@@ -37,7 +37,7 @@
 <section id="pl">
 
 <h1>Polityka prywatności</h1>
-<div class="updated">Ostatnia aktualizacja: 19 kwietnia 2026</div>
+<div class="updated">Ostatnia aktualizacja: 26 września 2026</div>
 
 <p>
   Niniejsza polityka prywatności opisuje w jaki sposób aplikacja <strong>Spokojny Rodzic</strong>
@@ -48,7 +48,8 @@
 <div class="hl">
   <strong>W skrócie:</strong> Aplikacja przechowuje dane dziecka (imię, wiek, waga, historia karmienia,
   snu, temperatury) wyłącznie na Twoim koncie Google. Nie sprzedajemy danych. Nie reklamujemy.
-  Nie udostępniamy nikomu poza dostawcami niezbędnymi do działania aplikacji (Google Firebase).
+  Nie udostępniamy nikomu poza dostawcami niezbędnymi do działania aplikacji (Google Firebase)
+  oraz osobami, które sam zaprosisz do wspólnego konta.
 </div>
 
 <h2>1. Administrator danych</h2>
@@ -80,18 +81,23 @@
   <li>Szczepienia</li>
   <li>Notatki rodzica (dziennik)</li>
   <li>Notatki z wizyt lekarskich</li>
+  <li>Zdjęcie dziecka — tylko jeśli sam je dodasz (funkcja Premium)</li>
 </ul>
 
 <h3>Dane techniczne</h3>
 <ul>
-  <li>Wybrany język interfejsu (przechowywany lokalnie)</li>
+  <li>Wybrany język interfejsu i strefa czasowa — żeby powiadomienia przychodziły o właściwej porze i w Twoim języku</li>
+  <li>Token powiadomień push (Firebase Cloud Messaging) — tylko jeśli włączysz powiadomienia</li>
+  <li>Ustawienia powiadomień (np. przypomnienie o karmieniu, godzina podsumowania dnia)</li>
   <li>Status subskrypcji Premium (z RevenueCat)</li>
+  <li>Anonimowe statystyki użycia (Firebase Analytics) — np. które ekrany są otwierane i czy dodano wpis;
+      bez treści wpisów, imienia dziecka i danych zdrowotnych</li>
   <li>Anonimowe logi błędów (jeśli apka się wywali — pomaga nam ją naprawić)</li>
 </ul>
 
 <div class="hl">
-  <strong>Aplikacja NIE zbiera:</strong> lokalizacji, zdjęć z galerii, kontaktów, kalendarza,
-  historii przeglądania, nagrań audio/wideo, danych biometrycznych.
+  <strong>Aplikacja NIE zbiera:</strong> lokalizacji, kontaktów, kalendarza, historii przeglądania,
+  nagrań audio/wideo, danych biometrycznych. Z galerii pobiera wyłącznie zdjęcie dziecka, które sam wybierzesz.
 </div>
 
 <h2>3. W jaki sposób używamy Twoich danych</h2>
@@ -99,8 +105,11 @@
 <ul>
   <li>Zapewnienia działania Aplikacji (zapisanie wpisów, analiza, synchronizacja między urządzeniami)</li>
   <li>Personalizacji interfejsu (imię dziecka w nagłówkach, wiek w rekomendacjach)</li>
+  <li>Wysyłania powiadomień, które włączysz (przypomnienia o lekach i karmieniu, podsumowanie dnia)</li>
+  <li>Wspólnego konta — dane dziecka widzą i uzupełniają osoby, które sam zaprosisz kodem;
+      możesz je w każdej chwili usunąć w Ustawieniach</li>
   <li>Naliczenia subskrypcji Premium</li>
-  <li>Poprawy Aplikacji poprzez analizę anonimowych crashy</li>
+  <li>Poprawy Aplikacji na podstawie anonimowych statystyk użycia i crashy</li>
 </ul>
 <p>
   <strong>Nie wykorzystujemy Twoich danych do:</strong> reklamy (żadnej), profilowania marketingowego,
@@ -116,6 +125,11 @@
 <p>
   Dane subskrypcji są przetwarzane przez <strong>RevenueCat</strong> (<a href="https://www.revenuecat.com/privacy" target="_blank">polityka</a>)
   oraz <strong>Google Play Billing</strong>.
+</p>
+<p>
+  Zdjęcie dziecka przechowywane jest w <strong>Firebase Storage</strong> (ten sam region UE).
+  Anonimowe statystyki użycia przetwarza <strong>Google Analytics for Firebase</strong>,
+  a powiadomienia dostarcza <strong>Firebase Cloud Messaging</strong> (Google).
 </p>
 
 <h2>5. Jak długo przechowujemy dane</h2>
@@ -160,13 +174,16 @@
   <li>Szyfrowanie transmisji (HTTPS/TLS)</li>
   <li>Szyfrowanie danych w spoczynku (Google Firebase standard)</li>
   <li>Uwierzytelnianie Google OAuth 2.0</li>
-  <li>Reguły bezpieczeństwa Firestore — każdy użytkownik widzi tylko swoje dane</li>
+  <li>Reguły bezpieczeństwa Firestore — każdy użytkownik widzi tylko swoje dane
+      i dane kont, do których dołączył kodem zaproszenia od właściciela</li>
 </ul>
 
 <h2>10. Cookies i śledzenie</h2>
 <p>
-  Aplikacja nie używa cookies marketingowych ani narzędzi śledzących (Facebook Pixel, Google Analytics itp.).
-  Używamy <code>localStorage</code> przeglądarki do zapamiętania wybranego języka i trybu gościa.
+  Aplikacja nie używa cookies marketingowych ani narzędzi śledzących w celach reklamowych (np. Facebook Pixel)
+  i nie wyświetla reklam. Do anonimowych statystyk użycia (które funkcje są używane, gdzie użytkownicy
+  napotykają trudności) korzystamy z <strong>Firebase Analytics</strong> — bez treści wpisów i danych zdrowotnych.
+  Używamy <code>localStorage</code> przeglądarki do zapamiętania języka, trybu gościa i ustawień.
 </p>
 
 <h2>11. Usunięcie konta</h2>
@@ -209,7 +226,7 @@
 <section id="en">
 
 <h1>Privacy Policy</h1>
-<div class="updated">Last updated: April 19, 2026</div>
+<div class="updated">Last updated: September 26, 2026</div>
 
 <p>
   This privacy policy describes how the <strong>Calm Parent</strong> app (the "App"), operated by
@@ -219,7 +236,8 @@
 <div class="hl">
   <strong>In short:</strong> The App stores your child's data (name, age, weight, feeding history, sleep,
   temperature) only on your Google account. We don't sell data. We don't serve ads. We don't share
-  data with anyone except providers necessary to run the App (Google Firebase).
+  data with anyone except providers necessary to run the App (Google Firebase) and people you invite
+  to your shared account yourself.
 </div>
 
 <h2>1. Data Controller</h2>
@@ -249,18 +267,23 @@
   <li>Vaccinations</li>
   <li>Parent notes (journal)</li>
   <li>Doctor visit notes</li>
+  <li>Child's photo — only if you add one yourself (Premium feature)</li>
 </ul>
 
 <h3>Technical data</h3>
 <ul>
-  <li>Selected interface language (stored locally)</li>
+  <li>Selected interface language and time zone — so notifications arrive at the right time and in your language</li>
+  <li>Push notification token (Firebase Cloud Messaging) — only if you enable notifications</li>
+  <li>Notification settings (e.g. feeding reminder, daily summary time)</li>
   <li>Premium subscription status (via RevenueCat)</li>
+  <li>Anonymous usage statistics (Firebase Analytics) — e.g. which screens are opened and whether an entry
+      was added; without entry contents, the child's name or health data</li>
   <li>Anonymous crash logs</li>
 </ul>
 
 <div class="hl">
-  <strong>The App does NOT collect:</strong> location, photos from gallery, contacts, calendar,
-  browsing history, audio/video recordings, biometric data.
+  <strong>The App does NOT collect:</strong> location, contacts, calendar, browsing history,
+  audio/video recordings, biometric data. It reads from your gallery only the child's photo you choose yourself.
 </div>
 
 <h2>3. How we use your data</h2>
@@ -268,8 +291,11 @@
 <ul>
   <li>Running the App (saving entries, analysis, cross-device sync)</li>
   <li>Interface personalization (child's name in headers, age-based recommendations)</li>
+  <li>Sending notifications you enable (medication and feeding reminders, daily summary)</li>
+  <li>Shared account — people you invite with a code see and add your child's data;
+      you can remove them at any time in Settings</li>
   <li>Premium subscription billing</li>
-  <li>Improving the App through anonymous crash analysis</li>
+  <li>Improving the App based on anonymous usage statistics and crash logs</li>
 </ul>
 <p>
   <strong>We do not use your data for:</strong> advertising (none), marketing profiling,
@@ -285,6 +311,11 @@
 <p>
   Subscription data is processed by <strong>RevenueCat</strong> (<a href="https://www.revenuecat.com/privacy" target="_blank">policy</a>)
   and <strong>Google Play Billing</strong>.
+</p>
+<p>
+  The child's photo is stored in <strong>Firebase Storage</strong> (same EU region).
+  Anonymous usage statistics are processed by <strong>Google Analytics for Firebase</strong>,
+  and notifications are delivered by <strong>Firebase Cloud Messaging</strong> (Google).
 </p>
 
 <h2>5. How long we keep data</h2>
@@ -329,13 +360,16 @@
   <li>Transmission encryption (HTTPS/TLS)</li>
   <li>Encryption at rest (Google Firebase standard)</li>
   <li>Google OAuth 2.0 authentication</li>
-  <li>Firestore security rules — each user sees only their own data</li>
+  <li>Firestore security rules — each user sees only their own data
+      and the data of accounts they joined with the owner's invite code</li>
 </ul>
 
 <h2>10. Cookies and tracking</h2>
 <p>
-  The App does not use marketing cookies or tracking tools (Facebook Pixel, Google Analytics etc.).
-  We use browser <code>localStorage</code> to remember language selection and guest mode.
+  The App does not use marketing cookies or advertising tracking tools (e.g. Facebook Pixel) and shows no ads.
+  For anonymous usage statistics (which features are used, where users run into trouble) we use
+  <strong>Firebase Analytics</strong> — without entry contents or health data.
+  We use browser <code>localStorage</code> to remember language, guest mode and settings.
 </p>
 
 <h2>11. Account deletion</h2>

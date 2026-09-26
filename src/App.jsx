@@ -652,9 +652,24 @@ export default function App() {
   feedAddedRef.current = (entry, profileId) => {
     if (profileId !== active.id) return
     const feedTs = entryTimestamp(entry)
+    // Karmienie dopisane wstecz (starsze niż to, od którego liczy się obecne
+    // przypomnienie) nie przestawia przypomnienia na wcześniej.
+    const current = typeof feedReminder?.fireAt === 'number' ? feedReminder : null
+    const currentFeedTs = current
+      ? (current.feedTs ?? current.fireAt - (current.intervalMin || 0) * 60000)
+      : 0
+    if (current && feedTs < currentFeedTs) return
+
     const pref = getFeedReminderPref()
     if (typeof pref === 'number') {
       if (uid) scheduleFeedReminder(feedTs, pref)
+      return
+    }
+    // Wspólne konto: przypomnienie ustawił drugi rodzic — przesuń je na to
+    // karmienie, inaczej przyszłoby "ostatnie karmienie o 14:30" po karmieniu o 17:00.
+    // (Wyłączenie w Ustawieniach kasuje dokument, więc wtedy tu nie wejdziemy.)
+    if (uid && current?.intervalMin) {
+      scheduleFeedReminder(feedTs, current.intervalMin)
       return
     }
     if (shouldAskFeedReminder(feedTs)) setFeedReminderPrompt({ feedTs })
@@ -666,7 +681,9 @@ export default function App() {
     const perm = await enableNotifications()
     if (perm !== 'granted') {
       track('feed_reminder_permission_denied', { result: String(perm) })
-      setFeedReminderPref('off')
+      // Odmowa → nie pytamy więcej; brak odpowiedzi / błąd mostu (null) → spróbujemy za dobę.
+      if (perm === 'denied') setFeedReminderPref('off')
+      else snoozeFeedReminderPrompt()
       toast(t('feed_reminder.no_permission'), 'error')
       return
     }
@@ -1362,8 +1379,8 @@ export default function App() {
 
   useEffect(() => {
     if (!pendingQuickAction || authLoading || !consentAccepted) return
-    if (!user && !guestMode) return
-    if (!onboardingDone) { setPendingQuickAction(null); return }  // najpierw profil dziecka
+    // Ekran logowania albo onboarding — porzuć akcję (nie dodawaj wpisu po zalogowaniu).
+    if ((!user && !guestMode) || !onboardingDone) { setPendingQuickAction(null); return }
     const timer = setTimeout(() => {
       quickActionRef.current?.(pendingQuickAction)
       setPendingQuickAction(null)
