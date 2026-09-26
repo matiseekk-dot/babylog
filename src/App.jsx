@@ -56,6 +56,7 @@ import {
   trackPartnerCardClicked, trackPartnerCardDismissed, setAnalyticsUserProperty,
 } from './utils/analytics'
 import FirstEntryCard from './components/FirstEntryCard'
+import WidgetTipCard from './components/WidgetTipCard'
 import { usePartners } from './hooks/usePartners'
 import { shouldShowPartnerInvite } from './utils/partner'
 import PartnerInviteCard from './components/PartnerInviteCard'
@@ -606,6 +607,21 @@ export default function App() {
     setPartnerCardDismissed(true)
     try { localStorage.setItem(partnerCardKey, '1') } catch {}
   }
+
+  // v2.16.6 — podpowiedź o widżecie/skrótach (natywne v55+), gdy ktoś już
+  // realnie używa apki. Nie razem z kartą partnera — jedna podpowiedź naraz.
+  const WIDGET_TIP_KEY = 'babylog_widget_tip_dismissed'
+  const [widgetTipDismissed, setWidgetTipDismissed] = useState(() => {
+    try { return localStorage.getItem(WIDGET_TIP_KEY) === '1' } catch { return false }
+  })
+  const dismissWidgetTip = () => {
+    track('widget_tip_dismissed')
+    setWidgetTipDismissed(true)
+    try { localStorage.setItem(WIDGET_TIP_KEY, '1') } catch {}
+  }
+  const recentEntryCount = feedLogsForFab.length + sleepLogsForFab.length + diaperLogsForFab.length
+  const showWidgetTip = hasNativeExtras() && firstStepsDone && !widgetTipDismissed
+    && !showPartnerCard && recentEntryCount >= 3
 
   // Ustawienia otwarte z karty przewijają się do sekcji Wspólne konto.
   const [settingsFocus, setSettingsFocus] = useState(null)
@@ -1668,6 +1684,10 @@ export default function App() {
 
         {!showProfiles && !showMore && tab === 'today' && showPartnerCard && (
           <PartnerInviteCard onInvite={openPartnerSettings} onDismiss={dismissPartnerCard} />
+        )}
+
+        {!showProfiles && !showMore && tab === 'today' && showWidgetTip && (
+          <WidgetTipCard variant="today" onDismiss={dismissWidgetTip} />
         )}
 
         {/* AUTO-HIDE BANNER — one-time prompt po 3 latach dziecka */}

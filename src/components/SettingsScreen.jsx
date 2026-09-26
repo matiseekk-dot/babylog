@@ -5,6 +5,8 @@ import {
   FEED_REMINDER_OPTIONS, formatHours, getFeedReminderPref, setFeedReminderPref,
 } from '../utils/feedReminder'
 import { DAILY_SUMMARY_HOURS, formatHourLabel } from '../utils/dailySummary'
+import { hasNativeExtras } from '../native/spokojny'
+import WidgetTipCard from './WidgetTipCard'
 import { httpsCallable } from 'firebase/functions'
 import { functions } from '../firebase'
 import { t, useLocale, SUPPORTED_LOCALES } from '../i18n'
@@ -903,6 +905,16 @@ export default function SettingsScreen({
           </div>
         )}
       </div>
+
+      {/* v2.16.6 — widżet i skróty ikony (tylko natywna apka v55+) */}
+      {hasNativeExtras() && (
+        <div className="card" style={{ margin: '12px 16px 0', padding: 14 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a18', marginBottom: 8 }}>
+            📲 {t('widget_tip.settings_title')}
+          </div>
+          <WidgetTipCard variant="settings" />
+        </div>
+      )}
 
       {/* Legal — wymagane przez Play Console review.
           Linki otwierają się w przeglądarce systemowej; w TWA ten link wychodzi
