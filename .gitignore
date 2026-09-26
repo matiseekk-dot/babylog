@@ -53,3 +53,4 @@ coverage/
 .firebase/
 .claude/worktrees/
 store-assets/.tmp-raw-screenshots/
+store-assets/ads/.tmp/

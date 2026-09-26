@@ -181,6 +181,12 @@ function buildState(locale = 'pl') {
     'babylog_guest_activeProfile': JSON.stringify(PROFILE_ID),
     'babylog_guest_onboarding_done': JSON.stringify(true),
     'babylog_guest_trial_start': JSON.stringify(Date.now() - 3 * 86400000),
+    // usePremium czyta trial gościa z klucza trial_start_guest — bez niego trial
+    // startuje od nowa i okno "Odblokowaliśmy Premium" zasłania każdy screen.
+    'babylog_guest_trial_start_guest': JSON.stringify(Date.now() - 3 * 86400000),
+    'babylog_trial_started_shown_guest': '1',
+    'babylog_onb_tips_dismissed': '1',
+    'babylog_first_entry_tracked': '1',
     [`babylog_guest_feed_${PROFILE_ID}`]: JSON.stringify([
       { id: 'f1', date: today, time: '07:30', type: u.breastL, amount: '15' },
       { id: 'f2', date: today, time: '10:45', type: u.breastR, amount: '15' },
@@ -287,6 +293,22 @@ async function captureAndComposite(browser, locale) {
   await page.setViewport({
     width: VIEWPORT.width, height: VIEWPORT.height,
     deviceScaleFactor: 2.5,
+  })
+  // Zegar strony zawsze na 19:30 (dziś) — dane demo mają wpisy do 19:00, a
+  // screeny robione po południu pokazywały "-139 min od ostatniego karmienia".
+  await page.evaluateOnNewDocument(() => {
+    const Real = Date
+    const base = new Real(); base.setHours(19, 30, 0, 0)
+    const offset = base.getTime() - Real.now()
+    function FakeDate(...args) {
+      if (!(this instanceof FakeDate)) return new Real(Real.now() + offset).toString()
+      return args.length ? new Real(...args) : new Real(Real.now() + offset)
+    }
+    FakeDate.prototype = Real.prototype
+    FakeDate.now = () => Real.now() + offset
+    FakeDate.parse = Real.parse
+    FakeDate.UTC = Real.UTC
+    window.Date = FakeDate
   })
   await page.goto(APP_URL, { waitUntil: 'domcontentloaded', timeout: 60000 })
 

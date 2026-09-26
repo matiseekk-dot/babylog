@@ -38,11 +38,16 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
   const todayLogs = logs.filter(l => l.date === today).sort((a,b) => b.time.localeCompare(a.time))
   const totalMl = todayLogs.filter(l=>l.type==='Butelka'||l.type==='Odciągnięte mleko').reduce((s,l)=>s+Number(l.amount||0),0)
   const breastCount = todayLogs.filter(l=>l.type.startsWith('Pierś')).length
-  const lastLog = todayLogs[0]
+  // Ostatnie karmienie, które już było — wpis z godziną z przyszłości (literówka,
+  // inna strefa u partnera) dawał wcześniej "-139 min".
+  const minutesSince = (log) => {
+    const [h,m] = log.time.split(':').map(Number)
+    const then = new Date(); then.setHours(h,m,0,0)
+    return Math.floor((Date.now() - then) / 60000)
+  }
+  const lastLog = todayLogs.find(l => minutesSince(l) >= 0)
   const lastAgo = lastLog ? (() => {
-    const [h,m] = lastLog.time.split(':').map(Number)
-    const now = new Date(); const then = new Date(); then.setHours(h,m,0,0)
-    const diff = Math.floor((now-then)/60000)
+    const diff = minutesSince(lastLog)
     if (diff < 60) return `${diff} min`
     return `${Math.floor(diff/60)}h ${diff%60}m`
   })() : '—'

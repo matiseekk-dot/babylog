@@ -76,7 +76,10 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
     const items = []
 
     todayFeeds.forEach(l => {
-      const amount = l.amount ? ` · ${l.amount} ml` : ''
+      // Butelka/odciągnięte — ml, pierś — minuty (jak w FeedTab). Wcześniej
+      // zawsze "ml", więc karmienie piersią pokazywało się jako "15 ml".
+      const isMl = l.type === 'Butelka' || l.type === 'Odciągnięte mleko'
+      const amount = l.amount ? ` · ${l.amount} ${isMl ? 'ml' : 'min'}` : ''
       items.push({
         id: `feed-${l.id}`,
         time: l.time,
