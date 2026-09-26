@@ -18,12 +18,12 @@ test('push o lekach w języku apki, nieznany → polski', () => {
 
 test('podsumowanie dnia: jedno dziecko, kilkoro, pusty dzień', () => {
   const one = dailySummaryText('pl', [{ name: 'Zosia', feeds: 8, sleepMin: 680, diapers: 6 }])
-  assert.deepStrictEqual(one, { title: 'Podsumowanie dnia — Zosia', body: 'Karmienia: 8 · Sen: 11 h 20 min · Pieluchy: 6' })
+  assert.deepStrictEqual(one, { title: 'Podsumowanie dnia: Zosia', body: 'Karmienia: 8 · Sen: 11 h 20 min · Pieluchy: 6' })
   const two = dailySummaryText('en', [
     { name: 'Emma', feeds: 5, sleepMin: 0, diapers: 0 },
     { name: 'Leo', feeds: 0, sleepMin: 45, diapers: 3, toiletMode: 'potty' },
   ])
-  assert.strictEqual(two.body, 'Emma: Feedings: 5\nLeo: Sleep: 45 min · Toilet: 3')
+  assert.strictEqual(two.body, 'Emma · Feedings: 5\nLeo · Sleep: 45 min · Toilet: 3')
   assert.strictEqual(dailySummaryText('pl', [{ name: 'Zosia', feeds: 0, sleepMin: 0, diapers: 0 }]), null)
 })
 

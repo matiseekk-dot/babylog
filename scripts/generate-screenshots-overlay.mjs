@@ -48,18 +48,18 @@ const BRAND_BOT = '#D77460'
 // Uwaga: 07-vaccinations pominięte bo w wielu wersjach apki jest różnie.
 const OVERLAYS = {
   '01-today': {
-    pl: { hook: 'Wszystko w jednym miejscu',        benefit: 'Karmienie, sen, temperatura — dziś' },
-    en: { hook: 'Everything in one place',          benefit: 'Feedings, sleep, temperature — today' },
-    de: { hook: 'Alles an einem Ort',               benefit: 'Mahlzeiten, Schlaf, Temperatur — heute' },
-    fr: { hook: 'Tout en un seul endroit',          benefit: "Biberons, sommeil, température — aujourd'hui" },
-    es: { hook: 'Todo en un solo lugar',            benefit: 'Tomas, sueño, temperatura — hoy' },
+    pl: { hook: 'Wszystko w jednym miejscu',        benefit: 'Karmienie, sen i temperatura z całego dnia' },
+    en: { hook: 'Everything in one place',          benefit: 'Feedings, sleep and temperature for today' },
+    de: { hook: 'Alles an einem Ort',               benefit: 'Mahlzeiten, Schlaf und Temperatur von heute' },
+    fr: { hook: 'Tout en un seul endroit',          benefit: "Biberons, sommeil et température du jour" },
+    es: { hook: 'Todo en un solo lugar',            benefit: 'Tomas, sueño y temperatura del día' },
   },
   '02-temperature': {
-    pl: { hook: '37,6°C — rośnie czy spada?',       benefit: 'Wykres i trend na jednym ekranie' },
-    en: { hook: '99.7°F — rising or falling?',      benefit: 'Chart and trend in one view' },
-    de: { hook: '37,6°C — steigend oder fallend?',  benefit: 'Diagramm und Trend auf einem Bildschirm' },
-    fr: { hook: '37,6°C — monte ou baisse ?',       benefit: 'Courbe et tendance sur un écran' },
-    es: { hook: '37,6°C — ¿sube o baja?',           benefit: 'Gráfico y tendencia en una pantalla' },
+    pl: { hook: '37,6°C: rośnie czy spada?',       benefit: 'Wykres i trend na jednym ekranie' },
+    en: { hook: '99.7°F: rising or falling?',      benefit: 'Chart and trend in one view' },
+    de: { hook: '37,6°C: steigend oder fallend?',  benefit: 'Diagramm und Trend auf einem Bildschirm' },
+    fr: { hook: '37,6°C : monte ou baisse ?',       benefit: 'Courbe et tendance sur un écran' },
+    es: { hook: '37,6°C: ¿sube o baja?',           benefit: 'Gráfico y tendencia en una pantalla' },
   },
   '03-meds': {
     pl: { hook: 'Kiedy ostatnio Paracetamol?',      benefit: 'Historia leków z godziną i dawką' },
@@ -71,9 +71,9 @@ const OVERLAYS = {
   '04-reference-library': {
     pl: { hook: 'Wytyczne pediatryczne w apce',     benefit: 'Nie forum. Nie Google. Źródło PTP/AAP.' },
     en: { hook: 'Pediatric guidelines built-in',    benefit: 'Not forums. Not Google. Just AAP.' },
-    de: { hook: 'Pädiatrische Leitlinien integriert', benefit: 'Kein Forum, kein Google — nur Fachquellen.' },
-    fr: { hook: 'Recommandations pédiatriques',     benefit: 'Ni forum ni Google — sources officielles.' },
-    es: { hook: 'Pautas pediátricas incluidas',     benefit: 'Ni foros ni Google — fuentes oficiales.' },
+    de: { hook: 'Pädiatrische Leitlinien integriert', benefit: 'Kein Forum, kein Google. Nur Fachquellen.' },
+    fr: { hook: 'Recommandations pédiatriques',     benefit: 'Ni forum ni Google. Sources officielles.' },
+    es: { hook: 'Pautas pediátricas incluidas',     benefit: 'Ni foros ni Google. Fuentes oficiales.' },
   },
   '05-when-to-seek-help': {
     pl: { hook: 'Kiedy zadzwonić do lekarza?',      benefit: 'Objawy alarmowe wg PTP/AAP i numer 112' },

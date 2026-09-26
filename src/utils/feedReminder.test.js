@@ -43,6 +43,9 @@ describe('feedReminder', () => {
     expect(r.body).toContain('Zosia')
     expect(r.body).toContain(formatClock(now))
     expect(buildFeedReminder({ feedTs: now - 4 * H, intervalMin: 180, now })).toBeNull()
-    expect(buildFeedReminder({ feedTs: now, intervalMin: 180, childName: '', now }).body).not.toMatch(/^\s*—/)
+    const noName = buildFeedReminder({ feedTs: now, intervalMin: 180, childName: '', now }).body
+    expect(noName).toMatch(/^Ostatnie karmienie o \d\d:\d\d\.$/)
+    expect(r.body).toMatch(/^Zosia: ostatnie karmienie o /)
+    expect(r.body).not.toMatch(/[—–]/)
   })
 })

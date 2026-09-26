@@ -1,6 +1,6 @@
-# Play Store — English Variants (dodatkowe rynki)
+# Play Store: English Variants (dodatkowe rynki)
 
-**Cel:** Dodać apkę do angielskojęzycznych rynków gdzie EN jest naturalne, używając już przygotowanych EN assets. Zero nowej pracy — tylko copy-paste w Play Console.
+**Cel:** Dodać apkę do angielskojęzycznych rynków gdzie EN jest naturalne, używając już przygotowanych EN assets. Zero nowej pracy, tylko copy-paste w Play Console.
 
 **Efekt:** Potencjalne +100-500 organic instalacji miesięcznie za darmo, bez ryzyka „not in my language" recenzji.
 
@@ -26,10 +26,10 @@
 
 ## 📋 CO WKLEJAĆ DO PLAY CONSOLE
 
-**Dla WSZYSTKICH English variants — użyj DOKŁADNIE tych samych assets co en-US.** Google Play automatycznie konwertuje cenę na lokalną walutę (£, A$, C$, ₹, itd.).
+**Dla WSZYSTKICH English variants, użyj DOKŁADNIE tych samych assets co en-US.** Google Play automatycznie konwertuje cenę na lokalną walutę (£, A$, C$, ₹, itd.).
 
 ### Nazwa, krótki i pełny opis
-Skopiuj z sekcji **🇬🇧 EN** w [appstore-copy.md](appstore-copy.md) — jedno źródło tekstu dla en-US i wszystkich wariantów.
+Skopiuj z sekcji **🇬🇧 EN** w [appstore-copy.md](appstore-copy.md), jedno źródło tekstu dla en-US i wszystkich wariantów.
 Cennik w tym opisie jest bez waluty, więc pasuje do każdego kraju.
 
 ### Feature graphic (1024×500)
@@ -94,30 +94,30 @@ store-assets/screenshots-2026-09/en/07-shared-account.png   ← przeciągnij na 
 
 ## ⚠️ Uwagi
 
-**Ceny per rynek:** Play Console w sekcji „In-app products" ma cenę per region. Sprawdź czy dla nowo dodanych rynków (UK £, AU A$, CA C$, IN ₹) są ustawione ceny — inaczej Google użyje auto-conversion (może wyjść dziwna cena jak 92,45 ZAR).
+**Ceny per rynek:** Play Console w sekcji „In-app products" ma cenę per region. Sprawdź czy dla nowo dodanych rynków (UK £, AU A$, CA C$, IN ₹) są ustawione ceny, inaczej Google użyje auto-conversion (może wyjść dziwna cena jak 92,45 ZAR).
 
 Sugerowane cenniki „psychological pricing":
 - **UK**: £2.99 / £19.99
 - **AU**: A$4.99 / A$34.99
 - **CA**: C$4.99 / C$29.99
-- **IN**: ₹99 / ₹599 (India rynek bardzo cenowo wrażliwy — obniż o 50% vs Zachód)
+- **IN**: ₹99 / ₹599 (India rynek bardzo cenowo wrażliwy, obniż o 50% vs Zachód)
 - **PH**: ₱149 / ₱899
 - **SG**: S$4.99 / S$29.99
 - **IE / NZ / ZA**: auto FX z EUR / USD
 
 Ustawianie: Play Console → **Monetize → Products → Subscriptions** → wybierz SKU → **Region availability & pricing** → per country.
 
-**British spelling vs American:** Wszystkie moje EN teksty są w American English („pediatrician", „color", „behavior"). Dla en-GB/en-AU/en-NZ/en-IE możesz podmienić na British („paediatrician", „colour", „behaviour") — ale to opcjonalne. British userzy rozumieją American bez problemu, plus Google indexuje pod obie spellings.
+**British spelling vs American:** Wszystkie moje EN teksty są w American English („pediatrician", „color", „behavior"). Dla en-GB/en-AU/en-NZ/en-IE możesz podmienić na British („paediatrician", „colour", „behaviour"), ale to opcjonalne. British userzy rozumieją American bez problemu, plus Google indexuje pod obie spellings.
 
-**Wideo YouTube:** Puste dla wszystkich — jak nagrasz kiedyś teaser 15-30s, wystarczy dodać 1 URL i będzie widoczne we wszystkich English variants.
+**Wideo YouTube:** gotowy jest film EN `store-assets/ads/en/video-landscape.mp4` (poziomy, 14 s). Wgraj go na YouTube i wklej link w polu „Film w YouTube” każdej wersji angielskiej.
 
 ---
 
 ## 📊 Priorytet inwestycji czasu (moja rekomendacja)
 
-1. **NAJPIERW** — kończ Google Ads PL kampanię (dziś)
-2. **JUTRO** — dodaj en-GB + en-AU + en-CA + en-IN do Play Store (12 min)
-3. **ZA TYDZIEŃ** — jak PL Ads pokazuje results, stwórz osobną kampanię EN Ads (targetuje UK+AU+CA+US)
-4. **ZA 2 TYGODNIE** — sprawdź metryki, iteruj
+1. **NAJPIERW**: kończ Google Ads PL kampanię (dziś)
+2. **JUTRO**: dodaj en-GB + en-AU + en-CA + en-IN do Play Store (12 min)
+3. **ZA TYDZIEŃ**: jak PL Ads pokazuje results, stwórz osobną kampanię EN Ads (targetuje UK+AU+CA+US)
+4. **ZA 2 TYGODNIE**: sprawdź metryki, iteruj
 
 Nie próbuj wszystkiego naraz. Play Store organic to długoterminowy compound growth, Google Ads to szybki feedback loop.

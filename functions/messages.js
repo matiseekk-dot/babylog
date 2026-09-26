@@ -76,9 +76,9 @@ function dailySummaryText(locale, kids) {
   if (!lines.length) return null
   if (kids.length === 1) {
     const name = lines[0].name
-    return { title: name ? `${L.summaryTitle} — ${name}` : L.summaryTitle, body: lines[0].text }
+    return { title: name ? `${L.summaryTitle}: ${name}` : L.summaryTitle, body: lines[0].text }
   }
-  return { title: L.summaryTitle, body: lines.map(l => `${l.name}: ${l.text}`).join('\n') }
+  return { title: L.summaryTitle, body: lines.map(l => `${l.name} · ${l.text}`).join('\n') }
 }
 
 module.exports = { SUPPORTED, DEFAULT_LOCALE, normalizeLocale, medPushText, dailySummaryText }

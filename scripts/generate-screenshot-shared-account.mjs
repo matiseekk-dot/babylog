@@ -125,12 +125,17 @@ async function capture(browser, locale) {
     const card = window.__partnerCard
     if (!card) return
     card.scrollIntoView({ block: 'start' })
-    // Nagłówek "Ustawienia" jest sticky — przewiń tak, żeby karta była pod nim.
+    // Nagłówek "Ustawienia" jest sticky — ustaw kartę 12 px pod jego dolną
+    // krawędzią, licząc z faktycznych pozycji (odporne na zmiany układu).
     const header = [...document.querySelectorAll('*')].find(el =>
-      getComputedStyle(el).position === 'sticky' && el.getBoundingClientRect().top <= 0)
-    const offset = (header?.getBoundingClientRect().bottom || 0) + 12
-    const scroller = [card.parentElement, document.scrollingElement].find(el => el && el.scrollHeight > el.clientHeight)
-    if (scroller) scroller.scrollTop -= offset
+      getComputedStyle(el).position === 'sticky' && el.getBoundingClientRect().height < 200)
+    const headerBottom = header ? header.getBoundingClientRect().bottom : 0
+    let scroller = card.parentElement
+    while (scroller && !(scroller.scrollHeight > scroller.clientHeight + 10 && getComputedStyle(scroller).overflowY !== 'visible')) {
+      scroller = scroller.parentElement
+    }
+    scroller = scroller || document.scrollingElement
+    scroller.scrollTop += card.getBoundingClientRect().top - headerBottom - 12
   })
   await sleep(800)
 

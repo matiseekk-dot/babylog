@@ -1,6 +1,6 @@
 // scripts/build-ad-assets.mjs
 //
-// Materiały do kampanii Google Ads (App promotion) — PL, FR i DE, 2026-09.
+// Materiały do kampanii Google Ads (App promotion) — PL, EN, DE, FR i ES, 2026-09.
 // Źródło: prawdziwe screeny z store-assets/screenshots-2026-09/{lang}/ (wycinamy
 // sam telefon spod pasków z tekstem). Wynik: store-assets/ads/{lang}/
 //   image-{wariant}-landscape.png  1200×628  (1,91:1)
@@ -10,7 +10,7 @@
 //   video-landscape.mp4            1920×1080 (16:9)
 // Filmy trzeba wgrać na YouTube (niepubliczne) i podać link w Google Ads.
 //
-// Run: FFMPEG_PATH=/sciezka/ffmpeg node scripts/build-ad-assets.mjs [pl fr de]
+// Run: FFMPEG_PATH=/sciezka/ffmpeg node scripts/build-ad-assets.mjs [pl en de fr es]
 
 import sharp from 'sharp'
 import fs from 'fs'
@@ -40,8 +40,19 @@ const TEXT = {
     variants: {
       fever:  { shot: '02-temperature',    head: ['Gorączka', 'o 3 w nocy?'],           sub: 'Wykres i trend na jednym ekranie' },
       shared: { shot: '07-shared-account', head: ['Jedno Premium', 'dla obojga rodziców'], sub: 'Te same wpisy na obu telefonach' },
-      feed:   { shot: '06-feed',           head: ['Karmienie', 'w 2 sekundy'],           sub: 'Pierś, butelka, godzina — jednym dotknięciem' },
-      today:  { shot: '01-today',          head: ['Wszystko', 'w jednym miejscu'],       sub: 'Karmienie, sen, temperatura — dziś' },
+      feed:   { shot: '06-feed',           head: ['Karmienie', 'w 2 sekundy'],           sub: 'Pierś, butelka i godzina jednym dotknięciem' },
+      today:  { shot: '01-today',          head: ['Wszystko', 'w jednym miejscu'],       sub: 'Karmienie, sen i temperatura z całego dnia' },
+    },
+  },
+  en: {
+    app: 'Calm Parent',
+    tagline: 'Less stress. More calm.',
+    cta: 'Available on Google Play',
+    variants: {
+      fever:  { shot: '02-temperature',    head: ['Fever at', '3 in the morning?'],    sub: 'Chart and trend at a glance' },
+      shared: { shot: '07-shared-account', head: ['One Premium for', 'both parents'],   sub: 'The same entries on both phones' },
+      feed:   { shot: '06-feed',           head: ['A feeding logged', 'in 2 seconds'], sub: 'Breast, bottle and time with one tap' },
+      today:  { shot: '01-today',          head: ['Everything', 'in one place'],       sub: 'Feedings, sleep and temperature for today' },
     },
   },
   fr: {
@@ -51,8 +62,19 @@ const TEXT = {
     variants: {
       fever:  { shot: '02-temperature',    head: ['Fièvre à 3 h', 'du matin ?'],        sub: 'Courbe et tendance en un coup d’œil' },
       shared: { shot: '07-shared-account', head: ['Un Premium pour', 'les deux parents'], sub: 'Les mêmes entrées sur vos deux téléphones' },
-      feed:   { shot: '06-feed',           head: ['Un repas noté', 'en 2 secondes'],     sub: 'Sein, biberon, heure — d’un seul appui' },
-      today:  { shot: '01-today',          head: ['Tout au même', 'endroit'],            sub: 'Repas, sommeil, température — aujourd’hui' },
+      feed:   { shot: '06-feed',           head: ['Un repas noté', 'en 2 secondes'],     sub: 'Sein, biberon et heure d’un seul appui' },
+      today:  { shot: '01-today',          head: ['Tout au même', 'endroit'],            sub: 'Repas, sommeil et température du jour' },
+    },
+  },
+  es: {
+    app: 'Calm Parent',
+    tagline: 'Menos estrés. Más calma.',
+    cta: 'Disponible en Google Play',
+    variants: {
+      fever:  { shot: '02-temperature',    head: ['¿Fiebre a las', '3 de la mañana?'],  sub: 'Gráfico y tendencia de un vistazo' },
+      shared: { shot: '07-shared-account', head: ['Un Premium para', 'ambos padres'],   sub: 'Los mismos registros en ambos móviles' },
+      feed:   { shot: '06-feed',           head: ['Una toma anotada', 'en 2 segundos'], sub: 'Pecho, biberón y hora con un toque' },
+      today:  { shot: '01-today',          head: ['Todo en', 'un solo lugar'],          sub: 'Tomas, sueño y temperatura del día' },
     },
   },
   de: {
@@ -62,8 +84,8 @@ const TEXT = {
     variants: {
       fever:  { shot: '02-temperature',    head: ['Fieber um', '3 Uhr nachts?'],        sub: 'Verlauf und Trend auf einen Blick' },
       shared: { shot: '07-shared-account', head: ['Ein Premium für', 'beide Eltern'],     sub: 'Dieselben Einträge auf beiden Handys' },
-      feed:   { shot: '06-feed',           head: ['Mahlzeit erfasst', 'in 2 Sekunden'],   sub: 'Brust, Flasche, Uhrzeit – mit einem Tipp' },
-      today:  { shot: '01-today',          head: ['Alles an', 'einem Ort'],              sub: 'Mahlzeiten, Schlaf, Temperatur – heute' },
+      feed:   { shot: '06-feed',           head: ['Mahlzeit erfasst', 'in 2 Sekunden'],   sub: 'Brust, Flasche und Uhrzeit mit einem Tipp' },
+      today:  { shot: '01-today',          head: ['Alles an', 'einem Ort'],              sub: 'Mahlzeiten, Schlaf und Temperatur von heute' },
     },
   },
 }

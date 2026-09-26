@@ -77,10 +77,10 @@ test('przypomnienie o karmieniu: push raz, oznaczone jako wysłane', { skip }, a
   await put(uid, 'profiles', [{ id: 'p1', name: 'Zosia' }])
   await put(uid, 'reminder_feed_p1', {
     fireAt: Date.now() - 2 * 60000, feedTs: Date.now() - 182 * 60000, intervalMin: 180,
-    title: 'Czas na karmienie? 🍼', body: 'Zosia — ostatnie karmienie o 14:30.', notified: false,
+    title: 'Czas na karmienie? 🍼', body: 'Zosia: ostatnie karmienie o 14:30.', notified: false,
   })
   assert.strictEqual(await fns.__test.processUser(uid, ['tokA'], {}), 1)
-  assert.strictEqual(sent[0].notification.body, 'Zosia — ostatnie karmienie o 14:30.')
+  assert.strictEqual(sent[0].notification.body, 'Zosia: ostatnie karmienie o 14:30.')
   assert.strictEqual(sent[0].data.url, '/babylog/?tab=feed')
   const r = await get(uid, 'reminder_feed_p1')
   assert.strictEqual(r.notified, true)
@@ -106,7 +106,7 @@ test('podsumowanie dnia: z danych dziecka, raz dziennie, tylko o wybranej godzin
 
   await put(partner, 'daily_summary', { hour })
   assert.strictEqual(await fns.__test.processDailySummary(partner, owner, ['tokP'], {}), 1)
-  assert.strictEqual(sent[0].notification.title, 'Podsumowanie dnia — Zosia')
+  assert.strictEqual(sent[0].notification.title, 'Podsumowanie dnia: Zosia')
   assert.strictEqual(sent[0].notification.body, 'Karmienia: 2 · Sen: 1 h 30 min · Pieluchy: 1')
   assert.deepStrictEqual(sent[0].tokens, ['tokP'])
 

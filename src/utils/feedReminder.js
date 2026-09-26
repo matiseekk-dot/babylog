@@ -66,6 +66,13 @@ export function formatHours(minutes) {
   return `${new Intl.NumberFormat(tag, { maximumFractionDigits: 1 }).format(minutes / 60)} h`
 }
 
+// "Zosia: ostatnie karmienie o 14:30." — bez imienia: "Ostatnie karmienie o 14:30."
+function bodyText(childName, feedTs) {
+  const text = t('feed_reminder.push_body', { name: childName || '', time: formatClock(feedTs) })
+    .replace(/^\s*:\s*/, '')
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
 /**
  * Dokument przypomnienia albo null, gdy termin już minął (np. wpis sprzed
  * kilku godzin).
@@ -78,7 +85,7 @@ export function buildFeedReminder({ feedTs, intervalMin, childName, now = Date.n
     feedTs,
     intervalMin,
     title: t('feed_reminder.push_title'),
-    body: t('feed_reminder.push_body', { name: childName || '', time: formatClock(feedTs) }).replace(/^\s*—\s*/, ''),
+    body: bodyText(childName, feedTs),
     notified: false,
     createdAt: now,
   }
