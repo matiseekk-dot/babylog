@@ -159,8 +159,8 @@ export default function TempChart({ logs }) {
       <div style={{ display: 'flex', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
         {[
           { label: 'Norma', color: '#1D9E75', range: '< 37.5°' },
-          { label: t('temp.chart.subfebrile'), color: '#639922', range: '37.5–38°' },
-          { label: t('temp.chart.fever'), color: '#BA7517', range: '38–38.5°' },
+          { label: t('temp.chart.subfebrile'), color: '#639922', range: '37.5-38°' },
+          { label: t('temp.chart.fever'), color: '#BA7517', range: '38-38.5°' },
           { label: t('temp.chart.high'), color: '#D85A30', range: '≥ 38.5°' },
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

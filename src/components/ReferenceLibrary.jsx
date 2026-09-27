@@ -24,7 +24,7 @@ import { getReferenceTables } from '../data/referenceTables'
 // v2.12.0: source label per locale — każdy kraj cytuje własne wytyczne.
 const SOURCE_LABELS = {
   pl: {
-    temp:    'Źródło: KOMPAS GORĄCZKA — Polskie Towarzystwo Pediatryczne (PTP/PTMR).',
+    temp:    'Źródło: KOMPAS GORĄCZKA, Polskie Towarzystwo Pediatryczne (PTP/PTMR).',
     signs:   'Źródło: PTP/PTMR (KOMPAS GORĄCZKA), Medycyna Praktyczna.',
   },
   en: {

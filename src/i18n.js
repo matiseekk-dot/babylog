@@ -792,15 +792,15 @@ const TRANSLATIONS = {
 
     // Meds tab
     'meds.title':               'Leki',
-    'meds.desc':                'Zapisuj podane leki. Apka nie wylicza dawek — dawkę sprawdź w ulotce leku lub z pediatrą.',
+    'meds.desc':                'Zapisuj podane leki. Apka nie wylicza dawek. Dawkę sprawdź w ulotce leku lub z pediatrą.',
     'meds.info.title':          'Informacje o lekach',
     'meds.info.disclaimer':     'Poniższe informacje pochodzą z ulotek leków (ChPL). Apka nie wylicza dawek dla konkretnego dziecka. Dawkę sprawdź w ulotce, aptece lub u pediatry.',
     'meds.info.para_short':     'Od urodzenia pod kontrolą lekarza',
     'meds.info.ibu_short':      'Od 6. miesiąca życia (z ChPL)',
     'meds.info.ibu_blocked':    'Od 6. miesiąca życia',
     'meds.info_btn':            'Info',
-    'meds.saline_dose':         '3–5 kropli / dziurkę',
-    'meds.probiotic_dose':      '5–10 kropli / dobę',
+    'meds.saline_dose':         '3-5 kropli / dziurkę',
+    'meds.probiotic_dose':      '5-10 kropli / dobę',
     'meds.reminder.now':         'minął minimalny odstęp',
     'meds.reminder.in':          'za',
     'meds.reminder.dose_label':  'Ilość:',
@@ -1012,7 +1012,7 @@ const TRANSLATIONS = {
     'rule.temp_critical.title':    'Wysoka temperatura — próg konsultacji',
     'rule.temp_critical.msg':      'Temperatura {temp}°C u dziecka powyżej 3. miesiąca jest progiem, przy którym KOMPAS GORĄCZKA (PTP) zaleca konsultację pediatryczną. Jeśli dziecko źle wygląda, jest apatyczne lub ma inne niepokojące objawy — wytyczne wskazują izbę przyjęć.',
     'rule.temp_rising.title':      'Tendencja wzrostowa temperatury',
-    'rule.temp_rising.msg':        'Trzy kolejne pomiary: {t1}° → {t2}° → {t3}°C. Wskaźnik obserwacyjny — apka pokazuje trend na podstawie zapisanych przez Ciebie pomiarów.',
+    'rule.temp_rising.msg':        'Trzy kolejne pomiary: {t1}° → {t2}° → {t3}°C. Wskaźnik obserwacyjny: apka pokazuje trend na podstawie zapisanych przez Ciebie pomiarów.',
     'rule.med_not_working.title':  'Informacja: gorączka po podaniu leku',
     'rule.med_not_working.msg':    'Temperatura nie spadła po podaniu leku {med} ({hours}h temu). Według ulotki leku (SmPC) i wytycznych KOMPAS GORĄCZKA brak reakcji na lek przeciwgorączkowy może być wskazaniem do konsultacji z lekarzem. Nie podawaj kolejnej dawki poza zaleceniami z ulotki.',
     'rule.med_too_soon.title':     'Informacja o odstępach między dawkami',
@@ -1030,7 +1030,7 @@ const TRANSLATIONS = {
     'rule.med_expired.title':      'Informacja: czas działania leku',
     'rule.med_expired.msg':        'Lek {name} podałeś/-aś {hours}h {mins}min temu. Według ulotki czas działania leku przeciwgorączkowego mieści się zwykle w zakresie 4–8h. Kolejną dawkę podaj wyłącznie zgodnie z ulotką (odstęp + limit dobowy).',
     'rule.sleep_deficit.title':    'Obserwacja: krótki sen',
-    'rule.sleep_deficit.msg':      'Dziś zapisałeś/-aś {h}h {m}m snu. Normy snu według literatury pediatrycznej: {min}–{max}h dla tego wieku. Wskaźnik obserwacyjny.',
+    'rule.sleep_deficit.msg':      'Dziś zapisałeś/-aś {h}h {m}m snu. Normy snu według literatury pediatrycznej: {min}-{max}h dla tego wieku. Wskaźnik obserwacyjny.',
     'rule.combined.title':         'Kombinacja niepokojących wskaźników',
     'rule.combined.msg':           'Pomiary z dziś: temperatura {temp}°C + krótki sen + niewiele karmień. Według KOMPAS GORĄCZKA (PTP) kombinacja takich wskaźników jest sygnałem ryzyka ciężkiej, poważnej choroby — zalecana pilna konsultacja medyczna.',
     'rule.default.title':          'Brak ostrzeżeń',
@@ -1117,11 +1117,11 @@ const TRANSLATIONS = {
     'doctor.visit.routine':        'Wizyta kontrolna',
 
     // Dose info — referencyjne z ulotek leków (ChPL), bez wyliczeń
-    'dose.saline.1':               '3–5 kropli do każdej dziurki nosa',
+    'dose.saline.1':               '3-5 kropli do każdej dziurki nosa',
     'dose.saline.2':               'Podawać 3–4× dziennie',
     'dose.saline.3':               'Wkraplać w pozycji leżącej z lekko odchyloną głową',
     'dose.saline.4':               'Można stosować od urodzenia',
-    'dose.probiotic.1':            '1× dziennie, 5–10 kropli lub 1 saszetka (wg ulotki)',
+    'dose.probiotic.1':            '1× dziennie, 5-10 kropli lub 1 saszetka (wg ulotki)',
     'dose.probiotic.2':            'Stosować min. 2h po antybiotyku',
     'dose.probiotic.3':            'Można mieszać z mlekiem lub papką',
     'meds.custom.delete_msg':       'Czy na pewno chcesz usunąć ten lek z listy?',
@@ -1512,7 +1512,7 @@ const TRANSLATIONS = {
 
     // ReferenceLibrary
     'ref.title':                    'Wytyczne pediatryczne',
-    'ref.intro':                    'Statyczna biblioteka — tabele referencyjne PTP/AAP. Identyczna treść niezależnie od danych Twojego dziecka. Materiał do przeczytania, nie diagnoza.',
+    'ref.intro':                    'Statyczna biblioteka: tabele referencyjne PTP/AAP. Identyczna treść niezależnie od danych Twojego dziecka. Materiał do przeczytania, nie diagnoza.',
     'ref.section.temp':             'Progi temperatury wg wieku',
     'ref.section.warning_signs':    'Objawy alarmowe',
     'ref.section.emergency':        'Numer alarmowy',
@@ -1523,7 +1523,7 @@ const TRANSLATIONS = {
 
     // WhenToSeekHelpCard
     'seek_help.title':              'Kiedy szukać pomocy',
-    'seek_help.intro':              'Lista objawów alarmowych według PTP/AAP. Otwórz, gdy chcesz przejrzeć — apka nie sugeruje nic na podstawie wpisów Twojego dziecka.',
+    'seek_help.intro':              'Lista objawów alarmowych według PTP/AAP. Otwórz, gdy chcesz przejrzeć. Apka nie sugeruje nic na podstawie wpisów Twojego dziecka.',
     'seek_help.expand':             'Pokaż wszystkie ({count})',
     'seek_help.collapse':           'Zwiń',
     'seek_help.emergency_label':    'NUMER ALARMOWY',
@@ -2299,15 +2299,15 @@ const TRANSLATIONS = {
 
     // Meds tab
     'meds.title':               'Medicine',
-    'meds.desc':                "Log given medications. The app does not calculate doses — check the dose in the medicine leaflet or with your pediatrician.",
+    'meds.desc':                "Log given medications. The app does not calculate doses. Check the dose in the medicine leaflet or with your pediatrician.",
     'meds.info.title':          'Medication information',
     'meds.info.disclaimer':     'Information below comes from medicine leaflets (SmPC). The app does not calculate doses for a specific child. Check the dose in the leaflet, pharmacy, or with your pediatrician.',
     'meds.info.para_short':     'From birth, under medical supervision',
     'meds.info.ibu_short':      'From 6 months of age (per leaflet)',
     'meds.info.ibu_blocked':    'From 6 months of age',
     'meds.info_btn':            'Info',
-    'meds.saline_dose':         '3–5 drops / nostril',
-    'meds.probiotic_dose':      '5–10 drops / day',
+    'meds.saline_dose':         '3-5 drops / nostril',
+    'meds.probiotic_dose':      '5-10 drops / day',
     'meds.reminder.now':         'minimum interval passed',
     'meds.reminder.in':          'in',
     'meds.reminder.dose_label':  'Amount:',
@@ -2518,7 +2518,7 @@ const TRANSLATIONS = {
     'rule.temp_critical.title':    'High temperature — consultation threshold',
     'rule.temp_critical.msg':      'Temperature {temp}°C in a child over 3 months is a threshold at which AAP guidelines recommend pediatric consultation. If the child appears unwell, lethargic, or has other concerning symptoms, AAP/Mayo Clinic indicate ER.',
     'rule.temp_rising.title':      'Upward temperature trend',
-    'rule.temp_rising.msg':        'Three consecutive readings: {t1}° → {t2}° → {t3}°C. Observational indicator — the app shows a trend based on readings you logged.',
+    'rule.temp_rising.msg':        'Three consecutive readings: {t1}° → {t2}° → {t3}°C. Observational indicator: the app shows a trend based on readings you logged.',
     'rule.med_not_working.title':  'Information: fever after medication',
     'rule.med_not_working.msg':    'Temperature did not drop after {med} ({hours}h ago). Per fever-reducing medication leaflets, lack of response to the medication may indicate the need for medical consultation. Do not give another dose outside leaflet recommendations.',
     'rule.med_too_soon.title':     'Information about dose intervals',
@@ -2536,7 +2536,7 @@ const TRANSLATIONS = {
     'rule.med_expired.title':      'Information: medication duration',
     'rule.med_expired.msg':        'You gave {name} {hours}h {mins}min ago. Per the leaflet, fever-reducing medication typically acts for 4–8h. Give the next dose only per the leaflet (interval + daily limit).',
     'rule.sleep_deficit.title':    'Observation: short sleep',
-    'rule.sleep_deficit.msg':      "Today you logged {h}h {m}m of sleep. Sleep norms per medical literature (AAP): {min}–{max}h for this age. Observational indicator.",
+    'rule.sleep_deficit.msg':      "Today you logged {h}h {m}m of sleep. Sleep norms per medical literature (AAP): {min}-{max}h for this age. Observational indicator.",
     'rule.combined.title':         'Combination of concerning indicators',
     'rule.combined.msg':           "Today's readings: temperature {temp}°C + short sleep + few feedings. Per medical literature (AAP), this combination of indicators is a threshold recommending urgent medical consultation.",
     'rule.default.title':          'No alerts',
@@ -2623,11 +2623,11 @@ const TRANSLATIONS = {
     'doctor.visit.routine':        'Routine check-up',
 
     // Dose info — reference from medicine leaflets (SmPC), no calculations
-    'dose.saline.1':               '3–5 drops in each nostril',
+    'dose.saline.1':               '3-5 drops in each nostril',
     'dose.saline.2':               'Apply 3–4× per day',
     'dose.saline.3':               'Apply lying down with head slightly tilted back',
     'dose.saline.4':               'Safe from birth',
-    'dose.probiotic.1':            '1× daily, 5–10 drops or 1 sachet (per leaflet)',
+    'dose.probiotic.1':            '1× daily, 5-10 drops or 1 sachet (per leaflet)',
     'dose.probiotic.2':            'Apply at least 2h after antibiotic',
     'dose.probiotic.3':            'Can be mixed with milk or puree',
     'meds.custom.delete_msg':       'Are you sure you want to delete this medicine from the list?',
@@ -3015,7 +3015,7 @@ const TRANSLATIONS = {
 
     // ReferenceLibrary
     'ref.title':                    'Pediatric guidelines',
-    'ref.intro':                    'Static library — AAP/PTP reference tables. Identical content regardless of your child\'s data. Reading material, not a diagnosis.',
+    'ref.intro':                    'Static library: AAP/PTP reference tables. Identical content regardless of your child\'s data. Reading material, not a diagnosis.',
     'ref.section.temp':             'Temperature thresholds by age',
     'ref.section.warning_signs':    'Warning signs',
     'ref.section.emergency':        'Emergency number',
@@ -3026,7 +3026,7 @@ const TRANSLATIONS = {
 
     // WhenToSeekHelpCard
     'seek_help.title':              'When to seek help',
-    'seek_help.intro':              'List of warning signs per AAP/PTP. Open it when you want to review — the app suggests nothing based on your child\'s entries.',
+    'seek_help.intro':              'List of warning signs per AAP/PTP. Open it when you want to review. The app suggests nothing based on your child\'s entries.',
     'seek_help.expand':             'Show all ({count})',
     'seek_help.collapse':           'Collapse',
     'seek_help.emergency_label':    'EMERGENCY NUMBER',
@@ -3807,15 +3807,15 @@ const TRANSLATIONS = {
 
     // Meds tab
     'meds.title':                 'Medikamente',
-    'meds.desc':                  'Erfassen Sie verabreichte Medikamente. Die App berechnet keine Dosierungen — Dosis im Beipackzettel oder beim Kinderarzt überprüfen.',
+    'meds.desc':                  'Erfassen Sie verabreichte Medikamente. Die App berechnet keine Dosierungen. Dosis im Beipackzettel oder beim Kinderarzt überprüfen.',
     'meds.info.title':            'Medikamenteninformationen',
     'meds.info.disclaimer':       'Folgende Informationen stammen aus den Beipackzetteln (Fachinformation). Die App berechnet keine Dosierungen für ein bestimmtes Kind. Dosis im Beipackzettel, in der Apotheke oder beim Kinderarzt überprüfen.',
     'meds.info.para_short':       'Ab Geburt unter ärztlicher Aufsicht',
     'meds.info.ibu_short':        'Ab dem 6. Lebensmonat (laut Fachinfo)',
     'meds.info.ibu_blocked':      'Ab dem 6. Lebensmonat',
     'meds.info_btn':              'Info',
-    'meds.saline_dose':           '3–5 Tropfen / Nasenloch',
-    'meds.probiotic_dose':        '5–10 Tropfen / Tag',
+    'meds.saline_dose':           '3-5 Tropfen / Nasenloch',
+    'meds.probiotic_dose':        '5-10 Tropfen / Tag',
     'meds.reminder.now':          'Mindestabstand erreicht',
     'meds.reminder.in':           'in',
     'meds.reminder.dose_label':   'Menge:',
@@ -4025,7 +4025,7 @@ const TRANSLATIONS = {
     'rule.temp_critical.title':   'Hohe Temperatur — Konsultations-Schwelle',
     'rule.temp_critical.msg':     'Temperatur {temp}°C bei einem Kind über 3 Monaten ist eine Schwelle, bei der die DGKJ einen Kinderarztbesuch empfiehlt. Wenn das Kind schlecht aussieht, apathisch ist oder andere besorgniserregende Symptome zeigt — empfehlen die Leitlinien die Notaufnahme.',
     'rule.temp_rising.title':     'Steigende Temperaturtendenz',
-    'rule.temp_rising.msg':       'Drei aufeinanderfolgende Messungen: {t1}° → {t2}° → {t3}°C. Beobachtungsindikator — die App zeigt den Trend basierend auf Ihren gespeicherten Messungen.',
+    'rule.temp_rising.msg':       'Drei aufeinanderfolgende Messungen: {t1}° → {t2}° → {t3}°C. Beobachtungsindikator: Die App zeigt den Trend basierend auf Ihren gespeicherten Messungen.',
     'rule.med_not_working.title': 'Information: Fieber nach Medikamentengabe',
     'rule.med_not_working.msg':   'Temperatur ist nach Gabe von {med} (vor {hours}h) nicht gesunken. Laut Beipackzettel (Fachinfo) und DGKJ-Leitlinien kann das Ausbleiben einer Reaktion auf ein fiebersenkendes Mittel ein Hinweis für eine Konsultation mit einem Arzt sein. Geben Sie keine weitere Dosis außerhalb der Beipackzettel-Empfehlungen.',
     'rule.med_too_soon.title':    'Information über Dosis-Abstände',
@@ -4043,7 +4043,7 @@ const TRANSLATIONS = {
     'rule.med_expired.title':     'Information: Wirkungsdauer des Medikaments',
     'rule.med_expired.msg':       '{name} haben Sie vor {hours}h {mins}min verabreicht. Laut Beipackzettel liegt die Wirkungsdauer eines fiebersenkenden Mittels gewöhnlich bei 4–8h. Geben Sie die nächste Dosis nur gemäß Beipackzettel (Abstand + Tageslimit).',
     'rule.sleep_deficit.title':   'Beobachtung: kurzer Schlaf',
-    'rule.sleep_deficit.msg':     'Heute haben Sie {h}h {m}m Schlaf aufgezeichnet. Schlafnormen laut pädiatrischer Literatur: {min}–{max}h für dieses Alter. Beobachtungsindikator.',
+    'rule.sleep_deficit.msg':     'Heute haben Sie {h}h {m}m Schlaf aufgezeichnet. Schlafnormen laut pädiatrischer Literatur: {min}-{max}h für dieses Alter. Beobachtungsindikator.',
     'rule.combined.title':        'Kombination beunruhigender Indikatoren',
     'rule.combined.msg':          'Messungen von heute: Temperatur {temp}°C + kurzer Schlaf + wenige Mahlzeiten. Laut DGKJ-Leitlinie ist eine Kombination solcher Indikatoren ein Risikosignal für eine schwere, ernsthafte Erkrankung — dringende medizinische Konsultation empfohlen.',
     'rule.default.title':         'Keine Warnungen',
@@ -4131,11 +4131,11 @@ const TRANSLATIONS = {
     'doctor.visit.routine':       'Vorsorgeuntersuchung',
 
     // Dose info
-    'dose.saline.1':              '3–5 Tropfen in jedes Nasenloch',
+    'dose.saline.1':              '3-5 Tropfen in jedes Nasenloch',
     'dose.saline.2':              '3–4× täglich verabreichen',
     'dose.saline.3':              'Einträufeln in Rückenlage mit leicht zurückgeneigtem Kopf',
     'dose.saline.4':              'Ab Geburt anwendbar',
-    'dose.probiotic.1':           '1× täglich, 5–10 Tropfen oder 1 Beutel (laut Beipackzettel)',
+    'dose.probiotic.1':           '1× täglich, 5-10 Tropfen oder 1 Beutel (laut Beipackzettel)',
     'dose.probiotic.2':           'Mind. 2h nach dem Antibiotikum anwenden',
     'dose.probiotic.3':           'Kann mit Milch oder Brei gemischt werden',
     'meds.custom.delete_msg':     'Möchten Sie dieses Medikament wirklich aus der Liste löschen?',
@@ -4510,7 +4510,7 @@ const TRANSLATIONS = {
 
     // ReferenceLibrary
     'ref.title':                  'Pädiatrische Leitlinien',
-    'ref.intro':                  'Statische Bibliothek — Referenztabellen DGKJ/AAP. Identischer Inhalt unabhängig von den Daten Ihres Kindes. Lesematerial, keine Diagnose.',
+    'ref.intro':                  'Statische Bibliothek: Referenztabellen DGKJ/AAP. Identischer Inhalt unabhängig von den Daten Ihres Kindes. Lesematerial, keine Diagnose.',
     'ref.section.temp':           'Temperatur-Schwellen nach Alter',
     'ref.section.warning_signs':  'Alarmsymptome',
     'ref.section.emergency':      'Notrufnummer',
@@ -4521,7 +4521,7 @@ const TRANSLATIONS = {
 
     // WhenToSeekHelpCard
     'seek_help.title':            'Wann zum Arzt',
-    'seek_help.intro':            'Liste der Alarmsymptome nach DGKJ/AAP. Öffnen Sie sie zur Durchsicht — die App schlägt nichts basierend auf den Einträgen Ihres Kindes vor.',
+    'seek_help.intro':            'Liste der Alarmsymptome nach DGKJ/AAP. Öffnen Sie sie zur Durchsicht. Die App schlägt nichts basierend auf den Einträgen Ihres Kindes vor.',
     'seek_help.expand':           'Alle anzeigen ({count})',
     'seek_help.collapse':         'Einklappen',
     'seek_help.emergency_label':  'NOTRUFNUMMER',
@@ -5297,15 +5297,15 @@ const TRANSLATIONS = {
 
     // Meds tab
     'meds.title':                 'Médicaments',
-    'meds.desc':                  'Enregistrez les médicaments donnés. L\'application ne calcule pas les posologies — vérifiez la dose dans la notice ou auprès du pédiatre.',
+    'meds.desc':                  'Enregistrez les médicaments donnés. L\'application ne calcule pas les posologies. Vérifiez la dose dans la notice ou auprès du pédiatre.',
     'meds.info.title':            'Informations sur le médicament',
     'meds.info.disclaimer':       'Les informations suivantes proviennent des notices (RCP). L\'application ne calcule pas les posologies pour un enfant donné. Vérifiez la dose dans la notice, en pharmacie ou auprès du pédiatre.',
     'meds.info.para_short':       'Dès la naissance sous surveillance médicale',
     'meds.info.ibu_short':        'À partir de 3 mois (selon notice)',
     'meds.info.ibu_blocked':      'À partir de 3 mois',
     'meds.info_btn':              'Info',
-    'meds.saline_dose':           '3–5 gouttes / narine',
-    'meds.probiotic_dose':        '5–10 gouttes / jour',
+    'meds.saline_dose':           '3-5 gouttes / narine',
+    'meds.probiotic_dose':        '5-10 gouttes / jour',
     'meds.reminder.now':          'Intervalle minimum atteint',
     'meds.reminder.in':           'dans',
     'meds.reminder.dose_label':   'Quantité :',
@@ -5515,7 +5515,7 @@ const TRANSLATIONS = {
     'rule.temp_critical.title':   'Température élevée — seuil de consultation',
     'rule.temp_critical.msg':     'Température {temp}°C chez un enfant de plus de 3 mois — seuil auquel la SFP recommande une consultation pédiatrique. Si l\'enfant a mauvaise mine, est apathique ou présente d\'autres symptômes inquiétants — les recommandations indiquent les urgences.',
     'rule.temp_rising.title':     'Tendance température en hausse',
-    'rule.temp_rising.msg':       'Trois mesures consécutives : {t1}° → {t2}° → {t3}°C. Indicateur de surveillance — l\'application affiche la tendance basée sur vos mesures enregistrées.',
+    'rule.temp_rising.msg':       'Trois mesures consécutives : {t1}° → {t2}° → {t3}°C. Indicateur de surveillance : l\'application affiche la tendance basée sur vos mesures enregistrées.',
     'rule.med_not_working.title': 'Information : fièvre après prise de médicament',
     'rule.med_not_working.msg':   'La température n\'a pas baissé après prise de {med} (il y a {hours}h). Selon la notice (RCP) et les recommandations SFP, l\'absence de réponse à un antipyrétique peut indiquer la nécessité d\'une consultation médicale. Ne donnez pas une dose supplémentaire en dehors des recommandations de la notice.',
     'rule.med_too_soon.title':    'Information sur les intervalles de prises',
@@ -5533,7 +5533,7 @@ const TRANSLATIONS = {
     'rule.med_expired.title':     'Information : durée d\'action du médicament',
     'rule.med_expired.msg':       'Vous avez donné {name} il y a {hours}h {mins}min. Selon la notice, la durée d\'action d\'un antipyrétique est généralement de 4 à 8h. Donnez la dose suivante uniquement selon la notice (intervalle + limite quotidienne).',
     'rule.sleep_deficit.title':   'Observation : sommeil court',
-    'rule.sleep_deficit.msg':     'Aujourd\'hui vous avez enregistré {h}h {m}m de sommeil. Normes de sommeil selon la littérature pédiatrique : {min}–{max}h pour cet âge. Indicateur d\'observation.',
+    'rule.sleep_deficit.msg':     'Aujourd\'hui vous avez enregistré {h}h {m}m de sommeil. Normes de sommeil selon la littérature pédiatrique : {min}-{max}h pour cet âge. Indicateur d\'observation.',
     'rule.combined.title':        'Combinaison d\'indicateurs préoccupants',
     'rule.combined.msg':          'Mesures du jour : température {temp}°C + sommeil court + peu de repas. Selon les recommandations SFP/HAS, une combinaison de tels indicateurs est un signal de risque d\'infection grave — consultation médicale urgente recommandée.',
     'rule.default.title':         'Aucune alerte',
@@ -5621,11 +5621,11 @@ const TRANSLATIONS = {
     'doctor.visit.routine':       'Visite de routine',
 
     // Dose info
-    'dose.saline.1':              '3–5 gouttes dans chaque narine',
+    'dose.saline.1':              '3-5 gouttes dans chaque narine',
     'dose.saline.2':              'Administrer 3 à 4 fois par jour',
     'dose.saline.3':              'Instiller en position dorsale, tête légèrement renversée',
     'dose.saline.4':              'Utilisable dès la naissance',
-    'dose.probiotic.1':           '1× par jour, 5–10 gouttes ou 1 sachet (selon notice)',
+    'dose.probiotic.1':           '1× par jour, 5-10 gouttes ou 1 sachet (selon notice)',
     'dose.probiotic.2':           'Administrer au moins 2h après l\'antibiotique',
     'dose.probiotic.3':           'Peut être mélangé avec lait ou purée',
     'meds.custom.delete_msg':     'Voulez-vous vraiment supprimer ce médicament de la liste ?',
@@ -6000,7 +6000,7 @@ const TRANSLATIONS = {
 
     // ReferenceLibrary
     'ref.title':                  'Recommandations pédiatriques',
-    'ref.intro':                  'Bibliothèque statique — tableaux de référence SFP/HAS. Contenu identique indépendamment des données de votre enfant. Lecture, pas de diagnostic.',
+    'ref.intro':                  'Bibliothèque statique : tableaux de référence SFP/HAS. Contenu identique indépendamment des données de votre enfant. Lecture, pas de diagnostic.',
     'ref.section.temp':           'Seuils de température selon l\'âge',
     'ref.section.warning_signs':  'Signes d\'alerte',
     'ref.section.emergency':      'Numéro d\'urgence',
@@ -6011,7 +6011,7 @@ const TRANSLATIONS = {
 
     // WhenToSeekHelpCard
     'seek_help.title':            'Quand consulter',
-    'seek_help.intro':            'Liste des signes d\'alerte selon SFP/HAS. Consultez-la pour information — l\'application ne suggère rien sur la base des saisies de votre enfant.',
+    'seek_help.intro':            'Liste des signes d\'alerte selon SFP/HAS. Consultez-la pour information. L\'application ne suggère rien sur la base des saisies de votre enfant.',
     'seek_help.expand':           'Tout afficher ({count})',
     'seek_help.collapse':         'Replier',
     'seek_help.emergency_label':  'NUMÉRO D\'URGENCE',
@@ -6788,15 +6788,15 @@ const TRANSLATIONS = {
 
     // Meds tab
     'meds.title':                 'Medicamentos',
-    'meds.desc':                  'Registra los medicamentos administrados. La app no calcula dosis — comprueba la dosis en el prospecto o con el pediatra.',
+    'meds.desc':                  'Registra los medicamentos administrados. La app no calcula dosis. Comprueba la dosis en el prospecto o con el pediatra.',
     'meds.info.title':            'Información del medicamento',
     'meds.info.disclaimer':       'La siguiente información procede de los prospectos (ficha técnica). La app no calcula dosis para un niño concreto. Comprueba la dosis en el prospecto, en la farmacia o con el pediatra.',
     'meds.info.para_short':       'Desde el nacimiento bajo supervisión médica',
     'meds.info.ibu_short':        'A partir de los 3 meses (según prospecto)',
     'meds.info.ibu_blocked':      'A partir de los 3 meses',
     'meds.info_btn':              'Info',
-    'meds.saline_dose':           '3–5 gotas / fosa nasal',
-    'meds.probiotic_dose':        '5–10 gotas / día',
+    'meds.saline_dose':           '3-5 gotas / fosa nasal',
+    'meds.probiotic_dose':        '5-10 gotas / día',
     'meds.reminder.now':          'Intervalo mínimo alcanzado',
     'meds.reminder.in':           'en',
     'meds.reminder.dose_label':   'Cantidad:',
@@ -7007,7 +7007,7 @@ const TRANSLATIONS = {
     'rule.temp_critical.title':   'Temperatura alta — umbral de consulta',
     'rule.temp_critical.msg':     'Temperatura {temp}°C en un niño mayor de 3 meses — umbral en el que la AEP recomienda consulta pediátrica. Si el niño tiene mal aspecto, está apático o muestra otros síntomas preocupantes — las recomendaciones indican urgencias.',
     'rule.temp_rising.title':     'Tendencia de temperatura en subida',
-    'rule.temp_rising.msg':       'Tres mediciones consecutivas: {t1}° → {t2}° → {t3}°C. Indicador de vigilancia — la app muestra la tendencia basada en tus mediciones guardadas.',
+    'rule.temp_rising.msg':       'Tres mediciones consecutivas: {t1}° → {t2}° → {t3}°C. Indicador de vigilancia: la app muestra la tendencia basada en tus mediciones guardadas.',
     'rule.med_not_working.title': 'Información: fiebre tras administración de medicamento',
     'rule.med_not_working.msg':   'La temperatura no ha bajado tras administrar {med} (hace {hours}h). Según el prospecto (ficha técnica) y las recomendaciones AEP, la falta de respuesta a un antipirético puede indicar la necesidad de consulta médica. No des otra dosis fuera de las recomendaciones del prospecto.',
     'rule.med_too_soon.title':    'Información sobre intervalos entre dosis',
@@ -7025,7 +7025,7 @@ const TRANSLATIONS = {
     'rule.med_expired.title':     'Información: duración de acción del medicamento',
     'rule.med_expired.msg':       'Diste {name} hace {hours}h {mins}min. Según el prospecto, la duración de acción de un antipirético suele ser de 4 a 8h. Da la siguiente dosis solo según el prospecto (intervalo + límite diario).',
     'rule.sleep_deficit.title':   'Observación: poco sueño',
-    'rule.sleep_deficit.msg':     'Hoy has registrado {h}h {m}m de sueño. Normas de sueño según la literatura pediátrica: {min}–{max}h para esta edad. Indicador de observación.',
+    'rule.sleep_deficit.msg':     'Hoy has registrado {h}h {m}m de sueño. Normas de sueño según la literatura pediátrica: {min}-{max}h para esta edad. Indicador de observación.',
     'rule.combined.title':        'Combinación de indicadores preocupantes',
     'rule.combined.msg':          'Mediciones de hoy: temperatura {temp}°C + poco sueño + pocas tomas. Según las recomendaciones AEP, la combinación de tales indicadores es una señal de riesgo de infección grave — se recomienda consulta médica urgente.',
     'rule.default.title':         'Sin alertas',
@@ -7113,11 +7113,11 @@ const TRANSLATIONS = {
     'doctor.visit.routine':       'Revisión',
 
     // Dose info
-    'dose.saline.1':              '3–5 gotas en cada fosa nasal',
+    'dose.saline.1':              '3-5 gotas en cada fosa nasal',
     'dose.saline.2':              'Administrar 3 a 4 veces al día',
     'dose.saline.3':              'Instilar en posición tumbada con la cabeza ligeramente inclinada',
     'dose.saline.4':              'Apto desde el nacimiento',
-    'dose.probiotic.1':           '1× al día, 5–10 gotas o 1 sobre (según prospecto)',
+    'dose.probiotic.1':           '1× al día, 5-10 gotas o 1 sobre (según prospecto)',
     'dose.probiotic.2':           'Administrar al menos 2h después del antibiótico',
     'dose.probiotic.3':           'Se puede mezclar con leche o puré',
     'meds.custom.delete_msg':     '¿Seguro que quieres eliminar este medicamento de la lista?',
@@ -7492,7 +7492,7 @@ const TRANSLATIONS = {
 
     // ReferenceLibrary
     'ref.title':                  'Recomendaciones pediátricas',
-    'ref.intro':                  'Biblioteca estática — tablas de referencia AEP/HAS. Contenido idéntico independientemente de los datos de tu hijo. Lectura, no diagnóstico.',
+    'ref.intro':                  'Biblioteca estática: tablas de referencia AEP/HAS. Contenido idéntico independientemente de los datos de tu hijo. Lectura, no diagnóstico.',
     'ref.section.temp':           'Umbrales de temperatura según edad',
     'ref.section.warning_signs':  'Signos de alarma',
     'ref.section.emergency':      'Número de emergencia',
@@ -7503,7 +7503,7 @@ const TRANSLATIONS = {
 
     // WhenToSeekHelpCard
     'seek_help.title':            'Cuándo consultar',
-    'seek_help.intro':            'Lista de signos de alarma según AEP/HAS. Consúltala como referencia — la app no sugiere nada en función de los registros de tu hijo.',
+    'seek_help.intro':            'Lista de signos de alarma según AEP/HAS. Consúltala como referencia. La app no sugiere nada en función de los registros de tu hijo.',
     'seek_help.expand':           'Ver todo ({count})',
     'seek_help.collapse':         'Plegar',
     'seek_help.emergency_label':  'NÚMERO DE EMERGENCIA',

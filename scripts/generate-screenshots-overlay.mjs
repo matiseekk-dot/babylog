@@ -180,10 +180,10 @@ function buildState(locale = 'pl') {
     }]),
     'babylog_guest_activeProfile': JSON.stringify(PROFILE_ID),
     'babylog_guest_onboarding_done': JSON.stringify(true),
-    'babylog_guest_trial_start': JSON.stringify(Date.now() - 3 * 86400000),
+    'babylog_guest_trial_start': JSON.stringify(Date.now() - 2 * 3600000),
     // usePremium czyta trial gościa z klucza trial_start_guest — bez niego trial
     // startuje od nowa i okno "Odblokowaliśmy Premium" zasłania każdy screen.
-    'babylog_guest_trial_start_guest': JSON.stringify(Date.now() - 3 * 86400000),
+    'babylog_guest_trial_start_guest': JSON.stringify(Date.now() - 2 * 3600000),
     'babylog_trial_started_shown_guest': '1',
     'babylog_onb_tips_dismissed': '1',
     'babylog_first_entry_tracked': '1',
@@ -263,7 +263,12 @@ function clickByText(pattern) {
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
 const SHOTS = [
-  { name: '01-today', action: clickNav(NAV_TODAY) },
+  // Przejście na inną zakładkę i z powrotem: bez tego odznaka trialu na
+  // pierwszym ekranie potrafiła pokazać 15 dni zamiast 14.
+  { name: '01-today', action: async (page) => {
+    await clickNav(NAV_FEED)(page); await sleep(800)
+    await clickNav(NAV_TODAY)(page)
+  }},
   { name: '02-temperature', action: async (page) => {
     await clickNav(NAV_HEALTH)(page); await sleep(800)
     await clickByText('^(Temperatura|Temperature|Temperatur|Température)$')(page)
@@ -317,8 +322,10 @@ async function captureAndComposite(browser, locale) {
     Object.keys(localStorage).filter(k => k.startsWith('babylog')).forEach(k => localStorage.removeItem(k))
     Object.entries(s).forEach(([k, v]) => localStorage.setItem(k, v))
   }, state)
-  await page.reload({ waitUntil: 'networkidle0' })
-  await sleep(2500)
+  // networkidle0 potrafi nie nastąpić (Vite HMR, połączenia Firebase), więc
+  // czekamy na DOM i dajemy aplikacji chwilę na wyrenderowanie.
+  await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 })
+  await sleep(4000)
 
   // Dismiss onboarding tips banner
   await page.evaluate(() => {
