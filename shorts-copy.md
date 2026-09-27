@@ -1,21 +1,19 @@
 # Shorts edukacyjne (PL, EN, DE, FR, ES), 2026-09
 
 Pliki: `store-assets/shorts/{pl,en,de,fr,es}/` (generuje `scripts/build-shorts.mjs`).
-Każdy film ma 21 do 24 sekund, format 9:16, same napisy i ciche audio. Treść pochodzi
+Każdy film ma 21 do 24 sekund, format 9:16, same napisy i własną melodię pozytywki
+(`scripts/shorts-music.mjs`, bez praw autorskich osób trzecich). Treść pochodzi
 z danych w apce (progi gorączki, objawy alarmowe, zakresy snu i karmienia).
 
-## Jak wrzucać (z muzyką)
+## Jak wrzucać
 
-Muzykę do Shorta da się dodać tylko w aplikacji YouTube na telefonie:
+Muzyka jest już w plikach, więc wrzucasz normalnie z komputera:
 
-1. Przerzuć pliki `.mp4` na telefon (Dysk Google albo kabel).
-2. Aplikacja YouTube → **+** → **Utwórz Short**.
-3. Ikona galerii w lewym dolnym rogu → wybierz film.
-4. U góry **Dodaj dźwięk** → wybierz spokojny utwór → ustaw niską głośność.
-5. **Dalej** → wklej tytuł i opis z tego pliku.
-6. Odbiorcy: **Nie, nie jest przeznaczony dla dzieci**. Widoczność: **Publiczny**.
+1. YouTube Studio → **Utwórz** → **Prześlij filmy** → wybierz plik.
+2. Wklej tytuł i opis z tego pliku.
+3. Odbiorcy: **Nieprzeznaczony dla dzieci**. Widoczność: **Publiczny**.
 
-Wrzucaj jeden film co 1 lub 2 dni. Te same pliki pasują do Reels i TikToka.
+Wrzucaj jeden film co 1 lub 2 dni. Te same pliki pasują do Reels, TikToka i reklam.
 
 ## Link do aplikacji
 

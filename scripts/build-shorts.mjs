@@ -1,8 +1,9 @@
 // scripts/build-shorts.mjs
 //
 // Krótkie filmy edukacyjne na YouTube Shorts / Reels / TikTok (2026-09).
-// Same napisy, bez głosu i bez muzyki (muzykę dodaje się w aplikacji YouTube
-// przy wrzucaniu). Treść pochodzi z danych, które już są w apce:
+// Same napisy, bez głosu, pod spodem własna melodia pozytywki
+// (scripts/shorts-music.mjs), bo muzykę z biblioteki YouTube da się dodać
+// tylko przy wrzucaniu z telefonu. Treść pochodzi z danych, które już są w apce:
 // src/data/referenceTables.js (progi gorączki, objawy alarmowe),
 // feedingNorms.js, sleepNorms.js, dailyTips.js. Nie dopisujemy własnych porad.
 //
@@ -20,6 +21,7 @@ import path from 'path'
 import { execFileSync } from 'child_process'
 import { fileURLToPath } from 'url'
 import { CHROME_PATH } from './generate-screenshots-overlay.mjs'
+import { buildMusic } from './shorts-music.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SHOTS = path.join(ROOT, 'store-assets', 'screenshots-2026-09')
@@ -534,12 +536,12 @@ function htmlFrames(frame, ctx) {
 
 // ─── Wideo ───────────────────────────────────────────────────────────────────
 
-function encode(frames, out) {
+function encode(frames, out, music) {
   const args = ['-y']
   // Każde wejście trwa dur + FADE, bo przejście zjada FADE z sąsiednich klatek.
   frames.forEach(f => args.push('-loop', '1', '-framerate', '30', '-t', (f.dur + FADE).toFixed(2), '-i', f.file))
   const total = frames.reduce((s, f) => s + f.dur, 0) + FADE
-  args.push('-f', 'lavfi', '-t', total.toFixed(2), '-i', 'anullsrc=r=48000:cl=stereo')
+  args.push('-i', music)
   let chain = ''
   let last = '[0:v]'
   let offset = 0
@@ -549,8 +551,10 @@ function encode(frames, out) {
     chain += `${last}[${i}:v]xfade=transition=fade:duration=${FADE}:offset=${(offset - FADE / 2).toFixed(2)}${label};`
     last = label
   }
-  chain += `${last}format=yuv420p[out]`
-  args.push('-filter_complex', chain, '-map', '[out]', '-map', `${frames.length}:a`,
+  chain += `${last}format=yuv420p[out];`
+  // Melodia przycięta do długości filmu, z wyciszeniem na końcu.
+  chain += `[${frames.length}:a]atrim=0:${total.toFixed(2)},afade=t=out:st=${(total - 1.8).toFixed(2)}:d=1.8[aout]`
+  args.push('-filter_complex', chain, '-map', '[out]', '-map', '[aout]',
     '-r', '30', '-c:v', 'libx264', '-preset', 'medium', '-crf', '19',
     '-c:a', 'aac', '-b:a', '128k', '-shortest', '-movflags', '+faststart', out)
   execFileSync(FFMPEG, args, { stdio: ['ignore', 'ignore', 'pipe'] })
@@ -567,6 +571,8 @@ async function main() {
   const langs = args.filter(a => VIDEOS[a])
   const slugs = args.filter(a => !VIDEOS[a])
   const icon = b64(await sharp(ICON).resize(128, 128).png().toBuffer())
+  fs.mkdirSync(path.join(OUT, '.tmp'), { recursive: true })
+  const music = buildMusic(path.join(OUT, '.tmp', 'music.wav'), FFMPEG)
   const browser = await puppeteer.launch({ executablePath: CHROME_PATH, headless: 'new', args: ['--no-sandbox'] })
   const pg = await browser.newPage()
   await pg.setViewport({ width: W, height: H, deviceScaleFactor: 1 })
@@ -602,7 +608,7 @@ async function main() {
       }
       fs.copyFileSync(frames[0].file, path.join(dir, `${video.slug}-cover.png`))
       const out = path.join(dir, `${video.slug}.mp4`)
-      const total = encode(frames, out)
+      const total = encode(frames, out, music)
       console.log(`  [${lang}] ${video.slug}.mp4  ${total.toFixed(1)} s, ${frames.length} klatek, ${(fs.statSync(out).size / 1e6).toFixed(1)} MB`)
     }
   }
