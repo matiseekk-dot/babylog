@@ -54,3 +54,4 @@ coverage/
 .claude/worktrees/
 store-assets/.tmp-raw-screenshots/
 store-assets/ads/.tmp/
+store-assets/shorts/.tmp/
