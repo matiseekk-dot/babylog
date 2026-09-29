@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { formatDuration, todayDate, dateYMD, genId } from '../utils/helpers'
 import Modal from './Modal'
@@ -9,7 +9,7 @@ import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretSleep } from '../engine/interpretations'
 import HistorySection from './HistorySection'
-import SleepChart from './SleepChart'
+const SleepChart = React.lazy(() => import('./SleepChart'))
 
 export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   useLocale()
@@ -192,7 +192,9 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
 
       {/* v2.11.8: SleepChart wpięty (był dead file). Free: wykres z surowymi danymi.
           Premium: wykres + reference range vs normy WHO + interpretation insight. */}
-      <SleepChart sleepLogs={logs} currentAgeMonths={ageMonths} showReference={isPremium} />
+      <Suspense fallback={<div style={{padding:'20px',textAlign:'center',color:'var(--text-3)',fontSize:13}}>{t('chart.loading')}</div>}>
+        <SleepChart sleepLogs={logs} currentAgeMonths={ageMonths} showReference={isPremium} />
+      </Suspense>
 
       {isPremium
         ? <InlineInsight insight={interpretSleep(logs, ageMonths)} />

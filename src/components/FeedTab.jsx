@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { nowTime, todayDate, genId } from '../utils/helpers'
 import Modal from './Modal'
@@ -6,7 +6,7 @@ import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
 import { t, tPlural, useLocale } from '../i18n'
 import HistorySection from './HistorySection'
-import FeedingFrequencyChart from './FeedingFrequencyChart'
+const FeedingFrequencyChart = React.lazy(() => import('./FeedingFrequencyChart'))
 import PremiumTeaser from './PremiumTeaser'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']
@@ -155,7 +155,9 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
 
       {/* v2.11.8: FeedingFrequencyChart wpięty (był dead file). Free: wykres user data.
           Premium: + reference range — typowa liczba karmień/dzień wg wieku. */}
-      <FeedingFrequencyChart feedLogs={logs} currentAgeMonths={ageMonths} showReference={isPremium} />
+      <Suspense fallback={<div style={{padding:'20px',textAlign:'center',color:'var(--text-3)',fontSize:13}}>{t('chart.loading')}</div>}>
+        <FeedingFrequencyChart feedLogs={logs} currentAgeMonths={ageMonths} showReference={isPremium} />
+      </Suspense>
       {!isPremium && <PremiumTeaser label={t('feed.premium.label')} onUpgrade={onUpgrade} />}
 
       <div className="card">

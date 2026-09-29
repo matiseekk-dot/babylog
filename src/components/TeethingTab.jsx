@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
-import TeethingChart from './TeethingChart'
+const TeethingChart = React.lazy(() => import('./TeethingChart'))
 import PremiumTeaser from './PremiumTeaser'
 
 /**
@@ -185,7 +185,9 @@ export default function TeethingTab({ uid, babyId, ageMonths, isPremium, onUpgra
 
       {/* v2.11.8: TeethingChart wpięty (był dead file). Free: timeline z user data.
           Premium: timeline + reference range AAPD wg typowych wieków wyrznięcia. */}
-      <TeethingChart teeth={teeth} teethDef={TEETH} currentAgeMonths={ageMonths} showReference={isPremium} />
+      <Suspense fallback={<div style={{padding:'20px',textAlign:'center',color:'var(--text-3)',fontSize:13}}>{t('chart.loading')}</div>}>
+        <TeethingChart teeth={teeth} teethDef={TEETH} currentAgeMonths={ageMonths} showReference={isPremium} />
+      </Suspense>
       {!isPremium && <PremiumTeaser label={t('teething.premium.label') || 'Wykres rozwoju zębów'} onUpgrade={onUpgrade} />}
 
       {/* Recent teeth list */}

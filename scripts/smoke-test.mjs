@@ -11,7 +11,10 @@
 import puppeteer from 'puppeteer-core'
 import { CHROME_PATH, buildState } from './generate-screenshots-overlay.mjs'
 
-const APP_URL = 'http://localhost:5173/babylog/'
+// SMOKE_URL: np. wersja produkcyjna z 'npx vite preview' (http://localhost:4173/babylog/).
+// Wtedy blokujemy statystyki i Sentry, żeby test nie liczył się jako prawdziwy użytkownik.
+const APP_URL = process.env.SMOKE_URL || 'http://localhost:5173/babylog/'
+const BLOCK = /google-analytics|analytics.google|googletagmanager|firebaseinstallations|sentry.io|ingest./
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 const LANGS = ['pl', 'en', 'de', 'fr', 'es']
 // Tytuł funkcji z listy Premium w danym języku (paywall.feature.pdf.title).
@@ -54,6 +57,10 @@ async function clickNav(page, index) {
 async function run(browser, locale, issues) {
   const page = await browser.newPage()
   await page.setViewport({ width: 432, height: 864, deviceScaleFactor: 1 })
+  if (process.env.SMOKE_URL) {
+    await page.setRequestInterception(true)
+    page.on('request', r => (BLOCK.test(r.url()) ? r.abort() : r.continue()))
+  }
   page.on('pageerror', e => issues.push(`${locale} WYJĄTEK: ${e.message.slice(0, 160)}`))
   page.on('console', m => {
     if (m.type() !== 'error') return

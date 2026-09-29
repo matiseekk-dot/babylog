@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { MILESTONES, MILESTONES_EN, MILESTONES_DE, MILESTONES_FR, MILESTONES_ES } from '../data/staticData'
 import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toastWithUndo } from './Toast'
 import { t, useLocale, getLocale } from '../i18n'
-import MilestonesChart from './MilestonesChart'
+const MilestonesChart = React.lazy(() => import('./MilestonesChart'))
 import PremiumTeaser from './PremiumTeaser'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']
@@ -164,7 +164,9 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
 
       {/* v2.11.8: MilestonesChart wpięty (był dead file). Free: scatter user data.
           Premium: + reference range typowych wieków osiągnięcia milestone'ów. */}
-      <MilestonesChart milestones={builtInMilestones} done={done} currentAgeMonths={ageMonths} showReference={isPremium} />
+      <Suspense fallback={<div style={{padding:'20px',textAlign:'center',color:'var(--text-3)',fontSize:13}}>{t('chart.loading')}</div>}>
+        <MilestonesChart milestones={builtInMilestones} done={done} currentAgeMonths={ageMonths} showReference={isPremium} />
+      </Suspense>
       {!isPremium && <PremiumTeaser label={t('milestones.premium.label')} onUpgrade={onUpgrade} />}
 
       <button className="btn-add" onClick={()=>{ setForm({name:'',emoji:'⭐',months:String(ageMonths)}); setModal(true) }}>
