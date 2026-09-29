@@ -53,6 +53,17 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
   const typeMeta = (key) => SYMPTOM_TYPES.find(s => s.key === key) || SYMPTOM_TYPES[SYMPTOM_TYPES.length - 1]
 
   const [logs, setLogs] = useFirestore(uid, `symptoms_${babyId}`, [])
+  // v2.16.20: alert "wysypka + gorączka" nigdy się nie włączał, bo nikt nie
+  // przekazywał currentTempC. Bierzemy najwyższy pomiar z ostatnich 24 h.
+  const [tempLogs] = useFirestore(uid, `temp_${babyId}`, [])
+  const feverC = useMemo(() => {
+    if (currentTempC != null) return currentTempC
+    const now = Date.now()
+    const recent = (tempLogs || [])
+      .filter(l => now - new Date(`${l.date}T${l.time || '12:00'}`).getTime() <= 24 * 60 * 60 * 1000)
+      .map(l => Number(l.temp) || 0)
+    return recent.length ? Math.max(...recent) : null
+  }, [tempLogs, currentTempC])
 
   // Modal state
   const [modal, setModal] = useState(false)
@@ -124,7 +135,7 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
         text: t('sym.alert.diarrhea_risk', { count: diarrhea24h }),
       })
     }
-    if (rashRecent.length > 0 && currentTempC && currentTempC >= 38) {
+    if (rashRecent.length > 0 && feverC != null && feverC >= 38) {
       alerts.push({
         level: 'critical',
         text: t('sym.alert.rash_fever'),
@@ -143,7 +154,7 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
       })
     }
     return alerts
-  }, [stats, currentTempC])
+  }, [stats, feverC])
 
   // ── ZAPIS ─────────────────────────────────────────────────────────────────
   const quickLog = (typeKey) => {

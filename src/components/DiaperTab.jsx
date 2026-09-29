@@ -66,7 +66,7 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
   const [form, setForm] = useState({ type: TYPES[0].label, time: nowTime(), date: todayDate(), note:'' })
 
   const today = todayDate()
-  const todayLogs = logs.filter(l=>l.date===today).sort((a,b)=>b.time.localeCompare(a.time))
+  const todayLogs = logs.filter(l=>l.date===today).sort((a, b) => (b.time || '').localeCompare(a.time || ''))
 
   const pee = todayLogs.filter(l =>
     l.type === 'Mokra' || l.type === 'Obydwie' ||

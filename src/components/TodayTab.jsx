@@ -55,7 +55,7 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
   const sleepRemainder = totalSleepMin % 60
 
   const lastTemp = todayTemps.length > 0
-    ? [...todayTemps].sort((a, b) => b.time.localeCompare(a.time))[0]
+    ? [...todayTemps].sort((a, b) => (b.time || '').localeCompare(a.time || ''))[0]
     : null
 
   // v2.9.5: helpery nawigacji kontekstowej. Sub-zakładki (Feed/Diaper, Health
@@ -157,7 +157,8 @@ export default function TodayTab({ uid, babyId, onNavigate }) {
     })
 
     // Sortuj odwrotnie chronologicznie (najnowsze na górze)
-    return items.sort((a, b) => b.sortKey.localeCompare(a.sortKey))
+    // Wpis bez godziny (stary, od partnera) nie może wywrócić ekranu Dziś.
+    return items.sort((a, b) => (b.sortKey || '').localeCompare(a.sortKey || ''))
   }, [todayFeeds, todaySleeps, todayDiapers, todayTemps, todayMeds])
 
   const totalEvents = timeline.length

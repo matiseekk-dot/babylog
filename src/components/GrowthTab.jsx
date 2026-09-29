@@ -66,7 +66,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
     return Math.max(0, ageMonths - daysDiff / 30)
   }
 
-  const sorted = [...logs].sort((a,b)=>a.date.localeCompare(b.date))
+  const sorted = [...logs].sort((a, b) => (a.date || '').localeCompare(b.date || ''))
   const chartData = sorted.map(l=>({
     date: shortDate(l.date),
     weight: l.weight ? Number(l.weight) : undefined,
@@ -192,7 +192,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
         <div className="card-header">{t('growth.history')}</div>
         {logs.length === 0
           ? <div className="empty-state"><div className="empty-icon">📏</div><p>{t('growth.empty')}</p></div>
-          : [...logs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,20).map(l => (
+          : [...logs].sort((a, b) => (b.date || '').localeCompare(a.date || '')).slice(0,20).map(l => (
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">📏</div>
               <div className="log-body">

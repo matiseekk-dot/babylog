@@ -36,7 +36,7 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
   const [form, setForm] = useState({ type:'Pierś lewa', amount:'15', time: nowTime(), date: todayDate() })
 
   const today = todayDate()
-  const todayLogs = logs.filter(l => l.date === today).sort((a,b) => b.time.localeCompare(a.time))
+  const todayLogs = logs.filter(l => l.date === today).sort((a, b) => (b.time || '').localeCompare(a.time || ''))
   const totalMl = todayLogs.filter(l=>l.type==='Butelka'||l.type==='Odciągnięte mleko').reduce((s,l)=>s+Number(l.amount||0),0)
   const breastCount = todayLogs.filter(l=>l.type?.startsWith('Pierś')).length
   // Ostatnie karmienie, które już było — wpis z godziną z przyszłości (literówka,

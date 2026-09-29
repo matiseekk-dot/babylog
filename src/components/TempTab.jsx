@@ -78,7 +78,7 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
   }
 
   const today = todayDate()
-  const todayLogs = logs.filter(l=>l.date===today).sort((a,b)=>b.time.localeCompare(a.time))
+  const todayLogs = logs.filter(l=>l.date===today).sort((a, b) => (b.time || '').localeCompare(a.time || ''))
   const last = todayLogs[0]
 
 

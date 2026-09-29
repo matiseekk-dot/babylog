@@ -236,8 +236,8 @@ async function checkMedReminders({ logs = [], locale = 'pl', strings = {} }) {
       ? 'Interval between doses has passed 💊'
       : 'Minął odstęp między dawkami 💊')
     const body = (strings.body || (locale === 'en'
-      ? '{med}{dose} — {hours}h since last dose. Only give the next dose if needed, following the medicine leaflet.'
-      : '{med}{dose} — minęło {hours}h od ostatniej dawki. Kolejną podaj tylko jeśli potrzebna, zgodnie z ulotką leku.'))
+      ? '{med}{dose}: {hours}h since last dose. Only give the next dose if needed, following the medicine leaflet.'
+      : '{med}{dose}: minęło {hours}h od ostatniej dawki. Kolejną podaj tylko jeśli potrzebna, zgodnie z ulotką leku.'))
       .replace('{med}', log.med || '')
       .replace('{dose}', dose)
       .replace('{hours}', hours)
