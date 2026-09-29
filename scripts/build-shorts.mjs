@@ -25,7 +25,9 @@ import { buildMusic } from './shorts-music.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SHOTS = path.join(ROOT, 'store-assets', 'screenshots-2026-09')
-const OUT = path.join(ROOT, 'store-assets', 'shorts')
+// SHORTS_BATCH=2: druga paczka (scripts/shorts-batch2.mjs) do store-assets/shorts-2.
+const BATCH = process.env.SHORTS_BATCH === '2' ? 2 : 1
+const OUT = path.join(ROOT, 'store-assets', BATCH === 2 ? 'shorts-2' : 'shorts')
 const ICON = path.join(ROOT, 'public', 'icon-512.png')
 const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg'
 
@@ -54,7 +56,7 @@ const COMMON = {
 
 // Typy klatek: hook, card, list (odsłanianie po jednym), note, source, end.
 // dur = ile sekund klatka jest widoczna.
-const VIDEOS = {
+const VIDEOS_BATCH1 = {
   pl: [
     {
       slug: '01-goraczka-kiedy-do-lekarza',
@@ -567,6 +569,7 @@ async function phoneImage(lang, shot) {
 }
 
 async function main() {
+  const VIDEOS = BATCH === 2 ? (await import('./shorts-batch2.mjs')).VIDEOS : VIDEOS_BATCH1
   const args = process.argv.slice(2)
   const langs = args.filter(a => VIDEOS[a])
   const slugs = args.filter(a => !VIDEOS[a])
