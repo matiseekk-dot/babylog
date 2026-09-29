@@ -9,7 +9,8 @@ import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
 import { interpretSleep } from '../engine/interpretations'
 import HistorySection from './HistorySection'
-const SleepChart = React.lazy(() => import('./SleepChart'))
+import { lazyChart } from './lazyChart'
+const SleepChart = lazyChart(() => import('./SleepChart'))
 
 export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], onNavigate, onDataChange, isPremium, onUpgrade }) {
   useLocale()

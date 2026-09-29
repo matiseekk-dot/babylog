@@ -647,6 +647,7 @@ const TRANSLATIONS = {
     'temp.note_after_med_ph':      'np. po Paracetamolu',
     'common.optional_ph':          'opcjonalnie...',
     'chart.loading':               'Ładowanie wykresu...',
+    'chart.offline':               'Wykres pojawi się, gdy wróci internet.',
     'chart.age_months':            'Wiek (mies.)',
     'chart.months_short':          'mies.',
     'chart.now':                   'teraz',
@@ -2173,6 +2174,7 @@ const TRANSLATIONS = {
     'temp.note_after_med_ph':      'e.g. after paracetamol',
     'common.optional_ph':          'optional...',
     'chart.loading':               'Loading chart...',
+    'chart.offline':               'The chart will appear when you are back online.',
     'chart.age_months':            'Age (months)',
     'chart.months_short':          'mo.',
     'chart.now':                   'now',
@@ -3721,6 +3723,7 @@ const TRANSLATIONS = {
 
     // Charts
     'chart.loading':              'Diagramm lädt...',
+    'chart.offline':              'Das Diagramm erscheint, sobald die Internetverbindung wieder da ist.',
     'chart.age_months':           'Alter (Monate)',
     'chart.months_short':         'M.',
     'chart.now':                  'jetzt',
@@ -5228,6 +5231,7 @@ const TRANSLATIONS = {
 
     // Charts
     'chart.loading':              'Chargement du graphique...',
+    'chart.offline':              'Le graphique s\'affichera dès que la connexion sera rétablie.',
     'chart.age_months':           'Âge (mois)',
     'chart.months_short':         'M.',
     'chart.now':                  'maintenant',
@@ -6736,6 +6740,7 @@ const TRANSLATIONS = {
 
     // Charts
     'chart.loading':              'Cargando gráfico...',
+    'chart.offline':              'El gráfico aparecerá cuando vuelvas a tener conexión.',
     'chart.age_months':           'Edad (meses)',
     'chart.months_short':         'm.',
     'chart.now':                  'ahora',

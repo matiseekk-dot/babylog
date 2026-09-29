@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { initSentry, captureError } from './sentry'
+import { preloadCharts } from './components/lazyChart'
 
 // Inicjalizuj Sentry przed renderem (lazy, nie blokuje startu)
 initSentry()
@@ -100,3 +101,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </AppErrorBoundary>
   </React.StrictMode>
 )
+
+// v2.16.13: wykresy pobierane w tle po starcie (nie spowalniają pierwszego
+// ekranu, a są gotowe, gdy telefon za chwilę straci zasięg).
+setTimeout(preloadCharts, 4000)

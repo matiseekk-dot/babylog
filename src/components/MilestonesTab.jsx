@@ -5,7 +5,8 @@ import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toastWithUndo } from './Toast'
 import { t, useLocale, getLocale } from '../i18n'
-const MilestonesChart = React.lazy(() => import('./MilestonesChart'))
+import { lazyChart } from './lazyChart'
+const MilestonesChart = lazyChart(() => import('./MilestonesChart'))
 import PremiumTeaser from './PremiumTeaser'
 
 const EMOJI_OPTIONS = ['⭐','🎯','🏆','🌟','💫','🎉','🎈','🚀','💪','🧠','👣','🗣️','🏃','🤝','❤️','🌈','🎵','🎨','📚','🧩','🌱','🦋','🐣','🌸','🍀','🔑','🎀','🛝','🏊','🚴']

@@ -31,6 +31,13 @@ export default defineConfig({
   build: {
     assetsDir: 'assets',
     chunkSizeWarningLimit: 600,
+    // v2.16.13: bez <link rel=modulepreload> dla biblioteki wykresów. Nieudany
+    // preload (brak zasięgu) Chrome pamięta do końca sesji i ponowna próba
+    // w lazyChart nie mogłaby już pobrać tego pliku. Wykresy i tak pobiera
+    // w tle preloadCharts() kilka sekund po starcie.
+    modulePreload: {
+      resolveDependencies: (_file, deps) => deps.filter(d => !/(^|\/)charts-[\w-]+\.js$/.test(d)),
+    },
     rollupOptions: {
       output: {
         // v2.16.12: przypisanie po ścieżce modułu. Forma obiektowa zostawiała

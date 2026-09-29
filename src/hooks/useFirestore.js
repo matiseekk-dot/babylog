@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  doc, getDoc, setDoc, onSnapshot
+  doc, getDoc, setDoc, onSnapshot, runTransaction
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import { captureError, addBreadcrumb } from '../sentry'
@@ -79,10 +79,13 @@ function registerCacheKey(fullKey) {
 export function clearAccountCache() {
   const keys = loadCacheKeys()
   for (const k of lsKeys()) {
-    if (keys.has(k) || k.startsWith('babylog_shared_') || LEGACY_ACCOUNT_KEY.test(k)) {
+    if (keys.has(k) || k.startsWith('babylog_shared_') || k.startsWith(PENDING_PREFIX) || LEGACY_ACCOUNT_KEY.test(k)) {
       try { localStorage.removeItem(k) } catch {}
     }
   }
+  // Niewysłane zmiany poprzedniego konta nie mogą już pójść (inne logowanie).
+  for (const p of pendingOps.values()) if (p.timer) clearTimeout(p.timer)
+  pendingOps.clear()
   keys.clear()
   try { localStorage.removeItem(CACHE_KEYS) } catch {}
 }
@@ -139,6 +142,157 @@ const FIRESTORE_DEBOUNCE_MS = 500
 // do zmiany zakładki. set() rozsyła teraz nową wartość do pozostałych instancji.
 const siblingSetters = new Map()  // klucz localStorage → Set(setState)
 
+// ─── Listy wpisów: scalanie zamiast nadpisywania (v2.16.13) ─────────────────
+// Wcześniej każdy zapis wysyłał CAŁĄ listę. Na wspólnym koncie rodzic bez
+// zasięgu po powrocie online nadpisywał wpisy drugiego rodzica (znikały bez
+// śladu). Teraz dla list obiektów z `id` zapamiętujemy zmiany (dodane,
+// zmienione, usunięte) i w transakcji nakładamy je na aktualną listę
+// z serwera. Bez sieci zmiany czekają w localStorage i idą po powrocie
+// połączenia. Zmiany są wspólne dla wszystkich instancji hooka z tym kluczem.
+const PENDING_PREFIX = 'babylog_pending_ops_'
+const pendingOps = new Map()  // klucz localStorage → { uid, key, upserts, removes, timer, flushing }
+
+/** Lista obiektów z `id` (wpisy, profile) — scalana po id. */
+export function isEntryList(v) {
+  return Array.isArray(v) && v.every(e => e && typeof e === 'object' && e.id != null)
+}
+
+/**
+ * Dopisuje do zebranych zmian różnicę między poprzednią a nową listą.
+ * ops: { upserts: Map(id → wpis), removes: Set(id) }
+ */
+export function recordEntryOps(ops, prev, next) {
+  const prevById = new Map((prev || []).map(e => [e.id, e]))
+  const nextIds = new Set()
+  for (const e of next) {
+    nextIds.add(e.id)
+    const old = prevById.get(e.id)
+    if (!old || JSON.stringify(old) !== JSON.stringify(e)) {
+      ops.upserts.set(e.id, e)
+      ops.removes.delete(e.id)
+    }
+  }
+  for (const id of prevById.keys()) {
+    if (!nextIds.has(id)) { ops.removes.add(id); ops.upserts.delete(id) }
+  }
+}
+
+/**
+ * Nakłada zmiany na listę z serwera. order (lista lokalna) mówi, gdzie wstawić
+ * nowe wpisy: tuż za najbliższym wcześniejszym sąsiadem, którego lista już ma,
+ * a bez sąsiada na początek (listy są od najnowszego).
+ */
+export function applyEntryOps(server, ops, order) {
+  const result = (server || [])
+    .filter(e => !ops.removes.has(e?.id))
+    .map(e => (ops.upserts.has(e.id) ? ops.upserts.get(e.id) : e))
+  const present = new Set(result.map(e => e.id))
+  const local = order || []
+  local.forEach((e, i) => {
+    if (!ops.upserts.has(e.id) || present.has(e.id)) return
+    let at = 0
+    for (let j = i - 1; j >= 0; j--) {
+      const k = result.findIndex(x => x.id === local[j].id)
+      if (k >= 0) { at = k + 1; break }
+    }
+    result.splice(at, 0, ops.upserts.get(e.id))
+    present.add(e.id)
+  })
+  for (const [id, entry] of ops.upserts) {
+    if (!present.has(id)) { result.unshift(entry); present.add(id) }
+  }
+  return result
+}
+
+function hasOps(p) {
+  return !!p && (p.upserts.size > 0 || p.removes.size > 0)
+}
+
+function getPending(lsKey, uid, key) {
+  let p = pendingOps.get(lsKey)
+  if (p && p.uid === uid) return p
+  p = { uid, key, upserts: new Map(), removes: new Set(), timer: null, flushing: false }
+  try {
+    const saved = JSON.parse(localStorage.getItem(PENDING_PREFIX + lsKey) || 'null')
+    if (saved && saved.uid === uid && saved.key === key) {
+      saved.upserts.forEach(e => p.upserts.set(e.id, e))
+      saved.removes.forEach(id => p.removes.add(id))
+    }
+  } catch {}
+  pendingOps.set(lsKey, p)
+  return p
+}
+
+function savePending(lsKey, p) {
+  try {
+    if (!hasOps(p)) localStorage.removeItem(PENDING_PREFIX + lsKey)
+    else localStorage.setItem(PENDING_PREFIX + lsKey, JSON.stringify({
+      uid: p.uid, key: p.key, upserts: [...p.upserts.values()], removes: [...p.removes],
+    }))
+  } catch { /* quota — zmiany zostają w pamięci */ }
+}
+
+function scheduleFlush(lsKey, delay = FIRESTORE_DEBOUNCE_MS) {
+  const p = pendingOps.get(lsKey)
+  if (!p) return
+  if (p.timer) clearTimeout(p.timer)
+  p.timer = setTimeout(() => { p.timer = null; flushEntryOps(lsKey) }, delay)
+}
+
+async function flushEntryOps(lsKey) {
+  const p = pendingOps.get(lsKey)
+  if (!hasOps(p) || p.flushing) return
+  p.flushing = true
+  // Kopia: zmiany dopisane w trakcie transakcji zostają na następny zapis.
+  const ops = { upserts: new Map(p.upserts), removes: new Set(p.removes) }
+  let order = []
+  try { order = JSON.parse(localStorage.getItem(lsKey) || '[]') || [] } catch {}
+  try {
+    await runTransaction(db, async (tx) => {
+      const ref = docRef(p.uid, p.key)
+      const snap = await tx.get(ref)
+      const value = snap.exists()
+        ? applyEntryOps(snap.data().value || [], ops, order)
+        // Pierwszy zapis tego klucza: cała lista lokalna.
+        : order.filter(e => !ops.removes.has(e.id))
+      tx.set(ref, { value })
+    })
+    for (const [id, e] of ops.upserts) if (p.upserts.get(id) === e) p.upserts.delete(id)
+    for (const id of ops.removes) if (!p.upserts.has(id)) p.removes.delete(id)
+    savePending(lsKey, p)
+    p.flushing = false
+    if (hasOps(p)) scheduleFlush(lsKey)
+  } catch (e) {
+    p.flushing = false
+    // Brak sieci to normalny stan (noc, metro) — nie zaśmiecamy Sentry.
+    if (e?.code !== 'unavailable' && e?.code !== 'failed-precondition') {
+      captureError(e, { context: 'firestore-merge-write', key: p.key, uid: p.uid })
+    }
+    // Z siecią ponów szybko, bez sieci czekaj (zdarzenie 'online' i tak przyspieszy).
+    const online = typeof navigator === 'undefined' || navigator.onLine !== false
+    scheduleFlush(lsKey, online ? 3000 : 30000)
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    for (const lsKey of pendingOps.keys()) scheduleFlush(lsKey, 1000)
+  })
+}
+
+/**
+ * Wysyła wszystkie czekające zmiany (np. przed wylogowaniem). Najwyżej
+ * timeoutMs, żeby wylogowanie nie wisiało bez internetu.
+ */
+export async function flushAllEntryOps(timeoutMs = 4000) {
+  const all = [...pendingOps.keys()].map(k => {
+    const p = pendingOps.get(k)
+    if (p?.timer) { clearTimeout(p.timer); p.timer = null }
+    return flushEntryOps(k)
+  })
+  await Promise.race([Promise.allSettled(all), new Promise(r => setTimeout(r, timeoutMs))])
+}
+
 export function useFirestore(uid, key, fallback) {
   const [state, setState] = useState(() => lsLoad(uid, key, fallback))
   const firstSnap = useRef(true)
@@ -180,9 +334,22 @@ export function useFirestore(uid, key, fallback) {
 
     if (!uid) return  // Guest — czytaj tylko localStorage
 
+    // v2.16.13: zmiany list zapisane bez sieci (np. przed zamknięciem aplikacji)
+    // czekają w localStorage — wyślij je, gdy hook znów działa.
+    const lsKey = lsPrefix(uid) + key
+    try {
+      if (localStorage.getItem(PENDING_PREFIX + lsKey) && hasOps(getPending(lsKey, uid, key))) scheduleFlush(lsKey, 2000)
+    } catch {}
+
     const unsub = onSnapshot(docRef(uid, key), snap => {
       if (snap.exists()) {
-        const val = snap.data().value ?? fallback
+        let val = snap.data().value ?? fallback
+        // Niewysłane jeszcze zmiany nakładamy na stan z serwera, żeby wpis
+        // partnera nie "cofnął" na ekranie tego, co właśnie dodał ten rodzic.
+        const p = pendingOps.get(lsKey)
+        if (hasOps(p) && p.uid === uid && Array.isArray(val)) {
+          val = applyEntryOps(val, p, lsLoad(uid, key, []))
+        }
         lsSave(uid, key, val)
         setState(val)
         firstSnap.current = false
@@ -220,6 +387,15 @@ export function useFirestore(uid, key, fallback) {
       const prevIds = new Set(state.map(e => e?.id))
       const added = next.filter(e => e && !prevIds.has(e.id))
       entryAddedListener(key.slice(0, key.indexOf('_')), { key, added })
+    }
+    if (uid && isEntryList(next) && (state == null || Array.isArray(state))) {
+      // v2.16.13: lista wpisów — zapisujemy tylko zmiany i scalamy na serwerze.
+      const lsKey = lsPrefix(uid) + key
+      const p = getPending(lsKey, uid, key)
+      recordEntryOps(p, Array.isArray(state) ? state : [], next)
+      savePending(lsKey, p)
+      if (hasOps(p)) scheduleFlush(lsKey)
+      return
     }
     if (uid) {
       // v2.10.0: debounce setDoc. Jeśli user spamuje set(), ostatnia

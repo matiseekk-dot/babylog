@@ -6,7 +6,8 @@ import { toast, toastWithUndo } from './Toast'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
 import PremiumTeaser from './PremiumTeaser'
-const TempChart = React.lazy(() => import('./TempChart'))
+import { lazyChart } from './lazyChart'
+const TempChart = lazyChart(() => import('./TempChart'))
 import { interpretTemp } from '../engine/interpretations'
 import HistorySection from './HistorySection'
 import { t, useLocale } from '../i18n'

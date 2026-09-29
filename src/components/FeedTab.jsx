@@ -6,7 +6,8 @@ import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
 import { t, tPlural, useLocale } from '../i18n'
 import HistorySection from './HistorySection'
-const FeedingFrequencyChart = React.lazy(() => import('./FeedingFrequencyChart'))
+import { lazyChart } from './lazyChart'
+const FeedingFrequencyChart = lazyChart(() => import('./FeedingFrequencyChart'))
 import PremiumTeaser from './PremiumTeaser'
 
 const TYPES = ['Pierś lewa','Pierś prawa','Butelka','Odciągnięte mleko']

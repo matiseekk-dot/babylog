@@ -25,6 +25,7 @@ vi.mock('firebase/firestore', () => ({
   setDoc: (...args) => mockSetDoc(...args),
   getDoc: (...args) => mockGetDoc(...args),
   onSnapshot: vi.fn(() => () => {}),
+  runTransaction: vi.fn(() => Promise.resolve()),
 }))
 
 vi.mock('../firebase', () => ({
@@ -38,6 +39,9 @@ import {
   hasGuestData,
   clearAccountCache,
   claimAccountCache,
+  recordEntryOps,
+  applyEntryOps,
+  isEntryList,
 } from './useFirestore'
 
 // ─── LocalStorage helper (vitest + happy-dom provides window.localStorage) ───
@@ -453,5 +457,68 @@ describe('pamięć podręczna konta przy zmianie konta', () => {
     localStorage.setItem('babylog_profiles', '[1]')
     claimAccountCache('uid-B')
     expect(localStorage.getItem('babylog_profiles')).toBe(null)
+  })
+})
+
+// v2.16.13: wspólne konto — zmiany list scalane po id zamiast nadpisywania.
+describe('scalanie list wpisów (wspólne konto)', () => {
+  const ops = () => ({ upserts: new Map(), removes: new Set() })
+  const e = (id, extra = {}) => ({ id, time: '10:00', ...extra })
+
+  it('rodzic bez zasięgu dodaje wpis, drugi rodzic w tym czasie też: zostają oba', () => {
+    const start = [e('x')]
+    // Tata (offline) dodaje a1 na górę listy
+    const tata = ops()
+    const tataLocal = [e('a1'), ...start]
+    recordEntryOps(tata, start, tataLocal)
+    // W tym czasie mama dodała b1 (jest już na serwerze)
+    const server = [e('b1'), ...start]
+    const merged = applyEntryOps(server, tata, tataLocal)
+    expect(merged.map(x => x.id).sort()).toEqual(['a1', 'b1', 'x'])
+    expect(merged[merged.length - 1].id).toBe('x')
+  })
+
+  it('usunięcie i poprawka działają na liście z serwera', () => {
+    const prev = [e('a'), e('b'), e('c')]
+    const next = [e('a', { time: '11:00' }), e('c')]
+    const o = ops()
+    recordEntryOps(o, prev, next)
+    expect([...o.removes]).toEqual(['b'])
+    expect([...o.upserts.keys()]).toEqual(['a'])
+    // Partner w międzyczasie dodał d
+    const merged = applyEntryOps([e('d'), e('a'), e('b'), e('c')], o, next)
+    expect(merged.map(x => x.id)).toEqual(['d', 'a', 'c'])
+    expect(merged.find(x => x.id === 'a').time).toBe('11:00')
+  })
+
+  it('cofnięcie usunięcia przywraca wpis', () => {
+    const o = ops()
+    recordEntryOps(o, [e('a')], [])
+    expect(o.removes.has('a')).toBe(true)
+    recordEntryOps(o, [], [e('a')])
+    expect(o.removes.has('a')).toBe(false)
+    expect(applyEntryOps([e('a')], o, [e('a')]).map(x => x.id)).toEqual(['a'])
+  })
+
+  it('bez zmian nic nie jest zapisywane', () => {
+    const o = ops()
+    const list = [e('a'), e('b')]
+    recordEntryOps(o, list, list.map(x => ({ ...x })))
+    expect(o.upserts.size + o.removes.size).toBe(0)
+  })
+
+  it('nowe wpisy zachowują kolejność od najnowszego', () => {
+    const o = ops()
+    const prev = [e('x')]
+    const next = [e('n1'), e('n2'), e('x')]
+    recordEntryOps(o, prev, next)
+    expect(applyEntryOps([e('s1'), e('x')], o, next).map(x => x.id)).toEqual(['n1', 'n2', 's1', 'x'])
+  })
+
+  it('rozpoznaje listy wpisów', () => {
+    expect(isEntryList([e('a')])).toBe(true)
+    expect(isEntryList([])).toBe(true)
+    expect(isEntryList(['a'])).toBe(false)
+    expect(isEntryList({ a: 1 })).toBe(false)
   })
 })

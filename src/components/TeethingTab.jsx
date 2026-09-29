@@ -4,7 +4,8 @@ import { todayDate, formatDate, genId } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
-const TeethingChart = React.lazy(() => import('./TeethingChart'))
+import { lazyChart } from './lazyChart'
+const TeethingChart = lazyChart(() => import('./TeethingChart'))
 import PremiumTeaser from './PremiumTeaser'
 
 /**

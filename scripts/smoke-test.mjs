@@ -31,6 +31,8 @@ const IGNORE_CONSOLE = [
   /Manifest: Line: 1, column: 1/,
   // App Check w dev: tymczasowy token nie jest zarejestrowany (403).
   /status of 403/,
+  // Z SMOKE_URL: skutek celowo zablokowanych statystyk (gtag, installations).
+  ...(process.env.SMOKE_URL ? [/net::ERR_FAILED/, /TypeError: Failed to fetch/] : []),
 ]
 
 async function inspect(page, locale, screen, issues) {

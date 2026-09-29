@@ -5,7 +5,8 @@ import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
 import { getWhoPercentiles, calculatePercentile, interpretPercentile } from '../data/whoNorms'
-const GrowthChart = React.lazy(() => import('./GrowthChart'))
+import { lazyChart } from './lazyChart'
+const GrowthChart = lazyChart(() => import('./GrowthChart'))
 
 export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUpgrade }) {
   useLocale()

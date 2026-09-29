@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline, setAccountUid, setEntryAddedListener, clearAccountCache } from './hooks/useFirestore'
+import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline, setAccountUid, setEntryAddedListener, clearAccountCache, flushAllEntryOps } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
 import MedicalConsentScreen, { needsConsent } from './components/MedicalConsentScreen'
@@ -231,6 +231,8 @@ export default function App() {
   // tego konta), czyścimy pamięć podręczną konta i zamykamy Ustawienia, żeby
   // po ponownym zalogowaniu nie otworzyły się same. Dopiero potem Firebase.
   const handleLogout = async () => {
+    // v2.16.13: najpierw wyślij zmiany list, które czekają (np. zapisane bez sieci).
+    await flushAllEntryOps()
     await unregisterDeviceToken(uid)
     clearAccountCache()
     setShowSettings(false)
