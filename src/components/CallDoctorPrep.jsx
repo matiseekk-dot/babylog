@@ -72,7 +72,7 @@ export default function CallDoctorPrep({ profile, uid, onClose, onCall }) {
         borderBottom: '0.5px solid rgba(0,0,0,0.08)',
         position: 'sticky', top: 0, zIndex: 10,
       }}>
-        <button onClick={onClose} style={{
+        <button onClick={onClose} aria-label={t('common.back')} style={{
           background: 'none', border: 'none', cursor: 'pointer',
           fontSize: 20, color: '#3a3a36', padding: 4, minHeight: 36,
         }}>←</button>

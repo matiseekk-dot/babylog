@@ -1,6 +1,6 @@
 import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { todayDate, genId, parseNum } from '../utils/helpers'
+import { todayDate, genId, parseNum, shortDate } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
@@ -68,7 +68,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
 
   const sorted = [...logs].sort((a,b)=>a.date.localeCompare(b.date))
   const chartData = sorted.map(l=>({
-    date: l.date.slice(5),
+    date: shortDate(l.date),
     weight: l.weight ? Number(l.weight) : undefined,
     height: l.height ? Number(l.height) : undefined,
     headCirc: l.headCirc ? Number(l.headCirc) : undefined,

@@ -128,6 +128,13 @@ const MONTHS_SHORT_DE = ['Jan.','Feb.','März','Apr.','Mai','Juni','Juli','Aug.'
 const MONTHS_SHORT_FR = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.']
 const MONTHS_SHORT_ES = ['ene','feb','mar','abr','may','jun','jul','ago','sept','oct','nov','dic']
 
+/** Krótka data na osi wykresu: 28.09 (PL/DE/FR/ES) albo 09/28 (EN). */
+export function shortDate(dateStr) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr || '')
+  if (!m) return ''
+  return getLocale() === 'en' ? `${m[2]}/${m[3]}` : `${m[3]}.${m[2]}`
+}
+
 export function formatDate(dateStr) {
   if (!dateStr) return ''
   // T12:00:00 (midday lokalnie) — bezpieczne w każdej strefie czasowej i przy DST

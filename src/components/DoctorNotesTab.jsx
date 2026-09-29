@@ -262,6 +262,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           />
           <button
             onClick={addQuestion}
+            aria-label={t('doctor.questions.add_aria')}
             disabled={!newQuestion.trim()}
             style={{
               background: newQuestion.trim() ? 'var(--green)' : '#c0c0b8',

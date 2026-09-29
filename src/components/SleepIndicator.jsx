@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { formatDuration } from '../utils/helpers'
+import { t } from '../i18n'
 
 /**
  * SleepIndicator
@@ -24,6 +25,7 @@ export default function SleepIndicator({ startTs, onPress }) {
   return (
     <button
       onClick={onPress}
+      aria-label={t('sleep.indicator_aria')}
       style={{
         display: 'flex', alignItems: 'center', gap: 5,
         background: '#EEEDFE', color: '#3C3489',

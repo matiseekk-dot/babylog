@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from 'vitest'
-import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD, monthsFromBirthDate, birthDateFromMonths, withCurrentAge, timerSleepEntry } from './helpers'
+import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD, monthsFromBirthDate, birthDateFromMonths, withCurrentAge, timerSleepEntry, shortDate } from './helpers'
 
 describe('getTempClass', () => {
   test('hipotermia <36.0', () => {
@@ -154,5 +154,13 @@ describe('sen ze stopera (v2.16.18)', () => {
     const e = timerSleepEntry(new Date(2026, 8, 29, 13, 0).getTime(), new Date(2026, 8, 29, 14, 15).getTime())
     expect(e.date).toBe('2026-09-29')
     expect(e.label).toBe('Drzemka')
+  })
+})
+
+describe('shortDate (oś wykresów)', () => {
+  test('dzień.miesiąc, pusta data bez błędu', () => {
+    expect(shortDate('2026-09-28')).toMatch(/^(28\.09|09\/28)$/)
+    expect(shortDate('')).toBe('')
+    expect(shortDate(undefined)).toBe('')
   })
 })

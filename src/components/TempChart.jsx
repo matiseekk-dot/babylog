@@ -1,4 +1,5 @@
 import { t, useLocale } from '../i18n'
+import { shortDate } from '../utils/helpers'
 import React, { useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -114,7 +115,7 @@ export default function TempChart({ logs }) {
 
   const chartData = filtered.map(l => ({
     temp: Number(l.temp),
-    label: `${l.date?.slice(5) || ''} ${l.time || ''}`,
+    label: `${shortDate(l.date)} ${l.time || ''}`,
     method: l.method,
     time: l.time,
     date: l.date,

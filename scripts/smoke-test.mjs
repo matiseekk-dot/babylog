@@ -58,7 +58,8 @@ async function clickNav(page, index) {
 
 async function run(browser, locale, issues) {
   const page = await browser.newPage()
-  await page.setViewport({ width: 432, height: 864, deviceScaleFactor: 1 })
+  // SMOKE_WIDTH=360: małe telefony (domyślnie 432).
+  await page.setViewport({ width: Number(process.env.SMOKE_WIDTH) || 432, height: 864, deviceScaleFactor: 1 })
   if (process.env.SMOKE_URL) {
     await page.setRequestInterception(true)
     page.on('request', r => (BLOCK.test(r.url()) ? r.abort() : r.continue()))
