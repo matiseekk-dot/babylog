@@ -24,6 +24,46 @@ export function dateYMD(d) {
 }
 
 /**
+ * Wpis z formularza (v2.16.17): wyczyszczone pole daty = dziś, godziny = teraz.
+ * Bez tego wpis bez daty znikał z listy (nie należał do żadnego dnia).
+ */
+export function fillDateTime(form) {
+  const filled = { ...form, date: form.date || todayDate() }
+  if ('time' in form) filled.time = form.time || nowTime()
+  return filled
+}
+
+/**
+ * Wiek dziecka (v2.16.17). Wcześniej profil trzymał tylko liczbę `months`
+ * z dnia onboardingu, więc wiek nigdy nie rósł (ibuprofen zablokowany na stałe,
+ * percentyle WHO liczone dla wieku sprzed miesięcy). Teraz źródłem jest
+ * birthDate, a months liczymy na dziś.
+ */
+export function monthsFromBirthDate(birthDate, now = new Date()) {
+  const d = new Date(`${birthDate}T12:00:00`)
+  if (!birthDate || isNaN(d.getTime())) return null
+  let m = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth())
+  if (now.getDate() < d.getDate()) m--
+  return Math.max(0, m)
+}
+
+/** Data urodzenia, przy której dziecko ma `months` pełnych miesięcy w dniu `at`. */
+export function birthDateFromMonths(months, at = new Date()) {
+  const d = new Date(at.getFullYear(), at.getMonth(), 1, 12)
+  d.setMonth(d.getMonth() - (Number(months) || 0))
+  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+  d.setDate(Math.min(at.getDate(), lastDay))
+  return dateYMD(d)
+}
+
+/** Profil z `months` policzonym na dziś (gdy znamy datę urodzenia). */
+export function withCurrentAge(profile) {
+  if (!profile?.birthDate) return profile
+  const months = monthsFromBirthDate(profile.birthDate)
+  return months == null || months === profile.months ? profile : { ...profile, months }
+}
+
+/**
  * sleepMinutes(date, startTime, endTime) — minuty snu od startTime do endTime
  * (HH:MM), start w dniu date, koniec wcześniej niż start = następny dzień.
  * Liczone z prawdziwych dat, nie z tarczy zegara (v2.16.15), więc noc zmiany

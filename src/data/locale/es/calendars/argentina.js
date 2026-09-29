@@ -18,36 +18,36 @@ export default {
   lastUpdated: '2024',
 
   schedule: [
-    { ageMonths: 0, name: 'BCG (tuberculosis) — dosis única',                  type: 'mandatory', timing: 'al nacer (antes del egreso)' },
-    { ageMonths: 0, name: 'Hepatitis B — dosis al nacer',                       type: 'mandatory', timing: 'primeras 12 horas' },
+    { ageMonths: 0, name: 'BCG (tuberculosis), dosis única',                  type: 'mandatory', timing: 'al nacer (antes del egreso)' },
+    { ageMonths: 0, name: 'Hepatitis B, dosis al nacer',                       type: 'mandatory', timing: 'primeras 12 horas' },
 
-    { ageMonths: 2, name: 'Quíntuple (DTP+Hib+HepB) — 1ª',                      type: 'mandatory' },
-    { ageMonths: 2, name: 'Sabin (poliomielitis VPI/VOP) — 1ª',                 type: 'mandatory' },
-    { ageMonths: 2, name: 'Neumococo conjugada — 1ª',                            type: 'mandatory' },
-    { ageMonths: 2, name: 'Rotavirus — 1ª dosis',                               type: 'mandatory' },
+    { ageMonths: 2, name: 'Quíntuple (DTP+Hib+HepB), 1ª',                      type: 'mandatory' },
+    { ageMonths: 2, name: 'Sabin (poliomielitis VPI/VOP), 1ª',                 type: 'mandatory' },
+    { ageMonths: 2, name: 'Neumococo conjugada, 1ª',                            type: 'mandatory' },
+    { ageMonths: 2, name: 'Rotavirus, 1ª dosis',                               type: 'mandatory' },
 
-    { ageMonths: 4, name: 'Quíntuple — 2ª',                                      type: 'mandatory' },
-    { ageMonths: 4, name: 'Sabin — 2ª',                                          type: 'mandatory' },
-    { ageMonths: 4, name: 'Neumococo — 2ª',                                      type: 'mandatory' },
-    { ageMonths: 4, name: 'Rotavirus — 2ª dosis',                               type: 'mandatory' },
+    { ageMonths: 4, name: 'Quíntuple, 2ª',                                      type: 'mandatory' },
+    { ageMonths: 4, name: 'Sabin, 2ª',                                          type: 'mandatory' },
+    { ageMonths: 4, name: 'Neumococo, 2ª',                                      type: 'mandatory' },
+    { ageMonths: 4, name: 'Rotavirus, 2ª dosis',                               type: 'mandatory' },
 
-    { ageMonths: 6, name: 'Quíntuple — 3ª',                                      type: 'mandatory' },
-    { ageMonths: 6, name: 'Sabin — 3ª',                                          type: 'mandatory' },
+    { ageMonths: 6, name: 'Quíntuple, 3ª',                                      type: 'mandatory' },
+    { ageMonths: 6, name: 'Sabin, 3ª',                                          type: 'mandatory' },
     { ageMonths: 6, name: 'Gripe (anual)',                                       type: 'mandatory', timing: 'antes de la temporada' },
 
-    { ageMonths: 12, name: 'Triple Viral (Sarampión-Rubéola-Paperas) — 1ª',     type: 'mandatory' },
-    { ageMonths: 12, name: 'Neumococo — refuerzo',                              type: 'mandatory' },
-    { ageMonths: 12, name: 'Hepatitis A — dosis única',                          type: 'mandatory' },
+    { ageMonths: 12, name: 'Triple Viral (Sarampión-Rubéola-Paperas), 1ª',     type: 'mandatory' },
+    { ageMonths: 12, name: 'Neumococo, refuerzo',                              type: 'mandatory' },
+    { ageMonths: 12, name: 'Hepatitis A, dosis única',                          type: 'mandatory' },
 
-    { ageMonths: 15, name: 'Varicela — 1ª dosis',                               type: 'mandatory', timing: '15 meses' },
+    { ageMonths: 15, name: 'Varicela, 1ª dosis',                               type: 'mandatory', timing: '15 meses' },
 
-    { ageMonths: 18, name: 'Cuádruple (DTP+Hib) — refuerzo',                    type: 'mandatory' },
-    { ageMonths: 18, name: 'Sabin — refuerzo',                                  type: 'mandatory' },
+    { ageMonths: 18, name: 'Cuádruple (DTP+Hib), refuerzo',                    type: 'mandatory' },
+    { ageMonths: 18, name: 'Sabin, refuerzo',                                  type: 'mandatory' },
 
-    { ageMonths: 60, name: 'Triple Viral — 2ª dosis (refuerzo)',                type: 'mandatory', visit: 'Ingreso escolar' },
-    { ageMonths: 60, name: 'Triple Bacteriana (DTP) — refuerzo',                type: 'mandatory' },
-    { ageMonths: 60, name: 'Sabin — refuerzo',                                  type: 'mandatory' },
-    { ageMonths: 60, name: 'Varicela — 2ª dosis',                               type: 'mandatory' },
+    { ageMonths: 60, name: 'Triple Viral, 2ª dosis (refuerzo)',                type: 'mandatory', visit: 'Ingreso escolar' },
+    { ageMonths: 60, name: 'Triple Bacteriana (DTP), refuerzo',                type: 'mandatory' },
+    { ageMonths: 60, name: 'Sabin, refuerzo',                                  type: 'mandatory' },
+    { ageMonths: 60, name: 'Varicela, 2ª dosis',                               type: 'mandatory' },
   ],
 
   reminderTextKey: 'vacc.reminder.es',
@@ -66,6 +66,6 @@ export default {
     { id: 'C9',  label: '18 meses',      ageRange: '18 meses',  desc: 'Cuádruple refuerzo' },
     { id: 'C10', label: '2 años',        ageRange: '2 años',    desc: 'Control integral' },
     { id: 'C11', label: '3 años',        ageRange: '3 años',    desc: 'Lenguaje, conducta' },
-    { id: 'C12', label: '5 años',        ageRange: '5 años',    desc: 'Ingreso escolar — refuerzos' },
+    { id: 'C12', label: '5 años',        ageRange: '5 años',    desc: 'Ingreso escolar, refuerzos' },
   ],
 }

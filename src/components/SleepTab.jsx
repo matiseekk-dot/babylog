@@ -125,17 +125,20 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
   }
 
   const save = () => {
-    const mins = sleepMinutes(form.date, form.startTime, form.endTime)
+    // Bez godzin nie da się policzyć snu (wychodziło "NaN h"). Pusta data = dziś.
+    if (!form.startTime || !form.endTime) return
+    const date = form.date || todayDate()
+    const mins = sleepMinutes(date, form.startTime, form.endTime)
 
     if (editingId) {
       // Przy edycji: zachowujemy startTs/endTs jeśli oryginalnie były (ze stopera),
       // ale aktualizujemy durationMin + label + date na podstawie nowych wartości
       setLogs(logs.map(l => {
         if (l.id !== editingId) return l
-        const updated = { ...l, date: form.date, durationMin: mins, label: form.label }
+        const updated = { ...l, date, durationMin: mins, label: form.label }
         // Jeśli wpis miał startTs/endTs — przeliczamy na nowe godziny z form
         if (l.startTs) {
-          const newStart = new Date(form.date + 'T' + form.startTime + ':00').getTime()
+          const newStart = new Date(date + 'T' + form.startTime + ':00').getTime()
           const newEnd = newStart + mins * 60000
           updated.startTs = newStart
           updated.endTs = newEnd
@@ -144,7 +147,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
       }))
       toast(t('common.saved'))
     } else {
-      const entry = { id: genId(), date: form.date, durationMin: mins, label: form.label, manual: true }
+      const entry = { id: genId(), date, durationMin: mins, label: form.label, manual: true }
       setLogs([entry, ...logs])
     }
     setModal(false)

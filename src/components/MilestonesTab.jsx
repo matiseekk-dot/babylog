@@ -65,7 +65,7 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
   }
 
   const saveEditDate = () => {
-    if (!editDateMilestone) return
+    if (!editDateMilestone || !editDateValue) return
     setDone({ ...done, [editDateMilestone.id]: editDateValue })
     setEditDateMilestone(null)
   }
@@ -85,7 +85,6 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
       id: genId(),
       name: form.name.trim(),
       emoji: form.emoji,
-      age: `${monthsNum}. mies.`,
       months: monthsNum,
       custom: true,
     }
@@ -118,7 +117,10 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
     return true
   })
 
-  const doneCount = Object.keys(done).length
+  const doneCount = allMilestones.filter(m => done[m.id]).length
+
+  // v2.16.17: własne etapy miały zapisane "5. mies." po polsku w każdym języku.
+  const ageLabel = (m) => (m.custom ? t('milestones.age_months', { months: m.months }) : m.age)
 
   return (
     <>
@@ -150,7 +152,7 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
             )}
             <div className="ms-emoji">{m.emoji}</div>
             <div className="ms-name">{m.name}</div>
-            <div className="ms-age">{m.age}</div>
+            <div className="ms-age">{ageLabel(m)}</div>
             {done[m.id] && <div className="ms-done">✓ {formatDate(done[m.id])}</div>}
           </div>
         ))}
@@ -249,7 +251,7 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
               />
             </div>
             <div className="modal-btns" style={{flexDirection:'column',gap:8}}>
-              <button className="btn-primary" style={{width:'100%'}} onClick={saveEditDate}>
+              <button className="btn-primary" style={{width:'100%', opacity: editDateValue ? 1 : 0.5}} disabled={!editDateValue} onClick={saveEditDate}>
                 {t('common.save')}
               </button>
               <button
@@ -257,7 +259,7 @@ export default function MilestonesTab({uid, babyId, ageMonths, isPremium, onUpgr
                 style={{width:'100%',background:'var(--coral-light)',color:'var(--coral)',border:'none'}}
                 onClick={unmark}
               >
-                Odznacz ten etap
+                {t('milestones.unmark')}
               </button>
               <button
                 className="btn-secondary"

@@ -29,31 +29,31 @@ export default {
     //
     // Schéma simplifié 2/4/11 mois (depuis 2013).
 
-    { ageMonths: 2,  name: 'Hexavalent (DTP + Coqueluche + Hib + HépB) — 1ère dose', type: 'mandatory', visit: 'Examen 2 mois' },
-    { ageMonths: 2,  name: 'Pneumocoque (PCV13) — 1ère dose', type: 'mandatory', visit: 'Examen 2 mois' },
-    { ageMonths: 2,  name: 'Rotavirus — 1ère dose (recommandé)', type: 'recommended', timing: 'à partir de 6 semaines' },
+    { ageMonths: 2,  name: 'Hexavalent (DTP + Coqueluche + Hib + HépB), 1ère dose', type: 'mandatory', visit: 'Examen 2 mois' },
+    { ageMonths: 2,  name: 'Pneumocoque (PCV13), 1ère dose', type: 'mandatory', visit: 'Examen 2 mois' },
+    { ageMonths: 2,  name: 'Rotavirus, 1ère dose (recommandé)', type: 'recommended', timing: 'à partir de 6 semaines' },
 
-    { ageMonths: 3,  name: 'Rotavirus — 2ème dose (recommandé)', type: 'recommended' },
+    { ageMonths: 3,  name: 'Rotavirus, 2ème dose (recommandé)', type: 'recommended' },
 
-    { ageMonths: 4,  name: 'Hexavalent — 2ème dose', type: 'mandatory', visit: 'Examen 4 mois' },
-    { ageMonths: 4,  name: 'Pneumocoque — 2ème dose', type: 'mandatory' },
-    { ageMonths: 4,  name: 'Rotavirus — 3ème dose si schéma 3 doses', type: 'recommended' },
+    { ageMonths: 4,  name: 'Hexavalent, 2ème dose', type: 'mandatory', visit: 'Examen 4 mois' },
+    { ageMonths: 4,  name: 'Pneumocoque, 2ème dose', type: 'mandatory' },
+    { ageMonths: 4,  name: 'Rotavirus, 3ème dose si schéma 3 doses', type: 'recommended' },
 
-    { ageMonths: 5,  name: 'Méningocoque B — 1ère dose (recommandé depuis 2022)', type: 'recommended' },
+    { ageMonths: 5,  name: 'Méningocoque B, 1ère dose (recommandé depuis 2022)', type: 'recommended' },
 
-    { ageMonths: 6,  name: 'Méningocoque B — 2ème dose', type: 'recommended' },
+    { ageMonths: 6,  name: 'Méningocoque B, 2ème dose', type: 'recommended' },
 
-    { ageMonths: 11, name: 'Hexavalent — 3ème dose (rappel)', type: 'mandatory', visit: 'Examen 9 mois' },
-    { ageMonths: 11, name: 'Pneumocoque — 3ème dose (rappel)', type: 'mandatory' },
+    { ageMonths: 11, name: 'Hexavalent, 3ème dose (rappel)', type: 'mandatory', visit: 'Examen 9 mois' },
+    { ageMonths: 11, name: 'Pneumocoque, 3ème dose (rappel)', type: 'mandatory' },
 
-    { ageMonths: 12, name: 'ROR (Rougeole-Oreillons-Rubéole) — 1ère dose', type: 'mandatory', visit: 'Examen 12 mois' },
-    { ageMonths: 12, name: 'Méningocoque C — 1ère dose', type: 'mandatory' },
-    { ageMonths: 12, name: 'Méningocoque B — 3ème dose (rappel)', type: 'recommended' },
+    { ageMonths: 12, name: 'ROR (Rougeole-Oreillons-Rubéole), 1ère dose', type: 'mandatory', visit: 'Examen 12 mois' },
+    { ageMonths: 12, name: 'Méningocoque C, 1ère dose', type: 'mandatory' },
+    { ageMonths: 12, name: 'Méningocoque B, 3ème dose (rappel)', type: 'recommended' },
 
-    { ageMonths: 16, name: 'ROR — 2ème dose (entre 16-18 mois)', type: 'mandatory' },
-    { ageMonths: 18, name: 'Méningocoque C — rappel', type: 'mandatory' },
+    { ageMonths: 16, name: 'ROR, 2ème dose (entre 16-18 mois)', type: 'mandatory' },
+    { ageMonths: 18, name: 'Méningocoque C, rappel', type: 'mandatory' },
 
-    { ageMonths: 72, name: 'DTP-Coqueluche — rappel (6 ans)', type: 'mandatory', visit: 'Examen 6 ans' },
+    { ageMonths: 72, name: 'DTP-Coqueluche, rappel (6 ans)', type: 'mandatory', visit: 'Examen 6 ans' },
   ],
 
   reminderTextKey: 'vacc.reminder.fr',

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, dateYMD, genId } from '../utils/helpers'
+import { nowTime, todayDate, dateYMD, genId, fillDateTime } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
@@ -124,10 +124,10 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
 
   const save = () => {
     if (editingId) {
-      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...fillDateTime(form) } : l))
       toast(t('common.saved'))
     } else {
-      setLogs([{ id: genId(), ...form }, ...logs])
+      setLogs([{ id: genId(), ...fillDateTime(form) }, ...logs])
       toast(t('diaper.toast.saved'))
     }
     setModal(false)

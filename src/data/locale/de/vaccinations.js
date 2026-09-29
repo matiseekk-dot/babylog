@@ -27,25 +27,32 @@ export default {
     //
     // Wiele szczepień jest "zu U-Termin" — łączone z wizytami profilaktycznymi.
 
-    { ageMonths: 2,  name: 'Rotaviren (RV) — 1. Dosis',  type: 'mandatory', timing: 'ab 6. Lebenswoche', uVisit: null },
-    { ageMonths: 2,  name: '6-fach (D-T-aP-Hib-IPV-HepB) — 1. Dosis', type: 'mandatory', uVisit: 'U4' },
-    { ageMonths: 2,  name: 'Pneumokokken (PCV) — 1. Dosis', type: 'mandatory', uVisit: 'U4' },
+    { ageMonths: 2,  name: 'Rotaviren (RV), 1. Dosis',  type: 'mandatory', timing: 'ab 6. Lebenswoche', uVisit: null },
+    { ageMonths: 2,  name: '6-fach (D-T-aP-Hib-IPV-HepB), 1. Dosis', type: 'mandatory', uVisit: 'U4' },
+    { ageMonths: 2,  name: 'Pneumokokken (PCV), 1. Dosis', type: 'mandatory', uVisit: 'U4' },
 
-    { ageMonths: 3,  name: 'Rotaviren — 2. Dosis (oder 3. je nach Impfstoff)',  type: 'mandatory' },
+    { ageMonths: 3,  name: 'Rotaviren, 2. Dosis (oder 3. je nach Impfstoff)',  type: 'mandatory' },
 
-    { ageMonths: 4,  name: '6-fach — 2. Dosis (z aktualizacją 2020 odpadła, teraz tylko 2/4/11 mies.)', type: 'mandatory', note: 'STIKO 2020+: 2/4/11 schemat (statt 2/3/4/11)' },
-    { ageMonths: 4,  name: 'Pneumokokken — 2. Dosis', type: 'mandatory' },
+    { ageMonths: 4,  name: '6-fach, 2. Dosis', type: 'mandatory', note: 'STIKO 2020+: 2/4/11 schemat (statt 2/3/4/11)' },
+    { ageMonths: 4,  name: 'Pneumokokken, 2. Dosis', type: 'mandatory' },
 
-    { ageMonths: 11, name: '6-fach — 3. (Auffrischung)', type: 'mandatory', uVisit: 'U6' },
-    { ageMonths: 11, name: 'Pneumokokken — 3. (Auffrischung)', type: 'mandatory' },
-    { ageMonths: 11, name: 'MMR (Masern-Mumps-Röteln) — 1. Dosis', type: 'mandatory' },
-    { ageMonths: 11, name: 'Varizellen (Windpocken) — 1. Dosis', type: 'mandatory' },
-    { ageMonths: 12, name: 'Meningokokken C — 1. Dosis', type: 'mandatory', timing: 'ab 12. Monat' },
+    { ageMonths: 11, name: '6-fach, 3. (Auffrischung)', type: 'mandatory', uVisit: 'U6' },
+    { ageMonths: 11, name: 'Pneumokokken, 3. (Auffrischung)', type: 'mandatory' },
+    { ageMonths: 11, name: 'MMR (Masern-Mumps-Röteln), 1. Dosis', type: 'mandatory' },
+    { ageMonths: 11, name: 'Varizellen (Windpocken), 1. Dosis', type: 'mandatory' },
+    { ageMonths: 12, name: 'Meningokokken C, 1. Dosis', type: 'mandatory', timing: 'ab 12. Monat' },
 
-    { ageMonths: 15, name: 'MMR — 2. Dosis (mind. 4 Wochen Abstand)', type: 'mandatory' },
-    { ageMonths: 15, name: 'Varizellen — 2. Dosis', type: 'mandatory' },
+    { ageMonths: 15, name: 'MMR, 2. Dosis (mind. 4 Wochen Abstand)', type: 'mandatory' },
+    { ageMonths: 15, name: 'Varizellen, 2. Dosis', type: 'mandatory' },
 
-    { ageMonths: 60, name: 'D-T-aP — Auffrischung (5-6 Jahre)', type: 'mandatory', uVisit: 'U9' },
+    { ageMonths: 60, name: 'D-T-aP, Auffrischung (5-6 Jahre)', type: 'mandatory', uVisit: 'U9' },
+
+    // v2.16.17: MenB dla wszystkich niemowląt (STIKO, Epid. Bull. 3/2024: 2, 4, 12 mies.).
+    // Na końcu listy: ID wpisu = pozycja (VaccinationsTab), wstawienie w środek
+    // przesunęłoby zaznaczone już szczepienia. Kolejność na ekranie wg wieku.
+    { ageMonths: 2,  name: 'Meningokokken B, 1. Dosis', type: 'mandatory' },
+    { ageMonths: 4,  name: 'Meningokokken B, 2. Dosis', type: 'mandatory' },
+    { ageMonths: 12, name: 'Meningokokken B, 3. (Auffrischung)', type: 'mandatory' },
   ],
 
   reminderTextKey: 'vacc.reminder.de',

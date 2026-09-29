@@ -137,7 +137,7 @@ export default function CallDoctorPrep({ profile, uid, onClose, onCall }) {
             }}>
               <div>
                 <strong>{displayMedName(l.med)}</strong>
-                {l.dose && <span> — {l.dose}</span>}
+                {l.dose && <span> · {l.dose}</span>}
               </div>
               <div style={{ fontSize: 11, color: '#9a9a94' }}>
                 {l.date === today ? t('common.today') : t('prep.yesterday')} {t('prep.at')} {l.time}

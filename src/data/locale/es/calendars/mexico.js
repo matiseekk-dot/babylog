@@ -19,33 +19,33 @@ export default {
   lastUpdated: '2024',
 
   schedule: [
-    { ageMonths: 0, name: 'BCG (tuberculosis) — dosis única',                 type: 'mandatory', timing: 'al nacer' },
-    { ageMonths: 0, name: 'Hepatitis B — 1ª dosis',                            type: 'mandatory', timing: 'al nacer' },
+    { ageMonths: 0, name: 'BCG (tuberculosis), dosis única',                 type: 'mandatory', timing: 'al nacer' },
+    { ageMonths: 0, name: 'Hepatitis B, 1ª dosis',                            type: 'mandatory', timing: 'al nacer' },
 
-    { ageMonths: 2, name: 'Pentavalente acelular (DTPa+Hib+IPV+HepB) — 1ª',    type: 'mandatory' },
-    { ageMonths: 2, name: 'Rotavirus — 1ª dosis',                              type: 'mandatory' },
-    { ageMonths: 2, name: 'Neumococo conjugada — 1ª dosis',                    type: 'mandatory' },
+    { ageMonths: 2, name: 'Pentavalente acelular (DTPa+Hib+IPV+HepB), 1ª',    type: 'mandatory' },
+    { ageMonths: 2, name: 'Rotavirus, 1ª dosis',                              type: 'mandatory' },
+    { ageMonths: 2, name: 'Neumococo conjugada, 1ª dosis',                    type: 'mandatory' },
 
-    { ageMonths: 4, name: 'Pentavalente acelular — 2ª',                        type: 'mandatory' },
-    { ageMonths: 4, name: 'Rotavirus — 2ª dosis',                              type: 'mandatory' },
-    { ageMonths: 4, name: 'Neumococo conjugada — 2ª dosis',                    type: 'mandatory' },
+    { ageMonths: 4, name: 'Pentavalente acelular, 2ª',                        type: 'mandatory' },
+    { ageMonths: 4, name: 'Rotavirus, 2ª dosis',                              type: 'mandatory' },
+    { ageMonths: 4, name: 'Neumococo conjugada, 2ª dosis',                    type: 'mandatory' },
 
-    { ageMonths: 6, name: 'Pentavalente acelular — 3ª',                        type: 'mandatory' },
-    { ageMonths: 6, name: 'Hepatitis B — 2ª dosis',                            type: 'mandatory' },
-    { ageMonths: 6, name: 'Influenza estacional — 1ª dosis (anual)',           type: 'mandatory', timing: 'cada año en temporada' },
+    { ageMonths: 6, name: 'Pentavalente acelular, 3ª',                        type: 'mandatory' },
+    { ageMonths: 6, name: 'Hepatitis B, 2ª dosis',                            type: 'mandatory' },
+    { ageMonths: 6, name: 'Influenza estacional, 1ª dosis (anual)',           type: 'mandatory', timing: 'cada año en temporada' },
 
-    { ageMonths: 7, name: 'Influenza estacional — 2ª dosis',                   type: 'mandatory' },
+    { ageMonths: 7, name: 'Influenza estacional, 2ª dosis',                   type: 'mandatory' },
 
-    { ageMonths: 12, name: 'SRP (Sarampión-Rubéola-Parotiditis) — 1ª dosis',   type: 'mandatory' },
-    { ageMonths: 12, name: 'Neumococo conjugada — refuerzo',                   type: 'mandatory' },
+    { ageMonths: 12, name: 'SRP (Sarampión-Rubéola-Parotiditis), 1ª dosis',   type: 'mandatory' },
+    { ageMonths: 12, name: 'Neumococo conjugada, refuerzo',                   type: 'mandatory' },
 
-    { ageMonths: 18, name: 'Pentavalente acelular — 4ª (refuerzo)',            type: 'mandatory' },
-    { ageMonths: 18, name: 'Hepatitis A — 1ª dosis (recomendada)',             type: 'recommended' },
+    { ageMonths: 18, name: 'Pentavalente acelular, 4ª (refuerzo)',            type: 'mandatory' },
+    { ageMonths: 18, name: 'Hepatitis A, 1ª dosis (recomendada)',             type: 'recommended' },
 
-    { ageMonths: 48, name: 'DPT (refuerzo) — 4 años',                          type: 'mandatory' },
-    { ageMonths: 48, name: 'SRP — 2ª dosis (refuerzo)',                        type: 'mandatory' },
+    { ageMonths: 48, name: 'DPT (refuerzo), 4 años',                          type: 'mandatory' },
+    { ageMonths: 48, name: 'SRP, 2ª dosis (refuerzo)',                        type: 'mandatory' },
 
-    { ageMonths: 72, name: 'SR (Sarampión-Rubéola) — 6 años',                  type: 'mandatory' },
+    { ageMonths: 72, name: 'SR (Sarampión-Rubéola), 6 años',                  type: 'mandatory' },
   ],
 
   reminderTextKey: 'vacc.reminder.es',

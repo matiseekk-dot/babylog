@@ -18,37 +18,37 @@ export default {
 
   schedule: [
     { ageMonths: 0, name: 'BCG (tuberculosis)',                                  type: 'mandatory', timing: 'al nacer' },
-    { ageMonths: 0, name: 'Hepatitis B — dosis al nacer',                        type: 'mandatory', timing: 'primeras 12 horas' },
+    { ageMonths: 0, name: 'Hepatitis B, dosis al nacer',                        type: 'mandatory', timing: 'primeras 12 horas' },
 
-    { ageMonths: 2, name: 'Pentavalente (DTP+Hib+HepB) — 1ª',                    type: 'mandatory' },
-    { ageMonths: 2, name: 'Polio inactivada (VPI) — 1ª',                         type: 'mandatory' },
-    { ageMonths: 2, name: 'Neumococo conjugada — 1ª',                            type: 'mandatory' },
-    { ageMonths: 2, name: 'Rotavirus — 1ª dosis',                                type: 'mandatory' },
+    { ageMonths: 2, name: 'Pentavalente (DTP+Hib+HepB), 1ª',                    type: 'mandatory' },
+    { ageMonths: 2, name: 'Polio inactivada (VPI), 1ª',                         type: 'mandatory' },
+    { ageMonths: 2, name: 'Neumococo conjugada, 1ª',                            type: 'mandatory' },
+    { ageMonths: 2, name: 'Rotavirus, 1ª dosis',                                type: 'mandatory' },
 
-    { ageMonths: 4, name: 'Pentavalente — 2ª',                                   type: 'mandatory' },
-    { ageMonths: 4, name: 'Polio inactivada — 2ª',                               type: 'mandatory' },
-    { ageMonths: 4, name: 'Neumococo — 2ª',                                      type: 'mandatory' },
-    { ageMonths: 4, name: 'Rotavirus — 2ª dosis',                                type: 'mandatory' },
+    { ageMonths: 4, name: 'Pentavalente, 2ª',                                   type: 'mandatory' },
+    { ageMonths: 4, name: 'Polio inactivada, 2ª',                               type: 'mandatory' },
+    { ageMonths: 4, name: 'Neumococo, 2ª',                                      type: 'mandatory' },
+    { ageMonths: 4, name: 'Rotavirus, 2ª dosis',                                type: 'mandatory' },
 
-    { ageMonths: 6, name: 'Pentavalente — 3ª',                                   type: 'mandatory' },
-    { ageMonths: 6, name: 'Polio (VPO oral) — 3ª',                               type: 'mandatory' },
-    { ageMonths: 6, name: 'Influenza estacional — 1ª (anual)',                   type: 'mandatory' },
+    { ageMonths: 6, name: 'Pentavalente, 3ª',                                   type: 'mandatory' },
+    { ageMonths: 6, name: 'Polio (VPO oral), 3ª',                               type: 'mandatory' },
+    { ageMonths: 6, name: 'Influenza estacional, 1ª (anual)',                   type: 'mandatory' },
 
-    { ageMonths: 7, name: 'Influenza — 2ª dosis',                                type: 'mandatory' },
+    { ageMonths: 7, name: 'Influenza, 2ª dosis',                                type: 'mandatory' },
 
-    { ageMonths: 12, name: 'Triple Viral (SRP) — 1ª',                            type: 'mandatory' },
-    { ageMonths: 12, name: 'Varicela — 1ª dosis',                                type: 'mandatory' },
-    { ageMonths: 12, name: 'Hepatitis A — dosis única',                          type: 'mandatory' },
-    { ageMonths: 12, name: 'Neumococo — refuerzo',                               type: 'mandatory' },
+    { ageMonths: 12, name: 'Triple Viral (SRP), 1ª',                            type: 'mandatory' },
+    { ageMonths: 12, name: 'Varicela, 1ª dosis',                                type: 'mandatory' },
+    { ageMonths: 12, name: 'Hepatitis A, dosis única',                          type: 'mandatory' },
+    { ageMonths: 12, name: 'Neumococo, refuerzo',                               type: 'mandatory' },
 
-    { ageMonths: 18, name: 'DPT — refuerzo',                                     type: 'mandatory' },
-    { ageMonths: 18, name: 'Polio (VPI) — refuerzo',                             type: 'mandatory' },
+    { ageMonths: 18, name: 'DPT, refuerzo',                                     type: 'mandatory' },
+    { ageMonths: 18, name: 'Polio (VPI), refuerzo',                             type: 'mandatory' },
     { ageMonths: 18, name: 'Fiebre Amarilla',                                    type: 'mandatory', timing: '18 meses' },
 
-    { ageMonths: 60, name: 'DPT — 2º refuerzo (5 años)',                         type: 'mandatory' },
-    { ageMonths: 60, name: 'Polio (VPO oral) — refuerzo',                        type: 'mandatory' },
-    { ageMonths: 60, name: 'Triple Viral (SRP) — refuerzo',                      type: 'mandatory' },
-    { ageMonths: 60, name: 'Varicela — 2ª dosis',                                type: 'mandatory' },
+    { ageMonths: 60, name: 'DPT, 2º refuerzo (5 años)',                         type: 'mandatory' },
+    { ageMonths: 60, name: 'Polio (VPO oral), refuerzo',                        type: 'mandatory' },
+    { ageMonths: 60, name: 'Triple Viral (SRP), refuerzo',                      type: 'mandatory' },
+    { ageMonths: 60, name: 'Varicela, 2ª dosis',                                type: 'mandatory' },
   ],
 
   reminderTextKey: 'vacc.reminder.es',
@@ -67,6 +67,6 @@ export default {
     { id: 'C9',  label: '18 meses',      ageRange: '18 meses',  desc: 'DPT refuerzo, Fiebre Amarilla' },
     { id: 'C10', label: '2 años',        ageRange: '2 años',    desc: 'Crecimiento integral' },
     { id: 'C11', label: '3 años',        ageRange: '3 años',    desc: 'Desarrollo del lenguaje' },
-    { id: 'C12', label: '5 años',        ageRange: '5 años',    desc: 'Ingreso escolar — refuerzos' },
+    { id: 'C12', label: '5 años',        ageRange: '5 años',    desc: 'Ingreso escolar, refuerzos' },
   ],
 }

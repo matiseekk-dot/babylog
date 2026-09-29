@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline, setAccountUid, setEntryAddedListener, clearAccountCache, flushAllEntryOps } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
@@ -83,7 +83,7 @@ import { useServiceWorker } from './hooks/useServiceWorker'
 import { useLocale, t, getLocale } from './i18n'
 import { findPlan } from './data/premiumPlans'
 import { fetchStorePrices, loadCachedStorePrices } from './data/storePrices'
-import { todayDate, nowTime, genId, dateYMD } from './utils/helpers'
+import { todayDate, nowTime, genId, dateYMD, withCurrentAge, birthDateFromMonths } from './utils/helpers'
 
 const DEFAULT_PROFILE = {
   id: 'default',
@@ -101,6 +101,24 @@ const DEFAULT_PROFILE = {
   // Flaga żeby one-time banner ">3 lata" pokazać TYLKO raz.
   // null = nigdy nie pokazany, ISO date = pokazany tego dnia (user zobaczył).
   autoHideSuggestedAt: null,
+}
+
+// v2.16.17: kiedy wpisano wiek profilu bez daty urodzenia (szacunek jednorazowy).
+// id z genId() zaczyna się od czasu utworzenia; profil z onboardingu ('default')
+// ma ten czas w babylog_disclaimer_ack (od v2.16.8) albo blisko startu trialu.
+const AGE_ANCHOR_MIN = Date.UTC(2024, 0, 1)
+function ageAnchor(profile) {
+  const fromId = parseInt(String(profile.id).slice(0, 8), 36)
+  if (fromId > AGE_ANCHOR_MIN && fromId <= Date.now()) return new Date(fromId)
+  try {
+    const ack = Date.parse(localStorage.getItem('babylog_disclaimer_ack') || '')
+    if (ack > AGE_ANCHOR_MIN && ack <= Date.now()) return new Date(ack)
+    for (const key of ['babylog_trial_start', 'babylog_guest_trial_start_guest']) {
+      const ts = Number(JSON.parse(localStorage.getItem(key) || 'null'))
+      if (ts > AGE_ANCHOR_MIN && ts <= Date.now()) return new Date(ts)
+    }
+  } catch {}
+  return new Date()
 }
 
 /**
@@ -374,7 +392,14 @@ export default function App() {
     }
   }, [uid])
 
-  const [profiles, setProfiles] = useFirestore(dataUid, 'profiles', [DEFAULT_PROFILE])
+  const [storedProfiles, setProfiles] = useFirestore(dataUid, 'profiles', [DEFAULT_PROFILE])
+  // v2.16.17: wiek liczony na dziś z daty urodzenia (wcześniej stał w miejscu).
+  const ageDay = todayDate()
+  const profiles = useMemo(
+    () => (Array.isArray(storedProfiles) ? storedProfiles.map(withCurrentAge) : storedProfiles),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [storedProfiles, ageDay],
+  )
   const [activeId, setActiveId] = useFirestore(dataUid, 'activeProfile', 'default')
   const [tab, setTab] = useState('today')
   const [showProfiles, setShowProfiles] = useState(false)
@@ -418,6 +443,27 @@ export default function App() {
     stableActiveIdRef.current = profiles[0].id
     return profiles[0]
   })()
+
+  // v2.16.17: profile bez daty urodzenia dostają ją raz (szacunek z dnia wpisania
+  // wieku), od tej pory wiek rośnie sam. Tylko u właściciela danych (dwa telefony
+  // nie policzą różnych dat), nie na zastępczym DEFAULT_PROFILE i dopiero gdy
+  // lista przez chwilę się nie zmienia: zapis profilu nadpisuje cały wpis, więc
+  // nie może pójść ze starej pamięci podręcznej sprzed odpowiedzi serwera.
+  useEffect(() => {
+    if (!onboardingDone || ownerUid || !Array.isArray(storedProfiles) || storedProfiles.length === 0) return
+    if (storedProfiles.every(p => p.birthDate)) return
+    const placeholder = JSON.stringify(DEFAULT_PROFILE)
+    if (storedProfiles.some(p => JSON.stringify(p) === placeholder)) return
+    const timer = setTimeout(() => {
+      setProfiles(storedProfiles.map(p => (p.birthDate ? p : {
+        ...p,
+        birthDate: birthDateFromMonths(p.months ?? 4, ageAnchor(p)),
+        birthDateEstimated: true,
+      })))
+    }, 5000)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedProfiles, onboardingDone, ownerUid])
 
   // Auto-naprawa: jeśli activeId w storage nie pasuje do żadnego realnego profilu,
   // zapisz prawidłowy ID żeby przy następnym reloadzie nie było race condition.
@@ -1235,10 +1281,20 @@ export default function App() {
       openPaywall('profile_limit')
       return
     }
+    // Z samego wieku: data urodzenia w przybliżeniu, żeby wiek dalej rósł.
+    if (!p.birthDate && p.months != null) p = { ...p, birthDate: birthDateFromMonths(p.months), birthDateEstimated: true }
     setProfiles([...profiles, p])
     setActiveId(p.id)
   }
-  const updateProfile = (id, data) => setProfiles(profiles.map(p => p.id === id ? { ...p, ...data } : p))
+  const updateProfile = (id, data) => setProfiles(profiles.map(p => {
+    if (p.id !== id) return p
+    // Zmieniony wiek w Ustawieniach / na liście dzieci → nowa data urodzenia.
+    // Ten sam wiek zostawia dokładną datę z onboardingu.
+    const ageChanged = data.months != null && Number(data.months) !== p.months
+    return ageChanged
+      ? { ...p, ...data, birthDate: birthDateFromMonths(data.months), birthDateEstimated: true }
+      : { ...p, ...data }
+  }))
   const deleteProfile = (id) => {
     const next = profiles.filter(p => p.id !== id)
     setProfiles(next.length ? next : [DEFAULT_PROFILE])

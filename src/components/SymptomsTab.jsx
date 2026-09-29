@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { todayDate, nowTime, genId, formatDate } from '../utils/helpers'
+import { todayDate, nowTime, genId, formatDate, fillDateTime } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, tPlural, useLocale } from '../i18n'
@@ -163,10 +163,10 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
 
   const saveFull = () => {
     if (editingId) {
-      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...fillDateTime(form) } : l))
       toast(t('sym.toast.updated'))
     } else {
-      setLogs([{ id: genId(), ...form }, ...logs])
+      setLogs([{ id: genId(), ...fillDateTime(form) }, ...logs])
       toast(t('sym.toast.saved'))
     }
     setModal(false)
@@ -424,7 +424,7 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
           >
             {SYMPTOM_TYPES.map(tp => (
               <option key={tp.key} value={tp.key}>
-                {tp.emoji} {tp.label} — {tp.desc}
+                {tp.emoji} {tp.label}: {tp.desc}
               </option>
             ))}
           </select>

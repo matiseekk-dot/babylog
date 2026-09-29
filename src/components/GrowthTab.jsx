@@ -158,7 +158,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
             >
               <span style={{fontSize:20}}>📊</span>
               <div style={{flex:1,fontSize:12,lineHeight:1.45}}>
-                <div style={{fontWeight:700,color:'#633806',marginBottom:2}}>{t('growth.percentile_who', { sex: 'WHO' })} — Premium</div>
+                <div style={{fontWeight:700,color:'#633806',marginBottom:2}}>{t('growth.percentile_who', { sex: 'WHO' })} · Premium</div>
                 <div style={{color:'#8A5A12'}}>{t('growth.premium_cta')}</div>
               </div>
             </div>

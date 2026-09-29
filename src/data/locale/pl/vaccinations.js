@@ -41,6 +41,13 @@ export default {
     { ageMonths: 24, name: 'Ospa wietrzna (zalecane od 9 mies.)', type: 'recommended' },
     { ageMonths: 60, name: 'MMR II', type: 'mandatory' },
     { ageMonths: 72, name: 'DTPa-IPV booster (przed szkołą)', type: 'mandatory' },
+
+    // v2.16.17: rotawirusy są obowiązkowe od 2021 (dzieci urodzone po 31.12.2020),
+    // 2 lub 3 dawki zależnie od szczepionki, pierwsza od 6. tygodnia życia.
+    // Na końcu listy: ID wpisu = pozycja (VaccinationsTab), wstawienie w środek
+    // przesunęłoby zaznaczone już szczepienia. Kolejność na ekranie wg wieku.
+    { ageMonths: 2,  name: 'Rotawirusy I', type: 'mandatory', timing: 'od 6. tygodnia życia' },
+    { ageMonths: 3,  name: 'Rotawirusy II (III dawka zależnie od szczepionki)', type: 'mandatory' },
   ],
 
   // Format wzmianki w UI: "Twoje dziecko ma X miesięcy. Zaplanowane: ..."

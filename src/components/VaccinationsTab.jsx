@@ -39,6 +39,9 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
       months: v.ageMonths,
     }
   })
+    // v2.16.17: na ekranie wg wieku. ID zostaje z pozycji w pliku, więc nowe
+    // szczepienia dopisane na końcu danych nie przesuwają zaznaczonych.
+    .sort((a, b) => a.months - b.months)
   const allVacc = [...builtInVaccines, ...customVacc]
 
   const openDateModal = (vacc) => {
@@ -51,6 +54,8 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
   }
 
   const saveDate = () => {
+    // Wyczyszczone pole daty zapisywało pusty wpis liczony jako zrobione.
+    if (!dateModal.date) return
     setDone({ ...done, [dateModal.vacc.id]: dateModal.date })
     setDateModal(null)
   }
@@ -88,7 +93,9 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
     }
   }
 
-  const doneCount = Object.keys(done).length
+  // Tylko szczepienia z bieżącej listy: po zmianie języka w `done` zostają
+  // zaznaczenia z harmonogramu innego kraju ("7 z 5").
+  const doneCount = allVacc.filter(v => done[v.id]).length
 
   const renderVaccItem = (v, isCustom = false) => {
     const isDone = !!done[v.id]
@@ -191,7 +198,8 @@ export default function VaccinationsTab({uid, babyId, ageMonths }) {
             <div className="modal-btns" style={{flexDirection:'column', gap:8}}>
               <button
                 className="btn-primary"
-                style={{width:'100%'}}
+                style={{width:'100%', opacity: dateModal.date ? 1 : 0.5}}
+                disabled={!dateModal.date}
                 onClick={saveDate}
               >
                 {dateModal.isExisting ? t('common.save') : t('vacc.mark_done')}

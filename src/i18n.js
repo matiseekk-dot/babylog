@@ -1114,6 +1114,8 @@ const TRANSLATIONS = {
     // Delete confirmations
     'meds.custom.delete_title':    'Usuń lek własny',
     'milestones.delete_title':     'Usuń kamień milowy',
+    'milestones.unmark':             'Odznacz ten etap',
+    'milestones.age_months':         '{months} mies.',
     'vacc.delete_title':           'Usuń szczepienie',
     'meds.add_custom.notes_ph':    'np. Przed posiłkiem...',
     // Feed types (dropdown labels — Polish values remain as data)
@@ -1192,6 +1194,7 @@ const TRANSLATIONS = {
     'doctor.questions.answer_saved':'Odpowiedź zapisana',
     'doctor.questions.answer_updated':'Odpowiedź zaktualizowana',
     'doctor.questions.skip':        'Pomiń',
+    'doctor.questions.mark_asked':  'Oznacz jako zadane',
     'doctor.questions.no_answer':   '(bez szczegółowej odpowiedzi)',
     'doctor.questions.deleted':     'Usunięto pytanie',
     'doctor.questions.added_on':    'Dodane: {date}',
@@ -2642,6 +2645,8 @@ const TRANSLATIONS = {
     // Delete confirmations
     'meds.custom.delete_title':    'Delete custom medicine',
     'milestones.delete_title':     'Delete milestone',
+    'milestones.unmark':             'Unmark this milestone',
+    'milestones.age_months':         '{months} mo',
     'vacc.delete_title':           'Delete vaccination',
     'meds.add_custom.notes_ph':    'e.g. Before meal...',
     // Feed types (dropdown labels)
@@ -2720,6 +2725,7 @@ const TRANSLATIONS = {
     'doctor.questions.answer_saved':'Answer saved',
     'doctor.questions.answer_updated':'Answer updated',
     'doctor.questions.skip':        'Skip',
+    'doctor.questions.mark_asked':  'Mark as asked',
     'doctor.questions.no_answer':   '(no detailed answer)',
     'doctor.questions.deleted':     'Question deleted',
     'doctor.questions.added_on':    'Added: {date}',
@@ -4171,6 +4177,8 @@ const TRANSLATIONS = {
     // Delete confirmations
     'meds.custom.delete_title':   'Eigenes Medikament löschen',
     'milestones.delete_title':    'Meilenstein löschen',
+    'milestones.unmark':             'Markierung entfernen',
+    'milestones.age_months':         '{months} Mon.',
     'vacc.delete_title':          'Impfung löschen',
     'meds.add_custom.notes_ph':   'z.B. Vor dem Essen...',
 
@@ -4249,6 +4257,7 @@ const TRANSLATIONS = {
     'doctor.questions.answer_saved':'Antwort gespeichert',
     'doctor.questions.answer_updated':'Antwort aktualisiert',
     'doctor.questions.skip':      'Überspringen',
+    'doctor.questions.mark_asked':  'Als gestellt markieren',
     'doctor.questions.no_answer': '(ohne detaillierte Antwort)',
     'doctor.questions.deleted':   'Frage gelöscht',
     'doctor.questions.added_on':  'Hinzugefügt: {date}',
@@ -5683,6 +5692,8 @@ const TRANSLATIONS = {
     // Delete confirmations
     'meds.custom.delete_title':   'Supprimer un médicament personnalisé',
     'milestones.delete_title':    'Supprimer une étape',
+    'milestones.unmark':             'Décocher cette étape',
+    'milestones.age_months':         '{months} mois',
     'vacc.delete_title':          'Supprimer une vaccination',
     'meds.add_custom.notes_ph':   'p.ex. avant le repas...',
 
@@ -5761,6 +5772,7 @@ const TRANSLATIONS = {
     'doctor.questions.answer_saved':'Réponse enregistrée',
     'doctor.questions.answer_updated':'Réponse mise à jour',
     'doctor.questions.skip':      'Ignorer',
+    'doctor.questions.mark_asked':  'Marquer comme posée',
     'doctor.questions.no_answer': '(sans réponse détaillée)',
     'doctor.questions.deleted':   'Question supprimée',
     'doctor.questions.added_on':  'Ajoutée : {date}',
@@ -7197,6 +7209,8 @@ const TRANSLATIONS = {
     // Delete confirmations
     'meds.custom.delete_title':   'Eliminar medicamento personalizado',
     'milestones.delete_title':    'Eliminar hito',
+    'milestones.unmark':             'Desmarcar este hito',
+    'milestones.age_months':         '{months} meses',
     'vacc.delete_title':          'Eliminar vacuna',
     'meds.add_custom.notes_ph':   'p. ej. antes de comer...',
 
@@ -7275,6 +7289,7 @@ const TRANSLATIONS = {
     'doctor.questions.answer_saved':'Respuesta guardada',
     'doctor.questions.answer_updated':'Respuesta actualizada',
     'doctor.questions.skip':      'Omitir',
+    'doctor.questions.mark_asked':  'Marcar como preguntada',
     'doctor.questions.no_answer': '(sin respuesta detallada)',
     'doctor.questions.deleted':   'Pregunta eliminada',
     'doctor.questions.added_on':  'Añadida: {date}',

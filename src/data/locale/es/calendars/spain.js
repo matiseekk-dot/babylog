@@ -18,32 +18,32 @@ export default {
   lastUpdated: '2024-09',
 
   schedule: [
-    { ageMonths: 2,  name: 'Hexavalente (DTPa + Hib + VPI + HepB) — 1ª dosis', type: 'mandatory', visit: 'Revisión 2 meses' },
-    { ageMonths: 2,  name: 'Pneumocócica (VNC13) — 1ª dosis', type: 'mandatory', visit: 'Revisión 2 meses' },
-    { ageMonths: 2,  name: 'Rotavirus — 1ª dosis (recomendada CAV-AEP)', type: 'recommended', timing: 'desde las 6 semanas' },
-    { ageMonths: 2,  name: 'Meningococo B — 1ª dosis (CAV-AEP)', type: 'recommended' },
+    { ageMonths: 2,  name: 'Hexavalente (DTPa + Hib + VPI + HepB), 1ª dosis', type: 'mandatory', visit: 'Revisión 2 meses' },
+    { ageMonths: 2,  name: 'Pneumocócica (VNC13), 1ª dosis', type: 'mandatory', visit: 'Revisión 2 meses' },
+    { ageMonths: 2,  name: 'Rotavirus, 1ª dosis (recomendada CAV-AEP)', type: 'recommended', timing: 'desde las 6 semanas' },
+    { ageMonths: 2,  name: 'Meningococo B, 1ª dosis (CAV-AEP)', type: 'recommended' },
 
-    { ageMonths: 3,  name: 'Rotavirus — 2ª dosis', type: 'recommended' },
+    { ageMonths: 3,  name: 'Rotavirus, 2ª dosis', type: 'recommended' },
 
-    { ageMonths: 4,  name: 'Hexavalente — 2ª dosis', type: 'mandatory', visit: 'Revisión 4 meses' },
-    { ageMonths: 4,  name: 'Pneumocócica — 2ª dosis', type: 'mandatory' },
-    { ageMonths: 4,  name: 'Meningococo B — 2ª dosis', type: 'recommended' },
-    { ageMonths: 4,  name: 'Rotavirus — 3ª dosis (si esquema 3 dosis)', type: 'recommended' },
+    { ageMonths: 4,  name: 'Hexavalente, 2ª dosis', type: 'mandatory', visit: 'Revisión 4 meses' },
+    { ageMonths: 4,  name: 'Pneumocócica, 2ª dosis', type: 'mandatory' },
+    { ageMonths: 4,  name: 'Meningococo B, 2ª dosis', type: 'recommended' },
+    { ageMonths: 4,  name: 'Rotavirus, 3ª dosis (si esquema 3 dosis)', type: 'recommended' },
 
-    { ageMonths: 11, name: 'Hexavalente — 3ª dosis (refuerzo)', type: 'mandatory', visit: 'Revisión 12 meses' },
-    { ageMonths: 11, name: 'Pneumocócica — 3ª dosis (refuerzo)', type: 'mandatory' },
+    { ageMonths: 11, name: 'Hexavalente, 3ª dosis (refuerzo)', type: 'mandatory', visit: 'Revisión 12 meses' },
+    { ageMonths: 11, name: 'Pneumocócica, 3ª dosis (refuerzo)', type: 'mandatory' },
 
-    { ageMonths: 12, name: 'ROR (Rubéola-Sarampión-Parotiditis) — 1ª dosis', type: 'mandatory' },
-    { ageMonths: 12, name: 'Meningococo C — 1ª dosis', type: 'mandatory' },
-    { ageMonths: 12, name: 'Meningococo B — 3ª dosis (refuerzo)', type: 'recommended' },
+    { ageMonths: 12, name: 'ROR (Rubéola-Sarampión-Parotiditis), 1ª dosis', type: 'mandatory' },
+    { ageMonths: 12, name: 'Meningococo C, 1ª dosis', type: 'mandatory' },
+    { ageMonths: 12, name: 'Meningococo B, 3ª dosis (refuerzo)', type: 'recommended' },
 
-    { ageMonths: 15, name: 'Varicela — 1ª dosis', type: 'mandatory', timing: '15 meses' },
-    { ageMonths: 15, name: 'Meningococo ACWY — 1ª dosis', type: 'mandatory', timing: '12-15 meses' },
+    { ageMonths: 15, name: 'Varicela, 1ª dosis', type: 'mandatory', timing: '15 meses' },
+    { ageMonths: 15, name: 'Meningococo ACWY, 1ª dosis', type: 'mandatory', timing: '12-15 meses' },
 
-    { ageMonths: 36, name: 'ROR — 2ª dosis (3-4 años)', type: 'mandatory' },
-    { ageMonths: 36, name: 'Varicela — 2ª dosis', type: 'mandatory' },
+    { ageMonths: 36, name: 'ROR, 2ª dosis (3-4 años)', type: 'mandatory' },
+    { ageMonths: 36, name: 'Varicela, 2ª dosis', type: 'mandatory' },
 
-    { ageMonths: 72, name: 'DTPa-VPI — refuerzo (6 años)', type: 'mandatory', visit: 'Revisión 6 años' },
+    { ageMonths: 72, name: 'DTPa-VPI, refuerzo (6 años)', type: 'mandatory', visit: 'Revisión 6 años' },
   ],
 
   reminderTextKey: 'vacc.reminder.es',

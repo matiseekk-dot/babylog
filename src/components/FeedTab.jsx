@@ -1,6 +1,6 @@
 import React, { useState, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, genId } from '../utils/helpers'
+import { nowTime, todayDate, genId, fillDateTime } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import { toast, toastWithUndo } from './Toast'
@@ -38,11 +38,12 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
   const today = todayDate()
   const todayLogs = logs.filter(l => l.date === today).sort((a,b) => b.time.localeCompare(a.time))
   const totalMl = todayLogs.filter(l=>l.type==='Butelka'||l.type==='Odciągnięte mleko').reduce((s,l)=>s+Number(l.amount||0),0)
-  const breastCount = todayLogs.filter(l=>l.type.startsWith('Pierś')).length
+  const breastCount = todayLogs.filter(l=>l.type?.startsWith('Pierś')).length
   // Ostatnie karmienie, które już było — wpis z godziną z przyszłości (literówka,
   // inna strefa u partnera) dawał wcześniej "-139 min".
   const minutesSince = (log) => {
-    const [h,m] = log.time.split(':').map(Number)
+    const [h,m] = String(log.time || '').split(':').map(Number)
+    if (isNaN(h) || isNaN(m)) return -1  // wpis bez godziny nie jest "ostatnim"
     const then = new Date(); then.setHours(h,m,0,0)
     return Math.floor((Date.now() - then) / 60000)
   }
@@ -79,10 +80,10 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
 
   const save = () => {
     if (editingId) {
-      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...fillDateTime(form) } : l))
       toast(t('common.saved'))
     } else {
-      setLogs([{ id: genId(), ...form }, ...logs])
+      setLogs([{ id: genId(), ...fillDateTime(form) }, ...logs])
       toast(t('feed.toast.saved'))
     }
     setModal(false)
@@ -170,7 +171,7 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
             </div>
           : todayLogs.map(l => (
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
-              <div className="log-icon">{l.type.startsWith('Pierś') ? '🤱' : '🍼'}</div>
+              <div className="log-icon">{l.type?.startsWith('Pierś') ? '🤱' : '🍼'}</div>
               <div className="log-body">
                 <div className="log-name">{
                   l.type === 'Pierś lewa'       ? t('feed.type.left')
@@ -193,7 +194,7 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
         logs={logs}
         renderItem={(l, { onDelete }) => (
           <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
-            <div className="log-icon">{l.type.startsWith('Pierś') ? '🤱' : '🍼'}</div>
+            <div className="log-icon">{l.type?.startsWith('Pierś') ? '🤱' : '🍼'}</div>
             <div className="log-body">
               <div className="log-name">{
                 l.type === 'Pierś lewa'       ? t('feed.type.left')
@@ -209,7 +210,7 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
           </div>
         )}
         summarize={entries => {
-          const breast = entries.filter(e => e.type.startsWith('Pierś')).length
+          const breast = entries.filter(e => e.type?.startsWith('Pierś')).length
           const ml = entries.filter(e => e.type === 'Butelka' || e.type === 'Odciągnięte mleko')
                             .reduce((s, e) => s + Number(e.amount || 0), 0)
           const parts = []

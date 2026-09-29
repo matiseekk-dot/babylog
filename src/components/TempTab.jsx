@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, genId, getTempClass, getTempLabel, displayMethod, parseNum } from '../utils/helpers'
+import { nowTime, todayDate, genId, getTempClass, getTempLabel, displayMethod, parseNum, fillDateTime } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { SectionAlerts } from './AlertBanner'
@@ -65,10 +65,10 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
       return
     }
     if (editingId) {
-      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form, temp: tempValue } : l))
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...fillDateTime(form), temp: tempValue } : l))
       toast(t('common.saved'))
     } else {
-      setLogs([{ id: genId(), ...form, temp: tempValue }, ...logs])
+      setLogs([{ id: genId(), ...fillDateTime(form), temp: tempValue }, ...logs])
       toast(`${t('toast.temp')}: ${tempValue.toFixed(1)}°C`)
     }
     setModal(false)
@@ -119,7 +119,7 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">🌡️</div>
               <div className="log-body">
-                <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C — {getTempLabel(l.temp)}</div>
+                <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C · {getTempLabel(l.temp)}</div>
                 <div className="log-detail">{l.time} · {displayMethod(l.method)}{l.note?` · ${l.note}`:''}</div>
               </div>
               <button aria-label={t('common.delete_aria')} onClick={e => {
@@ -143,7 +143,7 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
           <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
             <div className="log-icon">🌡️</div>
             <div className="log-body">
-              <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C — {getTempLabel(l.temp)}</div>
+              <div className={`log-name ${getTempClass(l.temp)}`}>{Number(l.temp).toFixed(1)}°C · {getTempLabel(l.temp)}</div>
               <div className="log-detail">{l.time} · {displayMethod(l.method)}{l.note?` · ${l.note}`:''}</div>
             </div>
             <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>

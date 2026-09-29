@@ -74,6 +74,7 @@ export default function TeethingTab({ uid, babyId, ageMonths, isPremium, onUpgra
   }
 
   const save = () => {
+    if (!form.date) return  // pusta data psuła sortowanie historii
     const next = { ...teeth, [modal.id]: { date: form.date, note: form.note } }
     setTeeth(next)
     setModal(null)
@@ -196,7 +197,7 @@ export default function TeethingTab({ uid, babyId, ageMonths, isPremium, onUpgra
         <div className="card">
           <div className="card-header">{t('teething.history')}</div>
           {Object.entries(teeth)
-            .sort((a, b) => b[1].date.localeCompare(a[1].date))
+            .sort((a, b) => (b[1]?.date || '').localeCompare(a[1]?.date || ''))
             .map(([toothId, data]) => {
               const tooth = TEETH.find(t => t.id === toothId)
               if (!tooth) return null
@@ -244,6 +245,7 @@ export default function TeethingTab({ uid, babyId, ageMonths, isPremium, onUpgra
                 className="form-input"
                 type="date"
                 value={form.date}
+                max={todayDate()}
                 onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
               />
             </div>
@@ -261,7 +263,7 @@ export default function TeethingTab({ uid, babyId, ageMonths, isPremium, onUpgra
             </div>
 
             <div className="modal-btns" style={{ flexDirection: 'column', gap: 8 }}>
-              <button className="btn-primary" style={{ width: '100%' }} onClick={save}>
+              <button className="btn-primary" style={{ width: '100%', opacity: form.date ? 1 : 0.5 }} disabled={!form.date} onClick={save}>
                 {t('common.save')}
               </button>
               {teeth[modal.id] && (

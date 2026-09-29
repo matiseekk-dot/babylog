@@ -37,7 +37,9 @@ export default function DietTab({uid, babyId, ageMonths }) {
 
   const addCustom = () => {
     if (!form.name.trim()) return
-    const item = { id: genId(), name: form.name.trim(), emoji: form.emoji, months: Number(form.months), custom: true }
+    // Puste lub błędne pole miesiąca dawało "od NaN miesiąca".
+    const months = Math.max(0, parseInt(form.months, 10) || 0)
+    const item = { id: genId(), name: form.name.trim(), emoji: form.emoji, months, custom: true }
     setCustomItems([...customItems, item])
     setModal(false)
     setForm({ name: '', emoji: '🥕', months: String(ageMonths) })

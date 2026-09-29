@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, dateYMD, genId, formatDate } from '../utils/helpers'
+import { nowTime, todayDate, dateYMD, genId, formatDate, fillDateTime } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, tPlural, useLocale } from '../i18n'
@@ -95,10 +95,10 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
 
   const save = () => {
     if (editingId) {
-      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...fillDateTime(form) } : l))
       toast(t('cough.toast.updated'))
     } else {
-      setLogs([{ id: genId(), ...form }, ...logs])
+      setLogs([{ id: genId(), ...fillDateTime(form) }, ...logs])
       toast(t('cough.toast.saved'))
     }
     setModal(false)

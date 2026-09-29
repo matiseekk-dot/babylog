@@ -111,6 +111,8 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     onComplete({
       name: name.trim(),
       months,
+      // v2.16.17: data urodzenia zostaje w profilu, wiek liczy się z niej na bieżąco.
+      birthDate: dob,
       weight: null,  // v2.9.2: waga feature-gated później
       avatar,
       sex,

@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from 'vitest'
-import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD } from './helpers'
+import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD, monthsFromBirthDate, birthDateFromMonths, withCurrentAge } from './helpers'
 
 describe('getTempClass', () => {
   test('hipotermia <36.0', () => {
@@ -117,5 +117,28 @@ describe('dateYMD: data lokalna, nie UTC', () => {
     const midnight = new Date(2026, 8, 29, 0, 0, 0)
     expect(dateYMD(midnight)).toBe('2026-09-29')
     expect(midnight.toISOString().slice(0, 10)).toBe('2026-09-28')
+  })
+})
+
+describe('wiek dziecka z daty urodzenia (v2.16.17)', () => {
+  const at = new Date(2026, 8, 29, 12)
+  test('pełne miesiące, dzień miesiąca się liczy', () => {
+    expect(monthsFromBirthDate('2026-06-29', at)).toBe(3)
+    expect(monthsFromBirthDate('2026-06-30', at)).toBe(2)
+    expect(monthsFromBirthDate('2026-09-29', at)).toBe(0)
+    expect(monthsFromBirthDate('', at)).toBe(null)
+  })
+  test('data urodzenia z wieku i z powrotem', () => {
+    expect(birthDateFromMonths(3, at)).toBe('2026-06-29')
+    expect(birthDateFromMonths(0, at)).toBe('2026-09-29')
+    // 31 marca minus miesiąc = 28 lutego, nie 3 marca
+    expect(birthDateFromMonths(1, new Date(2026, 2, 31, 12))).toBe('2026-02-28')
+    for (const m of [0, 1, 5, 11, 12, 25, 60]) expect(monthsFromBirthDate(birthDateFromMonths(m, at), at)).toBe(m)
+  })
+  test('profil: wiek rośnie z czasem, bez daty zostaje jak był', () => {
+    const p = { id: 'x', months: 2, birthDate: birthDateFromMonths(2, new Date(2026, 2, 1, 12)) }
+    expect(withCurrentAge(p).months).toBeGreaterThanOrEqual(8)
+    const old = { id: 'y', months: 4 }
+    expect(withCurrentAge(old)).toBe(old)
   })
 })

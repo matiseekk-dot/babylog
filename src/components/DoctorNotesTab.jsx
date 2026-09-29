@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { todayDate, genId, formatDate } from '../utils/helpers'
+import { todayDate, genId, formatDate, fillDateTime } from '../utils/helpers'
 import Modal from './Modal'
 import { t, useLocale } from '../i18n'
 import PremiumTeaser from './PremiumTeaser'
@@ -176,11 +176,11 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
     }
     if (editingNoteId) {
       // UPDATE existing
-      setNotes(notes.map(n => n.id === editingNoteId ? { ...n, ...form } : n))
+      setNotes(notes.map(n => n.id === editingNoteId ? { ...n, ...fillDateTime(form) } : n))
       toast(t('doctor.visits.updated'))
     } else {
       // CREATE new
-      setNotes([{ id: genId(), ...form }, ...notes])
+      setNotes([{ id: genId(), ...fillDateTime(form) }, ...notes])
       toast(t('doctor.visits.saved'))
     }
     setModal(false)
@@ -343,7 +343,8 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
                             flexShrink:0,marginTop:2,
                             display:'flex',alignItems:'center',justifyContent:'center',
                           }}
-                          title="Oznacz jako zadane"
+                          title={t('doctor.questions.mark_asked')}
+                          aria-label={t('doctor.questions.mark_asked')}
                         >
                           {isAnsweringThis && '✓'}
                         </button>

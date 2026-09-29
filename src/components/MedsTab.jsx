@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, genId } from '../utils/helpers'
+import { nowTime, todayDate, genId, fillDateTime } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
@@ -81,7 +81,9 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   const openAdd = (medOverride = null) => {
     setEditingId(null)
     setForm({
-      med: medOverride || 'Paracetamol',
+      // v2.16.17: tylko nazwa leku. onClick={openAdd} przekazywał tu obiekt
+      // zdarzenia, zapis bez zmiany leku wywracał aplikację (l.med nie był tekstem).
+      med: typeof medOverride === 'string' && medOverride ? medOverride : 'Paracetamol',
       form:'tablet',
       dose:'',
       time:nowTime(),
@@ -136,14 +138,14 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
     // v2.11.26: pokaż success message PRZED zamknięciem modal'a. Toast +
     // listę wpisów łatwo przeoczyć w TWA. Inline success w modal'u jest
     // niezaprzeczalny — user widzi "✓ Zapisano" gdzie patrzył gdy klikał.
-    const successMsg = `✓ ${t('common.saved') || 'Zapisano'}: ${form.med}${form.dose ? ` ${form.dose}` : ''}`
+    const successMsg = `✓ ${t('common.saved') || 'Zapisano'}: ${displayMedName(form.med)}${form.dose ? ` ${form.dose}` : ''}`
     setFormSuccess(successMsg)
 
     if (editingId) {
-      setLogs(logs.map(l => l.id === editingId ? { ...l, ...form } : l))
+      setLogs(logs.map(l => l.id === editingId ? { ...l, ...fillDateTime(form) } : l))
       toast(t('common.saved'))
     } else {
-      const entry = { id:genId(), ...form }
+      const entry = { id:genId(), ...fillDateTime(form) }
       setLogs([entry, ...logs])
       // v2.11.21: BRAKOWAŁO TOAST dla nowych wpisów. User klikał Zapisz,
       // modal się zamykał, a wpis dodawał się "po cichu" — ekran wyglądał
@@ -269,7 +271,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
               <span style={{fontSize:14}}>⏱️</span>
               <div style={{flex:1}}>
                 <div style={{fontSize:12,fontWeight:700,color:r.minutesLeft<=0?'#085041':'#633806'}}>
-                  {r.minutesLeft<=0 ? `${r.medName} — ${t('meds.reminder.now')}` : `${r.medName} — ${t('meds.reminder.in')} ${r.minutesLeft} min`}
+                  {r.minutesLeft<=0 ? `${displayMedName(r.medName)}: ${t('meds.reminder.now')}` : `${displayMedName(r.medName)}: ${t('meds.reminder.in')} ${r.minutesLeft} min`}
                 </div>
                 {r.dose && <div style={{fontSize:11,color:'var(--text-3)'}}>{t('meds.reminder.dose_label')} {r.dose}</div>}
               </div>
@@ -293,7 +295,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
                 <div className="log-name">{m.name}</div>
                 <div className="log-detail">{m.dosage || t('meds.custom.no_dose')}</div>
               </div>
-              <button onClick={()=>setDoseModal({ med:m.name, suggestedDose:'', title:m.name, content:[m.dosage,m.notes].filter(Boolean) })} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:600,minHeight:36,marginRight:4}}>Info</button>
+              <button onClick={()=>setDoseModal({ med:m.name, suggestedDose:'', title:m.name, content:[m.dosage,m.notes].filter(Boolean) })} style={{background:'var(--blue-light)',color:'var(--blue)',border:'none',borderRadius:8,padding:'6px 10px',fontSize:12,fontWeight:600,minHeight:36,marginRight:4}}>{t('meds.info_btn')}</button>
               <button aria-label={t('common.delete_aria')} onClick={()=>setDeleteId(m.id)} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,minHeight:44,minWidth:36,cursor:'pointer'}}>✕</button>
             </div>
           ))}
@@ -304,7 +306,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
 
       {isPremium
         ? <InlineInsight insight={interpretMeds(logs)} />
-        : <PremiumTeaser label="Informacje o lekach" onUpgrade={onUpgrade} />}
+        : <PremiumTeaser label={t('meds.info.title')} onUpgrade={onUpgrade} />}
 
       <div className="card" style={{marginTop:8}}>
         <div className="card-header">{t('feed.today')}</div>
@@ -317,7 +319,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           return todayMeds.map(l => (
             <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
               <div className="log-icon">💊</div>
-              <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.form?` · ${displayMedForm(l.form)}`:''}{l.note?` · ${l.note}`:''}</div></div>
+              <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` · ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.form?` · ${displayMedForm(l.form)}`:''}{l.note?` · ${l.note}`:''}</div></div>
               <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); remove(l.id) }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
             </div>
           ))
@@ -330,7 +332,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
         renderItem={(l, { onDelete }) => (
           <div className="log-item" key={l.id} onClick={() => openEdit(l)} style={{cursor:'pointer'}}>
             <div className="log-icon">💊</div>
-            <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` – ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.form?` · ${displayMedForm(l.form)}`:''}{l.note?` · ${l.note}`:''}</div></div>
+            <div className="log-body"><div className="log-name">{displayMedName(l.med)}{l.dose?` · ${l.dose}`:''}</div><div className="log-detail">{l.time}{l.form?` · ${displayMedForm(l.form)}`:''}{l.note?` · ${l.note}`:''}</div></div>
             <button aria-label={t('common.delete_aria')} onClick={e => { e.stopPropagation(); onDelete?.() }} style={{background:'none',border:'none',color:'var(--text-3)',fontSize:16,padding:'0 0 0 8px',minHeight:44,minWidth:44}}>✕</button>
           </div>
         )}
@@ -340,7 +342,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           toastWithUndo(t('common.deleted'), () => setLogs(prev => [log, ...prev]))
         }}
       />
-      <button className="btn-add" onClick={openAdd}>+ Zapisz podanie leku</button>
+      <button className="btn-add" onClick={() => openAdd()}>{t('dose.modal.log_btn')}</button>
 
       <Modal open={addMedModal} onClose={()=>setAddMedModal(false)} title={t('meds.add_custom.modal')}>
         <div className="form-group">
