@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { t, useLocale } from '../i18n'
 import { addBreadcrumb } from '../sentry'
-import { trackConsentAccepted } from '../utils/analytics'
+import { trackConsentAccepted, trackConsentViewed } from '../utils/analytics'
 
 /**
  * MedicalConsentScreen
@@ -59,6 +59,10 @@ function saveAcceptance() {
 export default function MedicalConsentScreen({ onAccept }) {
   useLocale()
   const [checked, setChecked] = useState(false)
+
+  // Pierwsze zdarzenie po instalacji: dzięki niemu Analytics liczy też tych,
+  // którzy otworzyli aplikację i wyszli na tym ekranie.
+  useEffect(() => { trackConsentViewed() }, [])
 
   const accept = () => {
     if (!checked) return
