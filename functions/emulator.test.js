@@ -113,3 +113,37 @@ test('podsumowanie dnia: z danych dziecka, raz dziennie, tylko o wybranej godzin
   // Drugi raz tego samego dnia → nic.
   assert.strictEqual(await fns.__test.processDailySummary(partner, owner, ['tokP'], {}), 0)
 })
+
+// v2.16.13: kody zaproszeń do wspólnego konta.
+const call = (fn, uid, data = {}) => fns[fn].run({ auth: { uid, token: { name: uid } }, data })
+
+test('zaproszenie: ten sam kod przy ponownym tworzeniu', { skip }, async () => {
+  const owner = `u-inv-${Date.now()}`
+  await put(owner, 'premium_purchased', true)
+  const a = await call('createPartnerInvite', owner)
+  const b = await call('createPartnerInvite', owner)
+  assert.match(a.code, /^[A-Z0-9]{6}$/)
+  assert.strictEqual(b.code, a.code)
+  const all = await admin.firestore().collection('partner_invites').where('ownerUid', '==', owner).get()
+  assert.strictEqual(all.size, 1)
+})
+
+test('zaproszenie: 10 prób na godzinę, potem blokada; dobry kod łączy konta', { skip }, async () => {
+  const owner = `u-own2-${Date.now()}`
+  const guesser = `u-guess-${Date.now()}`
+  const partner = `u-par2-${Date.now()}`
+  await put(owner, 'premium_purchased', true)
+  const { code } = await call('createPartnerInvite', owner)
+  const wrong = code === 'ZZZZZZ' ? 'YYYYYY' : 'ZZZZZZ'
+
+  for (let i = 0; i < 10; i++) {
+    await assert.rejects(call('acceptPartnerInvite', guesser, { code: wrong }), { message: 'invite-not-found' })
+  }
+  // 11. próba zablokowana, nawet z poprawnym kodem.
+  await assert.rejects(call('acceptPartnerInvite', guesser, { code }), { message: 'too-many-attempts' })
+
+  const res = await call('acceptPartnerInvite', partner, { code: code.toLowerCase() })
+  assert.strictEqual(res.ownerName, owner)
+  assert.strictEqual((await get(partner, 'linked_owner')).ownerUid, owner)
+  assert.strictEqual((await admin.firestore().doc(`partner_invite_attempts/${partner}`).get()).exists, false)
+})

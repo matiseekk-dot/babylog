@@ -10,6 +10,7 @@ import { t } from '../i18n'
 const KNOWN_ERRORS = [
   'not-premium', 'too-many-partners', 'is-partner', 'invite-not-found',
   'invite-expired', 'own-invite', 'already-linked', 'has-partners',
+  'too-many-attempts',
 ]
 
 export function partnerErrorText(err) {

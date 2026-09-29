@@ -26,6 +26,7 @@ const admin = require('firebase-admin')
 const medIntervalsData = require('./medIntervals.json')
 const { DEFAULT_TIME_ZONE, isValidTimeZone, localToTimestamp, localDateHour } = require('./time')
 const { DEFAULT_LOCALE, normalizeLocale, medPushText, dailySummaryText } = require('./messages')
+const { fetchEntitlementActive, transferUserIds } = require('./revenuecat')
 
 admin.initializeApp()
 setGlobalOptions({ region: 'europe-west3' }) // Frankfurt — najbliżej Polski
@@ -544,13 +545,13 @@ exports.sendTestPush = onCall({
 //   - NON_RENEWING_PURCHASE → premium_purchased = true (plan dożywotni)
 //   - RENEWAL           → premium_purchased = true (re-affirm)
 //   - CANCELLATION      → no-op (subskrypcja jest aktywna do końca okresu)
-//   - EXPIRATION        → premium_purchased = false
+//   - EXPIRATION        → premium_purchased = false, jeśli RC potwierdzi brak uprawnienia
 //   - BILLING_ISSUE     → no-op (RC sam ponawia, expiruje przy ostatecznym fail)
 //   - PRODUCT_CHANGE    → re-affirm (np. zmiana monthly→yearly)
-//   - REFUND            → premium_purchased = false (rzadkie)
+//   - REFUND            → premium_purchased = false, jak EXPIRATION
 //   - SUBSCRIPTION_EXTENDED → premium_purchased = true
 //   - UNCANCELLATION    → premium_purchased = true (user odwołał kasowanie)
-//   - TRANSFER          → no-op (nie używamy multi-platform transfer)
+//   - TRANSFER          → stan obu kont z RC (v2.16.13, functions/revenuecat.js)
 //
 // Zapisuje też metadane (premium_meta) do późniejszego diagnostyki:
 //   { last_event, last_event_at, expires_at, product_id, store }
@@ -588,6 +589,28 @@ exports.revenueCatWebhook = onRequest({
 
   const body = req.body || {}
   const event = body.event
+
+  // v2.16.13: TRANSFER (ten sam zakup z Google Play przeszedł na inne konto)
+  // nie ma app_user_id. Stan obu stron bierzemy z RevenueCat.
+  if (event?.type === 'TRANSFER') {
+    const ids = transferUserIds(event)
+    try {
+      const states = await Promise.all(ids.map(id => fetchEntitlementActive(id)))
+      const batch = admin.firestore().batch()
+      ids.forEach((id, i) => {
+        batch.set(admin.firestore().collection('users').doc(id).collection('data').doc('premium_purchased'),
+          { value: states[i] }, { merge: true })
+      })
+      await batch.commit()
+      console.log(`[rc-webhook] TRANSFER ${ids.map((id, i) => `${id}=${states[i]}`).join(' ')}`)
+      res.status(200).send('OK')
+    } catch (e) {
+      console.error('[rc-webhook] TRANSFER failed, RevenueCat ponowi:', e.message)
+      res.status(500).send('Retry later')
+    }
+    return
+  }
+
   if (!event || !event.type || !event.app_user_id) {
     console.warn('[rc-webhook] malformed body', JSON.stringify(body).slice(0, 500))
     res.status(400).send('Bad request')
@@ -635,11 +658,27 @@ exports.revenueCatWebhook = onRequest({
       break
     case 'CANCELLATION':
     case 'BILLING_ISSUE':
-    case 'TRANSFER':
     case 'TEST':
     default:
       action = null
       break
+  }
+
+  // v2.16.13: wygasnąć albo zostać zwrócony mógł tylko jeden zakup (np. stara
+  // subskrypcja u klienta, który ma już plan dożywotni). Premium odbieramy
+  // dopiero, gdy RevenueCat potwierdzi, że uprawnienie nie jest aktywne.
+  if (action === 'revoke') {
+    try {
+      if (await fetchEntitlementActive(uid)) {
+        console.log(`[rc-webhook] ${eventType} uid=${uid}: uprawnienie nadal aktywne, Premium zostaje`)
+        action = null
+      }
+    } catch (e) {
+      // Bez odpowiedzi RevenueCat nie decydujemy. 500 → RevenueCat ponowi webhook.
+      console.error(`[rc-webhook] ${eventType} uid=${uid}: brak stanu z RevenueCat:`, e.message)
+      res.status(500).send('Retry later')
+      return
+    }
   }
 
   // Atomic write: premium_purchased + premium_meta + idempotency stamp
@@ -887,6 +926,25 @@ function randomInviteCode() {
 
 const partnerFnOptions = { region: 'europe-west3', timeoutSeconds: 30, memory: '256MiB' }
 
+// v2.16.13: limit prób wpisania kodu. Bez niego dało się zgadywać kody
+// w pętli (kod daje dostęp do danych dziecka). Licznik rośnie w transakcji
+// PRZED sprawdzeniem kodu, więc równoległe zapytania go nie obejdą.
+const MAX_CODE_TRIES = 10
+const CODE_TRIES_WINDOW_MS = 60 * 60 * 1000
+
+async function countCodeTry(uid) {
+  const ref = db.collection('partner_invite_attempts').doc(uid)
+  await db.runTransaction(async (tx) => {
+    const v = (await tx.get(ref)).data()
+    const now = Date.now()
+    const fresh = !v || now - v.windowStart >= CODE_TRIES_WINDOW_MS
+    if (!fresh && v.count >= MAX_CODE_TRIES) {
+      throw new HttpsError('resource-exhausted', 'too-many-attempts')
+    }
+    tx.set(ref, fresh ? { windowStart: now, count: 1 } : { windowStart: v.windowStart, count: v.count + 1 })
+  })
+}
+
 exports.createPartnerInvite = onCall(partnerFnOptions, async (request) => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'not-signed-in')
   const uid = request.auth.uid
@@ -896,7 +954,22 @@ exports.createPartnerInvite = onCall(partnerFnOptions, async (request) => {
   const partners = await partnersOf(uid).get()
   if (partners.size >= MAX_PARTNERS) throw new HttpsError('failed-precondition', 'too-many-partners')
 
+  // v2.16.13: jeden aktywny kod na konto (mniej kodów do zgadnięcia). Kod
+  // ważny jeszcze co najmniej godzinę wraca ponownie, bo apka nie pamięta go
+  // po zamknięciu Ustawień, a mógł już pójść do partnera. Resztę usuwamy.
   const now = Date.now()
+  const old = await db.collection('partner_invites').where('ownerUid', '==', uid).get()
+  let reuse = null
+  const stale = db.batch()
+  let staleCount = 0
+  for (const d of old.docs) {
+    const expiresAt = d.data().expiresAt
+    if (!reuse && expiresAt - now > 60 * 60 * 1000) reuse = { code: d.id, expiresAt }
+    else { stale.delete(d.ref); staleCount++ }
+  }
+  if (staleCount) await stale.commit()
+  if (reuse) return reuse
+
   const invite = {
     ownerUid: uid,
     ownerName: displayName(request.auth),
@@ -920,6 +993,7 @@ exports.acceptPartnerInvite = onCall(partnerFnOptions, async (request) => {
   const uid = request.auth.uid
   const code = String(request.data?.code || '').trim().toUpperCase()
   if (!/^[A-Z0-9]{6}$/.test(code)) throw new HttpsError('invalid-argument', 'invite-not-found')
+  await countCodeTry(uid)
 
   const inviteRef = db.collection('partner_invites').doc(code)
   const ownerName = await db.runTransaction(async (tx) => {
@@ -961,6 +1035,7 @@ exports.acceptPartnerInvite = onCall(partnerFnOptions, async (request) => {
     return invite.ownerName || null
   })
 
+  await db.collection('partner_invite_attempts').doc(uid).delete().catch(() => {})
   console.log(`[acceptPartnerInvite] uid=${uid} linked via code`)
   return { ownerName }
 })
