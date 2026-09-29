@@ -23,6 +23,19 @@ export function dateYMD(d) {
   return `${y}-${m}-${day}`
 }
 
+/**
+ * sleepMinutes(date, startTime, endTime) — minuty snu od startTime do endTime
+ * (HH:MM), start w dniu date, koniec wcześniej niż start = następny dzień.
+ * Liczone z prawdziwych dat, nie z tarczy zegara (v2.16.15), więc noc zmiany
+ * czasu wychodzi poprawnie: 25.10, 20:00 do 7:00 = 12 h, a nie 11 h.
+ */
+export function sleepMinutes(date, startTime, endTime) {
+  const start = new Date(`${date}T${startTime}:00`)
+  const end = new Date(`${date}T${endTime}:00`)
+  if (endTime < startTime) end.setDate(end.getDate() + 1)
+  return Math.round((end - start) / 60000)
+}
+
 export function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)

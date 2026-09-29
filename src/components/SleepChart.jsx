@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts'
 import { t } from '../i18n'
 import { getSleepRange } from '../data/sleepNorms'
+import { dateYMD } from '../utils/helpers'
 
 /**
  * SleepChart — wykres dziennego snu vs typowy zakres wg wieku.
@@ -42,7 +43,9 @@ export default function SleepChart({ sleepLogs, currentAgeMonths, showReference 
     for (let i = daysWindow - 1; i >= 0; i--) {
       const d = new Date(today)
       d.setDate(d.getDate() - i)
-      const ymd = d.toISOString().slice(0, 10)
+      // Data lokalna. toISOString (UTC) z północy dawał dzień wcześniej, więc
+      // słupek "dziś" pokazywał wczorajsze wpisy.
+      const ymd = dateYMD(d)
       const minutes = byDate[ymd] || 0
       days.push({
         date: ymd,

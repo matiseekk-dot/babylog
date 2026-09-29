@@ -9,8 +9,8 @@
  *   npx vitest run src/utils/helpers.test.js
  */
 
-import { describe, test, expect } from 'vitest'
-import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId } from './helpers'
+import { describe, test, expect, beforeAll, afterAll } from 'vitest'
+import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD } from './helpers'
 
 describe('getTempClass', () => {
   test('hipotermia <36.0', () => {
@@ -88,5 +88,34 @@ describe('uid / genId', () => {
   })
   test('genId to alias uid', () => {
     expect(genId).toBe(uid)
+  })
+})
+
+describe('sleepMinutes (v2.16.15, zmiana czasu)', () => {
+  let tz
+  beforeAll(() => { tz = process.env.TZ; process.env.TZ = 'Europe/Warsaw' })
+  afterAll(() => { if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz })
+
+  test('zwykła noc i drzemka', () => {
+    expect(sleepMinutes('2026-09-29', '20:00', '07:00')).toBe(11 * 60)
+    expect(sleepMinutes('2026-09-29', '13:15', '14:45')).toBe(90)
+  })
+  test('25.10 zegar cofa się o godzinę: 20:00 do 7:00 to 12 h', () => {
+    expect(sleepMinutes('2026-10-24', '20:00', '07:00')).toBe(12 * 60)
+  })
+  test('29.03 zegar idzie do przodu: 20:00 do 7:00 to 10 h', () => {
+    expect(sleepMinutes('2026-03-28', '20:00', '07:00')).toBe(10 * 60)
+  })
+})
+
+describe('dateYMD: data lokalna, nie UTC', () => {
+  let tz
+  beforeAll(() => { tz = process.env.TZ; process.env.TZ = 'Europe/Warsaw' })
+  afterAll(() => { if (tz === undefined) delete process.env.TZ; else process.env.TZ = tz })
+
+  test('lokalna północ to ten sam dzień (toISOString dawał poprzedni)', () => {
+    const midnight = new Date(2026, 8, 29, 0, 0, 0)
+    expect(dateYMD(midnight)).toBe('2026-09-29')
+    expect(midnight.toISOString().slice(0, 10)).toBe('2026-09-28')
   })
 })

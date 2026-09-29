@@ -83,7 +83,7 @@ import { useServiceWorker } from './hooks/useServiceWorker'
 import { useLocale, t, getLocale } from './i18n'
 import { findPlan } from './data/premiumPlans'
 import { fetchStorePrices, loadCachedStorePrices } from './data/storePrices'
-import { todayDate, nowTime, genId } from './utils/helpers'
+import { todayDate, nowTime, genId, dateYMD } from './utils/helpers'
 
 const DEFAULT_PROFILE = {
   id: 'default',
@@ -591,7 +591,7 @@ export default function App() {
     if (!isOnTrial) return
     if (![0, 1, 3].includes(trialDaysLeft)) return
 
-    const today = new Date().toISOString().slice(0, 10)  // YYYY-MM-DD (UTC)
+    const today = todayDate()
     const flagKey = `babylog_trial_ending_shown_${trialUserKey}_${today}`
     try {
       if (localStorage.getItem(flagKey) === '1') return
@@ -604,7 +604,7 @@ export default function App() {
 
   const dismissTrialEnding = () => {
     setShowTrialEnding(false)
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayDate()
     try {
       localStorage.setItem(`babylog_trial_ending_shown_${trialUserKey}_${today}`, '1')
     } catch {}
@@ -1290,7 +1290,8 @@ export default function App() {
       // Stop sleep — wyznacz duration, zapisz wpis, wyczyść timer
       const dur = Math.floor((Date.now() - sleepTimerTs) / 1000)
       const mins = Math.round(dur / 60)
-      const startDate = new Date(sleepTimerTs).toISOString().slice(0, 10)
+      // Data lokalna: toISOString (UTC) dawał dzień wcześniej dla snu od 0:00 do 2:00.
+      const startDate = dateYMD(new Date(sleepTimerTs))
       const entry = {
         id: genId(),
         date: startDate,

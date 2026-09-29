@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { getTipForToday } from '../data/dailyTips'
 import { getLocale, t, useLocale } from '../i18n'
+import { todayDate } from '../utils/helpers'
 
 const LS_KEY = 'babylog_tip_seen'
 
@@ -15,7 +16,7 @@ export default function DailyTipCard({ ageMonths }) {
 
   useEffect(() => {
     try {
-      const today = new Date().toISOString().slice(0, 10)
+      const today = todayDate()
       const seen = localStorage.getItem(LS_KEY)
       if (seen === today) setDismissed(true)
     } catch {}
@@ -24,7 +25,7 @@ export default function DailyTipCard({ ageMonths }) {
   const dismiss = () => {
     setDismissed(true)
     try {
-      localStorage.setItem(LS_KEY, new Date().toISOString().slice(0, 10))
+      localStorage.setItem(LS_KEY, todayDate())
     } catch {}
   }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { formatDuration, todayDate, dateYMD, genId } from '../utils/helpers'
+import { formatDuration, todayDate, dateYMD, genId, sleepMinutes } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
@@ -125,10 +125,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
   }
 
   const save = () => {
-    const [sh,sm] = form.startTime.split(':').map(Number)
-    const [eh,em] = form.endTime.split(':').map(Number)
-    let mins = (eh*60+em) - (sh*60+sm)
-    if (mins < 0) mins += 24*60
+    const mins = sleepMinutes(form.date, form.startTime, form.endTime)
 
     if (editingId) {
       // Przy edycji: zachowujemy startTs/endTs jeśli oryginalnie były (ze stopera),

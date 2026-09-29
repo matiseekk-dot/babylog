@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea } from 'recharts'
 import { t } from '../i18n'
 import { getFeedingRange } from '../data/feedingNorms'
+import { dateYMD } from '../utils/helpers'
 
 /**
  * FeedingFrequencyChart — wykres liczby karmień / dzień vs typowy zakres
@@ -56,7 +57,9 @@ export default function FeedingFrequencyChart({ feedLogs, currentAgeMonths, show
     for (let i = daysWindow - 1; i >= 0; i--) {
       const d = new Date(today)
       d.setDate(d.getDate() - i)
-      const ymd = d.toISOString().slice(0, 10)
+      // Data lokalna. toISOString (UTC) z północy dawał dzień wcześniej, więc
+      // słupek "dziś" pokazywał wczorajsze wpisy.
+      const ymd = dateYMD(d)
       days.push({
         date: ymd,
         dateLabel: `${d.getDate()}.${d.getMonth() + 1}`,

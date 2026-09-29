@@ -4,6 +4,7 @@ import { trackOnboardingCompleted, trackOnboardingViewed } from '../utils/analyt
 import PartnerJoinForm from './PartnerJoinForm'
 import Modal from './Modal'
 import { ConsentDetails } from './MedicalConsentScreen'
+import { todayDate } from '../utils/helpers'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 
@@ -72,7 +73,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
   const [avatar, setAvatar] = useState('👶')
   const [sex, setSex] = useState('M')
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr = todayDate()
 
   // ── Walidacje ─────────────────────────────────────────────────────────────
   const nameValid = name.trim().length > 0
