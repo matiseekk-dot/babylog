@@ -49,7 +49,10 @@ export function timerSleepEntry(startTs, endTs = Date.now()) {
  * Bez tego wpis bez daty znikał z listy (nie należał do żadnego dnia).
  */
 export function fillDateTime(form) {
-  const filled = { ...form, date: form.date || todayDate() }
+  // Data z przyszłości (literówka w roku) też = dziś: taki wpis nie trafiał
+  // ani do "Dzisiaj", ani do historii, więc znikał.
+  const today = todayDate()
+  const filled = { ...form, date: form.date && form.date <= today ? form.date : today }
   if ('time' in form) filled.time = form.time || nowTime()
   return filled
 }
@@ -127,6 +130,23 @@ const MONTHS_SHORT_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','
 const MONTHS_SHORT_DE = ['Jan.','Feb.','März','Apr.','Mai','Juni','Juli','Aug.','Sept.','Okt.','Nov.','Dez.']
 const MONTHS_SHORT_FR = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.']
 const MONTHS_SHORT_ES = ['ene','feb','mar','abr','may','jun','jul','ago','sept','oct','nov','dic']
+
+/**
+ * Minimalny wiek dla ibuprofenu (v2.16.21), spójny z tekstami w danym języku:
+ * FR (ANSM) i ES (AEMPS) od 3. miesiąca, PL/DE/EN ostrożnie od 6.
+ * Wcześniej logika blokowała wszędzie do 6 mies., a FR/ES pisały "od 3 mies.".
+ */
+export function ibuprofenMinMonths() {
+  const lang = getLocale()
+  return lang === 'fr' || lang === 'es' ? 3 : 6
+}
+
+/** Czy wpis (date + time) jest z ostatnich `hours` godzin. */
+export function withinHours(entry, hours, now = Date.now()) {
+  if (!entry?.date) return false
+  const ts = new Date(`${entry.date}T${entry.time || '12:00'}`).getTime()
+  return !isNaN(ts) && now - ts <= hours * 3600 * 1000 && now - ts >= -5 * 60 * 1000
+}
 
 /** Krótka data na osi wykresu: 28.09 (PL/DE/FR/ES) albo 09/28 (EN). */
 export function shortDate(dateStr) {

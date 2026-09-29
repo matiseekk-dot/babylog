@@ -185,7 +185,7 @@ export default function TempTab({uid, babyId, sectionAlerts = [], onNavigate, on
         </div>
         <div className="form-row">
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
-          <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" max={todayDate()} value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
         </div>
         <div className="form-group"><label className="form-label">{t('temp.note_label')}</label><input className="form-input" type="text" maxLength={200} placeholder={t("temp.note_after_med_ph")} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
         <div className="modal-btns">

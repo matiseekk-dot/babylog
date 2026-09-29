@@ -460,7 +460,7 @@ export default function SymptomsTab({ uid, babyId, currentTempC }) {
             <label className="form-label">{t('common.date')}</label>
             <input
               className="form-input"
-              type="date"
+              type="date" max={todayDate()}
               value={form.date}
               onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
             />

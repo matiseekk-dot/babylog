@@ -218,7 +218,7 @@ export default function GrowthTab({ uid, babyId, sex, ageMonths, isPremium, onUp
       <Modal open={modal} onClose={() => { setModal(false); setEditingId(null) }} title={editingId ? t('common.edit') : t('growth.modal.title')}>
         <div className="form-group">
           <label className="form-label">{t('growth.modal.date')}</label>
-          <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
+          <input className="form-input" type="date" max={todayDate()} value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
         </div>
         <div className="form-row">
           {/* v2.11.4: type="text" + inputMode="decimal" — patrz TempTab. parseNum() w save()

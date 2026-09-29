@@ -253,7 +253,7 @@ export default function DiaperTab({uid, babyId, toiletMode = 'diapers', sectionA
         </div>
         <div className="form-row">
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
-          <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
+          <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" max={todayDate()} value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
         </div>
         <div className="form-group">
           <label className="form-label">{t('diaper.modal.note')}</label>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, genId, fillDateTime } from '../utils/helpers'
+import { nowTime, todayDate, genId, fillDateTime, ibuprofenMinMonths } from '../utils/helpers'
 import Modal from './Modal'
 import { SectionAlerts } from './AlertBanner'
 import InlineInsight from './InlineInsight'
@@ -69,7 +69,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
   // v2.7.1: Usunięto kalkulator dawek. Apka nie wylicza dawek leków —
   // rodzic czyta je z ulotki lub konsultuje z pediatrą/farmaceutą.
   // Wiek jest używany tylko do ostrzeżenia o minimalnym wieku ibuprofenu (≥6 mies.).
-  const ibuAllowedByAge = ageMonths != null && ageMonths >= 6
+  const ibuAllowedByAge = ageMonths != null && ageMonths >= ibuprofenMinMonths()
   // v2.12.0: built-in medication names per locale.
   //   PL → BUILT_IN_MEDS_PL (Apap, Ibuprom — polskie marki)
   //   inne (EN/DE/FR/ES) → BUILT_IN_MEDS_EN (Paracetamol, Ibuprofen — generic names
@@ -409,7 +409,7 @@ export default function MedsTab({uid, babyId, ageMonths, weightKg, sectionAlerts
           <div className="form-group"><label className="form-label">{t('meds.modal.dose')}</label><input className="form-input" type="text" maxLength={100} placeholder={t("meds.custom.dose_ph")} value={form.dose} onChange={e=>{ setForm(f=>({...f,dose:e.target.value})); if(formError) setFormError(null) }} /></div>
           <div className="form-group"><label className="form-label">{t('common.time')}</label><input className="form-input" type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))} /></div>
         </div>
-        <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
+        <div className="form-group"><label className="form-label">{t('common.date')}</label><input className="form-input" type="date" max={todayDate()} value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></div>
         <div className="form-group"><label className="form-label">{t('common.note')}</label><input className="form-input" type="text" maxLength={200} placeholder={t("common.optional_ph")} value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} /></div>
         <div className="modal-btns"><button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button><button className="btn-primary" onClick={save}>{t('common.save')}</button></div>
       </Modal>

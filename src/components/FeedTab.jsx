@@ -252,7 +252,7 @@ export default function FeedTab({uid, babyId, ageMonths, sectionAlerts = [], onN
         </div>
         <div className="form-group">
           <label className="form-label">{t('common.date')}</label>
-          <input className="form-input" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
+          <input className="form-input" type="date" max={todayDate()} value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} />
         </div>
         <div className="modal-btns">
           <button className="btn-secondary" onClick={() => { setModal(false); setEditingId(null) }}>{t('common.cancel')}</button>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { ibuprofenMinMonths } from '../utils/helpers'
 import { t, useLocale } from '../i18n'
 
 /**
@@ -29,9 +30,10 @@ export default function QuickDoseCard({ ageMonths, onNavigateToMeds }) {
   // Ostrzeżenia wiekowe (nie są rekomendacją, tylko przepisaniem z ChPL)
   const isNewborn = ageMonths != null && ageMonths < 1
   const isInfant = ageMonths != null && ageMonths < 3
-  const ibuAllowedByAge = ageMonths != null && ageMonths >= 6 // z ChPL Ibufen, Nurofen
+  const ibuMin = ibuprofenMinMonths()  // FR/ES 3 mies., reszta 6 (jak w tekstach)
+  const ibuAllowedByAge = ageMonths != null && ageMonths >= ibuMin
   const ibuAgeText = ageMonths == null ? t('dose.ref.ibu_age_unknown')
-    : ageMonths >= 6 ? t('dose.ref.ibu_age_ok')
+    : ageMonths >= ibuMin ? t('dose.ref.ibu_age_ok')
     : t('dose.ref.ibu_age_block', { months: ageMonths })
 
   const MedRow = ({ med, emoji, title, disabled, disabledReason, info }) => {

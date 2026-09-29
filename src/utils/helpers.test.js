@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from 'vitest'
-import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD, monthsFromBirthDate, birthDateFromMonths, withCurrentAge, timerSleepEntry, shortDate } from './helpers'
+import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD, monthsFromBirthDate, birthDateFromMonths, withCurrentAge, timerSleepEntry, shortDate, withinHours, ibuprofenMinMonths, fillDateTime } from './helpers'
 
 describe('getTempClass', () => {
   test('hipotermia <36.0', () => {
@@ -162,5 +162,27 @@ describe('shortDate (oś wykresów)', () => {
     expect(shortDate('2026-09-28')).toMatch(/^(28\.09|09\/28)$/)
     expect(shortDate('')).toBe('')
     expect(shortDate(undefined)).toBe('')
+  })
+})
+
+describe('withinHours i próg ibuprofenu (v2.16.21)', () => {
+  test('wpis z 23:30 wczoraj jest w ostatnich 24 h o 1:00', () => {
+    const now = new Date(2026, 8, 30, 1, 0).getTime()
+    expect(withinHours({ date: '2026-09-29', time: '23:30' }, 24, now)).toBe(true)
+    expect(withinHours({ date: '2026-09-28', time: '23:30' }, 24, now)).toBe(false)
+    expect(withinHours({}, 24, now)).toBe(false)
+  })
+  test('ibuprofen: 6 mies. domyślnie', () => {
+    expect([3, 6]).toContain(ibuprofenMinMonths())
+  })
+})
+
+describe('fillDateTime', () => {
+  test('pusta i przyszła data = dziś, przeszła zostaje, pusta godzina = teraz', () => {
+    expect(fillDateTime({ date: '' }).date).toBe(todayDate())
+    expect(fillDateTime({ date: '2999-01-01' }).date).toBe(todayDate())
+    expect(fillDateTime({ date: '2026-01-15' }).date).toBe('2026-01-15')
+    expect(fillDateTime({ date: '2026-01-15', time: '' }).time).toMatch(/^\d{2}:\d{2}$/)
+    expect('time' in fillDateTime({ date: '2026-01-15' })).toBe(false)
   })
 })

@@ -643,7 +643,7 @@ export default function DoctorNotesTab({uid, babyId, isPremium, onUpgrade }) {
           </div>
           <div className="form-group">
             <label className="form-label">{t('doctor.modal.date')}</label>
-            <input className="form-input" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
+            <input className="form-input" type="date" max={todayDate()} value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
           </div>
         </div>
         <div className="form-group">

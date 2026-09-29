@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { nowTime, todayDate, dateYMD, genId, formatDate, fillDateTime } from '../utils/helpers'
+import { nowTime, todayDate, dateYMD, genId, formatDate, fillDateTime, withinHours } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, tPlural, useLocale } from '../i18n'
@@ -153,7 +153,8 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
 
     // Kaszel szczekający dzisiaj → krup podejrzenie
     const today = todayDate()
-    const barkingToday = logs.some(l => l.date === today && l.type === 'barking')
+    // Ostatnie 24 h, nie "dziś": krup nasila się nocą, wpis z 23:30 znikał o północy.
+    const barkingToday = logs.some(l => l.type === 'barking' && withinHours(l, 24))
     if (barkingToday) {
       out.push({
         level: 'high',
@@ -162,7 +163,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
     }
 
     // Kaszel świszczący dzisiaj → obturacja
-    const wheezingToday = logs.some(l => l.date === today && l.type === 'wheezing')
+    const wheezingToday = logs.some(l => l.type === 'wheezing' && withinHours(l, 24))
     if (wheezingToday) {
       out.push({
         level: 'high',
@@ -488,7 +489,7 @@ export default function CoughTab({ uid, babyId, ageMonths }) {
             <label className="form-label">{t('common.date')}</label>
             <input
               className="form-input"
-              type="date"
+              type="date" max={todayDate()}
               value={form.date}
               onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
             />
