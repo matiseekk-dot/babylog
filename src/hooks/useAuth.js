@@ -88,10 +88,19 @@ export function useAuth() {
   }
 
   const logout = async () => {
+    // v2.16.9: najpierw Firebase, bo to jest właściwe wylogowanie z aplikacji.
+    // Wcześniej pierwszy był GoogleAuth.signOut() bez initialize(): po ponownym
+    // uruchomieniu aplikacji googleSignInClient w pluginie był null, natywny
+    // NPE zamykał aplikację i do signOut(auth) w ogóle nie dochodziło.
+    await signOut(auth)
     if (isCapacitorNative()) {
-      try { await GoogleAuth.signOut() } catch (_) { /* ignoruj */ }
+      // Wylogowanie konta Google w pluginie: przy następnym logowaniu pojawi
+      // się wybór konta. Błąd tutaj niczego już nie blokuje.
+      try {
+        await ensureGoogleAuthInitialized()
+        await GoogleAuth.signOut()
+      } catch (_) { /* ignoruj */ }
     }
-    return signOut(auth)
   }
 
   return { user, loading, login, logout }
