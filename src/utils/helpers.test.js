@@ -10,7 +10,7 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from 'vitest'
-import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD, monthsFromBirthDate, birthDateFromMonths, withCurrentAge } from './helpers'
+import { getTempClass, getTempLabel, nowTime, todayDate, formatDuration, uid, genId, sleepMinutes, dateYMD, monthsFromBirthDate, birthDateFromMonths, withCurrentAge, timerSleepEntry } from './helpers'
 
 describe('getTempClass', () => {
   test('hipotermia <36.0', () => {
@@ -140,5 +140,19 @@ describe('wiek dziecka z daty urodzenia (v2.16.17)', () => {
     expect(withCurrentAge(p).months).toBeGreaterThanOrEqual(8)
     const old = { id: 'y', months: 4 }
     expect(withCurrentAge(old)).toBe(old)
+  })
+})
+
+describe('sen ze stopera (v2.16.18)', () => {
+  test('noc liczy się do dnia zakończenia i jest snem nocnym', () => {
+    const e = timerSleepEntry(new Date(2026, 8, 28, 20, 0).getTime(), new Date(2026, 8, 29, 6, 30).getTime())
+    expect(e.date).toBe('2026-09-29')
+    expect(e.durationMin).toBe(630)
+    expect(e.label).toBe('Sen nocny')
+  })
+  test('drzemka w dzień zostaje drzemką', () => {
+    const e = timerSleepEntry(new Date(2026, 8, 29, 13, 0).getTime(), new Date(2026, 8, 29, 14, 15).getTime())
+    expect(e.date).toBe('2026-09-29')
+    expect(e.label).toBe('Drzemka')
   })
 })

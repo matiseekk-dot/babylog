@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { formatDuration, todayDate, dateYMD, genId, sleepMinutes } from '../utils/helpers'
+import { formatDuration, todayDate, dateYMD, genId, sleepMinutes, timerSleepEntry } from '../utils/helpers'
 import Modal from './Modal'
 import { toast, toastWithUndo } from './Toast'
 import { t, useLocale } from '../i18n'
@@ -56,9 +56,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
       setStartTs(Date.now())
     } else {
       const dur = Math.floor((Date.now() - startTs) / 1000)
-      const mins = Math.round(dur / 60)
-      const startDate = dateYMD(new Date(startTs))
-      const entry = { id: genId(), date: startDate, durationMin: mins, label: 'Drzemka', manual: false, startTs, endTs: Date.now() }
+      const entry = timerSleepEntry(startTs)
       setLogs([entry, ...logs])
       setStartTs(null)
       onDataChange?.()
@@ -116,7 +114,8 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
     setEditingId(entry.id)
     const { startTime, endTime } = durationToTimes(entry)
     setForm({
-      date: entry.date,
+      // Wpis ze stopera: formularz liczy od daty rozpoczęcia.
+      date: entry.startTs ? dateYMD(new Date(entry.startTs)) : entry.date,
       startTime,
       endTime,
       label: entry.label || 'Drzemka',
@@ -142,6 +141,7 @@ export default function SleepTab({uid, babyId, ageMonths, sectionAlerts = [], on
           const newEnd = newStart + mins * 60000
           updated.startTs = newStart
           updated.endTs = newEnd
+          updated.date = dateYMD(new Date(newEnd))  // jak przy zapisie ze stopera
         }
         return updated
       }))

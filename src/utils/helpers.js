@@ -24,6 +24,27 @@ export function dateYMD(d) {
 }
 
 /**
+ * Wpis snu ze stopera (v2.16.18). Data = dzień zakończenia: noc 20:00-6:00
+ * liczy się do dnia, w którym się skończyła (tak jak wpis ręczny robiony rano),
+ * inaczej rano "Dziś" pokazywało brak snu. Długi sen zaczęty wieczorem to sen
+ * nocny, nie drzemka.
+ */
+export function timerSleepEntry(startTs, endTs = Date.now()) {
+  const durationMin = Math.max(0, Math.round((endTs - startTs) / 60000))
+  const startHour = new Date(startTs).getHours()
+  const night = durationMin >= 180 && (startHour >= 18 || startHour < 6)
+  return {
+    id: genId(),
+    date: dateYMD(new Date(endTs)),
+    durationMin,
+    label: night ? 'Sen nocny' : 'Drzemka',
+    manual: false,
+    startTs,
+    endTs,
+  }
+}
+
+/**
  * Wpis z formularza (v2.16.17): wyczyszczone pole daty = dziś, godziny = teraz.
  * Bez tego wpis bez daty znikał z listy (nie należał do żadnego dnia).
  */

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { evaluateRules, getGlobalStatus, getSectionMessages } from '../engine/rulesEngine'
 import { loadFromStorage } from './useStorage'
+import { readCached } from './useFirestore'
 import { useLocale } from '../i18n'
 
 /**
@@ -13,7 +14,7 @@ import { useLocale } from '../i18n'
  *   sectionMessages(section) – komunikaty dla danej sekcji
  *   refresh()     – ręczne odświeżenie (po każdym zapisie danych)
  */
-export function useChildStatus(babyId, ageMonths, weightKg) {
+export function useChildStatus(babyId, ageMonths, weightKg, dataUid, sleepTimerTs = null) {
   const [result, setResult] = useState({ messages: [], topStatus: 'ok' })
   const [tick, setTick] = useState(0)
   // Re-render hook na zmianę języka + wymuś re-ewaluację reguł
@@ -23,18 +24,22 @@ export function useChildStatus(babyId, ageMonths, weightKg) {
   useEffect(() => {
     if (!babyId) return
 
+    // v2.16.18: te same dane co w zakładkach (także u partnera na wspólnym
+    // koncie, gdzie pamięć podręczna ma przedrostek babylog_shared_<owner>_).
+    const read = (key) => (dataUid !== undefined ? readCached(dataUid, key, []) : loadFromStorage(key, []))
     const ctx = {
-      tempLogs:   loadFromStorage(`temp_${babyId}`,   []),
-      sleepLogs:  loadFromStorage(`sleep_${babyId}`,  []),
-      feedLogs:   loadFromStorage(`feed_${babyId}`,   []),
-      medLogs:    loadFromStorage(`meds_${babyId}`,   []),
-      diaperLogs: loadFromStorage(`diaper_${babyId}`, []),
+      tempLogs:   read(`temp_${babyId}`),
+      sleepLogs:  read(`sleep_${babyId}`),
+      feedLogs:   read(`feed_${babyId}`),
+      medLogs:    read(`meds_${babyId}`),
+      diaperLogs: read(`diaper_${babyId}`),
       ageMonths:  ageMonths || 0,
       weightKg:   weightKg  || 5,
+      sleepTimerTs,
     }
 
     setResult(evaluateRules(ctx))
-  }, [babyId, ageMonths, weightKg, tick, locale])
+  }, [babyId, ageMonths, weightKg, dataUid, sleepTimerTs, tick, locale])
 
   // Auto-odświeżanie co 5 minut (reguły czasowe)
   useEffect(() => {

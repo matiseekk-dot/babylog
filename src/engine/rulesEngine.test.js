@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { evaluateRules } from './rulesEngine'
+import { dateYMD } from '../utils/helpers'
 
 /**
  * v2.11.0 — MDR EXIT REFACTOR.
@@ -13,7 +14,7 @@ import { evaluateRules } from './rulesEngine'
  *   - kontrakt `{messages, topStatus}` niezmieniony — UI nie wybucha
  */
 
-const today = new Date().toISOString().slice(0, 10)
+const today = dateYMD(new Date())
 const recentTime = new Date().toTimeString().slice(0, 5)
 
 const ctxBase = {
@@ -119,5 +120,24 @@ describe('rulesEngine — wynik ma poprawną strukturę', () => {
       medLogs: null,
     })
     expect(result.messages).toBeDefined()
+  })
+})
+
+describe('feed_time: sen zapisany przez apkę (v2.16.18)', () => {
+  afterEach(() => vi.useRealTimers())
+  const at = (h, m = 0) => new Date(2026, 8, 29, h, m)
+  const feed5hAgo = [{ id: 'f', date: '2026-09-29', time: '10:00', type: 'Butelka', amount: 120 }]
+
+  it('wpis snu (durationMin/endTs, bez endTime) nie wycisza przypomnienia', () => {
+    vi.useFakeTimers(); vi.setSystemTime(at(15))
+    const sleepLogs = [{ id: 's', date: '2026-09-29', durationMin: 60, startTs: at(11).getTime(), endTs: at(12).getTime() }]
+    const r = evaluateRules({ ...ctxBase, feedLogs: feed5hAgo, sleepLogs })
+    expect(r.messages.some(m => m.id === 'feed_time')).toBe(true)
+  })
+  it('śpi (włączony stoper) albo obudziło się przed chwilą → cisza', () => {
+    vi.useFakeTimers(); vi.setSystemTime(at(15))
+    expect(evaluateRules({ ...ctxBase, feedLogs: feed5hAgo, sleepTimerTs: at(14).getTime() }).messages.some(m => m.id === 'feed_time')).toBe(false)
+    const justWoke = [{ id: 's', date: '2026-09-29', durationMin: 90, startTs: at(13, 20).getTime(), endTs: at(14, 50).getTime() }]
+    expect(evaluateRules({ ...ctxBase, feedLogs: feed5hAgo, sleepLogs: justWoke }).messages.some(m => m.id === 'feed_time')).toBe(false)
   })
 })

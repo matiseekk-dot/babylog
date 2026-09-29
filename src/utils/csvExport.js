@@ -167,7 +167,7 @@ export function buildCsv(babyName, data) {
 
   const today = todayDate()
   const header = [
-    `# ${t('app.title')} — ${t('csv.header.export')}`,
+    `# ${t('app.title')}: ${t('csv.header.export')}`,
     `# ${t('csv.header.child')}: ${babyName}`,
     `# ${t('csv.header.export_date')}: ${today}`,
     `# ${t('csv.header.counts', { f: feed.length, s: sleep.length, d: diaper.length })}`,

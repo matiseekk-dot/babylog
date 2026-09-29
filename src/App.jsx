@@ -83,7 +83,7 @@ import { useServiceWorker } from './hooks/useServiceWorker'
 import { useLocale, t, getLocale } from './i18n'
 import { findPlan } from './data/premiumPlans'
 import { fetchStorePrices, loadCachedStorePrices } from './data/storePrices'
-import { todayDate, nowTime, genId, dateYMD, withCurrentAge, birthDateFromMonths } from './utils/helpers'
+import { todayDate, nowTime, genId, dateYMD, withCurrentAge, birthDateFromMonths, timerSleepEntry } from './utils/helpers'
 
 const DEFAULT_PROFILE = {
   id: 'default',
@@ -1195,7 +1195,7 @@ export default function App() {
   // które są używane przez poszczególne taby do lokalnych observations.
   // Globalny crisis UI (ChildStatusBar/ChildStatusCard/CallDoctorCard) usunięty.
   const { sectionMessages, refresh } = useChildStatus(
-    active.id, active.months, active.weight
+    active.id, active.months, active.weight, dataUid, sleepTimerTs
   )
 
   // v2.10.6: section alerts są nadal pokazywane w tabach (lokalne observations
@@ -1345,18 +1345,8 @@ export default function App() {
     if (sleepTimerTs) {
       // Stop sleep — wyznacz duration, zapisz wpis, wyczyść timer
       const dur = Math.floor((Date.now() - sleepTimerTs) / 1000)
-      const mins = Math.round(dur / 60)
-      // Data lokalna: toISOString (UTC) dawał dzień wcześniej dla snu od 0:00 do 2:00.
-      const startDate = dateYMD(new Date(sleepTimerTs))
-      const entry = {
-        id: genId(),
-        date: startDate,
-        durationMin: mins,
-        label: 'Drzemka',
-        manual: false,
-        startTs: sleepTimerTs,
-        endTs: Date.now(),
-      }
+      // Data dnia zakończenia, noc = "Sen nocny" (helpers.timerSleepEntry).
+      const entry = timerSleepEntry(sleepTimerTs)
       setSleepLogsForFab([entry, ...sleepLogsForFab])
       setSleepTimerTs(null)
       refresh?.()
@@ -1999,7 +1989,7 @@ export default function App() {
                   textAlign:'left',fontFamily:'monospace',wordBreak:'break-all',
                 }}>
                   <div style={{fontWeight:700,marginBottom:6,fontSize:10,color:'#7a6a40'}}>
-                    DEBUG INFO (skopiuj do support):
+                    {t('paywall.activation_failed.debug_label')}
                   </div>
                   <div>product: {pendingActivation.productId || '(none)'}</div>
                   <div>error: {pendingActivation.errorReason || '(none)'}</div>

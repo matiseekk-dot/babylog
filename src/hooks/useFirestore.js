@@ -43,6 +43,11 @@ function lsLoad(uid, key, fallback) {
   } catch { return fallback }
 }
 
+/** Odczyt pamięci podręcznej danego konta (ten sam przedrostek co hook). */
+export function readCached(uid, key, fallback) {
+  return lsLoad(uid, key, fallback)
+}
+
 function lsSave(uid, key, val) {
   try {
     localStorage.setItem(lsPrefix(uid) + key, JSON.stringify(val))

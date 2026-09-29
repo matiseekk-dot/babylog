@@ -287,11 +287,11 @@ describe('exportAllDataAsCsv', () => {
     const result = await exportAllDataAsCsv(null)
 
     const csv = await capturedBlob.text()
-    expect(csv).toContain('# FEED — Laura')
-    expect(csv).toContain('# FEED — Kuba')
-    expect(csv).toContain('# TEMP — Laura')
+    expect(csv).toContain('# FEED: Laura')
+    expect(csv).toContain('# FEED: Kuba')
+    expect(csv).toContain('# TEMP: Laura')
     // Kuba nie ma temp, więc nie ma sekcji
-    expect(csv).not.toContain('# TEMP — Kuba')
+    expect(csv).not.toContain('# TEMP: Kuba')
     // 4 sekcje łącznie (# PROFILE + FEED×2 + TEMP×1)
     expect(result.categoriesCount).toBeGreaterThanOrEqual(3)
   })

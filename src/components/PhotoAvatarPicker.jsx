@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { t, useLocale } from '../i18n'
 import { uploadAvatar, deleteAvatar } from '../utils/avatarStorage'
+import { captureError } from '../sentry'
 
 /**
  * PhotoAvatarPicker — modal do wyboru/upload zdjęcia dziecka jako awatar.
@@ -62,7 +63,9 @@ export default function PhotoAvatarPicker({ open, uid, profileId, currentUrl, on
       const url = await uploadAvatar(uid, profileId, pendingFile)
       onSaved(url)
     } catch (err) {
-      setError(err?.message || t('avatar.error.upload_failed'))
+      // Komunikat techniczny (Firebase, po angielsku) do Sentry, rodzic widzi tłumaczenie.
+      captureError(err, { context: 'avatar-upload' })
+      setError(t('avatar.error.upload_failed'))
       setUploading(false)
     }
   }
@@ -74,7 +77,8 @@ export default function PhotoAvatarPicker({ open, uid, profileId, currentUrl, on
       await deleteAvatar(uid, profileId)
       onDeleted()
     } catch (err) {
-      setError(err?.message || t('avatar.error.delete_failed'))
+      captureError(err, { context: 'avatar-delete' })
+      setError(t('avatar.error.delete_failed'))
       setUploading(false)
     }
   }

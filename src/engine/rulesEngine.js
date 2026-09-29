@@ -64,7 +64,7 @@ function todayLogs(logs) {
   const today = todayStr()
   return (logs || [])
     .filter(l => l.date === today)
-    .sort((a, b) => b.time.localeCompare(a.time))
+    .sort((a, b) => (b.time || '').localeCompare(a.time || ''))
 }
 
 /** Ostatni wpis z dziś. */
@@ -110,26 +110,21 @@ const RULES = [
   },
 
   // ── Feed time — fakt: ostatnie karmienie X godzin temu ────────────────────
-  // BUG-008: pomijaj gdy dziecko śpi (aktywny stoper lub sleep log bez endTime)
+  // BUG-008: pomijaj gdy dziecko śpi albo dopiero się obudziło.
+  // v2.16.18: wpisy snu nie mają pola endTime (są durationMin/startTs/endTs),
+  // więc stary warunek uznawał każdy wpis za trwający sen i reguła milkła
+  // u każdego, kto zapisuje sen. Teraz: włączony stoper snu albo koniec
+  // ostatniego snu (endTs) mniej niż 30 min temu.
   {
     id: 'feed_time',
     section: 'feed',
-    check({ feedLogs, sleepLogs, ageMonths }) {
+    check({ feedLogs, sleepLogs, ageMonths, sleepTimerTs }) {
       const last = lastOf(feedLogs)
       if (!last) return null
 
-      // Sprawdź czy dziecko obecnie śpi
-      const activeSleep = (sleepLogs || []).find(s => s.endTime == null || s.endTime === '')
-      if (activeSleep) return null
-
-      // Lub ostatni sleep w ciągu ostatniej godziny (świeżo się obudziło — daj chwilę)
-      const recentSleep = (sleepLogs || [])
-        .filter(s => s.endTime)
-        .sort((a, b) => (b.date + b.endTime).localeCompare(a.date + a.endTime))[0]
-      if (recentSleep) {
-        const endedMinAgo = minutesSince(recentSleep.endTime, recentSleep.date)
-        if (endedMinAgo < 30) return null
-      }
+      if (sleepTimerTs) return null
+      const lastSleepEnd = Math.max(0, ...(sleepLogs || []).map(s => Number(s.endTs) || 0))
+      if (lastSleepEnd && Date.now() - lastSleepEnd < 30 * 60000) return null
 
       const minAgo = minutesSince(last.time, last.date)
       const expected = ageMonths < 3 ? 150 : ageMonths < 6 ? 180 : 240

@@ -386,15 +386,15 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   const sources = [
     t('pdf.sources.intro'),
     '',
-    '• American Academy of Pediatrics (healthychildren.org) — Acetaminophen &',
+    '• American Academy of Pediatrics (healthychildren.org): Acetaminophen &',
     '  Ibuprofen dosage tables (2023)',
     '• AAP Clinical Practice Guideline: Evaluation and Management of Well-Appearing',
     '  Febrile Infants 8 to 60 Days Old (Pediatrics, 2021)',
     '• MSF Medical Guidelines (medicalguidelines.msf.org)',
     '• Motrin / Tylenol prescribing information (Johnson & Johnson, 2024)',
     '• Nelson Textbook of Pediatrics, 22nd ed. (Elsevier, 2025)',
-    '• Polskie Towarzystwo Pediatryczne (PTP) — ptp.edu.pl',
-    '• WHO — Pocket book of hospital care for children (2nd edition)',
+    '• Polskie Towarzystwo Pediatryczne (PTP), ptp.edu.pl',
+    '• WHO: Pocket book of hospital care for children (2nd edition)',
     '',
     t('pdf.sources.disclaimer'),
   ]

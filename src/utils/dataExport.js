@@ -191,7 +191,7 @@ export async function exportAllDataAsCsv(uid) {
       const entries = data[key]
       if (!Array.isArray(entries) || entries.length === 0) continue
 
-      parts.push(`# ${category.toUpperCase()} — ${babyName}`)
+      parts.push(`# ${category.toUpperCase()}: ${babyName}`)
       parts.push(arrayToCsv(entries, CSV_COLUMNS[category]))
       parts.push('')
     }
