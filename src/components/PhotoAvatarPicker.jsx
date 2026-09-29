@@ -89,6 +89,7 @@ export default function PhotoAvatarPicker({ open, uid, profileId, currentUrl, on
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 20,
       }}
+      data-back-close
       onClick={(e) => { if (e.target === e.currentTarget && !uploading) onClose() }}
     >
       <div style={{

@@ -48,6 +48,7 @@ export default function TrialEndingModal({ open, daysLeft, onUpgrade, onLater, p
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 20,
       }}
+      data-back-close
       onClick={(e) => { if (e.target === e.currentTarget) onLater() }}
     >
       <div style={{

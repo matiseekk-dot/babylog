@@ -37,6 +37,8 @@ export default function TrialStartedModal({ open, onClose }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="trial-started-title"
+      data-back-close
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(0,0,0,0.6)', zIndex: 10000,

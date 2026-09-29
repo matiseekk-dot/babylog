@@ -82,16 +82,25 @@ exports.scheduleNotifications = onSchedule(
     const tokensSnap = await db.collectionGroup('tokens').get()
     const userTokens = {} // userId → [tokens]
 
+    // v2.16.9: ten sam telefon (token) bywa zapisany pod dwoma kontami, gdy ktoś
+    // wylogował się i zalogował innym kontem. Starsze wersje aplikacji nie
+    // usuwały tokena przy wylogowaniu, więc telefon dostawał powiadomienia obu
+    // kont. Token należy do konta, pod którym zapisano go najpóźniej.
+    const latestFor = {} // token → { uid, ms }
     tokensSnap.forEach(docSnap => {
-      const path = docSnap.ref.path // users/{uid}/tokens/{token}
-      const parts = path.split('/')
+      const parts = docSnap.ref.path.split('/') // users/{uid}/tokens/{token}
       if (parts.length !== 4 || parts[0] !== 'users' || parts[2] !== 'tokens') return
-      const uid = parts[1]
-      const token = docSnap.data().token
-      if (!token) return
+      const data = docSnap.data()
+      if (!data.token) return
+      const ms = (data.lastSeenAt || data.createdAt)?.toMillis?.() || 0
+      const prev = latestFor[data.token]
+      if (!prev || ms > prev.ms) latestFor[data.token] = { uid: parts[1], ms }
+    })
+
+    for (const [token, { uid }] of Object.entries(latestFor)) {
       if (!userTokens[uid]) userTokens[uid] = []
       userTokens[uid].push(token)
-    })
+    }
 
     console.log(`[scheduleNotifications] Found ${Object.keys(userTokens).length} users with tokens`)
 

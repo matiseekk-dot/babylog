@@ -183,6 +183,7 @@ export default function QuickAddFab({
         <>
           {/* Backdrop */}
           <div
+            data-back-close
             onClick={close}
             style={{
               position: 'fixed', inset: 0,

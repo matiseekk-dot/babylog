@@ -43,6 +43,11 @@ function withTimeout(p, ms) {
   ])
 }
 
+// v2.16.9: token tego urządzenia i konto, pod którym jest zapisany. Przy
+// wylogowaniu usuwamy go z konta, inaczej telefon dalej dostawał powiadomienia
+// poprzedniego konta (leki, karmienie, podsumowanie dnia z imieniem dziecka).
+const DEVICE_TOKEN_KEY = 'babylog_fcm_device_token'
+
 // Wspólny zapis tokena do Firestore (idempotentny — ID dokumentu = token).
 async function saveTokenToFirestore(userId, token, isNative) {
   const tokenRef = doc(db, 'users', userId, 'tokens', token)
@@ -53,6 +58,23 @@ async function saveTokenToFirestore(userId, token, isNative) {
     createdAt: serverTimestamp(),
     lastSeenAt: serverTimestamp(),
   }, { merge: true })
+  try { localStorage.setItem(DEVICE_TOKEN_KEY, JSON.stringify({ uid: userId, token })) } catch {}
+}
+
+/**
+ * Usuwa token tego urządzenia z konta (przed wylogowaniem, póki reguły
+ * Firestore jeszcze wpuszczają). Najwyżej 4 s, żeby wylogowanie nie wisiało
+ * bez internetu.
+ */
+export async function unregisterDeviceToken(userId) {
+  let saved = null
+  try { saved = JSON.parse(localStorage.getItem(DEVICE_TOKEN_KEY) || 'null') } catch {}
+  if (!saved?.token || !userId || saved.uid !== userId) return
+  const res = await withTimeout(deleteDoc(doc(db, 'users', userId, 'tokens', saved.token)), 4000)
+  if (res.ok) {
+    try { localStorage.removeItem(DEVICE_TOKEN_KEY) } catch {}
+    addBreadcrumb('fcm', 'device-token-unregistered-on-logout')
+  }
 }
 
 export function useFCM(userId) {

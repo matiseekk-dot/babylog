@@ -36,6 +36,8 @@ import {
   migrateGuestDataToAccount,
   clearGuestData,
   hasGuestData,
+  clearAccountCache,
+  claimAccountCache,
 } from './useFirestore'
 
 // ─── LocalStorage helper (vitest + happy-dom provides window.localStorage) ───
@@ -405,5 +407,51 @@ describe('BUG 6 REGRESSION — TempTab flickering after remount', () => {
     clearGuestData()
     expect(localStorage.getItem('babylog_guest_temp_a')).toBe(null)
     expect(JSON.parse(localStorage.getItem('babylog_temp_a'))).toEqual([{ temp: 38.5 }])
+  })
+})
+
+// v2.16.9: po wylogowaniu i zalogowaniu innym kontem na tym samym telefonie
+// hooki czytały dane poprzedniego konta z pamięci podręcznej.
+describe('pamięć podręczna konta przy zmianie konta', () => {
+  beforeEach(() => localStorage.clear())
+
+  it('inne konto: dane poprzedniego znikają, gość i ustawienia zostają', () => {
+    claimAccountCache('uid-A')
+    localStorage.setItem('babylog_profiles', JSON.stringify([{ id: 'p1', name: 'Zosia' }]))
+    localStorage.setItem('babylog_feed_p1', JSON.stringify([{ id: 1 }]))
+    localStorage.setItem('babylog_onboarding_done', 'true')
+    localStorage.setItem('babylog_shared_uid-X_profiles', '[]')
+    localStorage.setItem('babylog_guest_feed_default', '[]')
+    localStorage.setItem('babylog_locale', 'pl')
+    localStorage.setItem('babylog_feed_reminder', '180')
+
+    claimAccountCache('uid-B')
+
+    expect(localStorage.getItem('babylog_profiles')).toBe(null)
+    expect(localStorage.getItem('babylog_feed_p1')).toBe(null)
+    expect(localStorage.getItem('babylog_onboarding_done')).toBe(null)
+    expect(localStorage.getItem('babylog_shared_uid-X_profiles')).toBe(null)
+    expect(localStorage.getItem('babylog_guest_feed_default')).toBe('[]')
+    expect(localStorage.getItem('babylog_locale')).toBe('pl')
+    expect(localStorage.getItem('babylog_feed_reminder')).toBe('180')
+    expect(localStorage.getItem('babylog_cache_owner')).toBe('uid-B')
+  })
+
+  it('to samo konto po ponownym otwarciu: nic nie jest czyszczone', () => {
+    claimAccountCache('uid-A')
+    localStorage.setItem('babylog_profiles', '[1]')
+    claimAccountCache('uid-A')
+    expect(localStorage.getItem('babylog_profiles')).toBe('[1]')
+  })
+
+  it('wylogowanie czyści dane konta, a właściciel zostaje do porównania', () => {
+    claimAccountCache('uid-A')
+    localStorage.setItem('babylog_profiles', '[1]')
+    clearAccountCache()
+    expect(localStorage.getItem('babylog_profiles')).toBe(null)
+    // Dane dopisane jeszcze po wyczyszczeniu nie przejdą na kolejne konto.
+    localStorage.setItem('babylog_profiles', '[1]')
+    claimAccountCache('uid-B')
+    expect(localStorage.getItem('babylog_profiles')).toBe(null)
   })
 })

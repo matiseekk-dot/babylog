@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline, setAccountUid, setEntryAddedListener } from './hooks/useFirestore'
+import { useFirestore, migrateGuestDataToAccount, hasGuestData, clearGuestData, enableOffline, setAccountUid, setEntryAddedListener, clearAccountCache } from './hooks/useFirestore'
 import { useAuth } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
 import MedicalConsentScreen, { needsConsent } from './components/MedicalConsentScreen'
@@ -41,7 +41,7 @@ import OnboardingScreen from './components/OnboardingScreen'
 import ToastContainer from './components/Toast'
 import { toast, toastWithUndo } from './components/Toast'
 import FeedReminderPrompt from './components/FeedReminderPrompt'
-import { useFCM } from './hooks/useFCM'
+import { useFCM, unregisterDeviceToken } from './hooks/useFCM'
 import { PushNotifications } from '@capacitor/push-notifications'
 import {
   buildFeedReminder, entryTimestamp, formatClock, getFeedReminderPref, setFeedReminderPref,
@@ -183,6 +183,11 @@ const MORE_TABS = [
 // Listener dotknięcia push (natywnie) — raz na życie aplikacji.
 let pushTapListenerAdded = false
 
+// v2.16.9: uid, z którym skonfigurowano RevenueCat. Drugie configure() nie
+// zmienia użytkownika, więc po przelogowaniu w tej samej sesji zakup trafiłby
+// na poprzednie konto. Przy zmianie uid wołamy logIn().
+let rcConfiguredUid = null
+
 export default function App() {
   const { user, loading: authLoading, login, logout } = useAuth()
   // Rejestracja SW od razu przy starcie — niezbędne dla notyfikacji o lekach.
@@ -220,6 +225,17 @@ export default function App() {
   // Token push tego urządzenia — jedna instancja dla całej apki (Ustawienia
   // i pytanie o przypomnienie o karmieniu korzystają z tej samej).
   const { refreshToken: refreshFcmToken } = useFCM(uid)
+
+  // v2.16.9: wylogowanie po kolei. Token powiadomień usuwamy z konta, póki
+  // jeszcze jesteśmy zalogowani (inaczej telefon dalej dostawał powiadomienia
+  // tego konta), czyścimy pamięć podręczną konta i zamykamy Ustawienia, żeby
+  // po ponownym zalogowaniu nie otworzyły się same. Dopiero potem Firebase.
+  const handleLogout = async () => {
+    await unregisterDeviceToken(uid)
+    clearAccountCache()
+    setShowSettings(false)
+    await logout()
+  }
 
   // v2.16.3: strefa czasowa dla Cloud Function — godziny wpisów (np. leków)
   // są lokalne, a serwer działa w UTC. v2.16.4: + język (treść push).
@@ -272,8 +288,14 @@ export default function App() {
       try {
         const { Purchases } = await import('@revenuecat/purchases-capacitor')
         const rcKey = import.meta.env.VITE_RC_PUBLIC_KEY || 'goog_CePHovfsjHOiYaoKwnFhtcDFnwq'
-        await Purchases.configure({ apiKey: rcKey, appUserID: uid })
-        addBreadcrumb('purchase', 'rc-configured', { uid })
+        if (rcConfiguredUid === null) {
+          await Purchases.configure({ apiKey: rcKey, appUserID: uid })
+          addBreadcrumb('purchase', 'rc-configured', { uid })
+        } else if (rcConfiguredUid !== uid) {
+          await Purchases.logIn({ appUserID: uid })
+          addBreadcrumb('purchase', 'rc-login-switched', { uid })
+        }
+        rcConfiguredUid = uid
         // v2.16.4: dotknięcie push → zakładka. Podpinamy DOPIERO tutaj: most
         // natywny już działa (configure przeszło), a wtyczka trzyma zdarzenie
         // z zimnego startu do pierwszego listenera. Na starcie aplikacji
@@ -1392,6 +1414,28 @@ export default function App() {
     return () => { cancelled = true; clearTimeout(timer); handle?.remove?.() }
   }, [])
 
+  // v2.16.9: systemowy przycisk Wstecz (Android). Bez obsługi Android zamykał
+  // aplikację z każdego ekranu (Ustawienia, Premium, Zdrowie...). Natywna
+  // MainActivity (od v57) pyta window.__spokojnyBack(): true = obsłużone
+  // w aplikacji, false = wyjdź. Kolejność: najwyższe okienko (tło oznaczone
+  // data-back-close), nakładki, inna zakładka niż Dziś.
+  const backRef = useRef(null)
+  backRef.current = () => {
+    const overlays = document.querySelectorAll('[data-back-close]')
+    if (overlays.length) { overlays[overlays.length - 1].click(); return true }
+    if (showPaywall) { closePaywall(); return true }
+    if (showSettings) { setShowSettings(false); return true }
+    if (showPrep) { setShowPrep(false); return true }
+    if (showProfiles) { setShowProfiles(false); return true }
+    if (showMore) { setShowMore(false); return true }
+    if (tab !== 'today') { setTab('today'); return true }
+    return false
+  }
+  useEffect(() => {
+    window.__spokojnyBack = () => { try { return !!backRef.current?.() } catch { return false } }
+    return () => { delete window.__spokojnyBack }
+  }, [])
+
   // Tylko dev server: symulacja akcji z widżetu w przeglądarce (bez telefonu).
   if (import.meta.env.DEV) {
     window.__quickAction = setPendingQuickAction
@@ -1536,7 +1580,7 @@ export default function App() {
           onUpgrade={() => { setShowSettings(false); openPaywall('settings') }}
           onEditPhoto={() => { setShowSettings(false); openPhotoPicker() }}
           user={user}
-          onLogout={user ? logout : () => {
+          onLogout={user ? handleLogout : () => {
             try { localStorage.removeItem('babylog_guest') } catch {}
             setGuestMode(false)
             setShowSettings(false)

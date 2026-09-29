@@ -10,6 +10,7 @@ import {
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import { auth, provider } from '../firebase'
 import { captureError, addBreadcrumb, setUserContext } from '../sentry'
+import { claimAccountCache } from './useFirestore'
 import { trackLoginFailed } from '../utils/analytics'
 
 /**
@@ -57,6 +58,8 @@ export function useAuth() {
     }
 
     const unsub = onAuthStateChanged(auth, u => {
+      // v2.16.9: zanim hooki odczytają dane, usuń pamięć podręczną innego konta.
+      if (u) claimAccountCache(u.uid)
       setUser(u ?? null)
       setLoading(false)
       setUserContext(u?.uid)

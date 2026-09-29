@@ -46,7 +46,59 @@ function lsLoad(uid, key, fallback) {
 function lsSave(uid, key, val) {
   try {
     localStorage.setItem(lsPrefix(uid) + key, JSON.stringify(val))
+    if (uid) registerCacheKey(lsPrefix(uid) + key)
   } catch { /* quota exceeded — ignore */ }
+}
+
+// ─── Pamięć podręczna konta a zmiana konta (v2.16.9) ─────────────────────────
+// Dane zalogowanego konta leżą pod wspólnym prefiksem babylog_, bez uid. Po
+// wylogowaniu i zalogowaniu INNYM kontem na tym samym telefonie hooki czytały
+// dane poprzedniego konta (dziecko, wpisy), a pierwszy zapis wysyłał je na nowe
+// konto. Teraz: rejestr kluczy danych konta + właściciel pamięci podręcznej.
+const CACHE_KEYS = 'babylog_cache_keys'
+const CACHE_OWNER = 'babylog_cache_owner'
+// Klucze sprzed rejestru (starsze wersje): wpisy i podstawowe dane konta.
+// feed_reminder to ustawienie urządzenia, nie dane konta.
+const LEGACY_ACCOUNT_KEY = /^babylog_(?!feed_reminder$)((feed|sleep|diaper|temp|meds|growth|cough|symptoms|teething|milestones|vacc|diet|doctor|reminder)_|profiles$|activeProfile$|onboarding_done$|linked_owner$|daily_summary$|premium_purchased$)/
+let cacheKeys = null
+
+function loadCacheKeys() {
+  if (cacheKeys) return cacheKeys
+  try { cacheKeys = new Set(JSON.parse(localStorage.getItem(CACHE_KEYS) || '[]')) } catch { cacheKeys = new Set() }
+  return cacheKeys
+}
+
+function registerCacheKey(fullKey) {
+  const keys = loadCacheKeys()
+  if (keys.has(fullKey)) return
+  keys.add(fullKey)
+  try { localStorage.setItem(CACHE_KEYS, JSON.stringify([...keys])) } catch {}
+}
+
+/** Usuwa z localStorage dane konta (i wspólnego konta partnera). Dane gościa zostają. */
+export function clearAccountCache() {
+  const keys = loadCacheKeys()
+  for (const k of lsKeys()) {
+    if (keys.has(k) || k.startsWith('babylog_shared_') || LEGACY_ACCOUNT_KEY.test(k)) {
+      try { localStorage.removeItem(k) } catch {}
+    }
+  }
+  keys.clear()
+  try { localStorage.removeItem(CACHE_KEYS) } catch {}
+}
+
+/**
+ * Wołane przy zalogowaniu (zanim hooki odczytają dane). Pamięć podręczna innego
+ * konta jest czyszczona. Właściciela zostawiamy przy wylogowaniu, więc nawet
+ * dane zapisane jeszcze po wyczyszczeniu nie trafią do kolejnego konta.
+ */
+export function claimAccountCache(uid) {
+  if (!uid) return
+  try {
+    const owner = localStorage.getItem(CACHE_OWNER)
+    if (owner && owner !== uid) clearAccountCache()
+    localStorage.setItem(CACHE_OWNER, uid)
+  } catch {}
 }
 
 function docRef(uid, key) {

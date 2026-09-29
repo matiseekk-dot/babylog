@@ -37,7 +37,7 @@ export default function FeedReminderPrompt({
 
   return (
     <>
-      <div onClick={onLater} style={{
+      <div data-back-close onClick={onLater} style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.28)', zIndex: 120,
       }} />
       <div role="dialog" aria-labelledby="feed-reminder-title" style={{

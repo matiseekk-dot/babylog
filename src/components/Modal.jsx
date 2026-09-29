@@ -6,6 +6,7 @@ export default function Modal({ open, onClose, title, children }) {
   return (
     <div
       className="modal-backdrop"
+      data-back-close
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       role="dialog"
       aria-modal="true"
