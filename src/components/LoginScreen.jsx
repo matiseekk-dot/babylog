@@ -1,8 +1,12 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { t, useLocale } from '../i18n'
+import { trackLoginViewed } from '../utils/analytics'
 
 export default function LoginScreen({ onLogin, onSkip, loading }) {
   useLocale()  // re-render on language change
+  // v2.16.8: pierwszy ekran nowej instalacji (zgoda medyczna już go nie
+  // poprzedza), więc to zdarzenie uruchamia Analytics i liczy każde otwarcie.
+  useEffect(() => { trackLoginViewed() }, [])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
 

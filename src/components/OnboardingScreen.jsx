@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { t, useLocale } from '../i18n'
 import { trackOnboardingCompleted, trackOnboardingViewed } from '../utils/analytics'
 import PartnerJoinForm from './PartnerJoinForm'
+import Modal from './Modal'
+import { ConsentDetails } from './MedicalConsentScreen'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 
@@ -48,6 +50,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
 
   const [mode, setMode] = useState(() => (hasJoinIntent() ? 'join' : 'profile'))
   const [joined, setJoined] = useState(false)
+  const [showDisclaimer, setShowDisclaimer] = useState(false)
 
   useEffect(() => { trackOnboardingViewed() }, [])
 
@@ -101,6 +104,9 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     // v2.11.32 P1-6: funnel event — onboarding complete.
     // Mierzymy ageMonths + sex (no PII — imię nie idzie do analytics).
     trackOnboardingCompleted({ ageMonths: months, sex })
+    // v2.16.8: kliknięcie przycisku pod linijką onb.disclaimer = potwierdzenie
+    // zastrzeżenia medycznego; zapisujemy kiedy (pełna zgoda przy Zdrowiu).
+    try { localStorage.setItem('babylog_disclaimer_ack', new Date().toISOString()) } catch {}
     onComplete({
       name: name.trim(),
       months,
@@ -345,11 +351,26 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
         >
           {`${t('onb.setup.cta')}, ${name.trim() || '👶'}! 🍼`}
         </button>
+        {/* v2.16.8: zastrzeżenie medyczne zamiast blokującego ekranu na starcie.
+            Pełny ekran zgody pokazuje się przy pierwszym wejściu w Zdrowie. */}
         <p style={{fontSize:11,color:'var(--text-3)',textAlign:'center',margin:'var(--space-tight) 0 0',lineHeight:1.5}}>
-          {t('app.tagline')}
+          {t('onb.disclaimer')}{' '}
+          <button type="button" onClick={() => setShowDisclaimer(true)} style={{
+            background:'none', border:'none', padding:0, font:'inherit',
+            color:'var(--brand-600)', textDecoration:'underline', cursor:'pointer',
+          }}>
+            {t('onb.disclaimer_more')}
+          </button>
         </p>
       </div>
       )}
+
+      <Modal open={showDisclaimer} onClose={() => setShowDisclaimer(false)} title={t('consent.title')}>
+        <ConsentDetails />
+        <button type="button" className="btn-primary" onClick={() => setShowDisclaimer(false)} style={{ width:'100%' }}>
+          {t('common.close')}
+        </button>
+      </Modal>
     </div>
   )
 }

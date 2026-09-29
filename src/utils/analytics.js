@@ -79,10 +79,16 @@ export async function track(eventName, params = {}) {
 // ─── Funnel events (6 critical) ──────────────────────────────────────────────
 
 /**
- * Ekran zgody medycznej się wyświetlił: pierwszy ekran po instalacji.
- * v2.16.7: Analytics startuje przy pierwszym zdarzeniu, a wcześniej pierwszym
- * było consent_accepted, więc kto wyszedł na tym ekranie, był niewidoczny
- * (kampania FR: Ads 15 instalacji, Analytics 3 nowych użytkowników).
+ * Pierwszy ekran nowej instalacji (wybór logowania) się wyświetlił.
+ * Analytics startuje przy pierwszym zdarzeniu, więc bez tego nie widać tych,
+ * którzy otworzyli aplikację i wyszli na pierwszym ekranie (kampania FR:
+ * Ads 15 instalacji, Analytics 3 nowych użytkowników).
+ */
+export const trackLoginViewed = () => track('login_viewed')
+
+/**
+ * Pełny ekran zgody medycznej się wyświetlił. v2.16.7: pierwszy ekran po
+ * instalacji; od v2.16.8 przy pierwszym wejściu w część medyczną.
  */
 export const trackConsentViewed = () => track('consent_viewed')
 

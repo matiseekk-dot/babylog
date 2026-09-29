@@ -7,7 +7,12 @@ import { trackConsentAccepted, trackConsentViewed } from '../utils/analytics'
  * MedicalConsentScreen
  *
  * Zunifikowany ekran zgody medycznej + disclaimera.
- * Pokazany RAZ przed pierwszym użyciem aplikacji.
+ *
+ * v2.16.8: nie blokuje już startu aplikacji. Pokazuje się RAZ, przy pierwszym
+ * wejściu w część medyczną (Zdrowie: temperatura, leki, objawy; wytyczne,
+ * objawy alarmowe). Na starcie zostaje jedna linijka pod przyciskiem na ekranie
+ * profilu dziecka (onb.disclaimer) z tą samą treścią w okienku "Więcej".
+ * onBack: wróć do poprzedniej zakładki bez akceptacji.
  *
  * v2.9.0 (kwiecień 2026):
  *   - Połączenie dwóch ekranów (consent + disclaimer) w jeden
@@ -56,7 +61,7 @@ function saveAcceptance() {
   }
 }
 
-export default function MedicalConsentScreen({ onAccept }) {
+export default function MedicalConsentScreen({ onAccept, onBack }) {
   useLocale()
   const [checked, setChecked] = useState(false)
 
@@ -142,38 +147,7 @@ export default function MedicalConsentScreen({ onAccept }) {
           {t('consent.intro')}
         </p>
 
-        {/* Bullet points */}
-        <div style={{
-          display: 'flex', flexDirection: 'column',
-          gap: 'var(--space-snug)',
-          marginBottom: 'var(--space-comfortable)',
-        }}>
-          <ConsentPoint icon="📋" text={t('consent.p1')} />
-          <ConsentPoint icon="🩺" text={t('consent.p2')} />
-          <ConsentPoint icon="👨‍⚕️" text={t('consent.p3')} />
-          <ConsentPoint icon="🚨" text={t('consent.p4')} />
-        </div>
-
-        {/* Emergency callout — wyróżniony wizualnie */}
-        <div style={{
-          background: 'var(--alert-50)',
-          border: '1.5px solid var(--alert-500)',
-          borderRadius: 'var(--radius)',
-          padding: 'var(--space) var(--space)',
-          marginBottom: 'var(--space-comfortable)',
-          boxShadow: '0 1px 3px rgba(224, 93, 68, 0.12)',
-        }}>
-          <div style={{
-            fontSize: 13, fontWeight: 800,
-            color: 'var(--alert-700)', marginBottom: 'var(--space-tight)',
-            textTransform: 'uppercase', letterSpacing: '0.02em',
-          }}>
-            🚨 {t('consent.emergency_title')}
-          </div>
-          <div style={{ fontSize: 15, color: 'var(--alert-700)', lineHeight: 1.5, fontWeight: 600 }}>
-            {t('consent.emergency_text')}
-          </div>
-        </div>
+        <ConsentDetails />
       </div>
 
       {/* Sticky footer — checkbox + button ZAWSZE widoczne, niezależnie od scroll
@@ -240,8 +214,65 @@ export default function MedicalConsentScreen({ onAccept }) {
         >
           {t('consent.accept')}
         </button>
+
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              display: 'block', margin: 'var(--space-snug) auto 0',
+              background: 'none', border: 'none', color: 'var(--text-2)',
+              fontSize: 14, fontWeight: 600, cursor: 'pointer', padding: 'var(--space-snug)',
+            }}
+          >
+            {t('common.back')}
+          </button>
+        )}
       </div>
     </div>
+  )
+}
+
+/**
+ * Treść zastrzeżenia (punkty + ramka 112). Używana na pełnym ekranie zgody
+ * i w okienku "Więcej" na ekranie tworzenia profilu dziecka.
+ */
+export function ConsentDetails() {
+  useLocale()
+  return (
+    <>
+      <div style={{
+        display: 'flex', flexDirection: 'column',
+        gap: 'var(--space-snug)',
+        marginBottom: 'var(--space-comfortable)',
+      }}>
+        <ConsentPoint icon="📋" text={t('consent.p1')} />
+        <ConsentPoint icon="🩺" text={t('consent.p2')} />
+        <ConsentPoint icon="👨‍⚕️" text={t('consent.p3')} />
+        <ConsentPoint icon="🚨" text={t('consent.p4')} />
+      </div>
+
+      {/* Ramka 112, wyróżniona wizualnie */}
+      <div style={{
+        background: 'var(--alert-50)',
+        border: '1.5px solid var(--alert-500)',
+        borderRadius: 'var(--radius)',
+        padding: 'var(--space) var(--space)',
+        marginBottom: 'var(--space-comfortable)',
+        boxShadow: '0 1px 3px rgba(224, 93, 68, 0.12)',
+      }}>
+        <div style={{
+          fontSize: 13, fontWeight: 800,
+          color: 'var(--alert-700)', marginBottom: 'var(--space-tight)',
+          textTransform: 'uppercase', letterSpacing: '0.02em',
+        }}>
+          🚨 {t('consent.emergency_title')}
+        </div>
+        <div style={{ fontSize: 15, color: 'var(--alert-700)', lineHeight: 1.5, fontWeight: 600 }}>
+          {t('consent.emergency_text')}
+        </div>
+      </div>
+    </>
   )
 }
 

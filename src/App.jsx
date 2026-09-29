@@ -161,6 +161,10 @@ const NAV_TABS = [
 // v2.10.2: emoji → Icon component z lucide-react (konsystencja platformowa).
 // v2.10.6: dodane 'reference' i 'seek_help' (MDR EXIT — statyczne biblioteki
 // wytycznych PTP/AAP, zastępują active crisis detection).
+// v2.16.8: pełna zgoda medyczna pokazuje się przy pierwszym wejściu w te zakładki
+// (wcześniej blokowała start aplikacji, zanim użytkownik zobaczył cokolwiek).
+const MEDICAL_TABS = ['health', 'temp', 'meds', 'symptoms', 'cough', 'reference', 'seek_help']
+
 const MORE_TABS = [
   { id:'reference',  Icon: HeartPulse,  labelKey:'nav.reference' },
   { id:'seek_help',  Icon: Stethoscope, labelKey:'nav.seek_help' },
@@ -186,7 +190,8 @@ export default function App() {
   // Meds tab), przez co świeżo zainstalowana apka nigdy nie miała SW gotowego.
   useServiceWorker()
 
-  // Medical consent — must be accepted ONCE before first use.
+  // Medical consent — akceptowana RAZ. Od v2.16.8 nie przy starcie, tylko przy
+  // pierwszym wejściu w MEDICAL_TABS (patrz return przed głównym widokiem).
   // v2.9.0: zunifikowany ekran (consent + disclaimer w jednym).
   // needsConsent() sprawdza OBA stare klucze localStorage dla kompatybilności
   // z userami z 2.7.x/2.8.x — nikt nie musi akceptować ponownie.
@@ -1394,7 +1399,8 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!pendingQuickAction || authLoading || !consentAccepted) return
+    // v2.16.8: widżet i skróty to karmienie i sen, zgoda medyczna ich nie blokuje.
+    if (!pendingQuickAction || authLoading) return
     // Ekran logowania albo onboarding — porzuć akcję (nie dodawaj wpisu po zalogowaniu).
     if ((!user && !guestMode) || !onboardingDone) { setPendingQuickAction(null); return }
     const timer = setTimeout(() => {
@@ -1402,7 +1408,7 @@ export default function App() {
       setPendingQuickAction(null)
     }, 1200)
     return () => clearTimeout(timer)
-  }, [pendingQuickAction, authLoading, consentAccepted, user, guestMode, onboardingDone])
+  }, [pendingQuickAction, authLoading, user, guestMode, onboardingDone])
 
   // Prośba o ocenę — po wpisie (listener useFirestore), gdy nic innego nie jest otwarte.
   reviewCheckRef.current = async () => {
@@ -1440,11 +1446,6 @@ export default function App() {
   }, [widgetTitle, locale])
 
   const currentMoreTab = MORE_TABS.find(t => t.id === tab)
-
-  // ── Medical consent gate (shown once before first use) ───────────────────
-  if (!consentAccepted) {
-    return <MedicalConsentScreen onAccept={acceptConsent} />
-  }
 
   // ── Auth loading ────────────────────────────────────────────────────────
   if (authLoading) {
@@ -1571,6 +1572,13 @@ export default function App() {
         />
       </div>
     )
+  }
+
+  // ── Zgoda medyczna przy pierwszym wejściu w część medyczną (v2.16.8) ──────
+  // Karmienie, sen i pieluchy działają od razu; pełne zastrzeżenie pokazujemy
+  // tam, gdzie ma znaczenie. "Wstecz" wraca na Dziś bez akceptacji.
+  if (!consentAccepted && MEDICAL_TABS.includes(tab)) {
+    return <MedicalConsentScreen onAccept={acceptConsent} onBack={() => setTab('today')} />
   }
 
   return (
