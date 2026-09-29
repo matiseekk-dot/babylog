@@ -20,7 +20,7 @@
  *   exportAllToCsv(babyName, { feed, sleep, diaper, temp, meds, growth })
  */
 
-import { todayDate, displayMethod, displayFeedType } from './helpers'
+import { todayDate, displayMethod, displayFeedType, displaySleepLabel, displayDiaperType } from './helpers'
 import { t } from '../i18n'
 
 /**
@@ -77,7 +77,7 @@ function feedSection(logs = []) {
 function sleepSection(logs = []) {
   const rows = logs.map(l => [
     l.date,
-    l.label || '',
+    displaySleepLabel(l.label),
     l.durationMin,
     l.manual ? t('csv.value.manual') : t('csv.value.timer'),
   ])
@@ -95,7 +95,7 @@ function diaperSection(logs = []) {
   const rows = logs.map(l => [
     l.date,
     l.time,
-    l.type,
+    displayDiaperType(l.type),
     l.note || '',
   ])
   return sectionCsv(

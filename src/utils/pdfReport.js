@@ -22,6 +22,7 @@
 
 import { t, getLocale } from '../i18n'
 import { loadPolishFont, stripPolish } from './pdfFonts'
+import { formatAge, displayMethod, displaySleepLabel, displayDiaperType } from './helpers'
 
 // ─── Module state (font loading) ───────────────────────────────────────────
 // Po loadPolishFont() te wartości są ustawione na aktywny font i czy
@@ -29,10 +30,19 @@ import { loadPolishFont, stripPolish } from './pdfFonts'
 let activeFont = 'helvetica'
 let nativePolish = false
 
+// v2.16.16: font Roboto nie ma emoji, w PDF wychodziły z nich krzaczki
+// (np. notatka "Spał spokojnie 😴"). Usuwamy je razem ze złączami.
+const EMOJI = /[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{1F1E6}-\u{1F1FF}]/gu
+
+function cleanForPdf(text) {
+  const noEmoji = String(text).replace(EMOJI, '').replace(/ {2,}/g, ' ').trim()
+  return nativePolish ? noEmoji : stripPolish(noEmoji)
+}
+
 /** Zwraca tekst bezpieczny do PDF — strip polskich jeśli font nie obsługuje */
 function safeText(text) {
   if (text === null || text === undefined) return ''
-  return nativePolish ? String(text) : stripPolish(text)
+  return cleanForPdf(text)
 }
 
 // Wrapper dla autoTable - zapewnia spójne style + hook dla safeText
@@ -51,8 +61,8 @@ function _renderTable(autoTable, doc, opts) {
   const existingHook = opts.didParseCell
   const didParseCell = function (data) {
     if (existingHook) existingHook(data)
-    if (!nativePolish && data.cell.text && Array.isArray(data.cell.text)) {
-      data.cell.text = data.cell.text.map(line => stripPolish(line))
+    if (data.cell.text && Array.isArray(data.cell.text)) {
+      data.cell.text = data.cell.text.map(line => cleanForPdf(line))
     }
   }
   return autoTable(doc, { ...opts, styles, headStyles, didParseCell })
@@ -65,19 +75,29 @@ const PAGE_INNER_WIDTH = A4_WIDTH - 2 * MARGIN
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
+// v2.16.16: DE/FR/ES dostawały polski format daty i wieku.
+const DATE_LOCALES = { pl: 'pl-PL', en: 'en-US', de: 'de-DE', fr: 'fr-FR', es: 'es-ES' }
+function dateLocale() {
+  return DATE_LOCALES[getLocale()] || 'pl-PL'
+}
+
+/** Liczba z przecinkiem tam, gdzie tak się pisze (PL/DE/FR/ES). */
+function num(v, digits) {
+  const n = Number(String(v).replace(',', '.'))
+  if (!isFinite(n)) return String(v)
+  const opts = digits == null ? { maximumFractionDigits: 2 } : { minimumFractionDigits: digits, maximumFractionDigits: digits }
+  return n.toLocaleString(dateLocale(), opts)
+}
+
 function formatDateLocale(dateStr) {
   const d = new Date(dateStr + 'T12:00:00')
-  const locale = getLocale() === 'en' ? 'en-US' : 'pl-PL'
+  const locale = dateLocale()
   return d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 function formatAgeMonths(months) {
-  if (!months) return '—'
-  const years = Math.floor(months / 12)
-  const rem = months % 12
-  if (years === 0) return `${months} mies.`
-  if (rem === 0) return `${years} lat`
-  return `${years}r ${rem}m`
+  if (months == null || months === '') return '—'
+  return formatAge(Number(months))
 }
 
 /** Filtruje wpisy po zakresie dat (inclusive) */
@@ -85,11 +105,6 @@ function inRange(entry, startDate, endDate, dateKey = 'date') {
   const d = entry[dateKey]
   if (!d) return false
   return d >= startDate && d <= endDate
-}
-
-/** Formatuje listę dat dla headeru raportu */
-function formatPeriod(startDate, endDate) {
-  return `${formatDateLocale(startDate)} – ${formatDateLocale(endDate)}`
 }
 
 // ─── Main PDF generator ─────────────────────────────────────────────────────
@@ -139,7 +154,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   const childRows = [
     [t('pdf.child.name'), profile.name || '—'],
     [t('pdf.child.age'), formatAgeMonths(profile.months)],
-    [t('pdf.child.weight'), profile.weight ? `${profile.weight} kg` : '—'],
+    [t('pdf.child.weight'), profile.weight ? `${num(profile.weight)} kg` : '—'],
     [t('pdf.child.sex'), profile.sex === 'M' ? t('pdf.child.sex.M') : profile.sex === 'F' ? t('pdf.child.sex.F') : '—'],
   ]
   _renderTable(autoTable, doc, {
@@ -177,8 +192,8 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
       body: tempLogs.map(l => [
         formatDateLocale(l.date),
         l.time || '',
-        `${Number(l.temp).toFixed(1)}°C`,
-        l.method || '',
+        `${num(l.temp, 1)}°C`,
+        displayMethod(l.method),
         l.note || '',
       ]),
       ...tableStyle(),
@@ -215,7 +230,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
       body: sleepLogs.map(l => {
         const h = Math.floor((l.durationMin || 0) / 60)
         const m = (l.durationMin || 0) % 60
-        return [formatDateLocale(l.date), l.label || '—', `${h}h ${m}m`]
+        return [formatDateLocale(l.date), displaySleepLabel(l.label) || '—', `${h}h ${m}m`]
       }),
       ...tableStyle(),
     })
@@ -230,7 +245,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
     _renderTable(autoTable, doc, {
       startY: y,
       head: [[t('pdf.header.date'), t('pdf.header.time'), t('pdf.header.type'), t('pdf.header.note')]],
-      body: diaperLogs.map(l => [formatDateLocale(l.date), l.time || '', l.type || '—', l.note || '']),
+      body: diaperLogs.map(l => [formatDateLocale(l.date), l.time || '', displayDiaperType(l.type) || '—', l.note || '']),
       ...tableStyle(),
     })
     y = doc.lastAutoTable.finalY + 6
@@ -302,9 +317,9 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
       head: [[t('pdf.header.date'), t('pdf.child.weight'), t('pdf.col.height'), t('pdf.col.head_circ')]],
       body: growthLogs.map(l => [
         formatDateLocale(l.date),
-        l.weight ? `${l.weight} kg` : '—',
-        l.height ? `${l.height} cm` : '—',
-        l.headCirc ? `${l.headCirc} cm` : '—',
+        l.weight ? `${num(l.weight)} kg` : '—',
+        l.height ? `${num(l.height)} cm` : '—',
+        l.headCirc ? `${num(l.headCirc)} cm` : '—',
       ]),
       ...tableStyle(),
     })
@@ -352,7 +367,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
     y = addSectionTitle(doc, t('pdf.section.visits'), y)
     _renderTable(autoTable, doc, {
       startY: y,
-      head: [[t('pdf.header.date'), 'Diagnoza / zalecenia']],
+      head: [[t('pdf.header.date'), t('pdf.header.diagnosis')]],
       body: notes.map(n => [
         formatDateLocale(n.date),
         [n.diagnosis, n.recommendations, n.medications].filter(Boolean).join(' · '),
@@ -365,6 +380,7 @@ export async function generatePdfReport({ profile, startDate, endDate, data }) {
   // ─── ŹRÓDŁA MEDYCZNE ────────────────────────────────────────────────────
   y = ensurePageSpace(doc, y, 40)
   y = addSectionTitle(doc, t('pdf.section.sources'), y)
+  y += 4  // pierwsza linia tekstu (nie tabela) nachodziła na tytuł sekcji
   doc.setFontSize(8)
   doc.setTextColor(100, 100, 100)
   const sources = [
@@ -430,8 +446,8 @@ function tableStyle() {
     // Gdy font nie obsługuje polskich znaków (fallback na helvetica),
     // zamieniamy polskie znaki na ASCII w każdej komórce.
     didParseCell: function (data) {
-      if (!nativePolish && data.cell.text && Array.isArray(data.cell.text)) {
-        data.cell.text = data.cell.text.map(line => stripPolish(line))
+      if (data.cell.text && Array.isArray(data.cell.text)) {
+        data.cell.text = data.cell.text.map(line => cleanForPdf(line))
       }
     },
   }
@@ -449,8 +465,7 @@ function ensurePageSpace(doc, y, requiredMm = 40) {
 function addFooters(doc) {
   const pageCount = doc.internal.getNumberOfPages()
   const now = new Date()
-  const locale = getLocale() === 'en' ? 'en-US' : 'pl-PL'
-  const dtStr = now.toLocaleString(locale, {
+  const dtStr = now.toLocaleString(dateLocale(), {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
@@ -514,7 +529,7 @@ function renderSummary(doc, y, data, startDate, endDate, autoTable) {
     rows.push([t('pdf.stat.diapers'), String(diaperLogs.length)])
   }
   if (tempLogs.length && maxTemp) {
-    rows.push([t('pdf.stat.temp_max'), `${maxTemp.toFixed(1)}°C`])
+    rows.push([t('pdf.stat.temp_max'), `${num(maxTemp, 1)}°C`])
     if (feverDays > 0) rows.push([t('pdf.stat.temp_days'), String(feverDays)])
   }
   if (medsLogs.length) {
@@ -595,7 +610,7 @@ function displayMedFormPdf(formKey) {
  */
 export async function buildAndDownloadPdf({ profile, startDate, endDate, data, filename }) {
   const doc = await generatePdfReport({ profile, startDate, endDate, data })
-  const safeFilename = filename || `raport-${profile.name || 'dziecko'}-${startDate}-${endDate}.pdf`
+  const safeFilename = filename || `${t('pdf.filename')}-${profile.name || t('pdf.filename_child')}-${startDate}-${endDate}.pdf`
   doc.save(safeFilename)
   return { filename: safeFilename }
 }

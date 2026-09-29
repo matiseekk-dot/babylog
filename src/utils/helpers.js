@@ -126,6 +126,29 @@ export function displayFeedType(type) {
   }
 }
 
+/**
+ * displaySleepLabel / displayDiaperType — jak wyżej, dla rodzaju snu i pieluchy
+ * (v2.16.16: raport PDF i CSV pokazywały te wartości po polsku w każdym języku).
+ */
+const SLEEP_LABEL_KEYS = {
+  'Drzemka': 'sleep.type.nap', nap: 'sleep.type.nap',
+  'Sen nocny': 'sleep.type.night', night: 'sleep.type.night',
+}
+export function displaySleepLabel(label) {
+  const key = SLEEP_LABEL_KEYS[label]
+  return key ? t(key) : (label || '')
+}
+
+const DIAPER_TYPE_KEYS = {
+  'Mokra': 'diaper.wet', 'Brudna': 'diaper.dirty', 'Obydwie': 'diaper.both',
+  'Nocnik-siku': 'diaper.potty_pee', 'Nocnik-kupa': 'diaper.potty_poo',
+  'Siku': 'diaper.toilet_pee', 'Kupa': 'diaper.toilet_poo',
+}
+export function displayDiaperType(type) {
+  const key = DIAPER_TYPE_KEYS[type]
+  return key ? t(key) : (type || '')
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // USUNIĘTE W v2.7.1: calcParacetamol, calcIbuprofen
 //
