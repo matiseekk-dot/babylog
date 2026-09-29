@@ -1843,7 +1843,7 @@ export default function App() {
               style={{position:'relative'}}
               role="tab"
               aria-selected={isActive}
-              aria-label={count > 0 ? `${tabLabel}, ${count} powiadomień` : tabLabel}
+              aria-label={count > 0 ? t('nav.tab_alerts_aria', { tab: tabLabel, count }) : tabLabel}
             >
               <span aria-hidden="true">{n.icon}</span>
               {tabLabel}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { t, useLocale, getLocale, isPL } from '../i18n'
+import { t, useLocale, getLocale } from '../i18n'
 import { getPlans } from '../data/premiumPlans'
 import { trackPaywallViewed, trackPaywallCTAClicked } from '../utils/analytics'
 
@@ -39,31 +39,18 @@ import { trackPaywallViewed, trackPaywallCTAClicked } from '../utils/analytics'
 //      (waga/wzrost/BMI/obwód głowy). Nie publikuje norm dla ząbkowania, kaszlu,
 //      milestone'ów. Te są w PTP/AAP referencyjnych tabelach. Tekst poprawiony
 //      żeby nie wprowadzał w błąd.
-// v2.12.0: feature list per locale.
-//   PL → polskie texty
-//   inne (EN/DE/FR/ES) → English (safe międzynarodowy fallback)
-// TODO: pełny per-language paywall przez i18n keys (Phase 4).
+// v2.16.10: lista funkcji z tłumaczeń w 5 językach. Wcześniej PL na sztywno,
+// a DE/FR/ES widziały ją po angielsku, akurat na ekranie decyzji o zakupie.
+const FEATURE_KEYS = [
+  ['📄', 'pdf'], ['📊', 'growth'], ['📈', 'trends'], ['🩺', 'doctor'],
+  ['👶', 'children'], ['👨‍👩‍👧', 'shared'], ['🔔', 'reminders'],
+]
 function getFeatures() {
-  if (!isPL()) {
-    return [
-      { icon:'📄', title:'PDF report for pediatrician', desc:'Formatted summary of temperatures, doses, feedings, sleep — for any date range. Take it to your visit.' },
-      { icon:'📊', title:'Growth charts with WHO percentiles', desc:'See where your child ranks compared to WHO norms (weight, height, head circumference).' },
-      { icon:'📈', title:'Trend analytics',             desc:'Charts and pattern detection for temperature, sleep duration, feeding frequency over weeks/months.' },
-      { icon:'🩺', title:'Doctor notes & questions',    desc:'Visit history, prescriptions, questions to ask next time. Never forget what the doctor said.' },
-      { icon:'👶', title:'Unlimited children',          desc:'Twins, siblings — one subscription, no limits.' },
-      { icon:'👨‍👩‍👧', title:'Shared account for both parents', desc:'Your partner sees and adds the same entries on their own phone. Invite with a code.' },
-      { icon:'🔔', title:'Smart medication reminders',  desc:'Notifications when interval between doses has passed (per package leaflet).' },
-    ]
-  }
-  return [
-    { icon:'📄', title:'Raport PDF dla pediatry',       desc:'Sformatowane podsumowanie: temperatury, dawki, karmienia, sen — za dowolny okres. Zabierz do gabinetu.' },
-    { icon:'📊', title:'Wykresy wzrostu z percentylami WHO', desc:'Zobacz w którym percentylu jest twoje dziecko wg norm WHO (waga, wzrost, obwód głowy).' },
-    { icon:'📈', title:'Analityka trendów',             desc:'Wykresy i wzorce dla temperatury, snu, karmienia w skali tygodni i miesięcy.' },
-    { icon:'🩺', title:'Notatki i pytania do pediatry', desc:'Historia wizyt, recepty, pytania do zadania na następnej wizycie. Nie zapomnisz co lekarz powiedział.' },
-    { icon:'👶', title:'Nielimitowane dzieci',          desc:'Bliźnięta, rodzeństwo — jedna subskrypcja, bez limitów.' },
-    { icon:'👨‍👩‍👧', title:'Wspólne konto dla obojga rodziców', desc:'Partner widzi i uzupełnia te same wpisy na swoim telefonie. Zaproszenie kodem.' },
-    { icon:'🔔', title:'Inteligentne przypomnienia o lekach', desc:'Powiadomienia gdy minął odstęp między dawkami (zgodnie z ulotką).' },
-  ]
+  return FEATURE_KEYS.map(([icon, k]) => ({
+    icon,
+    title: t(`paywall.feature.${k}.title`),
+    desc: t(`paywall.feature.${k}.desc`),
+  }))
 }
 
 // v2.9.2: getPlans() usunięte — single source of truth w src/data/premiumPlans.js.

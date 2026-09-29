@@ -49,6 +49,10 @@ export function formatAge(months) {
  */
 const MONTHS_SHORT_PL = ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru']
 const MONTHS_SHORT_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+// v2.16.10: DE/FR/ES widziały wcześniej polskie skróty miesięcy ("29 wrz 2026").
+const MONTHS_SHORT_DE = ['Jan.','Feb.','März','Apr.','Mai','Juni','Juli','Aug.','Sept.','Okt.','Nov.','Dez.']
+const MONTHS_SHORT_FR = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.']
+const MONTHS_SHORT_ES = ['ene','feb','mar','abr','may','jun','jul','ago','sept','oct','nov','dic']
 
 export function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -62,6 +66,9 @@ export function formatDate(dateStr) {
   if (lang === 'en') {
     return `${MONTHS_SHORT_EN[mIdx]} ${day}, ${year}`
   }
+  if (lang === 'de') return `${day}. ${MONTHS_SHORT_DE[mIdx]} ${year}`
+  if (lang === 'fr') return `${day} ${MONTHS_SHORT_FR[mIdx]} ${year}`
+  if (lang === 'es') return `${day} ${MONTHS_SHORT_ES[mIdx]} ${year}`
   return `${day} ${MONTHS_SHORT_PL[mIdx]} ${year}`
 }
 

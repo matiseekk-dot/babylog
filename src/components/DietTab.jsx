@@ -92,7 +92,6 @@ export default function DietTab({uid, babyId, ageMonths }) {
               key={d.id}
               className={`diet-item ${s==='ok'?'ok':s==='nope'?'nope':''}`}
               onClick={() => !locked && toggle(d.id)}
-              onLongPress={() => d.custom && setDeleteId(d.id)}
               style={{ opacity: locked ? 0.45 : 1, cursor: locked ? 'default' : 'pointer', position:'relative' }}
             >
               {d.custom && (
@@ -106,7 +105,7 @@ export default function DietTab({uid, babyId, ageMonths }) {
               <div className="diet-name">{d.name}</div>
               <div className="diet-age">{t('diet.from_month', {months: d.months})}</div>
               {s==='ok' && <div style={{fontSize:10,color:'var(--green-dark)',fontWeight:700,marginTop:3}}>{t('diet.status.tried')}</div>}
-              {s==='nope' && <div style={{fontSize:10,color:'var(--coral)',fontWeight:700,marginTop:3}}>✗ Reakcja</div>}
+              {s==='nope' && <div style={{fontSize:10,color:'var(--coral)',fontWeight:700,marginTop:3}}>{t('diet.status.reaction')}</div>}
               {locked && <div style={{fontSize:10,color:'var(--text-3)',marginTop:3}}>{t('diet.status.too_early')}</div>}
             </div>
           )

@@ -24,24 +24,22 @@ class AppErrorBoundary extends React.Component {
     if (this.state.hasError) {
       // ErrorBoundary musi być odporny na crash i18n.js — czytamy locale
       // bezpośrednio z localStorage/navigator (bez importu i18n).
+      // v2.16.10: 5 języków (wcześniej DE/FR/ES widziały ten ekran po polsku).
+      const STRINGS = {
+        pl: { title: 'Coś poszło nie tak', body: 'Aplikacja napotkała błąd. Twoje dane są bezpieczne. Dotknij poniżej, żeby spróbować ponownie.', btn: 'Przeładuj aplikację' },
+        en: { title: 'Something went wrong', body: 'The app ran into an error. Your data is safe. Tap below to try again.', btn: 'Reload app' },
+        de: { title: 'Etwas ist schiefgelaufen', body: 'Die App hat einen Fehler festgestellt. Ihre Daten sind sicher. Tippen Sie unten, um es erneut zu versuchen.', btn: 'App neu laden' },
+        fr: { title: 'Un problème est survenu', body: 'L’application a rencontré une erreur. Vos données sont en sécurité. Touchez ci-dessous pour réessayer.', btn: 'Recharger l’appli' },
+        es: { title: 'Algo ha salido mal', body: 'La app ha encontrado un error. Tus datos están a salvo. Toca abajo para intentarlo de nuevo.', btn: 'Recargar la app' },
+      }
       let lang = 'pl'
       try {
         const saved = localStorage.getItem('babylog_locale')
-        if (saved === 'en' || saved === 'pl') {
-          lang = saved
-        } else if (typeof navigator !== 'undefined' && navigator.language?.startsWith('en')) {
-          lang = 'en'
-        }
+        const nav = typeof navigator !== 'undefined' ? (navigator.language || '').slice(0, 2) : ''
+        if (STRINGS[saved]) lang = saved
+        else if (STRINGS[nav]) lang = nav
       } catch {}
-      const strings = lang === 'en' ? {
-        title: 'Something went wrong',
-        body: 'The app encountered an error. Your data is safe. Click below to try again.',
-        btn: 'Reload app',
-      } : {
-        title: 'Coś poszło nie tak',
-        body: 'Apka napotkała błąd. Twoje dane są bezpieczne. Kliknij poniżej, żeby spróbować ponownie.',
-        btn: 'Przeładuj aplikację',
-      }
+      const strings = STRINGS[lang]
       return (
         <div style={{
           padding: '40px 24px',
