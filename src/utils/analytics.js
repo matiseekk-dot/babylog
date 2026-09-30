@@ -108,6 +108,12 @@ export const trackLoginFailed = (reason) => track('login_failed', { reason })
 /** Formularz dziecka się wyświetlił (raz na wejście na ekran). */
 export const trackOnboardingViewed = () => track('onboarding_viewed')
 
+/**
+ * Kliknięcie "Zaczynamy" przy niepełnym formularzu (v2.16.23).
+ * @param {string} missing — 'name' | 'dob' | 'both' | 'dob_invalid'
+ */
+export const trackOnboardingBlocked = (missing) => track('onboarding_blocked', { missing })
+
 /** Serwerowy trial konta Google właśnie wystartował (initTrial: nowy). */
 export const trackTrialStarted = () => track('trial_started')
 

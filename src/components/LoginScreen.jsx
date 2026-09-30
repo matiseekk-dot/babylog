@@ -37,15 +37,15 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
       background: 'var(--surface)',
     }}>
 
-      {/* Hero */}
-      <div style={{
+      {/* Hero (login-hero: niższy na krótkich ekranach, patrz <style> na dole) */}
+      <div className="login-hero" style={{
         background: 'linear-gradient(160deg, var(--brand-600) 0%, var(--brand-500) 60%, #5DCAA5 100%)',
         padding: 'var(--space-spacious) var(--space-spacious) var(--space-comfortable)',
         paddingTop: 'calc(var(--space-spacious) * 2 + var(--space-snug))',  // 72px ekvivalent
         textAlign: 'center',
         flex: '0 0 auto',
       }}>
-        <div style={{ fontSize: 64, marginBottom: 'var(--space)' }}>🍼</div>
+        <div className="login-emoji" style={{ fontSize: 64, marginBottom: 'var(--space)' }}>🍼</div>
         <div style={{
           fontSize: 26, fontWeight: 800, color: 'var(--surface)',
           letterSpacing: -0.5, lineHeight: 1.2,
@@ -61,7 +61,7 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
       </div>
 
       {/* Treść */}
-      <div style={{
+      <div className="login-benefits" style={{
         flex: 1,
         padding: 'var(--space-spacious) var(--space-comfortable) 0',
         display: 'flex', flexDirection: 'column', gap: 'var(--space)',
@@ -136,14 +136,9 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
           {busy ? t('login.loading') : t('login.button')}
         </button>
 
-        <p style={{
-          fontSize: 11, color: 'var(--text-3)', textAlign: 'center',
-          marginTop: 'var(--space)', lineHeight: 1.5,
-        }}>
-          {t('login.footer').split('\n').map((l,i)=><span key={i}>{l}{i===0?<br />:null}</span>)}
-        </p>
-
-        {/* Guest mode - prominent secondary button */}
+        {/* Guest mode - prominent secondary button. v2.16.23: zaraz pod Google
+            (notka o polityce prywatności niżej), bo na telefonach 360×640
+            przycisk wypadał poza ekran. */}
         <button
           onClick={onSkip}
           style={{
@@ -170,9 +165,23 @@ export default function LoginScreen({ onLogin, onSkip, loading }) {
         }}>
           {t('login.guest_note')}
         </p>
+
+        <p style={{
+          fontSize: 11, color: 'var(--text-3)', textAlign: 'center',
+          marginTop: 'var(--space-snug)', lineHeight: 1.5,
+        }}>
+          {t('login.footer').split('\n').map((l,i)=><span key={i}>{l}{i===0?<br />:null}</span>)}
+        </p>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-height: 720px) {
+          .login-hero { padding-top: max(40px, calc(env(safe-area-inset-top) + 24px)) !important; padding-bottom: 16px !important; }
+          .login-emoji { font-size: 48px !important; margin-bottom: 8px !important; }
+          .login-benefits { padding-top: 20px !important; gap: 10px !important; }
+        }
+      `}</style>
     </div>
   )
 }

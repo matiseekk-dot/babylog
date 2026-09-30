@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { t, useLocale } from '../i18n'
-import { trackOnboardingCompleted, trackOnboardingViewed } from '../utils/analytics'
+import { trackOnboardingBlocked, trackOnboardingCompleted, trackOnboardingViewed } from '../utils/analytics'
 import PartnerJoinForm from './PartnerJoinForm'
 import Modal from './Modal'
 import { ConsentDetails } from './MedicalConsentScreen'
@@ -72,6 +72,12 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
   const [dob, setDob] = useState('')   // YYYY-MM-DD
   const [avatar, setAvatar] = useState('👶')
   const [sex, setSex] = useState('M')
+  // v2.16.23: po kliknięciu "Zaczynamy" przy niepełnym formularzu pokazujemy,
+  // czego brakuje (wcześniej szary przycisk nic nie mówił, a data urodzenia
+  // na telefonie chowała się pod nim; w Analytics 6 z 10 osób odpadało tutaj).
+  const [tried, setTried] = useState(false)
+  const nameRef = useRef(null)
+  const dobRef = useRef(null)
 
   const todayStr = todayDate()
 
@@ -100,7 +106,17 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
   }
 
   const finish = () => {
-    if (!canSubmit) return
+    if (!canSubmit) {
+      setTried(true)
+      trackOnboardingBlocked(
+        !nameValid && !dob ? 'both' : !nameValid ? 'name' : !dob ? 'dob' : 'dob_invalid'
+      )
+      const field = !nameValid ? nameRef.current : dobRef.current
+      field?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      // Imię: od razu klawiatura. Data: sam fokus, kalendarz otwiera dotknięcie.
+      if (!nameValid) field?.focus({ preventScroll: true })
+      return
+    }
     const months = dobToMonths(dob)
     // v2.11.32 P1-6: funnel event — onboarding complete.
     // Mierzymy ageMonths + sex (no PII — imię nie idzie do analytics).
@@ -196,72 +212,66 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
       }}>
         {mode === 'join' ? joinPanel : (
         <div style={{ display:'flex', flexDirection:'column', gap:'var(--space)' }}>
-          {/* v2.16.0: wejście dla zaproszonego rodzica — kompaktowe, żeby
-              nie przeszkadzało reszcie, która po prostu tworzy profil. */}
+          {/* v2.16.0: wejście dla zaproszonego rodzica. v2.16.23: jedna linijka,
+              żeby imię i data urodzenia mieściły się na ekranie nad przyciskiem. */}
           <button type="button" onClick={() => setMode('join')} style={{
             width:'100%', display:'flex', alignItems:'center', gap:'var(--space-snug)',
-            padding:'var(--space-snug) var(--space)', textAlign:'left',
+            padding:'var(--space-tight) var(--space)', textAlign:'left',
             background:'#E1F5EE', border:'1px solid #0F6E5633', borderRadius:'var(--radius)',
             cursor:'pointer',
           }}>
-            <span style={{fontSize:20}}>👨‍👩‍👧</span>
-            <span style={{flex:1}}>
-              <span style={{display:'block',fontSize:13,fontWeight:700,color:'#0F6E56'}}>{t('onb.partner.cta')}</span>
-              <span style={{display:'block',fontSize:12,color:'var(--text-2)',marginTop:2}}>{t('onb.partner.prompt')}</span>
-            </span>
+            <span style={{fontSize:18}}>👨‍👩‍👧</span>
+            <span style={{flex:1,fontSize:13,fontWeight:700,color:'#0F6E56'}}>{t('onb.partner.cta')}</span>
             <span style={{fontSize:18,color:'#0F6E56'}}>›</span>
           </button>
 
-          {/* Avatar */}
-          <div>
-            <div style={{fontSize:13,color:'var(--text-2)',fontWeight:500,marginBottom:'var(--space-snug)'}}>
-              {t('onb.setup.avatar')}
-            </div>
-            <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-snug)'}}>
-              {AVATARS.map(a => (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() => setAvatar(a)}
-                  style={{
-                    width:48, height:48, fontSize:24, borderRadius:'var(--radius-round)',
-                    cursor:'pointer',
-                    border: `2px solid ${avatar === a ? 'var(--brand-500)' : 'transparent'}`,
-                    background: avatar === a ? 'var(--brand-50)' : 'var(--bg)',
-                  }}
-                >{a}</button>
-              ))}
-            </div>
-          </div>
-
           {/* Name */}
           <div className="form-group">
-            <label className="form-label">{t('onb.setup.name')} *</label>
+            <label className="form-label" htmlFor="onb-name">{t('onb.setup.name')} *</label>
             <input
+              id="onb-name"
+              ref={nameRef}
               className="form-input"
               type="text" maxLength={40}
               placeholder={t('onb.setup.name_ph')}
               value={name}
               onChange={e => setName(e.target.value)}
               autoFocus
-              style={{fontSize:16}}
+              aria-invalid={tried && !nameValid}
+              style={{
+                fontSize:16,
+                borderColor: (tried && !nameValid) ? 'var(--alert-500)' : undefined,
+              }}
             />
+            {tried && !nameValid && (
+              <div role="alert" style={{fontSize:12, color:'var(--alert-500)', marginTop:'var(--space-tight)', fontWeight:500}}>
+                ⚠️ {t('onb.setup.name_missing')}
+              </div>
+            )}
           </div>
 
           {/* DOB */}
           <div className="form-group">
-            <label className="form-label">{t('onb.setup.dob')} *</label>
+            <label className="form-label" htmlFor="onb-dob">{t('onb.setup.dob')} *</label>
             <input
+              id="onb-dob"
+              ref={dobRef}
               className="form-input"
               type="date"
               value={dob}
               onChange={e => setDob(e.target.value)}
               max={todayStr}
+              aria-invalid={(tried || dob.length > 0) && !dobValid}
               style={{
                 fontSize:16,
-                borderColor: (dob.length > 0 && !dobValid) ? 'var(--alert-500)' : undefined,
+                borderColor: ((tried || dob.length > 0) && !dobValid) ? 'var(--alert-500)' : undefined,
               }}
             />
+            {tried && !dob && (
+              <div role="alert" style={{fontSize:12, color:'var(--alert-500)', marginTop:'var(--space-tight)', fontWeight:500}}>
+                ⚠️ {t('onb.setup.dob_missing')}
+              </div>
+            )}
             {dob.length > 0 && !dobValid && (
               <div style={{fontSize:12, color:'var(--alert-500)', marginTop:'var(--space-tight)', fontWeight:500}}>
                 ⚠️ {t('onb.setup.dob_error')}
@@ -311,6 +321,29 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
             </div>
           </div>
 
+          {/* Avatar (nieobowiązkowy, dlatego pod polami wymaganymi) */}
+          <div>
+            <div style={{fontSize:13,color:'var(--text-2)',fontWeight:500,marginBottom:'var(--space-snug)'}}>
+              {t('onb.setup.avatar')}
+            </div>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-snug)'}}>
+              {AVATARS.map(a => (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => setAvatar(a)}
+                  aria-pressed={avatar === a}
+                  style={{
+                    width:48, height:48, fontSize:24, borderRadius:'var(--radius-round)',
+                    cursor:'pointer',
+                    border: `2px solid ${avatar === a ? 'var(--brand-500)' : 'transparent'}`,
+                    background: avatar === a ? 'var(--brand-50)' : 'var(--bg)',
+                  }}
+                >{a}</button>
+              ))}
+            </div>
+          </div>
+
           <div style={{
             marginTop:'var(--space-snug)',
             padding:'var(--space-snug) var(--space)',
@@ -336,20 +369,20 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
         background: 'var(--surface)',
         borderTop: '0.5px solid rgba(0,0,0,0.06)',
       }}>
+        {/* v2.16.23: przycisk zawsze aktywny; przy braku danych finish()
+            pokazuje, czego brakuje, i przewija do tego pola. */}
         <button
           type="button"
           onClick={finish}
-          disabled={!canSubmit}
           style={{
             width:'100%', padding:'var(--space)', minHeight:54,
-            background: canSubmit
-              ? 'linear-gradient(135deg, var(--brand-600), var(--brand-500))'
-              : 'var(--text-3)',
+            background: 'linear-gradient(135deg, var(--brand-600), var(--brand-500))',
+            opacity: canSubmit ? 1 : 0.8,
             color:'var(--surface)', border:'none', borderRadius:'var(--radius-comfortable)',
             fontSize:16, fontWeight:800,
-            cursor: canSubmit ? 'pointer' : 'not-allowed',
+            cursor: 'pointer',
             letterSpacing:-0.2,
-            transition: 'background 0.2s',
+            transition: 'opacity 0.2s',
           }}
         >
           {`${t('onb.setup.cta')}, ${name.trim() || '👶'}! 🍼`}
@@ -359,7 +392,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
         <p style={{fontSize:11,color:'var(--text-3)',textAlign:'center',margin:'var(--space-tight) 0 0',lineHeight:1.5}}>
           {t('onb.disclaimer')}{' '}
           <button type="button" onClick={() => setShowDisclaimer(true)} style={{
-            background:'none', border:'none', padding:0, font:'inherit',
+            background:'none', border:'none', padding:0, font:'inherit', minHeight:0,
             color:'var(--brand-600)', textDecoration:'underline', cursor:'pointer',
           }}>
             {t('onb.disclaimer_more')}
