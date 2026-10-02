@@ -114,6 +114,28 @@ export const trackOnboardingViewed = () => track('onboarding_viewed')
  */
 export const trackOnboardingBlocked = (missing) => track('onboarding_blocked', { missing })
 
+// ─── Tryb ciąży (v2.17.0) ──────────────────────────────────────────────────
+// Osobne nazwy zdarzeń (nie parametry), żeby było je widać w raporcie Zdarzenia
+// bez definiowania wymiarów niestandardowych w GA4.
+
+/** Utworzono profil ciąży. @param {string} source — 'onboarding' | 'profiles' */
+export const trackPregnancyStarted = (source) => track('pregnancy_started', { source })
+
+/** "Urodziło się": profil ciąży przeszedł w tryb niemowlęcia. */
+export const trackPregnancyBirth = () => track('pregnancy_birth')
+
+/** Zakończono tryb ciąży (bez porodu w aplikacji). */
+export const trackPregnancyEnded = () => track('pregnancy_ended')
+
+/** Pierwsze użycie licznika skurczy na tym urządzeniu. */
+export function trackContractionTimerUsed() {
+  try {
+    if (localStorage.getItem('babylog_contraction_tracked') === '1') return
+    localStorage.setItem('babylog_contraction_tracked', '1')
+  } catch {}
+  track('contraction_timer_used')
+}
+
 /** Serwerowy trial konta Google właśnie wystartował (initTrial: nowy). */
 export const trackTrialStarted = () => track('trial_started')
 

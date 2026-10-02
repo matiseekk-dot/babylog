@@ -9,7 +9,8 @@ rules_version = '2';
 //      dla kogo istnieje users/{uid}/partners/{partnerUid}.
 //
 //   2. POLA CHRONIONE — zapisuje wyłącznie Admin SDK (Cloud Functions):
-//      premium_purchased, premium_meta, trial_start, linked_owner, rc_event_*.
+//      premium_purchased, premium_meta, trial_start, birth_trial_start (v2.17.0),
+//      linked_owner, rc_event_*.
 //
 //   3. partners/* i partner_invites/* zapisują wyłącznie Cloud Functions
 //      (createPartnerInvite / acceptPartnerInvite / removePartnerLink).
@@ -42,6 +43,7 @@ service cloud.firestore {
       return docId == 'premium_purchased'
         || docId == 'premium_meta'
         || docId == 'trial_start'
+        || docId == 'birth_trial_start'
         || docId == 'linked_owner'
         || docId.matches('rc_event_.*');
     }

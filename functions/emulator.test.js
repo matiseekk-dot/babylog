@@ -147,3 +147,23 @@ test('zaproszenie: 10 prób na godzinę, potem blokada; dobry kod łączy konta'
   assert.strictEqual((await get(partner, 'linked_owner')).ownerUid, owner)
   assert.strictEqual((await admin.firestore().doc(`partner_invite_attempts/${partner}`).get()).exists, false)
 })
+
+test('prezent po porodzie (v2.17.0): raz na konto, potem ten sam start', { skip }, async () => {
+  const uid = `u-birth-${Date.now()}`
+  const a = await call('initBirthTrial', uid)
+  const b = await call('initBirthTrial', uid)
+  assert.strictEqual(a.alreadyExisted, false)
+  assert.strictEqual(b.alreadyExisted, true)
+  assert.strictEqual(b.startMs, a.startMs)
+  assert.strictEqual(await get(uid, 'birth_trial_start'), a.startMs)
+  await assert.rejects(fns.initBirthTrial.run({ data: {} }), { code: 'unauthenticated' })
+})
+
+test('prezent po porodzie liczy się jako Premium dla wspólnego konta', { skip }, async () => {
+  const owner = `u-birth-own-${Date.now()}`
+  await assert.rejects(call('createPartnerInvite', owner))
+  await put(owner, 'trial_start', Date.now() - 30 * 24 * 60 * 60 * 1000)  // zwykły trial dawno minął
+  await call('initBirthTrial', owner)
+  const { code } = await call('createPartnerInvite', owner)
+  assert.match(code, /^[A-Z0-9]{6}$/)
+})

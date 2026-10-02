@@ -16,6 +16,8 @@ import PdfReportModal from './PdfReportModal'
 import FeaturesScreen from './FeaturesScreen'
 import PartnerSharingSection from './PartnerSharingSection'
 import { toast } from './Toast'
+import { isValidDueDate, addDays, GESTATION_DAYS } from '../utils/pregnancy'
+import { todayDate } from '../utils/helpers'
 
 // Wersja aplikacji — podbijana przy release. Pokazana w stopce Settings.
 // Do automatyzacji: Vite podstawia `__APP_VERSION__` jeśli zdefiniowane
@@ -44,7 +46,7 @@ const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
  *   focusSection — 'partner': po otwarciu przewiń do sekcji Wspólne konto
  */
 export default function SettingsScreen({
-  profile, onUpdate, onDelete,
+  profile, onUpdate, onDelete, onPregnancyBirth, onPregnancyEnd,
   isPremium, isOnTrial, trialDaysLeft,
   onUpgrade, onEditPhoto, user, onLogout, onClose, uid, authUid, linkedOwner,
   partners, focusSection, refreshFcmToken, enableNotifications,
@@ -130,6 +132,17 @@ export default function SettingsScreen({
   // Now also in Settings tak userzy mogą łatwo przełączać dziecko z pieluch → nocnik → toaleta
   const [toiletMode, setToiletMode] = useState(profile.toiletMode || 'diapers')
   const [exporting, setExporting] = useState(false)
+  // v2.17.0: profil ciąży ma w ustawieniach imię i termin zamiast wieku,
+  // wagi i pieluch; bez raportu PDF i przypomnień o karmieniu.
+  const isPregnancy = profile.mode === 'pregnancy'
+  const [dueDate, setDueDate] = useState(profile.dueDate || '')
+  const dueValid = isValidDueDate(dueDate)
+  const savePregnancy = () => {
+    if (!dueValid) { toast(t('onb.preg.due_invalid'), 'error'); return }
+    onUpdate(profile.id, { name: name.trim() || profile.name, dueDate })
+    toast(t('settings.saved'))
+    onClose()
+  }
 
   const save = () => {
     // v2.9.0: pusta waga → null (nie 0). Zero kg jest niesensowne i może
@@ -278,6 +291,45 @@ export default function SettingsScreen({
         </div>
       )}
 
+      {isPregnancy ? (
+        <div style={card}>
+          <div style={cardHeader}>🤰 {t('preg.tab.home')}</div>
+          <div style={{ padding: '12px 14px' }}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="set-preg-name">{t('onb.preg.name')}</label>
+              <input id="set-preg-name" className="form-input" type="text" maxLength={40} value={name}
+                onChange={e => setName(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="set-preg-due">{t('onb.preg.due')}</label>
+              <input id="set-preg-due" className="form-input" type="date" value={dueDate}
+                min={addDays(todayDate(), -28)} max={addDays(todayDate(), GESTATION_DAYS)}
+                onChange={e => setDueDate(e.target.value)} aria-invalid={!dueValid}
+                style={{ borderColor: dueValid ? undefined : 'var(--alert-500)' }} />
+            </div>
+            <button onClick={savePregnancy} style={{
+              width: '100%', marginTop: 8, padding: '12px',
+              background: '#1D9E75', color: '#fff', border: 'none', borderRadius: 10,
+              fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            }}>
+              {t('common.save')}
+            </button>
+            <button onClick={onPregnancyBirth} style={{
+              width: '100%', marginTop: 10, padding: '12px',
+              background: '#E1F5EE', color: '#0F6E56', border: '1px solid #9FE1CB', borderRadius: 10,
+              fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            }}>
+              {t('preg.birth_btn')}
+            </button>
+            <button onClick={onPregnancyEnd} style={{
+              display: 'block', margin: '10px auto 0', background: 'none', border: 'none',
+              color: '#9a9a94', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '8px 12px',
+            }}>
+              {t('preg.end_link')}
+            </button>
+          </div>
+        </div>
+      ) : (<>
       {/* Child profile */}
       <div style={card}>
         <div style={cardHeader}>{t('settings.child.title')}</div>
@@ -522,6 +574,8 @@ export default function SettingsScreen({
         </div>
       </div>
 
+      </>)}
+
       {/* App language — v2.12.0 przeniesiony z TopBar.
           Native names dla discoverability: niemiecki user szuka "Deutsch",
           nie "Niemiecki". Stąd hardcode native — NIE idą przez t(). */}
@@ -569,7 +623,8 @@ export default function SettingsScreen({
         </div>
       </div>
 
-      {/* Export PDF */}
+      {/* Export PDF (raport dla pediatry: nie dla profilu ciąży) */}
+      {!isPregnancy && (
       <div style={card}>
         <div style={cardHeader}>{t('settings.export.title')}</div>
         <div style={{ padding: '12px 14px' }}>
@@ -615,6 +670,8 @@ export default function SettingsScreen({
           </div>
         </div>
       </div>
+
+      )}
 
       {/* Full Backup — JSON dla backupu, CSV dla Excel (wszystkie dzieci + wszystko) */}
       <div style={card}>
@@ -859,7 +916,7 @@ export default function SettingsScreen({
 
         {/* v2.16.3 — przypomnienie o karmieniu (push przez Cloud Function, więc
             tylko z kontem Google). */}
-        {authUid && (
+        {authUid && !isPregnancy && (
           <div style={{ marginTop: 12, paddingTop: 12, borderTop: '0.5px solid rgba(0,0,0,0.08)' }}>
             <label htmlFor="feed-reminder-select" style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1a1a18', marginBottom: 6 }}>
               ⏰ {t('feed_reminder.settings_label')}

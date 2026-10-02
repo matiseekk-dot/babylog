@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { t, useLocale } from '../i18n'
-import { trackOnboardingBlocked, trackOnboardingCompleted, trackOnboardingViewed } from '../utils/analytics'
+import { trackOnboardingBlocked, trackOnboardingCompleted, trackOnboardingViewed, trackPregnancyStarted } from '../utils/analytics'
 import PartnerJoinForm from './PartnerJoinForm'
 import Modal from './Modal'
 import { ConsentDetails } from './MedicalConsentScreen'
 import { todayDate } from '../utils/helpers'
-
-const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
+import { isValidDueDate, isValidLmp, dueDateFromLmp, addDays, GESTATION_DAYS } from '../utils/pregnancy'
+import { formatLongDate } from './PregnancyScreen'
 
 // Gość klika "Zaloguj się" w trybie kodu → po powrocie z logowania ekran
 // ma od razu otworzyć się na polu kodu, a nie na tworzeniu profilu.
@@ -45,11 +45,24 @@ function hasJoinIntent() {
  *   }
  *   canJoinPartner    — zalogowany przez Google (wspólne konto tego wymaga)
  *   onLoginForPartner — fn(): gość chce dołączyć → logowanie Google
+ *   onShowLogin       — gość chce się zalogować (link „Masz już konto?”)
+ *   afterEnd          — po zakończeniu trybu ciąży: najpierw spokojna plansza,
+ *                       formularz dopiero po kliknięciu "Dodaj profil"
+ *
+ * v2.17.0: przełącznik "Dziecko już jest" / "Spodziewamy się". W ciąży pytamy
+ *   tylko o termin porodu (albo ostatnią miesiączkę) i opcjonalne imię;
+ *   onComplete dostaje { mode: 'pregnancy', name, dueDate, avatar: '🤰', ... }.
  */
-export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginForPartner }) {
+export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginForPartner, onShowLogin = null, afterEnd = false }) {
   useLocale()
 
   const [mode, setMode] = useState(() => (hasJoinIntent() ? 'join' : 'profile'))
+  const [introDone, setIntroDone] = useState(!afterEnd)
+  const [kind, setKind] = useState('baby')       // 'baby' | 'pregnancy'
+  const [dueMode, setDueMode] = useState('due')  // 'due' | 'lmp'
+  const [due, setDue] = useState('')
+  const [lmp, setLmp] = useState('')
+  const pregRef = useRef(null)
   const [joined, setJoined] = useState(false)
   const [showDisclaimer, setShowDisclaimer] = useState(false)
 
@@ -70,7 +83,8 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
 
   const [name, setName] = useState('')
   const [dob, setDob] = useState('')   // YYYY-MM-DD
-  const [avatar, setAvatar] = useState('👶')
+  // v2.17.0: obrazek dziecka wybiera się później w Ustawieniach (krótszy start).
+  const avatar = '👶'
   const [sex, setSex] = useState('M')
   // v2.16.23: po kliknięciu "Zaczynamy" przy niepełnym formularzu pokazujemy,
   // czego brakuje (wcześniej szary przycisk nic nie mówił, a data urodzenia
@@ -94,7 +108,10 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     if (d < eighteenYearsAgo) return false
     return true
   })()
-  const canSubmit = nameValid && dobValid
+  const pregDate = dueMode === 'due' ? due : lmp
+  const pregValid = dueMode === 'due' ? isValidDueDate(due) : isValidLmp(lmp)
+  const pregDue = dueMode === 'due' ? due : (pregValid ? dueDateFromLmp(lmp) : '')
+  const canSubmit = kind === 'pregnancy' ? pregValid : nameValid && dobValid
 
   // ── Konwersja DOB → months ────────────────────────────────────────────────
   function dobToMonths(dobStr) {
@@ -105,7 +122,31 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     return Math.max(0, months)
   }
 
+  const finishPregnancy = () => {
+    if (!pregValid) {
+      setTried(true)
+      trackOnboardingBlocked(!pregDate ? dueMode : `${dueMode}_invalid`)
+      pregRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      return
+    }
+    trackOnboardingCompleted({ mode: 'pregnancy' })
+    trackPregnancyStarted('onboarding')
+    try { localStorage.setItem('babylog_disclaimer_ack', new Date().toISOString()) } catch {}
+    onComplete({
+      mode: 'pregnancy',
+      name: name.trim() || t('preg.default_name'),
+      dueDate: pregDue,
+      lmp: dueMode === 'lmp' ? lmp : null,
+      months: 0,
+      weight: null,
+      avatar: '🤰',
+      sex: null,
+      toiletMode: 'diapers',
+    })
+  }
+
   const finish = () => {
+    if (kind === 'pregnancy') { finishPregnancy(); return }
     if (!canSubmit) {
       setTried(true)
       trackOnboardingBlocked(
@@ -137,6 +178,10 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
   }
 
   const hint = { fontSize: 13, color: 'var(--text-2)', lineHeight: 1.5, marginBottom: 'var(--space)' }
+  const smallLink = {
+    background: 'none', border: 'none', padding: '8px 0', minHeight: 0, cursor: 'pointer',
+    color: 'var(--brand-600)', fontSize: 13, fontWeight: 600, textAlign: 'left',
+  }
 
   const joinPanel = (
     <div>
@@ -173,6 +218,89 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     </div>
   )
 
+  // v2.17.0: po zakończeniu trybu ciąży nie witamy od razu formularzem "Poznajmy
+  // Twoje dziecko". Spokojna plansza, formularz dopiero na życzenie.
+  if (!introDone) {
+    return (
+      <div style={{
+        position:'fixed', inset:0, overflowY:'auto', background:'var(--bg)',
+        display:'flex', flexDirection:'column', justifyContent:'center', padding:'var(--space-comfortable)',
+      }}>
+        <div style={{ maxWidth: 420, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', marginBottom: 12 }}>{t('preg_end.after_title')}</div>
+          <div style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.55, marginBottom: 24 }}>{t('preg_end.after_body')}</div>
+          <button type="button" onClick={() => setIntroDone(true)} style={{
+            minHeight: 48, padding: '0 24px', borderRadius: 'var(--radius)', cursor: 'pointer',
+            background: 'var(--surface)', border: '0.5px solid var(--border-med)', color: 'var(--text)',
+            fontSize: 15, fontWeight: 700,
+          }}>
+            {t('preg_end.after_cta')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const kindBtn = (value, label) => (
+    <button type="button" role="radio" aria-checked={kind === value}
+      onClick={() => { setKind(value); setTried(false) }}
+      style={{
+        flex: 1, minHeight: 40, padding: '6px 8px', border: 'none', borderRadius: 10, cursor: 'pointer',
+        fontSize: 14, fontWeight: 700,
+        background: kind === value ? 'var(--surface)' : 'transparent',
+        color: kind === value ? 'var(--brand-700)' : 'rgba(255,255,255,0.95)',
+      }}>
+      {label}
+    </button>
+  )
+
+  const pregnancyFields = (
+    <>
+      <div className="form-group">
+        <label className="form-label" htmlFor="onb-preg-name">{t('onb.preg.name')}</label>
+        <input id="onb-preg-name" className="form-input" type="text" maxLength={40}
+          placeholder={t('onb.preg.name_ph')} value={name} onChange={e => setName(e.target.value)}
+          style={{ fontSize: 16 }} />
+      </div>
+      <div className="form-group" ref={pregRef}>
+        {dueMode === 'due' ? (
+          <>
+            <label className="form-label" htmlFor="onb-due">{t('onb.preg.due')} *</label>
+            <input id="onb-due" className="form-input" type="date" value={due}
+              min={addDays(todayStr, -28)} max={addDays(todayStr, GESTATION_DAYS)}
+              onChange={e => setDue(e.target.value)} aria-invalid={(tried || !!due) && !pregValid}
+              style={{ fontSize: 16, borderColor: ((tried || due) && !pregValid) ? 'var(--alert-500)' : undefined }} />
+          </>
+        ) : (
+          <>
+            <label className="form-label" htmlFor="onb-lmp">{t('onb.preg.lmp')} *</label>
+            <input id="onb-lmp" className="form-input" type="date" value={lmp}
+              min={addDays(todayStr, -44 * 7)} max={todayStr}
+              onChange={e => setLmp(e.target.value)} aria-invalid={(tried || !!lmp) && !pregValid}
+              style={{ fontSize: 16, borderColor: ((tried || lmp) && !pregValid) ? 'var(--alert-500)' : undefined }} />
+          </>
+        )}
+        {(tried || pregDate) && !pregValid && (
+          <div role="alert" style={{ fontSize: 12, color: 'var(--alert-500)', marginTop: 'var(--space-tight)', fontWeight: 500 }}>
+            ⚠️ {t(!pregDate ? `onb.preg.${dueMode}_missing` : `onb.preg.${dueMode}_invalid`)}
+          </div>
+        )}
+        {dueMode === 'lmp' && pregValid && (
+          <div style={{ fontSize: 13, color: 'var(--brand-700)', marginTop: 'var(--space-tight)', fontWeight: 700 }}>
+            {t('onb.preg.due_result', { date: formatLongDate(pregDue) })}
+          </div>
+        )}
+        <button type="button" onClick={() => { setDueMode(m => (m === 'due' ? 'lmp' : 'due')); setTried(false) }}
+          style={{
+            background: 'none', border: 'none', padding: '8px 0', minHeight: 0, cursor: 'pointer',
+            color: 'var(--brand-600)', fontSize: 13, fontWeight: 600, textAlign: 'left',
+          }}>
+          {t(dueMode === 'due' ? 'onb.preg.use_lmp' : 'onb.preg.use_due')}
+        </button>
+      </div>
+    </>
+  )
+
   return (
     // v2.11.29: outer-scroll architecture (jak consent v2.11.26).
     //
@@ -197,13 +325,25 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
         textAlign:'center',
         paddingTop: 'max(var(--space-spacious), calc(env(safe-area-inset-top) + var(--space-comfortable)))',
       }}>
-        <div style={{fontSize:44,marginBottom:'var(--space-snug)'}}>{mode === 'join' ? '👨‍👩‍👧' : avatar}</div>
+        <div style={{fontSize:40,marginBottom:'var(--space-tight)'}}>
+          {mode === 'join' ? '👨‍👩‍👧' : kind === 'pregnancy' ? '🤰' : avatar}
+        </div>
         <div style={{fontSize:22,fontWeight:800,color:'var(--surface)',letterSpacing:-0.5,lineHeight:1.2}}>
-          {t(mode === 'join' ? 'onb.partner.title' : 'onb.setup.title')}
+          {t(mode === 'join' ? 'onb.partner.title' : kind === 'pregnancy' ? 'onb.preg.title' : 'onb.setup.title')}
         </div>
         <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',marginTop:'var(--space-snug)',lineHeight:1.4}}>
-          {t(mode === 'join' ? 'onb.partner.subtitle' : 'onb.setup.subtitle')}
+          {t(mode === 'join' ? 'onb.partner.subtitle' : kind === 'pregnancy' ? 'onb.preg.subtitle' : 'onb.setup.subtitle')}
         </div>
+        {/* v2.17.0: dziecko już jest czy dopiero w drodze */}
+        {mode !== 'join' && (
+          <div role="radiogroup" style={{
+            display:'flex', gap:4, padding:4, marginTop:'var(--space)',
+            background:'rgba(255,255,255,0.18)', borderRadius:12,
+          }}>
+            {kindBtn('baby', t('onb.mode.baby'))}
+            {kindBtn('pregnancy', `🤰 ${t('onb.mode.pregnancy')}`)}
+          </div>
+        )}
       </div>
 
       {/* Content — zwykły div bez własnego overflow */}
@@ -212,19 +352,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
       }}>
         {mode === 'join' ? joinPanel : (
         <div style={{ display:'flex', flexDirection:'column', gap:'var(--space)' }}>
-          {/* v2.16.0: wejście dla zaproszonego rodzica. v2.16.23: jedna linijka,
-              żeby imię i data urodzenia mieściły się na ekranie nad przyciskiem. */}
-          <button type="button" onClick={() => setMode('join')} style={{
-            width:'100%', display:'flex', alignItems:'center', gap:'var(--space-snug)',
-            padding:'var(--space-tight) var(--space)', textAlign:'left',
-            background:'#E1F5EE', border:'1px solid #0F6E5633', borderRadius:'var(--radius)',
-            cursor:'pointer',
-          }}>
-            <span style={{fontSize:18}}>👨‍👩‍👧</span>
-            <span style={{flex:1,fontSize:13,fontWeight:700,color:'#0F6E56'}}>{t('onb.partner.cta')}</span>
-            <span style={{fontSize:18,color:'#0F6E56'}}>›</span>
-          </button>
-
+          {kind === 'pregnancy' ? pregnancyFields : (<>
           {/* Name */}
           <div className="form-group">
             <label className="form-label" htmlFor="onb-name">{t('onb.setup.name')} *</label>
@@ -321,39 +449,19 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
             </div>
           </div>
 
-          {/* Avatar (nieobowiązkowy, dlatego pod polami wymaganymi) */}
-          <div>
-            <div style={{fontSize:13,color:'var(--text-2)',fontWeight:500,marginBottom:'var(--space-snug)'}}>
-              {t('onb.setup.avatar')}
-            </div>
-            <div style={{display:'flex',flexWrap:'wrap',gap:'var(--space-snug)'}}>
-              {AVATARS.map(a => (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() => setAvatar(a)}
-                  aria-pressed={avatar === a}
-                  style={{
-                    width:48, height:48, fontSize:24, borderRadius:'var(--radius-round)',
-                    cursor:'pointer',
-                    border: `2px solid ${avatar === a ? 'var(--brand-500)' : 'transparent'}`,
-                    background: avatar === a ? 'var(--brand-50)' : 'var(--bg)',
-                  }}
-                >{a}</button>
-              ))}
-            </div>
-          </div>
+          </>)}
 
-          <div style={{
-            marginTop:'var(--space-snug)',
-            padding:'var(--space-snug) var(--space)',
-            background:'var(--bg)',
-            borderRadius:'var(--radius-tight)',
-            fontSize:11,
-            color:'var(--text-3)',
-            lineHeight:1.5,
-          }}>
-            💡 {t('onb.setup.weight_later_hint')}
+          {/* v2.17.0: rzadkie ścieżki jako małe linki pod polami, żeby nie
+              odciągały od jedynej rzeczy do zrobienia: imię i data. */}
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:2, marginTop:'calc(-1 * var(--space-snug))' }}>
+            <button type="button" onClick={() => setMode('join')} style={smallLink}>
+              👨‍👩‍👧 {t('onb.partner.cta')} ›
+            </button>
+            {onShowLogin && (
+              <button type="button" onClick={onShowLogin} style={smallLink}>
+                {t('onb.have_account')}
+              </button>
+            )}
           </div>
         </div>
         )}
@@ -385,7 +493,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
             transition: 'opacity 0.2s',
           }}
         >
-          {`${t('onb.setup.cta')}, ${name.trim() || '👶'}! 🍼`}
+          {kind === 'pregnancy' ? t('onb.preg.cta') : `${t('onb.setup.cta')}, ${name.trim() || '👶'}! 🍼`}
         </button>
         {/* v2.16.8: zastrzeżenie medyczne zamiast blokującego ekranu na starcie.
             Pełny ekran zgody pokazuje się przy pierwszym wejściu w Zdrowie. */}

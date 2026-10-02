@@ -54,8 +54,11 @@ import { captureError, addBreadcrumb } from './sentry'
 import {
   track, trackPurchaseCompleted, trackFirstEntryOnce, hasFirstEntryFlag, trackLoginChoice,
   trackPartnerCardClicked, trackPartnerCardDismissed, setAnalyticsUserProperty,
+  trackPregnancyBirth, trackPregnancyEnded,
 } from './utils/analytics'
 import FirstEntryCard from './components/FirstEntryCard'
+import PregnancyScreen from './components/PregnancyScreen'
+import { BirthModal, BirthGiftModal, PregnancyEndModal } from './components/PregnancyModals'
 import WidgetTipCard from './components/WidgetTipCard'
 import { usePartners } from './hooks/usePartners'
 import { shouldShowPartnerInvite } from './utils/partner'
@@ -83,7 +86,7 @@ import { useServiceWorker } from './hooks/useServiceWorker'
 import { useLocale, t, getLocale } from './i18n'
 import { findPlan } from './data/premiumPlans'
 import { fetchStorePrices, loadCachedStorePrices } from './data/storePrices'
-import { todayDate, nowTime, genId, dateYMD, withCurrentAge, birthDateFromMonths, timerSleepEntry } from './utils/helpers'
+import { todayDate, nowTime, genId, dateYMD, withCurrentAge, birthDateFromMonths, monthsFromBirthDate, timerSleepEntry } from './utils/helpers'
 
 const DEFAULT_PROFILE = {
   id: 'default',
@@ -224,9 +227,31 @@ export default function App() {
   const acceptConsent = () => {
     setConsentAccepted(true)
   }
+  // v2.17.0: nowa instalacja startuje od razu bez konta, bez ekranu logowania
+  // (Analytics: co trzecia osoba odpadała na wyborze logowania). Logowanie jest
+  // pod linkiem w formularzu i w Ustawieniach; dane gościa przechodzą na konto
+  // (GuestMigrationDialog). Ekran logowania zostaje dla telefonów, na których
+  // ktoś już się logował albo sam o niego poprosił (babylog_login_wall).
+  const autoGuestRef = useRef(false)
   const [guestMode, setGuestMode] = useState(() => {
-    try { return localStorage.getItem('babylog_guest') === '1' } catch { return false }
+    try {
+      if (localStorage.getItem('babylog_guest') === '1') return true
+      if (!localStorage.getItem('babylog_cache_owner') && !localStorage.getItem('babylog_login_wall')) {
+        localStorage.setItem('babylog_guest', '1')
+        autoGuestRef.current = true
+        return true
+      }
+      return false
+    } catch { return false }
   })
+  useEffect(() => { if (autoGuestRef.current) trackLoginChoice('auto_guest') }, [])
+  const showLoginScreen = () => {
+    try {
+      localStorage.removeItem('babylog_guest')
+      localStorage.setItem('babylog_login_wall', '1')
+    } catch {}
+    setGuestMode(false)
+  }
   const uid = user?.uid ?? null
   setAccountUid(uid)
   const { locale } = useLocale()  // re-render on language change
@@ -451,11 +476,13 @@ export default function App() {
   // nie może pójść ze starej pamięci podręcznej sprzed odpowiedzi serwera.
   useEffect(() => {
     if (!onboardingDone || ownerUid || !Array.isArray(storedProfiles) || storedProfiles.length === 0) return
-    if (storedProfiles.every(p => p.birthDate)) return
+    // v2.17.0: profil ciąży nie ma daty urodzenia i nie może jej dostać z szacunku.
+    const needsDate = p => !p.birthDate && p.mode !== 'pregnancy'
+    if (!storedProfiles.some(needsDate)) return
     const placeholder = JSON.stringify(DEFAULT_PROFILE)
     if (storedProfiles.some(p => JSON.stringify(p) === placeholder)) return
     const timer = setTimeout(() => {
-      setProfiles(storedProfiles.map(p => (p.birthDate ? p : {
+      setProfiles(storedProfiles.map(p => (!needsDate(p) ? p : {
         ...p,
         birthDate: birthDateFromMonths(p.months ?? 4, ageAnchor(p)),
         birthDateEstimated: true,
@@ -487,6 +514,16 @@ export default function App() {
     }),
   }
   const [sleepTimerTs, setSleepTimerTs] = useFirestore(dataUid, `sleep_timer_${active.id}`, null)
+
+  // v2.17.0 — tryb ciąży: profil { mode: 'pregnancy', dueDate } ma własny ekran
+  // (PregnancyScreen) zamiast zakładek niemowlęcia.
+  const isPregnancy = active.mode === 'pregnancy'
+  const [showBirth, setShowBirth] = useState(false)
+  const [showBirthGift, setShowBirthGift] = useState(false)
+  const [showPregEnd, setShowPregEnd] = useState(false)
+  // Po zakończeniu ciąży bez innego profilu: spokojna plansza zamiast formularza.
+  const [pregnancyEnded, setPregnancyEnded] = useFirestore(dataUid, 'pregnancy_ended', null)
+  const [, setActiveContractions] = useFirestore(dataUid, `contractions_${active.id}`, [])
 
   // v2.9.3: quick-add stores dla FAB. Drobny duplicate listener względem
   // FeedTab/SleepTab/DiaperTab gdy te są aktywne (Firestore real-time
@@ -540,7 +577,7 @@ export default function App() {
   const firstStepsDone = hasAnyEntry || firstEntryCardDismissed
 
   // ── Freemium + RevenueCat ─────────────────────────────────────────────────
-  const { isPremium, isOnTrial, trialDaysLeft, purchased, activate, deactivate } = usePremium(uid, ownerUid)
+  const { isPremium, isOnTrial, trialDaysLeft, purchased, activate, deactivate, startBirthTrial } = usePremium(uid, ownerUid)
 
   // Premium onboarding — pokazuje modal raz po pierwszym odblokowaniu Premium
   const [showPremiumOnboarding, setShowPremiumOnboarding] = useState(false)
@@ -839,8 +876,7 @@ export default function App() {
       addBreadcrumb('purchase', 'guest-blocked-needs-login', {})
       toast(t('paywall.need_login'), 'error')
       // Sygnalizujemy LoginScreen — wyloguj guest mode, pokaż login.
-      try { localStorage.removeItem('babylog_guest') } catch {}
-      setGuestMode(false)
+      showLoginScreen()
       setShowPaywall(false)
       return
     }
@@ -1282,7 +1318,7 @@ export default function App() {
       return
     }
     // Z samego wieku: data urodzenia w przybliżeniu, żeby wiek dalej rósł.
-    if (!p.birthDate && p.months != null) p = { ...p, birthDate: birthDateFromMonths(p.months), birthDateEstimated: true }
+    if (!p.birthDate && p.months != null && p.mode !== 'pregnancy') p = { ...p, birthDate: birthDateFromMonths(p.months), birthDateEstimated: true }
     setProfiles([...profiles, p])
     setActiveId(p.id)
   }
@@ -1299,6 +1335,52 @@ export default function App() {
     const next = profiles.filter(p => p.id !== id)
     setProfiles(next.length ? next : [DEFAULT_PROFILE])
     if (activeId === id) setActiveId((next[0] || DEFAULT_PROFILE).id)
+  }
+
+  // v2.17.0 — "Urodziło się": ten sam profil (to samo id, więc dane zostają)
+  // przechodzi w tryb niemowlęcia. Bez updateProfile, bo ten przy zmianie wieku
+  // zastąpiłby prawdziwą datę urodzenia szacunkiem.
+  const completeBirth = async ({ name, birthDate, sex }) => {
+    const months = monthsFromBirthDate(birthDate) ?? 0
+    setProfiles(profiles.map(p => (p.id !== active.id ? p : {
+      ...p,
+      mode: 'baby',
+      bornFromPregnancy: true,
+      name: name || p.name,
+      birthDate,
+      birthDateEstimated: false,
+      months,
+      sex,
+      weight: null,
+      avatar: p.avatar === '🤰' ? '👶' : p.avatar,
+      toiletMode: 'diapers',
+      visibleTabs: defaultVisibleTabs({ months, toiletMode: 'diapers' }),
+    })))
+    setShowBirth(false)
+    setTab('today')
+    trackPregnancyBirth()
+    if (purchased) return
+    if (await startBirthTrial()) {
+      // Nasze okienko prezentu zastępuje ogólne "Masz 14 dni Premium".
+      try { localStorage.setItem(`babylog_trial_started_shown_${uid || 'guest'}`, '1') } catch {}
+      setShowBirthGift(true)
+    }
+  }
+
+  // v2.17.0 — zakończenie trybu ciąży: profil i jego skurcze znikają. Gdy to
+  // był jedyny profil, zamiast formularza "Poznajmy Twoje dziecko" spokojna
+  // plansza (OnboardingScreen afterEnd).
+  const endPregnancy = () => {
+    const id = active.id
+    setShowPregEnd(false)
+    trackPregnancyEnded()
+    setActiveContractions([])
+    const othersLeft = profiles.some(p => p.id !== id)
+    deleteProfile(id)
+    if (!othersLeft) {
+      setPregnancyEnded(Date.now())
+      setOnboardingDone(false)
+    }
   }
 
   const selectTab     = (id) => { if (id==='more'){setShowMore(true);return}; setTab(id); setShowMore(false); setShowProfiles(false) }
@@ -1496,12 +1578,14 @@ export default function App() {
     if (!pendingQuickAction || authLoading) return
     // Ekran logowania albo onboarding — porzuć akcję (nie dodawaj wpisu po zalogowaniu).
     if ((!user && !guestMode) || !onboardingDone) { setPendingQuickAction(null); return }
+    // Profil ciąży: karmienie i pieluchy z widżetu nie mają sensu.
+    if (isPregnancy) { setPendingQuickAction(null); return }
     const timer = setTimeout(() => {
       quickActionRef.current?.(pendingQuickAction)
       setPendingQuickAction(null)
     }, 1200)
     return () => clearTimeout(timer)
-  }, [pendingQuickAction, authLoading, user, guestMode, onboardingDone])
+  }, [pendingQuickAction, authLoading, user, guestMode, onboardingDone, isPregnancy])
 
   // Prośba o ocenę — po wpisie (listener useFirestore), gdy nic innego nie jest otwarte.
   reviewCheckRef.current = async () => {
@@ -1585,10 +1669,13 @@ export default function App() {
             )
             setProfiles(updated)
           }
+          if (pregnancyEnded) setPregnancyEnded(null)
           setOnboardingDone(true)
         }}
           canJoinPartner={!!uid}
           onLoginForPartner={loginForPartner}
+          onShowLogin={uid ? null : showLoginScreen}
+          afterEnd={!!pregnancyEnded}
         />
       </div>
     )
@@ -1623,6 +1710,8 @@ export default function App() {
           enableNotifications={enableNotifications}
           onUpdate={updateProfile}
           onDelete={deleteProfile}
+          onPregnancyBirth={() => { setShowSettings(false); setShowBirth(true) }}
+          onPregnancyEnd={() => { setShowSettings(false); setShowPregEnd(true) }}
           isPremium={isPremium}
           isOnTrial={isOnTrial}
           trialDaysLeft={trialDaysLeft}
@@ -1630,8 +1719,7 @@ export default function App() {
           onEditPhoto={() => { setShowSettings(false); openPhotoPicker() }}
           user={user}
           onLogout={user ? handleLogout : () => {
-            try { localStorage.removeItem('babylog_guest') } catch {}
-            setGuestMode(false)
+            showLoginScreen()
             setShowSettings(false)
           }}
           onClose={() => setShowSettings(false)}
@@ -1670,7 +1758,7 @@ export default function App() {
   // ── Zgoda medyczna przy pierwszym wejściu w część medyczną (v2.16.8) ──────
   // Karmienie, sen i pieluchy działają od razu; pełne zastrzeżenie pokazujemy
   // tam, gdzie ma znaczenie. "Wstecz" wraca na Dziś bez akceptacji.
-  if (!consentAccepted && MEDICAL_TABS.includes(tab)) {
+  if (!consentAccepted && MEDICAL_TABS.includes(tab) && !isPregnancy) {
     return <MedicalConsentScreen onAccept={acceptConsent} onBack={() => setTab('today')} />
   }
 
@@ -1685,7 +1773,7 @@ export default function App() {
               ~22px szerokości. */}
           <div className="topbar-logo">{t('app.title')}</div>
           <div className="topbar-sub">
-            {showProfiles ? t('topbar.profiles') : showMore ? t('topbar.more') : currentMoreTab ? t(currentMoreTab.labelKey) : t(NAV_TABS.find(x=>x.id===tab)?.labelKey || 'nav.feed')}
+            {showProfiles ? t('topbar.profiles') : isPregnancy ? t('preg.tab.home') : showMore ? t('topbar.more') : currentMoreTab ? t(currentMoreTab.labelKey) : t(NAV_TABS.find(x=>x.id===tab)?.labelKey || 'nav.feed')}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1737,7 +1825,7 @@ export default function App() {
             </button>
           )}
           {/* Sleep indicator */}
-          <SleepIndicator startTs={sleepTimerTs} onPress={() => selectTab('sleep')} />
+          {!isPregnancy && <SleepIndicator startTs={sleepTimerTs} onPress={() => selectTab('sleep')} />}
           {/* Settings (replaces logout — logout moved to settings screen) */}
           <button onClick={() => setShowSettings(true)} title={t('topbar.settings')} style={{
             background:'none', border:'none', cursor:'pointer',
@@ -1760,6 +1848,21 @@ export default function App() {
 
       {/* CONTENT */}
       <div className="content">
+        {isPregnancy && !showProfiles ? (
+          <PregnancyScreen
+            key={active.id}
+            profile={active}
+            uid={dataUid}
+            onBirth={() => setShowBirth(true)}
+            onEnd={() => setShowPregEnd(true)}
+          >
+            {showPartnerCard && (
+              <div style={{ margin: '-12px -16px' }}>
+                <PartnerInviteCard onInvite={openPartnerSettings} onDismiss={dismissPartnerCard} />
+              </div>
+            )}
+          </PregnancyScreen>
+        ) : (<>
 
         {/* v2.10.6 — MDR EXIT REFACTOR
             Usunięte: ChildStatusBar, CallDoctorCard (crisis), ChildStatusCard.
@@ -1850,9 +1953,11 @@ export default function App() {
             </div>
           </div>
         ) : renderTab()}
+        </>)}
       </div>
 
-      {/* BOTTOM NAV */}
+      {/* BOTTOM NAV (profil ciąży ma własne zakładki w PregnancyScreen) */}
+      {!isPregnancy && (
       <nav className="bottom-nav" role="tablist" aria-label={t('nav.main_aria')}>
         {NAV_TABS
           .filter(n => {
@@ -1907,13 +2012,14 @@ export default function App() {
           )
         })}
       </nav>
+      )}
 
       {/* QUICK ADD FAB (v2.9.3) — nad bottom nav, tap = bottom-sheet menu,
           long-press 500ms = bezpośredni quick feed (smart breast suggestion).
           Ukryty na ekranach modal-typu (Profiles) bo tam nie ma sensu szybko
           logować — user jest w trybie zarządzania. Settings/Prep/Paywall to
           osobne early returns wyżej, więc FAB i tak się tam nie renderuje. */}
-      {!showProfiles && (
+      {!showProfiles && !isPregnancy && (
         <QuickAddFab
           onQuickFeed={quickAddFeed}
           onQuickDiaper={quickAddDiaper}
@@ -2034,6 +2140,19 @@ export default function App() {
       <TrialStartedModal
         open={showTrialStarted}
         onClose={dismissTrialStarted}
+      />
+      <BirthModal
+        open={showBirth && isPregnancy}
+        profile={active}
+        defaultName={t('preg.default_name')}
+        onSave={completeBirth}
+        onClose={() => setShowBirth(false)}
+      />
+      <BirthGiftModal open={showBirthGift} onClose={() => setShowBirthGift(false)} />
+      <PregnancyEndModal
+        open={showPregEnd && isPregnancy}
+        onConfirm={endPregnancy}
+        onClose={() => setShowPregEnd(false)}
       />
       {feedReminderPrompt && (
         <FeedReminderPrompt

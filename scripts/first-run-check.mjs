@@ -1,7 +1,8 @@
 // scripts/first-run-check.mjs
 //
-// Pierwsze uruchomienie oczami nowej osoby: logowanie → formularz dziecka →
-// pierwszy wpis. Na każdym kroku sprawdza, czy to, co trzeba kliknąć albo
+// Pierwsze uruchomienie oczami nowej osoby: formularz dziecka → pierwszy wpis
+// (od v2.17.0 nowa instalacja startuje bez ekranu logowania; ekran logowania
+// sprawdzamy osobno, z flagą babylog_login_wall). Na każdym kroku sprawdza, czy to, co trzeba kliknąć albo
 // wypełnić, jest widoczne BEZ przewijania (nic nie chowa się pod przyciskiem
 // na dole ani pod paskiem nawigacji). Zrzuty do FIRST_RUN_OUT (domyślnie
 // store-assets/first-run, poza gitem).
@@ -35,18 +36,24 @@ function hidden(page, selector, bottomLimitSelector) {
   }, selector, bottomLimitSelector)
 }
 
-async function run(browser, lang, [w, h], issues) {
-  const tag = `${lang} ${w}x${h}`
+async function run(browser, lang, [w, h], issues, wall = false) {
+  const tag = `${lang} ${w}x${h}${wall ? ' (logowanie)' : ''}`
   const shot = name => page.screenshot({ path: path.join(OUT, `${lang}-${w}x${h}-${name}.png`) })
   const page = await browser.newPage()
   await page.setViewport({ width: w, height: h, deviceScaleFactor: 1, isMobile: true, hasTouch: true })
   page.on('pageerror', e => issues.push(`${tag} WYJĄTEK: ${e.message.slice(0, 160)}`))
   await page.goto(APP_URL, { waitUntil: 'domcontentloaded', timeout: 60000 })
-  await page.evaluate(l => { localStorage.clear(); sessionStorage.clear(); localStorage.setItem('babylog_locale', l) }, lang)
+  await page.evaluate((l, wl) => {
+    localStorage.clear(); sessionStorage.clear(); localStorage.setItem('babylog_locale', l)
+    if (wl) localStorage.setItem('babylog_login_wall', '1')
+  }, lang, wall)
   await page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 })
   await sleep(2500)
 
-  // 1. Logowanie: oba przyciski widoczne od razu.
+  // 1. Logowanie (tylko z flagą): oba przyciski widoczne od razu.
+  const direct = await page.evaluate(() => !!document.querySelector('#onb-name'))
+  if (!wall && !direct) issues.push(`${tag}: nowa instalacja nie startuje od formularza`)
+  if (wall) {
   const loginHidden = await hidden(page, '.app button')
   if (loginHidden.length) issues.push(`${tag} logowanie: poniżej ekranu ${loginHidden.join(' | ')}`)
   await shot('1-login')
@@ -56,6 +63,7 @@ async function run(browser, lang, [w, h], issues) {
   })
   if (!guest) { issues.push(`${tag}: brak przycisku "bez konta"`); await page.close(); return }
   await sleep(1200)
+  }
 
   // 2. Formularz: imię, data i przycisk na jednym ekranie (nad przyciskiem).
   const formHidden = await hidden(page, '#onb-name, #onb-dob', 'div[style*="sticky"]')
@@ -109,6 +117,9 @@ async function run(browser, lang, [w, h], issues) {
 fs.mkdirSync(OUT, { recursive: true })
 const browser = await puppeteer.launch({ executablePath: CHROME_PATH, headless: 'new' })
 const issues = []
-for (const lang of LANGS) for (const vp of VIEWPORTS) await run(browser, lang, vp, issues)
+for (const lang of LANGS) {
+  for (const vp of VIEWPORTS) await run(browser, lang, vp, issues)
+  await run(browser, lang, VIEWPORTS[0], issues, true)
+}
 await browser.close()
 console.log(issues.length ? issues.join('\n') : `OK: ${LANGS.length} języki × ${VIEWPORTS.length} ekrany, wszystko widoczne bez przewijania`)

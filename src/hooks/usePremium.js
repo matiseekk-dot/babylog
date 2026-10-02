@@ -119,13 +119,43 @@ export function usePremium(uid, ownerUid = null) {
   const [ownerPurchased] = useFirestore(ownerUid, 'premium_purchased', false)
   const [ownerTrialStart] = useFirestore(ownerUid, 'trial_start', null)
 
+  // v2.17.0: drugie 14 dni w prezencie po porodzie (tryb ciąży → "Urodziło się").
+  // Zalogowany: zapis tylko przez CF initBirthTrial (chroniony w regułach),
+  // gość: lokalnie, jak jego zwykły trial.
+  const [authBirthTrial] = useFirestore(uid, 'birth_trial_start', null)
+  const [guestBirthTrial, setGuestBirthTrial] = useFirestore(null, 'birth_trial_start_guest', null)
+  const [ownerBirthTrial] = useFirestore(ownerUid, 'birth_trial_start', null)
+  const birthTrialStart = uid
+    ? (typeof authBirthTrial === 'number' ? authBirthTrial : null)
+    : (typeof guestBirthTrial === 'number' ? guestBirthTrial : null)
+
+  /** Zwraca true, gdy prezent właśnie się zaczął (pokazać okienko), inaczej false. */
+  const startBirthTrial = async () => {
+    if (!uid) {
+      if (typeof guestBirthTrial === 'number') return false
+      setGuestBirthTrial(Date.now())
+      return true
+    }
+    try {
+      const result = await httpsCallable(functions, 'initBirthTrial')()
+      addBreadcrumb('trial', 'birth-trial', { alreadyExisted: result.data?.alreadyExisted })
+      return result.data?.alreadyExisted === false
+    } catch (err) {
+      // Funkcja niewdrożona albo brak sieci: bez prezentu, apka działa dalej.
+      captureError(err, { context: 'usePremium-initBirthTrial', uid })
+      return false
+    }
+  }
+
   // Wylicz czy Premium jest aktywny
   const now = Date.now()
   const DAY_MS = 24 * 60 * 60 * 1000
-  const trialEndMs = trialStart ? trialStart + TRIAL_DAYS * DAY_MS : 0
-  const trialActive = !!trialStart && now < trialEndMs
-  const ownerTrialEndMs = ownerUid && typeof ownerTrialStart === 'number'
-    ? ownerTrialStart + TRIAL_DAYS * DAY_MS
+  const endOf = start => (typeof start === 'number' ? start + TRIAL_DAYS * DAY_MS : 0)
+  // Koniec dłuższego z dwóch okresów: z rejestracji i z prezentu po porodzie.
+  const trialEndMs = Math.max(endOf(trialStart), endOf(birthTrialStart))
+  const trialActive = now < trialEndMs
+  const ownerTrialEndMs = ownerUid
+    ? Math.max(endOf(ownerTrialStart), endOf(ownerBirthTrial))
     : 0
   const ownerTrialActive = now < ownerTrialEndMs
   const ownerHasPurchased = !!ownerUid && ownerPurchased === true
@@ -154,6 +184,7 @@ export function usePremium(uid, ownerUid = null) {
     trialDaysLeft,
     purchased: effectivePurchased,
     premiumViaPartner: ownerHasPurchased && purchased !== true,
+    startBirthTrial,
     activate,
     deactivate,
   }

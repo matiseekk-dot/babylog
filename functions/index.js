@@ -324,7 +324,8 @@ async function processDailySummary(uid, dataUid, tokens, tokenOwner) {
     return Array.isArray(list) ? list.filter(e => e?.date === date) : []
   }
   const kids = []
-  for (const p of profiles.slice(0, 5)) {
+  // v2.17.0: profil ciąży nie ma karmień ani snu, nie wchodzi do podsumowania.
+  for (const p of profiles.filter(x => x?.mode !== 'pregnancy').slice(0, 5)) {
     if (!p?.id) continue
     const [feeds, sleeps, diapers] = await Promise.all([
       todays(`feed_${p.id}`), todays(`sleep_${p.id}`), todays(`diaper_${p.id}`),
@@ -868,6 +869,38 @@ exports.initTrial = onCall({
 })
 
 // ──────────────────────────────────────────────────────────────────────────
+// initBirthTrial — 14 dni Premium w prezencie po porodzie (v2.17.0)
+// ──────────────────────────────────────────────────────────────────────────
+//
+// Tryb ciąży: zwykły trial startuje przy pierwszym logowaniu, więc u kogoś,
+// kto zaczął w ciąży, wygasa na długo przed porodem. Przycisk "Urodziło się"
+// daje drugie 14 dni, raz na konto (idempotentnie, jak initTrial).
+// birth_trial_start jest chroniony w firestore.rules (zapis tylko tu).
+exports.initBirthTrial = onCall({
+  region: 'europe-west3',
+  timeoutSeconds: 30,
+  memory: '256MiB',
+}, async (request) => {
+  if (!request.auth) {
+    throw new HttpsError('unauthenticated', 'Must be logged in to init birth trial.')
+  }
+  const ref = userData(request.auth.uid).doc('birth_trial_start')
+  try {
+    return await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref)
+      const existing = snap.exists ? snap.data()?.value : null
+      if (typeof existing === 'number') return { startMs: existing, alreadyExisted: true }
+      const now = Date.now()
+      tx.set(ref, { value: now })
+      return { startMs: now, alreadyExisted: false }
+    })
+  } catch (err) {
+    console.error('[initBirthTrial] failed:', err)
+    throw new HttpsError('internal', 'Failed to init birth trial.', err.message)
+  }
+})
+
+// ──────────────────────────────────────────────────────────────────────────
 // Wspólne konto dla rodziców (v2.15.0, Premium)
 // ──────────────────────────────────────────────────────────────────────────
 //
@@ -905,13 +938,17 @@ async function getLinkedOwnerUid(uid) {
 }
 
 async function hasPremium(uid) {
-  const [purchased, trial] = await Promise.all([
+  const [purchased, trial, birthTrial] = await Promise.all([
     userData(uid).doc('premium_purchased').get(),
     userData(uid).doc('trial_start').get(),
+    userData(uid).doc('birth_trial_start').get(),
   ])
   if (purchased.exists && purchased.data()?.value === true) return true
-  const start = trial.exists ? trial.data()?.value : null
-  return typeof start === 'number' && Date.now() < start + TRIAL_MS
+  // v2.17.0: trial z rejestracji albo prezent po porodzie (initBirthTrial).
+  return [trial, birthTrial].some(snap => {
+    const start = snap.exists ? snap.data()?.value : null
+    return typeof start === 'number' && Date.now() < start + TRIAL_MS
+  })
 }
 
 function displayName(auth) {

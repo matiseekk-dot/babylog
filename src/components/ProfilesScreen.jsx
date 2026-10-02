@@ -1,7 +1,10 @@
 import { t, useLocale } from '../i18n'
 import React, { useState } from 'react'
 import Modal from './Modal'
-import { genId, parseNum } from '../utils/helpers'
+import { genId, parseNum, todayDate } from '../utils/helpers'
+import { isValidDueDate, addDays, GESTATION_DAYS } from '../utils/pregnancy'
+import { trackPregnancyStarted } from '../utils/analytics'
+import { pregnancyWeekText } from './PregnancyScreen'
 
 const AVATARS = ['👶','🍼','⭐','🌙','🌈','🦋','🐣','🌸']
 const AVATAR_COLORS = ['#E1F5EE','#FAEEDA','#EEEDFE','#FAECE7','#E6F1FB','#FBEAF0','#EAF3DE','#FCEBEB']
@@ -11,6 +14,10 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
   const [modal, setModal] = useState(false)
   const [editModal, setEditModal] = useState(null)
   const [form, setForm] = useState({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE', toiletMode:'diapers' })
+  // v2.17.0: kolejny profil może być ciążą (np. drugie dziecko w drodze).
+  const [kind, setKind] = useState('baby')
+  const [due, setDue] = useState('')
+  const [dueTried, setDueTried] = useState(false)
 
   const openAdd = () => {
     // v2.11.9: gate Add Profile button — free user max 1 profile.
@@ -22,6 +29,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
       return
     }
     setForm({ name:'', months:'4', weight:'6.5', avatar:'👶', avatarColor:'#E1F5EE', toiletMode:'diapers' })
+    setKind('baby'); setDue(''); setDueTried(false)
     setModal(true)
   }
 
@@ -39,6 +47,14 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
   }
 
   const save = () => {
+    if (kind === 'pregnancy') {
+      if (!isValidDueDate(due)) { setDueTried(true); return }
+      trackPregnancyStarted('profiles')
+      onAdd({ id: genId(), mode: 'pregnancy', name: form.name.trim() || t('preg.default_name'), dueDate: due, lmp: null,
+        months: 0, weight: null, sex: null, avatar: '🤰', avatarColor: '#FBEAF0', toiletMode: 'diapers' })
+      setModal(false)
+      return
+    }
     if (!form.name.trim()) return
     onAdd({ id: genId(), name: form.name.trim(), months: Number(form.months), weight: parseNum(form.weight) || 0, avatar: form.avatar, avatarColor: form.avatarColor, toiletMode: form.toiletMode })
     setModal(false)
@@ -73,12 +89,14 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
             </div>
             <div className="profile-info">
               <div className="profile-name">{p.name}</div>
-              <div className="profile-detail">{ageLabel(p.months)} · {p.weight} kg</div>
+              <div className="profile-detail">
+                {p.mode === 'pregnancy' ? pregnancyWeekText(p.dueDate) : `${ageLabel(p.months)} · ${p.weight} kg`}
+              </div>
             </div>
             {p.id===activeId && <span className="profile-check">✓</span>}
-            <button onClick={e=>{e.stopPropagation();openEdit(p)}} style={{
+            {p.mode !== 'pregnancy' && <button onClick={e=>{e.stopPropagation();openEdit(p)}} style={{
               background:'none',border:'none',color:'var(--text-3)',fontSize:18,padding:'0 4px',minHeight:44,minWidth:44
-            }}>✏️</button>
+            }}>✏️</button>}
           </div>
         ))}
       </div>
@@ -88,7 +106,32 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
       </button>
 
       <Modal open={modal} onClose={()=>setModal(false)} title={t('profiles.add.title')}>
-        <>
+        <div role="radiogroup" style={{display:'flex',gap:4,padding:4,marginBottom:12,background:'var(--gray-light)',borderRadius:12}}>
+          {[['baby', t('onb.mode.baby')], ['pregnancy', `🤰 ${t('onb.mode.pregnancy')}`]].map(([value, label]) => (
+            <button key={value} type="button" role="radio" aria-checked={kind === value} onClick={() => setKind(value)} style={{
+              flex:1, minHeight:40, border:'none', borderRadius:10, cursor:'pointer', fontSize:14, fontWeight:700,
+              background: kind === value ? 'var(--surface)' : 'transparent',
+              color: kind === value ? 'var(--brand-700)' : 'var(--text-2)',
+            }}>{label}</button>
+          ))}
+        </div>
+        {kind === 'pregnancy' ? (<>
+      <div className="form-group">
+        <label className="form-label" htmlFor="add-preg-name">{t('onb.preg.name')}</label>
+        <input id="add-preg-name" className="form-input" type="text" maxLength={40} placeholder={t('onb.preg.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+      </div>
+      <div className="form-group">
+        <label className="form-label" htmlFor="add-preg-due">{t('onb.preg.due')} *</label>
+        <input id="add-preg-due" className="form-input" type="date" value={due}
+          min={addDays(todayDate(), -28)} max={addDays(todayDate(), GESTATION_DAYS)}
+          onChange={e=>setDue(e.target.value)} aria-invalid={(dueTried || !!due) && !isValidDueDate(due)} />
+        {(dueTried || due) && !isValidDueDate(due) && (
+          <div role="alert" style={{fontSize:12,color:'var(--alert-500)',marginTop:4,fontWeight:500}}>
+            ⚠️ {t(due ? 'onb.preg.due_invalid' : 'onb.preg.due_missing')}
+          </div>
+        )}
+      </div>
+        </>) : (<>
       <div className="form-group">
         <label className="form-label">{t('onb.setup.name')}</label>
         <input className="form-input" type="text" maxLength={40} placeholder={t('profiles.name_ph')} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
@@ -180,7 +223,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
         <label className="form-label">{t('onb.setup.weight')}</label>
         <input className="form-input" type="text" inputMode="decimal" pattern="[0-9.,]*" maxLength={5} value={form.weight} onChange={e=>setForm(f=>({...f,weight:e.target.value.replace(/[^0-9.,]/g,'')}))} />
       </div>
-    </>
+    </>)}
         <div className="modal-btns">
           <button className="btn-secondary" onClick={()=>setModal(false)}>{t('common.cancel')}</button>
           <button className="btn-primary" onClick={save}>{t('common.save')}</button>
