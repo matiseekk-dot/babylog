@@ -4,6 +4,7 @@ import { readCached } from '../hooks/useFirestore'
 import { pregnancyProgress, GESTATION_DAYS } from '../utils/pregnancy'
 import ContractionTimer from './ContractionTimer'
 import AnnouncementModal from './AnnouncementModal'
+import PregnancyExams from './PregnancyExams'
 
 /** "25. tydzień ciąży" dla profilu ciąży (lista dzieci, nagłówek). */
 export function pregnancyWeekText(dueDate, termDays = GESTATION_DAYS) {
@@ -66,10 +67,18 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
         <button type="button" role="tab" aria-selected={tab === 'contractions'} style={segBtn(tab === 'contractions')} onClick={() => setTab('contractions')}>
           ⏱️ {t('preg.tab.contractions')}
         </button>
+        {/* v2.17.3: badania według polskiego standardu, więc tylko po polsku */}
+        {getLocale() === 'pl' && (
+          <button type="button" role="tab" aria-selected={tab === 'exams'} style={segBtn(tab === 'exams')} onClick={() => setTab('exams')}>
+            🩺 {t('exams.tab')}
+          </button>
+        )}
       </div>
 
       {tab === 'contractions' ? (
         <ContractionTimer uid={uid} profileId={profile.id} />
+      ) : tab === 'exams' && getLocale() === 'pl' ? (
+        <PregnancyExams uid={uid} profile={profile} />
       ) : (
         <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           {/* Tydzień ciąży */}
