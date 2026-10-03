@@ -1,8 +1,8 @@
-import { t, useLocale } from '../i18n'
+import { t, useLocale, getLocale } from '../i18n'
 import React, { useState } from 'react'
 import Modal from './Modal'
 import { genId, parseNum, todayDate } from '../utils/helpers'
-import { isValidDueDate, addDays, GESTATION_DAYS } from '../utils/pregnancy'
+import { isValidDueDate, addDays, termDaysForLocale } from '../utils/pregnancy'
 import { trackPregnancyStarted } from '../utils/analytics'
 import { pregnancyWeekText } from './PregnancyScreen'
 
@@ -18,6 +18,8 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
   const [kind, setKind] = useState('baby')
   const [due, setDue] = useState('')
   const [dueTried, setDueTried] = useState(false)
+  const termDays = termDaysForLocale(getLocale())
+  const dueOk = isValidDueDate(due, new Date(), termDays)
 
   const openAdd = () => {
     // v2.11.9: gate Add Profile button — free user max 1 profile.
@@ -48,9 +50,9 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
 
   const save = () => {
     if (kind === 'pregnancy') {
-      if (!isValidDueDate(due)) { setDueTried(true); return }
+      if (!dueOk) { setDueTried(true); return }
       trackPregnancyStarted('profiles')
-      onAdd({ id: genId(), mode: 'pregnancy', name: form.name.trim() || t('preg.default_name'), dueDate: due, lmp: null,
+      onAdd({ id: genId(), mode: 'pregnancy', name: form.name.trim() || t('preg.default_name'), dueDate: due, termDays, lmp: null,
         months: 0, weight: null, sex: null, avatar: '🤰', avatarColor: '#FBEAF0', toiletMode: 'diapers' })
       setModal(false)
       return
@@ -90,7 +92,7 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
             <div className="profile-info">
               <div className="profile-name">{p.name}</div>
               <div className="profile-detail">
-                {p.mode === 'pregnancy' ? pregnancyWeekText(p.dueDate) : `${ageLabel(p.months)} · ${p.weight} kg`}
+                {p.mode === 'pregnancy' ? pregnancyWeekText(p.dueDate, p.termDays) : `${ageLabel(p.months)} · ${p.weight} kg`}
               </div>
             </div>
             {p.id===activeId && <span className="profile-check">✓</span>}
@@ -123,9 +125,9 @@ export default function ProfilesScreen({ profiles, activeId, onSelect, onAdd, on
       <div className="form-group">
         <label className="form-label" htmlFor="add-preg-due">{t('onb.preg.due')} *</label>
         <input id="add-preg-due" className="form-input" type="date" value={due}
-          min={addDays(todayDate(), -28)} max={addDays(todayDate(), GESTATION_DAYS)}
-          onChange={e=>setDue(e.target.value)} aria-invalid={(dueTried || !!due) && !isValidDueDate(due)} />
-        {(dueTried || due) && !isValidDueDate(due) && (
+          min={addDays(todayDate(), -28)} max={addDays(todayDate(), termDays)}
+          onChange={e=>setDue(e.target.value)} aria-invalid={(dueTried || !!due) && !dueOk} />
+        {(dueTried || due) && !dueOk && (
           <div role="alert" style={{fontSize:12,color:'var(--alert-500)',marginTop:4,fontWeight:500}}>
             ⚠️ {t(due ? 'onb.preg.due_invalid' : 'onb.preg.due_missing')}
           </div>

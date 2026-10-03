@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { t, useLocale } from '../i18n'
+import { t, useLocale, getLocale } from '../i18n'
 import { trackOnboardingBlocked, trackOnboardingCompleted, trackOnboardingViewed, trackPregnancyStarted } from '../utils/analytics'
 import PartnerJoinForm from './PartnerJoinForm'
 import Modal from './Modal'
 import { ConsentDetails } from './MedicalConsentScreen'
 import { todayDate } from '../utils/helpers'
-import { isValidDueDate, isValidLmp, dueDateFromLmp, addDays, GESTATION_DAYS } from '../utils/pregnancy'
+import { isValidDueDate, isValidLmp, dueDateFromLmp, addDays, termDaysForLocale } from '../utils/pregnancy'
 import { formatLongDate } from './PregnancyScreen'
 
 // Gość klika "Zaloguj się" w trybie kodu → po powrocie z logowania ekran
@@ -109,8 +109,9 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     return true
   })()
   const pregDate = dueMode === 'due' ? due : lmp
-  const pregValid = dueMode === 'due' ? isValidDueDate(due) : isValidLmp(lmp)
-  const pregDue = dueMode === 'due' ? due : (pregValid ? dueDateFromLmp(lmp) : '')
+  const termDays = termDaysForLocale(getLocale())
+  const pregValid = dueMode === 'due' ? isValidDueDate(due, new Date(), termDays) : isValidLmp(lmp)
+  const pregDue = dueMode === 'due' ? due : (pregValid ? dueDateFromLmp(lmp, termDays) : '')
   const canSubmit = kind === 'pregnancy' ? pregValid : nameValid && dobValid
 
   // ── Konwersja DOB → months ────────────────────────────────────────────────
@@ -136,6 +137,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
       mode: 'pregnancy',
       name: name.trim() || t('preg.default_name'),
       dueDate: pregDue,
+      termDays,
       lmp: dueMode === 'lmp' ? lmp : null,
       months: 0,
       weight: null,
@@ -267,7 +269,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
           <>
             <label className="form-label" htmlFor="onb-due">{t('onb.preg.due')} *</label>
             <input id="onb-due" className="form-input" type="date" value={due}
-              min={addDays(todayStr, -28)} max={addDays(todayStr, GESTATION_DAYS)}
+              min={addDays(todayStr, -28)} max={addDays(todayStr, termDays)}
               onChange={e => setDue(e.target.value)} aria-invalid={(tried || !!due) && !pregValid}
               style={{ fontSize: 16, borderColor: ((tried || due) && !pregValid) ? 'var(--alert-500)' : undefined }} />
           </>

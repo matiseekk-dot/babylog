@@ -136,7 +136,8 @@ export default function SettingsScreen({
   // wagi i pieluch; bez raportu PDF i przypomnień o karmieniu.
   const isPregnancy = profile.mode === 'pregnancy'
   const [dueDate, setDueDate] = useState(profile.dueDate || '')
-  const dueValid = isValidDueDate(dueDate)
+  const termDays = profile.termDays || GESTATION_DAYS
+  const dueValid = isValidDueDate(dueDate, new Date(), termDays)
   const savePregnancy = () => {
     if (!dueValid) { toast(t('onb.preg.due_invalid'), 'error'); return }
     onUpdate(profile.id, { name: name.trim() || profile.name, dueDate })
@@ -303,7 +304,7 @@ export default function SettingsScreen({
             <div className="form-group">
               <label className="form-label" htmlFor="set-preg-due">{t('onb.preg.due')}</label>
               <input id="set-preg-due" className="form-input" type="date" value={dueDate}
-                min={addDays(todayDate(), -28)} max={addDays(todayDate(), GESTATION_DAYS)}
+                min={addDays(todayDate(), -28)} max={addDays(todayDate(), termDays)}
                 onChange={e => setDueDate(e.target.value)} aria-invalid={!dueValid}
                 style={{ borderColor: dueValid ? undefined : 'var(--alert-500)' }} />
             </div>

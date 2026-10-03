@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { t, tPlural, useLocale, getLocale } from '../i18n'
 import { readCached } from '../hooks/useFirestore'
-import { pregnancyProgress } from '../utils/pregnancy'
+import { pregnancyProgress, GESTATION_DAYS } from '../utils/pregnancy'
 import ContractionTimer from './ContractionTimer'
 
 /** "25. tydzień ciąży" dla profilu ciąży (lista dzieci, nagłówek). */
-export function pregnancyWeekText(dueDate) {
-  const p = pregnancyProgress(dueDate)
+export function pregnancyWeekText(dueDate, termDays = GESTATION_DAYS) {
+  const p = pregnancyProgress(dueDate, new Date(), termDays)
   return p ? t('preg.week_big', { week: p.week, w: p.weeks, d: p.days }) : ''
 }
 
@@ -37,7 +37,7 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
     const list = readCached(uid, `contractions_${profile.id}`, [])
     return Array.isArray(list) && list.some(c => c && c.end == null) ? 'contractions' : 'home'
   })
-  const p = pregnancyProgress(profile.dueDate)
+  const p = pregnancyProgress(profile.dueDate, new Date(), profile.termDays || GESTATION_DAYS)
 
   const segBtn = active => ({
     flex: 1, padding: '10px 8px', minHeight: 44, border: 'none', borderRadius: 10, cursor: 'pointer',

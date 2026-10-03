@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   daysBetween, addDays, dueDateFromLmp, pregnancyProgress,
   isValidDueDate, isValidLmp, isValidBirthDate,
-  withContractionTimes, contractionStats, formatMinSec,
+  withContractionTimes, contractionStats, formatMinSec, termDaysForLocale,
 } from './pregnancy'
 
 const at = (ymd, hm = '10:00') => new Date(`${ymd}T${hm}:00`)
@@ -92,5 +92,27 @@ describe('skurcze', () => {
     expect(formatMinSec(65)).toBe('1:05')
     expect(formatMinSec(0)).toBe('0:00')
     expect(formatMinSec(null)).toBe('')
+  })
+})
+
+describe('Francja: termin 41 SA (287 dni)', () => {
+  it('termDaysForLocale', () => {
+    expect(termDaysForLocale('fr')).toBe(287)
+    expect(termDaysForLocale('pl')).toBe(280)
+    expect(termDaysForLocale('de')).toBe(280)
+  })
+  it('ten sam dzień od ostatniej miesiączki daje ten sam tydzień przy terminie +280 i +287', () => {
+    const lmp = '2026-04-03'
+    const now = at('2026-09-30')
+    const pl = pregnancyProgress(dueDateFromLmp(lmp), now)
+    const fr = pregnancyProgress(dueDateFromLmp(lmp, 287), now, 287)
+    expect(dueDateFromLmp(lmp, 287)).toBe('2027-01-15')
+    expect([fr.weeks, fr.days]).toEqual([pl.weeks, pl.days])
+    expect(fr.daysLeft).toBe(pl.daysLeft + 7)
+  })
+  it('termin do 287 dni naprzód jest poprawny tylko przy 287', () => {
+    const now = at('2026-10-02')
+    expect(isValidDueDate(addDays('2026-10-02', 285), now)).toBe(false)
+    expect(isValidDueDate(addDays('2026-10-02', 285), now, 287)).toBe(true)
   })
 })

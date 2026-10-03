@@ -4961,7 +4961,7 @@ const TRANSLATIONS = {
     'onb.preg.use_due': 'Je connais la date prévue',
     'onb.preg.due_missing': 'Veuillez choisir la date prévue',
     'onb.preg.lmp_missing': 'Veuillez choisir la date des dernières règles',
-    'onb.preg.due_invalid': 'La date prévue doit se situer dans les 40 prochaines semaines',
+    'onb.preg.due_invalid': 'La date prévue doit se situer dans les 41 prochaines semaines',
     'onb.preg.lmp_invalid': 'Indiquez une date des 44 dernières semaines',
     'onb.preg.due_result': 'Date prévue : {date}',
     'onb.preg.cta': 'C’est parti 🤰',

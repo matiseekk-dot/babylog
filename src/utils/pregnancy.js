@@ -2,7 +2,11 @@
 //
 // Wiek ciąży liczymy jak lekarze: od pierwszego dnia ostatniej miesiączki,
 // termin porodu = ten dzień + 280 dni (reguła Naegelego). Gdy znamy tylko
-// termin z USG, początek = termin - 280 dni. "24+3" = 24 pełne tygodnie i 3 dni,
+// termin z USG, początek = termin - 280 dni.
+//
+// Wyjątek: Francja ustala termin na 41 SA (CNGOF), czyli 287 dni. Długość
+// zapisujemy w profilu (termDays) przy zakładaniu, żeby partner z inną
+// wersją językową liczył tak samo. "24+3" = 24 pełne tygodnie i 3 dni,
 // czyli trwa 25. tydzień ciąży.
 //
 // Daty jako 'YYYY-MM-DD' w strefie telefonu; liczymy w południe, żeby zmiana
@@ -11,6 +15,11 @@
 import { dateYMD } from './helpers'
 
 export const GESTATION_DAYS = 280
+
+/** Dni od ostatniej miesiączki do terminu w danym języku aplikacji. */
+export function termDaysForLocale(locale) {
+  return locale === 'fr' ? 287 : GESTATION_DAYS
+}
 const DAY_MS = 24 * 60 * 60 * 1000
 
 function noon(ymd) {
@@ -34,8 +43,8 @@ export function addDays(ymd, days) {
 }
 
 /** Termin porodu z pierwszego dnia ostatniej miesiączki. */
-export function dueDateFromLmp(lmp) {
-  return addDays(lmp, GESTATION_DAYS)
+export function dueDateFromLmp(lmp, termDays = GESTATION_DAYS) {
+  return addDays(lmp, termDays)
 }
 
 /**
@@ -44,10 +53,10 @@ export function dueDateFromLmp(lmp) {
  *   weeks+days — pełne tygodnie i dni (24+3), week — trwający tydzień (25),
  *   trimester — 1 do 13+6, 2 do 27+6, 3 potem; daysLeft < 0 po terminie.
  */
-export function pregnancyProgress(dueDate, now = new Date()) {
+export function pregnancyProgress(dueDate, now = new Date(), termDays = GESTATION_DAYS) {
   const daysLeft = daysBetween(now, dueDate)
   if (daysLeft == null) return null
-  const elapsed = Math.max(0, GESTATION_DAYS - daysLeft)
+  const elapsed = Math.max(0, termDays - daysLeft)
   const weeks = Math.floor(elapsed / 7)
   const days = elapsed % 7
   return {
@@ -56,15 +65,15 @@ export function pregnancyProgress(dueDate, now = new Date()) {
     week: weeks + 1,
     trimester: weeks < 14 ? 1 : weeks < 28 ? 2 : 3,
     daysLeft,
-    percent: Math.min(100, Math.round((elapsed / GESTATION_DAYS) * 100)),
+    percent: Math.min(100, Math.round((elapsed / termDays) * 100)),
   }
 }
 
 // Termin wpisany przy zakładaniu: najwyżej 4 tygodnie po (ktoś zakłada profil
 // po terminie) i najwyżej 280 dni przed (ostatnia miesiączka dziś).
-export function isValidDueDate(ymd, now = new Date()) {
+export function isValidDueDate(ymd, now = new Date(), termDays = GESTATION_DAYS) {
   const left = daysBetween(now, ymd)
-  return left != null && left >= -28 && left <= GESTATION_DAYS
+  return left != null && left >= -28 && left <= termDays
 }
 
 // Ostatnia miesiączka: nie w przyszłości i nie dawniej niż 44 tygodnie.
