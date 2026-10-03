@@ -38,3 +38,17 @@ export async function requestPinWidget() {
   if (!hasNativeExtras()) return false
   try { return !!(await Spokojny.pinWidget())?.requested } catch { return false }
 }
+
+/**
+ * v58: systemowe okno udostępniania z obrazkiem (karta "Będzie nas troje").
+ * false → brak metody (natywne v57 i starsze), przeglądarka albo błąd.
+ */
+export async function shareImageNative({ dataUrl, text, title, fileName }) {
+  if (!hasNativeExtras()) return false
+  try {
+    const base64 = String(dataUrl).split(',')[1]
+    return !!(await Spokojny.shareImage({ base64, text, title, fileName }))?.shared
+  } catch {
+    return false
+  }
+}

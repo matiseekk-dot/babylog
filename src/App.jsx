@@ -1855,6 +1855,8 @@ export default function App() {
             uid={dataUid}
             onBirth={() => setShowBirth(true)}
             onEnd={() => setShowPregEnd(true)}
+            isPremium={isPremium}
+            onUpgrade={() => openPaywall('announcement')}
           >
             {showPartnerCard && (
               <div style={{ margin: '-12px -16px' }}>

@@ -3,6 +3,7 @@ import { t, tPlural, useLocale, getLocale } from '../i18n'
 import { readCached } from '../hooks/useFirestore'
 import { pregnancyProgress, GESTATION_DAYS } from '../utils/pregnancy'
 import ContractionTimer from './ContractionTimer'
+import AnnouncementModal from './AnnouncementModal'
 
 /** "25. tydzień ciąży" dla profilu ciąży (lista dzieci, nagłówek). */
 export function pregnancyWeekText(dueDate, termDays = GESTATION_DAYS) {
@@ -29,8 +30,9 @@ export function formatLongDate(ymd) {
  *   onBirth  — fn(): otwórz okienko "Urodziło się"
  *   onEnd    — fn(): otwórz okienko zakończenia trybu ciąży
  *   children — dodatkowe karty pod licznikiem tygodni (np. zaproszenie partnera)
+ *   isPremium, onUpgrade — karta "Będzie nas troje" (podpis do wyłączenia w Premium)
  */
-export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children }) {
+export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children, isPremium, onUpgrade }) {
   useLocale()
   // Trwający skurcz po ponownym otwarciu apki: od razu licznik.
   const [tab, setTab] = useState(() => {
@@ -38,6 +40,7 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
     return Array.isArray(list) && list.some(c => c && c.end == null) ? 'contractions' : 'home'
   })
   const p = pregnancyProgress(profile.dueDate, new Date(), profile.termDays || GESTATION_DAYS)
+  const [showAnnounce, setShowAnnounce] = useState(false)
 
   const segBtn = active => ({
     flex: 1, padding: '10px 8px', minHeight: 44, border: 'none', borderRadius: 10, cursor: 'pointer',
@@ -125,6 +128,20 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
             <span style={{ fontSize: 20, color: 'var(--text-3)' }}>›</span>
           </button>
 
+          {/* v2.17.2: karta do ogłoszenia ciąży (pętla polecenia: stopka z nazwą apki) */}
+          <button type="button" onClick={() => setShowAnnounce(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%',
+            background: 'linear-gradient(135deg, #FDEDE5, #FCE9F1)', border: '0.5px solid var(--border)', borderRadius: 14,
+            padding: '14px 16px', cursor: 'pointer', minHeight: 64,
+          }}>
+            <span style={{ fontSize: 26 }}>🎉</span>
+            <span style={{ flex: 1 }}>
+              <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{t('announce.title')}</span>
+              <span style={{ display: 'block', fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>{t('announce.cta_desc')}</span>
+            </span>
+            <span style={{ fontSize: 20, color: 'var(--text-3)' }}>›</span>
+          </button>
+
           {children}
 
           <div style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.5, textAlign: 'center', padding: '4px 8px' }}>
@@ -143,6 +160,13 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
           </div>
         </div>
       )}
+      <AnnouncementModal
+        open={showAnnounce}
+        onClose={() => setShowAnnounce(false)}
+        dueDate={profile.dueDate}
+        isPremium={isPremium}
+        onUpgrade={() => { setShowAnnounce(false); onUpgrade?.() }}
+      />
     </div>
   )
 }
