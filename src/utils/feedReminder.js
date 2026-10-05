@@ -30,8 +30,12 @@ export function setFeedReminderPref(value) {
   try { localStorage.setItem(PREF_KEY, String(value)) } catch {}
 }
 
-export function snoozeFeedReminderPrompt(now = Date.now()) {
-  try { localStorage.setItem(SNOOZE_KEY, String(now)) } catch {}
+/**
+ * "Nie teraz": pytamy znowu po `days` dniach (domyślnie 1). v2.17.5: gość dostaje
+ * 7 dni, bo dla niego pytanie oznacza logowanie (było ok. 2,5 odmowy na osobę).
+ */
+export function snoozeFeedReminderPrompt(now = Date.now(), days = 1) {
+  try { localStorage.setItem(SNOOZE_KEY, String(now + (days - 1) * SNOOZE_MS)) } catch {}
 }
 
 /** Czy zapytać o przypomnienie po tym karmieniu. */

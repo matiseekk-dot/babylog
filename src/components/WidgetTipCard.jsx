@@ -31,7 +31,14 @@ export default function WidgetTipCard({ variant = 'today', onDismiss }) {
   }, [])
 
   useEffect(() => {
-    if (variant === 'today') track('widget_tip_shown')
+    if (variant !== 'today') return
+    // v2.17.5: raz dziennie (było ok. 30 zdarzeń na osobę, zaśmiecało raport).
+    const today = new Date().toDateString()
+    try {
+      if (localStorage.getItem('babylog_widget_tip_tracked') === today) return
+      localStorage.setItem('babylog_widget_tip_tracked', today)
+    } catch {}
+    track('widget_tip_shown')
   }, [variant])
 
   const hasWidget = (status?.count ?? 0) > 0

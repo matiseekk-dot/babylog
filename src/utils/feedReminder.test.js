@@ -27,6 +27,15 @@ describe('feedReminder', () => {
     expect(shouldAskFeedReminder(later, later)).toBe(false)        // już wybrał
   })
 
+  it('gość: "Nie teraz" odkłada pytanie na 7 dni', () => {
+    const now = Date.now()
+    snoozeFeedReminderPrompt(now, 7)
+    const day6 = now + 6 * 24 * H
+    const day8 = now + 8 * 24 * H
+    expect(shouldAskFeedReminder(day6, day6)).toBe(false)
+    expect(shouldAskFeedReminder(day8, day8)).toBe(true)
+  })
+
   it('preferencja: minuty, off albo brak', () => {
     expect(getFeedReminderPref()).toBeNull()
     setFeedReminderPref(150)

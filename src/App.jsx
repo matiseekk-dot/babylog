@@ -52,7 +52,7 @@ import { Spokojny, hasNativeExtras, QUICK_ACTIONS } from './native/spokojny'
 import { markFirstEntryTime, markReviewRequested, shouldRequestReview } from './utils/review'
 import { captureError, addBreadcrumb } from './sentry'
 import {
-  track, trackPurchaseCompleted, trackFirstEntryOnce, hasFirstEntryFlag, trackLoginChoice,
+  track, trackPurchaseCompleted, trackPurchaseFailed, trackFirstEntryOnce, hasFirstEntryFlag, trackLoginChoice,
   trackPartnerCardClicked, trackPartnerCardDismissed, setAnalyticsUserProperty,
   trackPregnancyBirth, trackPregnancyEnded,
 } from './utils/analytics'
@@ -822,7 +822,7 @@ export default function App() {
   }
   const laterFeedReminder = () => {
     track('feed_reminder_declined', { mode: 'later' })
-    snoozeFeedReminderPrompt()
+    snoozeFeedReminderPrompt(Date.now(), uid ? 1 : 7)
     setFeedReminderPrompt(null)
   }
   const neverFeedReminder = () => {
@@ -872,8 +872,13 @@ export default function App() {
     // app_user_id. Wcześniej guest mógł kupić, Google pobierał kasę, a
     // activateWithToken cicho returnował (uid=null check) — money lost.
     // Teraz: prompt do logowania zamiast otwierania Google Pay.
+    // v2.17.5: każdy nieudany zakup z powodem (purchase_failed { plan, reason }).
+    // Wcześniej zdarzenie nie było nigdzie wysyłane, a natywny sukces nie liczył
+    // purchase_completed, więc Analytics nie widziało ani zakupów, ani rezygnacji.
+    const failed = reason => trackPurchaseFailed({ plan: planId, reason: String(reason).slice(0, 60) })
     if (!uid) {
       addBreadcrumb('purchase', 'guest-blocked-needs-login', {})
+      failed('needs_login')
       toast(t('paywall.need_login'), 'error')
       // Sygnalizujemy LoginScreen — wyloguj guest mode, pokaż login.
       showLoginScreen()
@@ -888,6 +893,7 @@ export default function App() {
     const productId = plan?.productId
     if (!productId) {
       console.error('[handleActivate] no productId for planId:', planId)
+      failed('no_product_id')
       toast(t('paywall.error'), 'error')
       return
     }
@@ -911,6 +917,7 @@ export default function App() {
           // Produkt nie znaleziony w Play Store — może apka nie jest z Play lub
           // produkty nie skonfigurowane w RC Dashboard. Informuj usera.
           addBreadcrumb('purchase', 'capacitor-product-not-found', { productId })
+          failed('product_not_found')
           toast(t('paywall.error'), 'error')
           return
         }
@@ -927,6 +934,7 @@ export default function App() {
             purchaseErr?.message?.toLowerCase?.().includes('cancel')
           ) {
             addBreadcrumb('purchase', 'capacitor-purchase-cancelled', { productId })
+            failed('cancelled')
             return // cicho wyjdź
           }
           throw purchaseErr // inny błąd — obsłuż w zewnętrznym catch
@@ -935,6 +943,7 @@ export default function App() {
         const rcEntitlement = import.meta.env.VITE_RC_ENTITLEMENT || 'Spokojny Rodzic Pro'
         const hasEntitlement = !!result.customerInfo?.entitlements?.active?.[rcEntitlement]
         addBreadcrumb('purchase', 'capacitor-purchase-complete', { hasEntitlement, productId })
+        trackPurchaseCompleted(productId, { path: 'native', entitlement: hasEntitlement })
 
         if (hasEntitlement) {
           // RC SDK potwierdził aktywne uprawnienie — natychmiastowy sukces.
@@ -1110,6 +1119,7 @@ export default function App() {
       setShowPlayStoreModal(true)
     } catch (e) {
       console.error('[handleActivate]', e)
+      failed(e?.code || e?.userInfo?.readableErrorCode || e?.message || 'error')
       captureError(e, { context: 'paywall-activate', planId, productId })
       toast(t('paywall.error'), 'error')
     } finally {
