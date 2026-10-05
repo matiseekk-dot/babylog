@@ -123,11 +123,18 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     return Math.max(0, months)
   }
 
+  // Systemowy kalendarz (Chrome 99+, Android WebView). Wymaga kliknięcia, więc
+  // wołamy tylko z obsługi przycisku; gdzie nie działa, zostaje sam komunikat.
+  const openPicker = el => {
+    try { el?.showPicker?.() } catch {}
+  }
+
   const finishPregnancy = () => {
     if (!pregValid) {
       setTried(true)
       trackOnboardingBlocked(!pregDate ? dueMode : `${dueMode}_invalid`)
       pregRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      if (!pregDate) openPicker(pregRef.current?.querySelector('input[type=date]'))
       return
     }
     trackOnboardingCompleted({ mode: 'pregnancy' })
@@ -156,8 +163,10 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
       )
       const field = !nameValid ? nameRef.current : dobRef.current
       field?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-      // Imię: od razu klawiatura. Data: sam fokus, kalendarz otwiera dotknięcie.
+      // Imię: od razu klawiatura. Data (v2.17.4): od razu kalendarz, bo Analytics
+      // pokazało ok. 4 kliknięcia "Zaczynamy" na osobę przy brakującym polu.
       if (!nameValid) field?.focus({ preventScroll: true })
+      else if (!dob) openPicker(field)
       return
     }
     const months = dobToMonths(dob)
@@ -406,6 +415,12 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
               <div style={{fontSize:12, color:'var(--alert-500)', marginTop:'var(--space-tight)', fontWeight:500}}>
                 ⚠️ {t('onb.setup.dob_error')}
               </div>
+            )}
+            {/* v2.17.4: kto jeszcze czeka na dziecko, a przeoczył przełącznik u góry */}
+            {tried && !dob && (
+              <button type="button" onClick={() => { setKind('pregnancy'); setTried(false) }} style={smallLink}>
+                🤰 {t('onb.preg.switch_hint')}
+              </button>
             )}
           </div>
 
