@@ -25,9 +25,11 @@ import { buildMusic } from './shorts-music.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SHOTS = path.join(ROOT, 'store-assets', 'screenshots-2026-09')
-// SHORTS_BATCH=2: druga paczka (scripts/shorts-batch2.mjs) do store-assets/shorts-2.
-const BATCH = process.env.SHORTS_BATCH === '2' ? 2 : 1
-const OUT = path.join(ROOT, 'store-assets', BATCH === 2 ? 'shorts-2' : 'shorts')
+// SHORTS_BATCH=2 albo 3: kolejne paczki (scripts/shorts-batch{N}.mjs) do store-assets/shorts-{N}.
+const BATCH = ['2', '3'].includes(process.env.SHORTS_BATCH) ? Number(process.env.SHORTS_BATCH) : 1
+const OUT = path.join(ROOT, 'store-assets', BATCH === 1 ? 'shorts' : `shorts-${BATCH}`)
+// Zrzuty trybu ciąży (scripts/pregnancy-shots.mjs): już w rozmiarze telefonu, bez kadrowania.
+const PREG_SHOTS = path.join(ROOT, 'store-assets', 'screenshots-preg')
 const ICON = path.join(ROOT, 'public', 'icon-512.png')
 const FFMPEG = process.env.FFMPEG_PATH || 'ffmpeg'
 
@@ -564,12 +566,14 @@ function encode(frames, out, music) {
 }
 
 async function phoneImage(lang, shot) {
-  const buf = await sharp(path.join(SHOTS, lang, `${shot}.png`)).extract(PHONE_CROP).resize(440, 880).png().toBuffer()
+  const buf = shot.startsWith('preg-')
+    ? await sharp(path.join(PREG_SHOTS, lang, `${shot}.png`)).resize(440, 880).png().toBuffer()
+    : await sharp(path.join(SHOTS, lang, `${shot}.png`)).extract(PHONE_CROP).resize(440, 880).png().toBuffer()
   return b64(buf)
 }
 
 async function main() {
-  const VIDEOS = BATCH === 2 ? (await import('./shorts-batch2.mjs')).VIDEOS : VIDEOS_BATCH1
+  const VIDEOS = BATCH === 1 ? VIDEOS_BATCH1 : (await import(`./shorts-batch${BATCH}.mjs`)).VIDEOS
   const args = process.argv.slice(2)
   const langs = args.filter(a => VIDEOS[a])
   const slugs = args.filter(a => !VIDEOS[a])
