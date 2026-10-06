@@ -25,8 +25,8 @@ import { buildMusic } from './shorts-music.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const SHOTS = path.join(ROOT, 'store-assets', 'screenshots-2026-09')
-// SHORTS_BATCH=2 albo 3: kolejne paczki (scripts/shorts-batch{N}.mjs) do store-assets/shorts-{N}.
-const BATCH = ['2', '3'].includes(process.env.SHORTS_BATCH) ? Number(process.env.SHORTS_BATCH) : 1
+// SHORTS_BATCH=2, 3 albo 4: kolejne paczki (scripts/shorts-batch{N}.mjs) do store-assets/shorts-{N}.
+const BATCH = ['2', '3', '4'].includes(process.env.SHORTS_BATCH) ? Number(process.env.SHORTS_BATCH) : 1
 const OUT = path.join(ROOT, 'store-assets', BATCH === 1 ? 'shorts' : `shorts-${BATCH}`)
 // Zrzuty trybu ciąży (scripts/pregnancy-shots.mjs): już w rozmiarze telefonu, bez kadrowania.
 const PREG_SHOTS = path.join(ROOT, 'store-assets', 'screenshots-preg')
@@ -56,7 +56,8 @@ const COMMON = {
 // Poza PL cytujemy AAP (to samo źródło co angielska wersja apki), a numer
 // alarmowy jest lokalny: FR 15/112, ES i DE 112, EN ogólnie "emergency".
 
-// Typy klatek: hook, card, list (odsłanianie po jednym), note, source, end.
+// Typy klatek: hook, card, list (odsłanianie po jednym), note, source, end,
+// duo (paczka 4: dwa telefony obok siebie, np. ona i on widzą tę samą listę).
 // dur = ile sekund klatka jest widoczna.
 const VIDEOS_BATCH1 = {
   pl: [
@@ -463,6 +464,14 @@ body.brand { background: linear-gradient(180deg, #B84E2E 0%, #D77460 100%); colo
 .end .phone { height: 100%; max-height: 840px; width: auto; aspect-ratio: 1 / 2; border-radius: 42px; box-shadow: 0 30px 70px rgba(60, 15, 0, .35); }
 .end .brandrow { margin-top: 44px; display: flex; align-items: center; gap: 22px; font-size: 60px; font-weight: 800; }
 .end .brandrow img { width: 92px; height: 92px; border-radius: 22px; }
+.duo .caption { font-size: 74px; font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: 44px; }
+/* Dwa telefony mieszczą się w 790 px, czyli przed przyciskami Shorts z prawej. */
+.duo .pair { display: flex; gap: 30px; align-items: flex-end; }
+.duo .col { width: 380px; display: flex; flex-direction: column; align-items: center; }
+.duo .who { font-size: 40px; font-weight: 800; margin-bottom: 18px; text-align: center; line-height: 1.15; }
+.duo .col img { width: 380px; height: 760px; border-radius: 36px; box-shadow: 0 22px 50px rgba(60, 15, 0, .25); }
+.duo .badge { align-self: center; margin-top: 34px; background: #1F8A6B; color: #fff; font-size: 46px; font-weight: 800;
+  padding: 16px 40px; border-radius: 999px; }
 .end .cta { margin-top: 24px; font-size: 44px; font-weight: 700; background: #fff; color: #B84E2E;
   padding: 18px 44px; border-radius: 999px; }
 `
@@ -527,6 +536,12 @@ function htmlFrames(frame, ctx) {
         <div class="label">${esc(frame.plural ? T.sourcesLabel : T.sourceLabel)}</div>
         <div class="text">${esc(frame.text)}</div>
         <div class="disc">${esc(frame.disclaimer)}</div></div>`, icon, T.app) }]
+    case 'duo':
+      return [{ dur: frame.dur, html: page('duo', `<div class="safe duo" style="top:200px;right:90px;left:80px">
+        <div class="caption">${esc(frame.caption)}</div>
+        <div class="pair">${frame.shots.map((shot, i) => `<div class="col">
+          <div class="who">${esc(frame.labels[i])}</div><img src="${ctx.phones[shot]}"></div>`).join('')}</div>
+        ${frame.badge ? `<div class="badge">${esc(frame.badge)}</div>` : ''}</div>`, icon, T.app) }]
     case 'end':
       return [{ dur: frame.dur, html: page('end', `<div class="end">
         <div class="headline">${esc(frame.headline)}</div>
@@ -591,7 +606,7 @@ async function main() {
     fs.mkdirSync(dir, { recursive: true })
     fs.mkdirSync(tmp, { recursive: true })
     const phones = {}
-    for (const v of VIDEOS[lang]) for (const f of v.frames) if (f.shot && !phones[f.shot]) phones[f.shot] = await phoneImage(lang, f.shot)
+    for (const v of VIDEOS[lang]) for (const f of v.frames) for (const shot of [f.shot, ...(f.shots || [])]) if (shot && !phones[shot]) phones[shot] = await phoneImage(lang, shot)
 
     for (const video of VIDEOS[lang]) {
       if (slugs.length && !slugs.some(s => video.slug.startsWith(s))) continue
