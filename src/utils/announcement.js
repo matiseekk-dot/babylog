@@ -103,11 +103,82 @@ export function drawAnnouncement(canvas, o) {
     ctx.globalAlpha = 1
   }
 
-  if (o.footer) {
-    ctx.font = '600 34px system-ui, -apple-system, Roboto, sans-serif'
-    ctx.globalAlpha = 0.6
-    ctx.fillText(`♡ ${o.footer}`, W / 2, H - 70)
+  drawFooter(ctx, o.footer)
+  return canvas
+}
+
+function drawFooter(ctx, footer) {
+  if (!footer) return
+  ctx.font = '600 34px system-ui, -apple-system, Roboto, sans-serif'
+  ctx.globalAlpha = 0.6
+  ctx.fillText(`♡ ${footer}`, ANNOUNCE_W / 2, ANNOUNCE_H - 70)
+  ctx.globalAlpha = 1
+}
+
+/**
+ * Karta narodzin (v2.17.7): to samo tło co ogłoszenie ciąży, na środku imię,
+ * pod nim data z godziną i (jeśli podane) waga i długość.
+ * @param {HTMLCanvasElement} canvas
+ * @param {{ kicker: string, name: string, dateLine: string, details?: string, parents?: string, theme?: string, footer?: string|null }} o
+ */
+export function drawBirthCard(canvas, o) {
+  const T = THEMES[o.theme] || THEMES.sage
+  canvas.width = ANNOUNCE_W
+  canvas.height = ANNOUNCE_H
+  const ctx = canvas.getContext('2d')
+  const W = ANNOUNCE_W
+  const H = ANNOUNCE_H
+
+  const g = ctx.createLinearGradient(0, 0, W, H)
+  g.addColorStop(0, T.from)
+  g.addColorStop(1, T.to)
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, W, H)
+  ctx.globalAlpha = o.theme === 'night' ? 0.07 : 0.12
+  ctx.fillStyle = T.soft
+  for (const [x, y, r] of [[170, 150, 190], [980, 380, 150], [860, 1190, 250], [90, 1000, 130]]) {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill()
+  }
+  ctx.globalAlpha = 1
+
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillStyle = T.text
+
+  ctx.font = '600 48px system-ui, -apple-system, Roboto, sans-serif'
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '6px'
+  ctx.fillText(String(o.kicker || '').toUpperCase(), W / 2, 290)
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px'
+
+  ctx.font = '150px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif'
+  ctx.fillText('👶', W / 2, 500)
+
+  // Imię: duże, zmniejszane aż się zmieści w jednej linii.
+  let size = 150
+  ctx.font = `600 ${size}px Georgia, "Noto Serif", serif`
+  const name = String(o.name || '').slice(0, 30)
+  while (ctx.measureText(name).width > 920 && size > 70) {
+    size -= 6
+    ctx.font = `600 ${size}px Georgia, "Noto Serif", serif`
+  }
+  ctx.fillText(name, W / 2, 720)
+
+  ctx.font = '600 50px system-ui, -apple-system, Roboto, sans-serif'
+  ctx.fillText(String(o.dateLine || ''), W / 2, 840)
+  let y = 840
+  if (o.details) {
+    y += 84
+    ctx.font = '700 58px system-ui, -apple-system, Roboto, sans-serif'
+    ctx.fillStyle = T.soft
+    ctx.fillText(o.details, W / 2, y)
+    ctx.fillStyle = T.text
+  }
+  if (o.parents) {
+    ctx.font = 'italic 54px Georgia, "Noto Serif", serif'
+    ctx.globalAlpha = 0.85
+    ctx.fillText(String(o.parents).slice(0, 40), W / 2, y + 110)
     ctx.globalAlpha = 1
   }
+  drawFooter(ctx, o.footer)
   return canvas
 }

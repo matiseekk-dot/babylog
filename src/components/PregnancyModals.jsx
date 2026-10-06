@@ -3,17 +3,25 @@ import { t, useLocale } from '../i18n'
 import Modal from './Modal'
 import { todayDate } from '../utils/helpers'
 import { isValidBirthDate } from '../utils/pregnancy'
+import { parseBirthWeight, parseBirthLength } from '../utils/birthSummary'
 
 /**
  * Okienka trybu ciąży (v2.17.0): "Urodziło się", prezent 14 dni Premium
  * po porodzie i zakończenie trybu ciąży.
  */
 
-/** "Urodziło się": imię, data urodzenia i płeć; onSave({ name, birthDate, sex }). */
+/**
+ * "Urodziło się": imię, data urodzenia i płeć, a od v2.17.7 opcjonalnie godzina,
+ * waga i długość (do karty narodzin i pierwszego pomiaru na wykresie wzrostu).
+ * onSave({ name, birthDate, sex, birthTime, weightG, lengthCm }).
+ */
 export function BirthModal({ open, profile, defaultName, onSave, onClose }) {
   useLocale()
   const [name, setName] = useState('')
   const [dob, setDob] = useState(todayDate())
+  const [time, setTime] = useState('')
+  const [weight, setWeight] = useState('')
+  const [length, setLength] = useState('')
   const [sex, setSex] = useState('M')
   const [tried, setTried] = useState(false)
   const [lastProfileId, setLastProfileId] = useState(null)
@@ -22,16 +30,23 @@ export function BirthModal({ open, profile, defaultName, onSave, onClose }) {
     setLastProfileId(profile.id)
     setName(profile.name && profile.name !== defaultName ? profile.name : '')
     setDob(todayDate())
+    setTime('')
+    setWeight('')
+    setLength('')
     setSex(profile.sex === 'F' ? 'F' : 'M')
     setTried(false)
   }
   if (!open || !profile) return null
 
   const dobValid = isValidBirthDate(dob, profile.dueDate)
+  const weightG = parseBirthWeight(weight)
+  const lengthCm = parseBirthLength(length)
+  const measuresValid = !Number.isNaN(weightG) && !Number.isNaN(lengthCm)
   const save = () => {
-    if (!dobValid) { setTried(true); return }
-    onSave({ name: name.trim(), birthDate: dob, sex })
+    if (!dobValid || !measuresValid) { setTried(true); return }
+    onSave({ name: name.trim(), birthDate: dob, sex, birthTime: /^\d\d:\d\d$/.test(time) ? time : null, weightG, lengthCm })
   }
+  const half = { flex: 1, minWidth: 0, marginBottom: 0 }
   const sexBtn = (value, label) => (
     <button type="button" onClick={() => setSex(value)} aria-pressed={sex === value} style={{
       flex: 1, minHeight: 48, borderRadius: 'var(--radius)', cursor: 'pointer', fontSize: 14, fontWeight: 700,
@@ -50,13 +65,43 @@ export function BirthModal({ open, profile, defaultName, onSave, onClose }) {
           placeholder={t('onb.setup.name_ph')} onChange={e => setName(e.target.value)} style={{ fontSize: 16 }} />
       </div>
       <div className="form-group">
-        <label className="form-label" htmlFor="birth-dob">{t('onb.setup.dob')}</label>
-        <input id="birth-dob" className="form-input" type="date" value={dob} max={todayDate()}
-          onChange={e => setDob(e.target.value)} aria-invalid={tried && !dobValid}
-          style={{ fontSize: 16, borderColor: tried && !dobValid ? 'var(--alert-500)' : undefined }} />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ ...half, flex: 1.4 }}>
+            <label className="form-label" htmlFor="birth-dob">{t('onb.setup.dob')}</label>
+            <input id="birth-dob" className="form-input" type="date" value={dob} max={todayDate()}
+              onChange={e => setDob(e.target.value)} aria-invalid={tried && !dobValid}
+              style={{ fontSize: 16, borderColor: tried && !dobValid ? 'var(--alert-500)' : undefined }} />
+          </div>
+          <div style={half}>
+            <label className="form-label" htmlFor="birth-time">{t('birth.time')}</label>
+            <input id="birth-time" className="form-input" type="time" value={time}
+              onChange={e => setTime(e.target.value)} style={{ fontSize: 16 }} />
+          </div>
+        </div>
         {tried && !dobValid && (
           <div role="alert" style={{ fontSize: 12, color: 'var(--alert-500)', marginTop: 4, fontWeight: 500 }}>
             ⚠️ {t('birth.date_invalid')}
+          </div>
+        )}
+      </div>
+      <div className="form-group">
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={half}>
+            <label className="form-label" htmlFor="birth-weight">{t('birth.weight')}</label>
+            <input id="birth-weight" className="form-input" type="text" inputMode="decimal" maxLength={6} value={weight}
+              placeholder="3400" onChange={e => setWeight(e.target.value)} aria-invalid={tried && Number.isNaN(weightG)}
+              style={{ fontSize: 16, borderColor: tried && Number.isNaN(weightG) ? 'var(--alert-500)' : undefined }} />
+          </div>
+          <div style={half}>
+            <label className="form-label" htmlFor="birth-length">{t('birth.length')}</label>
+            <input id="birth-length" className="form-input" type="text" inputMode="decimal" maxLength={5} value={length}
+              placeholder="54" onChange={e => setLength(e.target.value)} aria-invalid={tried && Number.isNaN(lengthCm)}
+              style={{ fontSize: 16, borderColor: tried && Number.isNaN(lengthCm) ? 'var(--alert-500)' : undefined }} />
+          </div>
+        </div>
+        {tried && !measuresValid && (
+          <div role="alert" style={{ fontSize: 12, color: 'var(--alert-500)', marginTop: 4, fontWeight: 500 }}>
+            ⚠️ {t('birth.measure_invalid')}
           </div>
         )}
       </div>

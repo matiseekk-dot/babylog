@@ -170,9 +170,28 @@ async function run(browser, lang, issues) {
   })
   if (!birthBtn) issues.push(`${tag}: brak karty "Urodziło się" w 37. tygodniu`)
   await sleep(600)
+  // v2.17.7: godzina, waga i długość → karta narodzin, potem prezent.
+  await setInput(page, '#birth-time', '14:35')
+  await setInput(page, '#birth-weight', '3,45')
+  await setInput(page, '#birth-length', '54')
   await shot('3-birth-modal')
   await page.evaluate(() => document.querySelector('.modal-sheet button.btn-primary')?.click())
   await sleep(1500)
+  const card = await page.evaluate(() => ({
+    title: document.querySelector('.modal-title')?.textContent || '',
+    img: !!document.querySelector('.modal-sheet img[src^="data:image"]'),
+    dialogs: document.querySelectorAll('[role=dialog]').length,
+    stats: document.querySelector('.modal-sheet section')?.innerText || '',
+    growth: Object.entries(localStorage).find(([k]) => k.startsWith('babylog_guest_growth_'))?.[1] || '',
+  }))
+  if (card.dialogs !== 1) issues.push(`${tag}: na karcie narodzin ${card.dialogs} okna naraz`)
+  if (!card.title.includes('👶') || !card.img) issues.push(`${tag}: po porodzie brak karty narodzin (${card.title})`)
+  if (!/\d+\+\d/.test(card.stats) || !/2/.test(card.stats)) issues.push(`${tag} karta narodzin: podsumowanie "${card.stats.replace(/\n/g, ' ')}"`)
+  if (!card.growth.includes('3.45') || !card.growth.includes('54')) issues.push(`${tag}: pomiar z porodu nie trafił do wzrostu: ${card.growth.slice(0, 120)}`)
+  if (await overflow(page)) issues.push(`${tag} karta narodzin: wychodzi poza ekran`)
+  await shot('3b-birth-card')
+  await page.evaluate(() => [...document.querySelectorAll('.modal-sheet button')].pop()?.click())
+  await sleep(1000)
   const gift = await page.evaluate(() => document.querySelector('.modal-title')?.textContent || '')
   if (!gift.includes('🎁')) issues.push(`${tag}: po porodzie brak okienka prezentu (tytuł: "${gift}")`)
   await shot('4-gift')
@@ -182,9 +201,12 @@ async function run(browser, lang, issues) {
     nav: !!document.querySelector('.bottom-nav'),
     trial: document.querySelector('.topbar')?.innerText || '',
     profile: JSON.parse(localStorage.getItem('babylog_guest_profiles') || '[]')[0] || {},
+    teaser: [...document.querySelectorAll('button')].some(b => b.firstElementChild?.textContent === '👶'),
   }))
   if (!after.nav) issues.push(`${tag}: po porodzie brak zakładek niemowlęcia`)
   if (after.profile.mode !== 'baby' || !after.profile.birthDate) issues.push(`${tag}: profil po porodzie ${JSON.stringify(after.profile).slice(0, 120)}`)
+  if (after.profile.birthWeightG !== 3450 || after.profile.birthLengthCm !== 54 || after.profile.birthTime !== '14:35') issues.push(`${tag}: pomiary w profilu ${JSON.stringify(after.profile).slice(0, 200)}`)
+  if (!after.teaser) issues.push(`${tag}: brak karty narodzin na ekranie Dziś`)
   if (!/14/.test(after.trial)) issues.push(`${tag}: po porodzie nie widać 14 dni (topbar: ${after.trial.replace(/\n/g, ' ')})`)
   await shot('5-today')
   issues.push(...errors.map(e => `${tag} ${e}`))

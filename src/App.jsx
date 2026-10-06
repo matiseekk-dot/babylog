@@ -59,6 +59,7 @@ import {
 import FirstEntryCard from './components/FirstEntryCard'
 import PregnancyScreen from './components/PregnancyScreen'
 import { BirthModal, BirthGiftModal, PregnancyEndModal } from './components/PregnancyModals'
+import BirthCardModal, { BirthCardTeaser } from './components/BirthCardModal'
 import WidgetTipCard from './components/WidgetTipCard'
 import { usePartners } from './hooks/usePartners'
 import { shouldShowPartnerInvite } from './utils/partner'
@@ -524,6 +525,24 @@ export default function App() {
   // Po zakończeniu ciąży bez innego profilu: spokojna plansza zamiast formularza.
   const [pregnancyEnded, setPregnancyEnded] = useFirestore(dataUid, 'pregnancy_ended', null)
   const [, setActiveContractions] = useFirestore(dataUid, `contractions_${active.id}`, [])
+  // v2.17.7: karta narodzin (najpierw ona, potem prezent 14 dni) i pomiar z porodu na wykresie wzrostu.
+  const [activeGrowth, setActiveGrowth] = useFirestore(dataUid, `growth_${active.id}`, [])
+  const [birthCardSource, setBirthCardSource] = useState(null)   // 'birth' | 'today' | null
+  const [birthGiftPending, setBirthGiftPending] = useState(false)
+  const BIRTH_CARD_DISMISSED = `babylog_birth_card_dismissed_${active.id}`
+  const [birthCardDismissed, setBirthCardDismissed] = useState({})
+  const showBirthTeaser = active.bornFromPregnancy && !!active.birthDate
+    && Date.now() - new Date(`${active.birthDate}T12:00:00`).getTime() <= 30 * 864e5
+    && !birthCardDismissed[active.id]
+    && (() => { try { return localStorage.getItem(BIRTH_CARD_DISMISSED) !== '1' } catch { return true } })()
+  const dismissBirthTeaser = () => {
+    setBirthCardDismissed(d => ({ ...d, [active.id]: true }))
+    try { localStorage.setItem(BIRTH_CARD_DISMISSED, '1') } catch {}
+  }
+  const closeBirthCard = () => {
+    setBirthCardSource(null)
+    if (birthGiftPending) { setBirthGiftPending(false); setShowBirthGift(true) }
+  }
 
   // v2.9.3: quick-add stores dla FAB. Drobny duplicate listener względem
   // FeedTab/SleepTab/DiaperTab gdy te są aktywne (Firestore real-time
@@ -1350,7 +1369,7 @@ export default function App() {
   // v2.17.0 — "Urodziło się": ten sam profil (to samo id, więc dane zostają)
   // przechodzi w tryb niemowlęcia. Bez updateProfile, bo ten przy zmianie wieku
   // zastąpiłby prawdziwą datę urodzenia szacunkiem.
-  const completeBirth = async ({ name, birthDate, sex }) => {
+  const completeBirth = async ({ name, birthDate, sex, birthTime = null, weightG = null, lengthCm = null }) => {
     const months = monthsFromBirthDate(birthDate) ?? 0
     setProfiles(profiles.map(p => (p.id !== active.id ? p : {
       ...p,
@@ -1361,19 +1380,28 @@ export default function App() {
       birthDateEstimated: false,
       months,
       sex,
+      birthTime,
+      birthWeightG: weightG,
+      birthLengthCm: lengthCm,
       weight: null,
       avatar: p.avatar === '🤰' ? '👶' : p.avatar,
       toiletMode: 'diapers',
       visibleTabs: defaultVisibleTabs({ months, toiletMode: 'diapers' }),
     })))
+    // Karta narodzin i prezent zastępują ogólne "Masz 14 dni Premium": bez tej flagi okno wyskakiwało
+    // na kartę u kogoś, kto zainstalował apkę tuż przed porodem (pomiar z porodu = pierwszy wpis).
+    try { localStorage.setItem(`babylog_trial_started_shown_${uid || 'guest'}`, '1') } catch {}
+    if (weightG || lengthCm) {
+      const list = Array.isArray(activeGrowth) ? activeGrowth : []
+      setActiveGrowth([{ id: genId(), date: birthDate, weight: weightG ? weightG / 1000 : '', height: lengthCm || '', headCirc: '' }, ...list])
+    }
     setShowBirth(false)
     setTab('today')
     trackPregnancyBirth()
+    setBirthCardSource('birth')
     if (purchased) return
     if (await startBirthTrial()) {
-      // Nasze okienko prezentu zastępuje ogólne "Masz 14 dni Premium".
-      try { localStorage.setItem(`babylog_trial_started_shown_${uid || 'guest'}`, '1') } catch {}
-      setShowBirthGift(true)
+      setBirthGiftPending(true)
     }
   }
 
@@ -1884,6 +1912,10 @@ export default function App() {
             PTP/AAP. Apka pokazuje user'owi (a) jego własne dane w tabach,
             (b) statyczne tabele dostępne pod More → "Wytyczne PTP/AAP".
             Apka nie ocenia, nie alertuje, nie diagnozuje. */}
+        {!showProfiles && !showMore && tab === 'today' && showBirthTeaser && (
+          <BirthCardTeaser name={active.name} onOpen={() => setBirthCardSource('today')} onDismiss={dismissBirthTeaser} />
+        )}
+
         {!showProfiles && !showMore && tab === 'today' && !firstStepsDone && (
           <FirstEntryCard
             onQuickFeed={quickAddFeed}
@@ -2159,6 +2191,15 @@ export default function App() {
         defaultName={t('preg.default_name')}
         onSave={completeBirth}
         onClose={() => setShowBirth(false)}
+      />
+      <BirthCardModal
+        open={!!birthCardSource && !isPregnancy}
+        source={birthCardSource}
+        profile={active}
+        uid={dataUid}
+        isPremium={isPremium}
+        onUpgrade={() => { closeBirthCard(); openPaywall('birth_card') }}
+        onClose={closeBirthCard}
       />
       <BirthGiftModal open={showBirthGift} onClose={() => setShowBirthGift(false)} />
       <PregnancyEndModal

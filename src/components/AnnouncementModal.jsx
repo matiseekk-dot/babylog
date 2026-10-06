@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { t, useLocale, getLocale } from '../i18n'
 import Modal from './Modal'
 import { drawAnnouncement, seasonIndex, dueYear, monthYear, THEMES } from '../utils/announcement'
-import { shareImageNative } from '../native/spokojny'
+import { shareCardImage } from '../utils/shareCard'
 import { track } from '../utils/analytics'
 
 /**
@@ -51,25 +51,10 @@ export default function AnnouncementModal({ open, onClose, dueDate, isPremium, o
   if (!open) return null
 
   const share = async () => {
-    const text = t('announce.share_text')
-    const fileName = 'spokojny-rodzic.jpg'
-    if (await shareImageNative({ dataUrl: image, text, title: t('announce.title'), fileName })) {
-      track('announcement_shared', { method: 'native' })
-      return
-    }
-    try {
-      const blob = await (await fetch(image)).blob()
-      const file = new File([blob], fileName, { type: 'image/jpeg' })
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], text })
-        track('announcement_shared', { method: 'web' })
-        return
-      }
-    } catch (e) {
-      if (e?.name === 'AbortError') return  // użytkownik zamknął okno udostępniania
-    }
-    setShareFailed(true)
-    track('announcement_shared', { method: 'screenshot' })
+    const method = await shareCardImage(image, { text: t('announce.share_text'), title: t('announce.title') })
+    if (method === 'aborted') return
+    if (!method) setShareFailed(true)
+    track('announcement_shared', { method: method || 'screenshot' })
   }
 
   const chip = (active) => ({
