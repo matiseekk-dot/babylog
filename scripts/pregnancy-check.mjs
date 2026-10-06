@@ -81,6 +81,50 @@ async function run(browser, lang, issues) {
   if (await overflow(page)) issues.push(`${tag} ekran ciąży: wychodzi poza ekran`)
   await shot('1-home')
 
+  // v2.17.6: torba (odhaczenie + własna pozycja), wyprawka, ruchy dziecka.
+  const openCard = icon => page.evaluate(i => {
+    const b = [...document.querySelectorAll('button')].find(x => x.firstElementChild?.textContent === i)
+    b?.click(); return !!b
+  }, icon)
+  const back = () => page.evaluate(() => [...document.querySelectorAll('button')].find(x => x.textContent === '‹')?.click())
+  if (!(await openCard('🧳'))) issues.push(`${tag}: brak karty torby`)
+  await sleep(500)
+  await page.evaluate(() => document.querySelector('input[type=checkbox]')?.click())
+  await setInput(page, 'form input', 'Głośnik')
+  await page.evaluate(() => document.querySelector('form button[type=submit]')?.click())
+  await sleep(500)
+  const bagState = await page.evaluate(() => ({
+    checked: document.querySelectorAll('input[type=checkbox]:checked').length,
+    custom: document.body.innerText.includes('Głośnik'),
+  }))
+  if (bagState.checked !== 1 || !bagState.custom) issues.push(`${tag} torba: ${JSON.stringify(bagState)}`)
+  if (await overflow(page)) issues.push(`${tag} torba: wychodzi poza ekran`)
+  await shot('1c-bag')
+  await back(); await sleep(400)
+  if (!(await openCard('🧸'))) issues.push(`${tag}: brak karty wyprawki`)
+  await sleep(500)
+  if (await overflow(page)) issues.push(`${tag} wyprawka: wychodzi poza ekran`)
+  await shot('1d-layette')
+  await back(); await sleep(400)
+  if (!(await openCard('🦶'))) issues.push(`${tag}: brak karty ruchów w 37. tygodniu`)
+  await sleep(500)
+  const circle = () => page.evaluate(() => {
+    const b = [...document.querySelectorAll('button')].find(x => x.style.borderRadius === '50%')
+    b?.click(); return !!b
+  })
+  await circle(); await sleep(400)
+  for (let i = 0; i < 3; i++) { await circle(); await sleep(150) }
+  await shot('1e-kicks-running')
+  await page.evaluate(() => [...document.querySelectorAll('button')].find(x => x.style.borderRadius === '22px')?.click())
+  await sleep(500)
+  const kick = await page.evaluate(() => [...document.querySelectorAll('tbody tr td')].map(td => td.textContent))
+  if (kick[1] !== '3') issues.push(`${tag} ruchy: wiersz ${JSON.stringify(kick)}`)
+  if (await overflow(page)) issues.push(`${tag} ruchy: wychodzi poza ekran`)
+  await shot('1f-kicks')
+  await back(); await sleep(400)
+  const bagCard = await page.evaluate(() => [...document.querySelectorAll('button')].find(x => x.firstElementChild?.textContent === '🧳')?.textContent || '')
+  if (!/1\D+\d+/.test(bagCard)) issues.push(`${tag} karta torby bez postępu: "${bagCard}"`)
+
   // Ustawienia: termin zamiast wieku, bez raportu PDF; lista dzieci: tydzień ciąży.
   await page.evaluate(() => [...document.querySelectorAll('.topbar button')].find(b => b.querySelector('svg circle'))?.click())
   await sleep(700)

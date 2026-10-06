@@ -1,10 +1,14 @@
 import React, { useState } from 'react'
 import { t, tPlural, useLocale, getLocale } from '../i18n'
-import { readCached } from '../hooks/useFirestore'
+import { readCached, useFirestore } from '../hooks/useFirestore'
 import { pregnancyProgress, GESTATION_DAYS } from '../utils/pregnancy'
+import { listProgress } from '../data/pregnancyLists'
+import { track } from '../utils/analytics'
 import ContractionTimer from './ContractionTimer'
 import AnnouncementModal from './AnnouncementModal'
 import PregnancyExams from './PregnancyExams'
+import PregnancyChecklist from './PregnancyChecklist'
+import KickCounter from './KickCounter'
 
 /** "25. tydzień ciąży" dla profilu ciąży (lista dzieci, nagłówek). */
 export function pregnancyWeekText(dueDate, termDays = GESTATION_DAYS) {
@@ -22,6 +26,8 @@ export function formatLongDate(ymd) {
  * PregnancyScreen — ekran główny profilu w trybie ciąży (v2.17.0).
  *
  * Zakładki: Ciąża (tydzień, trymestr, odliczanie) i Skurcze (licznik).
+ * v2.17.6: z kart na ekranie Ciąża podwidoki z przyciskiem Wstecz: ruchy dziecka
+ * (kicks_{id}), torba do szpitala i wyprawka (wspólny obiekt lists_{id}).
  * "Urodziło się" jest zawsze dostępne na dole, a od 36. tygodnia także jako
  * karta na górze. "Zakończ tryb ciąży" to mały, spokojny link na samym dole.
  *
@@ -42,6 +48,29 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
   })
   const p = pregnancyProgress(profile.dueDate, new Date(), profile.termDays || GESTATION_DAYS)
   const [showAnnounce, setShowAnnounce] = useState(false)
+  const [lists, setLists] = useFirestore(uid, `lists_${profile.id}`, {})
+  const [sub, setSub] = useState(null)   // 'kicks' | 'bag' | 'layette'
+  const locale = getLocale()
+  const bag = listProgress('bag', locale, lists)
+  const layette = listProgress('layette', locale, lists)
+  const openSub = id => { track('preg_tool_opened', { tool: id }); setSub(id); window.scrollTo?.(0, 0) }
+
+  if (sub) {
+    const title = { kicks: 'kicks.title', bag: 'lists.bag_title', layette: 'lists.layette_title' }[sub]
+    return (
+      <div style={{ paddingBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 8px 12px' }}>
+          <button type="button" onClick={() => setSub(null)} aria-label={t('common.back')} style={{
+            background: 'none', border: 'none', cursor: 'pointer', fontSize: 26, minWidth: 44, minHeight: 44, color: 'var(--text)',
+          }}>‹</button>
+          <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: 'var(--text)' }}>{t(title)}</h2>
+        </div>
+        {sub === 'kicks'
+          ? <KickCounter uid={uid} profileId={profile.id} />
+          : <PregnancyChecklist listId={sub} state={lists} setState={setLists} />}
+      </div>
+    )
+  }
 
   const segBtn = active => ({
     flex: 1, padding: '10px 8px', minHeight: 44, border: 'none', borderRadius: 10, cursor: 'pointer',
@@ -137,6 +166,11 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
             <span style={{ fontSize: 20, color: 'var(--text-3)' }}>›</span>
           </button>
 
+          {/* v2.17.6: ruchy dziecka (od 20. tygodnia), torba i wyprawka */}
+          {p && p.weeks >= 20 && toolCard('🦶', t('kicks.title'), t('kicks.desc'), () => openSub('kicks'))}
+          {toolCard('🧳', t('lists.bag_title'), t('lists.bag_desc', bag), () => openSub('bag'))}
+          {toolCard('🧸', t('lists.layette_title'), t('lists.layette_desc', layette), () => openSub('layette'))}
+
           {/* v2.17.2: karta do ogłoszenia ciąży (pętla polecenia: stopka z nazwą apki) */}
           <button type="button" onClick={() => setShowAnnounce(true)} style={{
             display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%',
@@ -179,6 +213,21 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
     </div>
   )
 }
+
+const toolCard = (icon, title, desc, onClick) => (
+  <button type="button" onClick={onClick} style={{
+    display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left', width: '100%',
+    background: 'var(--surface)', border: '0.5px solid var(--border)', borderRadius: 14,
+    padding: '14px 16px', cursor: 'pointer', minHeight: 64,
+  }}>
+    <span style={{ fontSize: 26 }}>{icon}</span>
+    <span style={{ flex: 1 }}>
+      <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>{title}</span>
+      <span style={{ display: 'block', fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>{desc}</span>
+    </span>
+    <span style={{ fontSize: 20, color: 'var(--text-3)' }}>›</span>
+  </button>
+)
 
 const linkBtn = color => ({
   background: 'none', border: 'none', cursor: 'pointer', color,
