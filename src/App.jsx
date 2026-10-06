@@ -1783,6 +1783,7 @@ export default function App() {
           checking={rcChecking || purchasing}
           trigger={paywallTrigger}
           storePrices={storePrices}
+          pregnancy={isPregnancy}
         />
         <PlayStoreModal
           open={showPlayStoreModal}

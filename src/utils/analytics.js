@@ -177,8 +177,8 @@ export function trackFirstEntryOnce(entryType) {
  * Paywall się otworzył.
  * @param {string} trigger — 'topbar' | 'premium_feature' | 'profile_limit' | 'pdf_export' | ...
  */
-export const trackPaywallViewed = (trigger) =>
-  track('paywall_viewed', { trigger })
+export const trackPaywallViewed = (trigger, mode = 'baby') =>
+  track('paywall_viewed', { trigger, mode })
 
 /**
  * User kliknął "Aktywuj Premium" z konkretnego planu.

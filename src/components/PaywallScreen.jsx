@@ -45,8 +45,13 @@ const FEATURE_KEYS = [
   ['📄', 'pdf'], ['📊', 'growth'], ['📈', 'trends'], ['🩺', 'doctor'],
   ['👶', 'children'], ['👨‍👩‍👧', 'shared'], ['🔔', 'reminders'],
 ]
-function getFeatures() {
-  return FEATURE_KEYS.map(([icon, k]) => ({
+// v2.17.8: w trybie ciąży inne korzyści (tylko to, co już działa): wspólne konto
+// na czas ciąży, karty bez podpisu, wszystko gotowe po porodzie, starsze rodzeństwo.
+const FEATURE_KEYS_PREG = [
+  ['👫', 'preg_shared'], ['🎉', 'preg_cards'], ['👶', 'preg_after'], ['👧', 'preg_sibling'],
+]
+function getFeatures(pregnancy) {
+  return (pregnancy ? FEATURE_KEYS_PREG : FEATURE_KEYS).map(([icon, k]) => ({
     icon,
     title: t(`paywall.feature.${k}.title`),
     desc: t(`paywall.feature.${k}.desc`),
@@ -56,9 +61,9 @@ function getFeatures() {
 // v2.9.2: getPlans() usunięte — single source of truth w src/data/premiumPlans.js.
 // Ten sam moduł importuje useRevenueCat. Eliminuje rozjazd cen.
 
-export default function PaywallScreen({ onActivate, onClose, checking, trigger = 'unknown', storePrices = null }) {
+export default function PaywallScreen({ onActivate, onClose, checking, trigger = 'unknown', storePrices = null, pregnancy = false }) {
   useLocale()
-  const FEATURES = getFeatures()
+  const FEATURES = getFeatures(pregnancy)
   // v2.11.33: getPlans używa pełnego locale code (pl/en/de zamiast bool).
   // Re-render przy zmianie języka przez useLocale() powyżej.
   // v2.16.2: storePrices = ceny z Google Play (App.jsx), gdy dostępne.
@@ -71,8 +76,8 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
   //   'profile_limit' (próba dodania 2-go dziecka jako free), etc.
   // Pomaga zrozumieć który trigger conwertuje najlepiej.
   useEffect(() => {
-    trackPaywallViewed(trigger)
-  }, [trigger])
+    trackPaywallViewed(trigger, pregnancy ? 'pregnancy' : 'baby')
+  }, [trigger])  // eslint-disable-line react-hooks/exhaustive-deps
 
   // Aktualnie wybrany plan — używany do dynamicznego CTA z ceną
   const selectedPlan = PLANS.find(p => p.id === selected) || PLANS[0]
@@ -86,7 +91,7 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
           period: selectedPlan.period,
         })
 
-  const freeBanner = t('paywall.free_banner')
+  const freeBanner = t(pregnancy ? 'paywall.preg.free_banner' : 'paywall.free_banner')
 
   return (
     // v2.11.11: kompletny rewrite layoutu paywall — flex column z osobnym
@@ -124,12 +129,12 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
         padding:'var(--space-spacious) var(--space-comfortable) var(--space-comfortable)',
         textAlign:'center',
       }}>
-        <div style={{fontSize:44,marginBottom:'var(--space-snug)'}}>🍼</div>
+        <div style={{fontSize:44,marginBottom:'var(--space-snug)'}}>{pregnancy ? '🤰' : '🍼'}</div>
         <div style={{fontSize:22,fontWeight:800,color:'var(--surface)',letterSpacing:-0.5,lineHeight:1.2}}>
           {t('paywall.title')}
         </div>
         <div style={{fontSize:13,color:'rgba(255,255,255,0.85)',marginTop:'var(--space-snug)',lineHeight:1.5}}>
-          {t('paywall.subtitle')}
+          {t(pregnancy ? 'paywall.preg.subtitle' : 'paywall.subtitle')}
         </div>
       </div>
 
@@ -240,7 +245,9 @@ export default function PaywallScreen({ onActivate, onClose, checking, trigger =
             }}/>
             <div style={{flex:1}}>
               <div style={{fontSize:15,fontWeight:700,color:'var(--text)'}}>{plan.label}</div>
-              {plan.badge && <div style={{fontSize:11,color:'var(--brand-600)',fontWeight:600,marginTop:'var(--space-tight)'}}>{plan.badge}</div>}
+              {plan.badge && <div style={{fontSize:11,color:'var(--brand-600)',fontWeight:600,marginTop:'var(--space-tight)'}}>
+                {pregnancy && plan.oneTime ? t('paywall.preg.lifetime_badge') : plan.badge}
+              </div>}
             </div>
             <div style={{textAlign:'right'}}>
               <div style={{fontSize:17,fontWeight:800,color:'var(--text)'}}>{plan.price}</div>
