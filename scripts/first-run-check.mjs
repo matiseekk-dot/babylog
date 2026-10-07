@@ -72,11 +72,13 @@ async function run(browser, lang, [w, h], issues, wall = false) {
   await page.evaluate(() => document.querySelector('div[style*="sticky"] button')?.click())
   await sleep(700)
   const alerts = await page.evaluate(() => document.querySelectorAll('[role=alert]').length)
-  if (alerts !== 2) issues.push(`${tag} formularz: po pustym "Zaczynamy" ${alerts} komunikatów zamiast 2`)
+  // v2.17.10: imię opcjonalne, komunikat tylko o dacie.
+  if (alerts !== 1) issues.push(`${tag} formularz: po pustym "Zaczynamy" ${alerts} komunikatów zamiast 1`)
   const alertsHidden = await hidden(page, '[role=alert]', 'div[style*="sticky"]')
   if (alertsHidden.length) issues.push(`${tag} formularz: komunikat zasłonięty ${alertsHidden.join(' | ')}`)
   await shot('3-form-errors')
-  await page.type('#onb-name', 'Laura')
+  // Imię opcjonalne: przy 360 px zostawiamy puste (profil dostaje domyślne imię).
+  if (w !== 360) await page.type('#onb-name', 'Laura')
   await page.evaluate(() => {
     const el = document.querySelector('#onb-dob')
     const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
@@ -92,6 +94,8 @@ async function run(browser, lang, [w, h], issues, wall = false) {
   if (!tiles) issues.push(`${tag} Dziś: brak karty pierwszego wpisu`)
   const tilesHidden = await hidden(page, card, '.bottom-nav')
   if (tilesHidden.length) issues.push(`${tag} Dziś: pod paskiem/poza ekranem ${tilesHidden.join(' | ')}`)
+  const pname = await page.evaluate(() => JSON.parse(localStorage.getItem('babylog_guest_profiles') || '[]')[0]?.name || '')
+  if (!pname || (w === 360 && pname === 'Laura')) issues.push(`${tag}: imię profilu "${pname}"`)
   await shot('4-today')
 
   // 4. Pierwszy wpis (pierwszy kafelek) i to, co wyskoczy potem.

@@ -96,7 +96,6 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
   const todayStr = todayDate()
 
   // ── Walidacje ─────────────────────────────────────────────────────────────
-  const nameValid = name.trim().length > 0
   const dobValid = (() => {
     if (!dob) return false
     const d = new Date(dob)
@@ -112,7 +111,9 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
   const termDays = termDaysForLocale(getLocale())
   const pregValid = dueMode === 'due' ? isValidDueDate(due, new Date(), termDays) : isValidLmp(lmp)
   const pregDue = dueMode === 'due' ? due : (pregValid ? dueDateFromLmp(lmp, termDays) : '')
-  const canSubmit = kind === 'pregnancy' ? pregValid : nameValid && dobValid
+  // v2.17.10: imię opcjonalne (bez niego "Maluszek"); obowiązkowa zostaje tylko data,
+  // bo od wieku zależą progi gorączki. 3 do 7 paź: 18 osób widziało formularz, 2 skończyły.
+  const canSubmit = kind === 'pregnancy' ? pregValid : dobValid
 
   // ── Konwersja DOB → months ────────────────────────────────────────────────
   function dobToMonths(dobStr) {
@@ -158,15 +159,12 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     if (kind === 'pregnancy') { finishPregnancy(); return }
     if (!canSubmit) {
       setTried(true)
-      trackOnboardingBlocked(
-        !nameValid && !dob ? 'both' : !nameValid ? 'name' : !dob ? 'dob' : 'dob_invalid'
-      )
-      const field = !nameValid ? nameRef.current : dobRef.current
+      trackOnboardingBlocked(!dob ? 'dob' : 'dob_invalid')
+      const field = dobRef.current
       field?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-      // Imię: od razu klawiatura. Data (v2.17.4): od razu kalendarz, bo Analytics
-      // pokazało ok. 4 kliknięcia "Zaczynamy" na osobę przy brakującym polu.
-      if (!nameValid) field?.focus({ preventScroll: true })
-      else if (!dob) openPicker(field)
+      // Data (v2.17.4): od razu kalendarz, bo Analytics pokazało ok. 4 kliknięcia
+      // "Zaczynamy" na osobę przy brakującym polu.
+      if (!dob) openPicker(field)
       return
     }
     const months = dobToMonths(dob)
@@ -177,7 +175,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
     // zastrzeżenia medycznego; zapisujemy kiedy (pełna zgoda przy Zdrowiu).
     try { localStorage.setItem('babylog_disclaimer_ack', new Date().toISOString()) } catch {}
     onComplete({
-      name: name.trim(),
+      name: name.trim() || t('preg.default_name'),
       months,
       // v2.16.17: data urodzenia zostaje w profilu, wiek liczy się z niej na bieżąco.
       birthDate: dob,
@@ -366,7 +364,7 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
           {kind === 'pregnancy' ? pregnancyFields : (<>
           {/* Name */}
           <div className="form-group">
-            <label className="form-label" htmlFor="onb-name">{t('onb.setup.name')} *</label>
+            <label className="form-label" htmlFor="onb-name">{t('onb.setup.name')} <span style={{ fontWeight: 400, color: 'var(--text-3)' }}>{t('common.optional')}</span></label>
             <input
               id="onb-name"
               ref={nameRef}
@@ -375,18 +373,8 @@ export default function OnboardingScreen({ onComplete, canJoinPartner, onLoginFo
               placeholder={t('onb.setup.name_ph')}
               value={name}
               onChange={e => setName(e.target.value)}
-              autoFocus
-              aria-invalid={tried && !nameValid}
-              style={{
-                fontSize:16,
-                borderColor: (tried && !nameValid) ? 'var(--alert-500)' : undefined,
-              }}
+              style={{ fontSize:16 }}
             />
-            {tried && !nameValid && (
-              <div role="alert" style={{fontSize:12, color:'var(--alert-500)', marginTop:'var(--space-tight)', fontWeight:500}}>
-                ⚠️ {t('onb.setup.name_missing')}
-              </div>
-            )}
           </div>
 
           {/* DOB */}
