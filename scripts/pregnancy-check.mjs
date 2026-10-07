@@ -79,6 +79,9 @@ async function run(browser, lang, issues) {
   if (!home.week) issues.push(`${tag}: brak ekranu ciąży po formularzu`)
   if (home.nav) issues.push(`${tag}: pasek nawigacji niemowlęcia w trybie ciąży`)
   if (await overflow(page)) issues.push(`${tag} ekran ciąży: wychodzi poza ekran`)
+  // v2.17.9: karta "Ten tydzień" (termin za 20 dni = 37 pełnych tygodni, we Francji 38 SA).
+  const week = await page.evaluate(() => document.querySelector('[data-week]')?.dataset.week)
+  if (week !== (lang === 'fr' ? '38' : '37')) issues.push(`${tag}: karta tygodnia pokazuje tydzień ${week}`)
   await shot('1-home')
 
   // v2.17.6: torba (odhaczenie + własna pozycja), wyprawka, ruchy dziecka.

@@ -3,6 +3,7 @@ import { t, tPlural, useLocale, getLocale } from '../i18n'
 import { readCached, useFirestore } from '../hooks/useFirestore'
 import { pregnancyProgress, GESTATION_DAYS } from '../utils/pregnancy'
 import { listProgress } from '../data/pregnancyLists'
+import { weekContent } from '../data/pregnancyWeeks'
 import { track } from '../utils/analytics'
 import ContractionTimer from './ContractionTimer'
 import AnnouncementModal from './AnnouncementModal'
@@ -142,6 +143,9 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
             </div>
           )}
 
+          {/* v2.17.9: "Ten tydzień": wielkość, rozwój dziecka, rada dla rodziców */}
+          {p && <WeekCard weeks={p.weeks} />}
+
           {/* Od 36. tygodnia "Urodziło się" na wierzchu */}
           {p && p.weeks >= 36 && (
             <div style={{ background: 'var(--surface)', border: '1.5px solid var(--brand-500)', borderRadius: 14, padding: '14px 16px' }}>
@@ -211,6 +215,27 @@ export default function PregnancyScreen({ profile, uid, onBirth, onEnd, children
         onUpgrade={() => { setShowAnnounce(false); onUpgrade?.() }}
       />
     </div>
+  )
+}
+
+function WeekCard({ weeks }) {
+  const w = weekContent(weeks, getLocale())
+  const row = { display: 'flex', gap: 10, fontSize: 14, lineHeight: 1.5, color: 'var(--text)', marginTop: 8 }
+  return (
+    <section data-week={w.week} aria-label={t('weeks.label')} style={{
+      background: 'var(--surface)', border: '0.5px solid var(--border)', borderRadius: 14, padding: '14px 16px',
+    }}>
+      <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--brand-700)', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+        {t('weeks.label')}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+        <span aria-hidden="true" style={{ fontSize: 34, lineHeight: 1 }}>{w.emoji}</span>
+        <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', lineHeight: 1.35 }}>{w.size}</span>
+      </div>
+      <div style={row}><span aria-hidden="true">👶</span><span>{w.baby}</span></div>
+      <div style={row}><span aria-hidden="true">💡</span><span>{w.you}</span></div>
+      <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.45, marginTop: 10 }}>{t('weeks.note')}</div>
+    </section>
   )
 }
 
